@@ -1,0 +1,12 @@
+{application, xapian,
+ [
+  {description, ""},
+  {vsn, git},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { xapian_app, []}},
+  {env, []}
+ ]}.
