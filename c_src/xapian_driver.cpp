@@ -1,5 +1,19 @@
 #include "erl_driver.h"
 
+#include <xapian.h>
+
+#include <cstdlib>
+#include <vector>
+#include <string>
+#include <cstring>
+
+/* For int32_t */
+#include <stdint.h>
+
+
+using namespace std;
+
+
 /* Name of the so or dll library */
 #define DRIVER_NAME xapian_drv
 
@@ -10,7 +24,25 @@
 
 class XapianErlangDriver 
 {
+    private:
+    Xapian::Database *db;
+
     public:
+    // Commands
+    static const int OPEN = 0;
+
+    // Modes for opening of a db
+    static const int8_t READ_OPEN                 = 0;
+    static const int8_t WRITE_CREATE_OR_OPEN      = 1;
+    static const int8_t WRITE_CREATE              = 2;
+    static const int8_t WRITE_CREATE_OR_OVERWRITE = 3;
+    static const int8_t WRITE_OPEN                = 4;
+
+    XapianErlangDriver()
+    {
+        db = NULL;
+    }
+
     /**
      * Here we do some initialization, start is called from open_port. 
      * The drv_data will be passed to control and stop.
@@ -26,12 +58,14 @@ class XapianErlangDriver
         return (ErlDrvData) drv_data;
     }
 
+
     static void stop(
         ErlDrvData drv_data) 
     {
         XapianErlangDriver* drv = (XapianErlangDriver*) drv_data;
         delete drv;
     }   
+
 
     static int control(
         ErlDrvData drv_data, 
@@ -42,10 +76,70 @@ class XapianErlangDriver
         int rlen)
     {
         XapianErlangDriver* drv = (XapianErlangDriver*) drv_data;
-        return -1;
+        switch(command) {
+        case OPEN:
+            return drv->open(buf, len, rbuf, rlen);
+            
+        default:
+            return -1;
+        }
     }
 
-    private:
+
+
+    int open(char *buf, int len, char **rbuf, int rlen)
+    {
+        // parse params
+        const int32_t path_len = *((int32_t*) buf);
+        buf += sizeof(int32_t);
+        const char * path_bin = buf;
+        buf += path_len;
+        const int8_t mode = *((int8_t*) buf);
+        
+
+        // string ( const char * s, size_t n );
+        const string dbpath(path_bin, (size_t) path_len);
+
+        // Is already opened?
+        if (db != NULL)
+            return -1;
+
+        switch(mode) {
+            // Open readOnly db
+            case READ_OPEN:
+                db = new Xapian::Database(dbpath);
+                break;
+
+            // open for read/write; create if no db exists
+            case WRITE_CREATE_OR_OPEN:
+                db = new Xapian::WritableDatabase(dbpath, 
+                    Xapian::DB_CREATE_OR_OPEN);
+                break;
+
+            // create new database; fail if db exists
+            case WRITE_CREATE:
+                db = new Xapian::WritableDatabase(dbpath, 
+                    Xapian::DB_CREATE);
+                break;
+
+            // overwrite existing db; create if none exists
+            case WRITE_CREATE_OR_OVERWRITE:
+                db = new Xapian::WritableDatabase(dbpath, 
+                    Xapian::DB_CREATE_OR_OVERWRITE);
+                break;
+
+            // open for read/write; fail if no db exists
+            case WRITE_OPEN:
+                db = new Xapian::WritableDatabase(dbpath, 
+                    Xapian::DB_OPEN);
+                break;
+
+            default:
+                return -1;
+        }
+        return 0;
+    }
+
 };
 
 

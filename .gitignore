@@ -11,3 +11,4 @@ doc/README.md
 *.gcov
 *.gcda
 *.gcno
+priv/test_db/*
