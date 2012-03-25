@@ -1,112 +1,40 @@
-Hello,
+__Name__: Uvarov Michael
 
-I am Uvarov Michael. 
-I am studding at Southern Federal University in Russia from 2008.
-My github profile is here: https://github.com/freeakk
-I want to implement a binding as an Erlang driver. I already have an 
-experience with NIFs (Native Implemented Functions) 
-(Code is here https://github.com/freeakk/i18n).
+__E-mail address__: freeakk@gmail.com
 
-I implemented basic operations with Unicode both in pure Erlang and as NIF.
-I think, that Erlang will be a good choice for binding, because it has a nice 
-inter-node communication interface. This interface can be used as a transport 
-for access to a remote database.
+__IRC nickname (if any)__: freeakk
 
-I have few questions and ideas about Xapian:
-
-First of all, how does Xapian handle concurrent access to shared resources?
-How many connections can be established to one database for reading and writing?
-Who does coordinate parallel access to same database?
-Are opening and closing a database expensive operations or not?
-Is a minimal example of using Xapian with a real data set? 
-Are there datasets for an efficiently testing?
-
-I think it is a good idea for implementing this binding as a linked-in driver.
-A driver provides a queue and Xapian classes are not thread-safe. So, it will 
-be a mapping: one driver port -- one opening connection to a base.
-NIFs will require an implementing of a thread pool in C, but it is not a trivial 
-task.
-Calls of NIFs can block a schedule of an virtual machine. It is also not good,
-because other green processes will wait. 
-
-I will wait for answers and your questions.
-
-
-Thank you for the answers :)
-The idea about Erlang is that it has few interfaces with C/C++:
-- driver: 
-    for slow operations, it is a program which waits requests throw stdio.
-    It is a safest variant, for example, for image manipulating.
-    If the C process crash, Erlang is still alive.
-- linked-in driver:
-    The same, but a driver is a dll. If it crashed, one Erlang node crashed 
-    also. But it is faster.
-    Use case: RDBMS drivers.
-- NIF:
-    If we run "module:fun(4)" from Erlang, we will call a C function with 
-    TERM[1] array as argument. Is is simple, because we don't need encoding and 
-    decoding data.
-    It is faster because it use the same VM thread. Erlang uses the next 
-    schema: one core of CPU - one thread for a schedule. When we call a NIF,
-    it cannot be stopped. It will stop the world, the same behaviour in JVM 
-    with GC.
-    A NIF can provide resources. Resources are objects which can be automatically
-    garbage collecting. Resources must be thread safe, because they can be shared
-    between OS threads.
-    Use case: ICU NIFs.
-
-
-
-June: Creating an Erlang API.  Code a basic actions from classes Document, DB, 
-    Enquire, TermGenerator as a functions.
-July: Code basic examples (Indexer, Searcher) in Erlang. Extend the API 
-    to allow usage of MultipleKeyMaker, 
-August: Cleaning tests, writing documentation.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Name: Uvarov Michael
-
-E-mail address: freeakk@gmail.com
-
-IRC nickname (if any): freeakk
-
-Any personal websites, blogs, identica, twitter, etc: 
+__Any personal websites, blogs, identica, twitter, etc__: 
 [Github profile](https://github.com/freeakk)
 
 
-Biography (tell us a bit about yourself):
+__Biography (tell us a bit about yourself):__
 
-I am studding at Southern Federal University in Russia from 2008.
+I am from Rostov-on-Don in Russia.
+I am studding at Southern Federal University from 2008.
+I use Open Source software every day. 
+
+At 2007, I started to help my school with an Internet gateway and I made 
+a decision to use GNU/Linux for this task. Then I was in Traffpro command 
+as a front-end developer.
+
+My first passion in programming was PHP.
+It was simple and there were a lot of literature about it. 
+I used PHP for four years with a set of other technologies, such as REST, XML 
+and AJAX. I learned JavaScript and SQL. The university helped me to improve my 
+skills.
+
+Finally, Erlang became my main programming language. I found a noisy problem 
+with advanced Unicode support and solved it. Of course my approach was not so 
+efficient and did not support locales. That's why, I created a binding for ICU 
+library as an alternative. 
+
+I decided to participate in GSoC 2012, because I like Open Source software and
+want to make it better. I want to gain invaluable experience of developing in
+international command of professionals.
 
 
-Eligibility: yes
+__Eligibility__: yes
 
 
 Background Information
@@ -121,8 +49,8 @@ no
 __Please tell us about any previous experience you have with Xapian, 
   or other systems for indexed text search.__
 
-I used MyISAM full-text indexes. Also, I realized Unicode Collation Algorithm 
-in Erlang.
+I used MyISAM full-text indexes. Also, I worked under Unicode Collation 
+Algorithm in Erlang.
 
 
 __Do you have previous experience with Free Software and Open Source 
@@ -140,7 +68,7 @@ And applications from other developers:
 
 * I created few small plugins for rebar. I am using lager and SASL for logging.
 * I am using gproc as a dictionary of processes.
-* I used mochiweb and cowboy as a web servers.
+* I used mochiweb and cowboy as web servers.
 * I am an user of few JavaScript libraries: qooxdoo, ExtJS, jQuery and a former PHP enthusiast. 
 
 
@@ -164,7 +92,7 @@ Methods: TDD
 __Have you previously been responsible (as an employee/volunteer/student/etc) 
 for a project of a similar scope? If so, tell us about it.__
 
-I implimented ICU binding as NIFs. I used Erlang and C/C++. 
+I implemented ICU binding as NIFs. I used Erlang and C/C++. 
 I learned a lot of things about interoperability of Erlang applications.
 
 
@@ -224,7 +152,7 @@ minimize code base of the driver from C++ part of the library and make
 calls thread-save.
 
 My project will use an Erlang driver interface. Each driver port will handle 
-queries syncronicly and have their own set of objects. It is because Xapian 
+queries synchronously and have their own set of objects. It is because Xapian 
 objects are not thread save.
 
 Ports can be collected into a pool using an Erlang code and work in parallel.
@@ -236,14 +164,14 @@ testing and proper or triq for property testing.
 I am planning to use the record syntax for retrieving information from a 
 document and proplists or dict as a dictionary.
 
-I also think, `qlc:table' interface can help to impliment iterators.
+I also think, _qlc:table_ interface can help to impliment iterators.
 
 __What is new or different about your approach which hasn't 
 been done or wasn't possible before?__
 
-Other bindings use SWIG. My approach is to use only `erl_driver' interface.
+Other bindings use SWIG. My approach is to use only _erl_driver_ interface.
 It provides more wide opportunities to customize and tweak API for Erlang 
-library. But it also requiries more work and knowledges.
+library. But it also requires more work and knowledges.
 
 
 __Do you have any preliminary findings or results which suggest 
@@ -276,14 +204,14 @@ Project Timeline
 April - May 21th 
 ----------------
 
-* There are 4 weeks of "community bonding" after accepted 
-  students are announced. *
+_There are 4 weeks of "community bonding" after accepted 
+ students are announced._
 
 Read more about Xapian and its API. Write examples by hands.
 Understand how blocks are working, splitting classes on groups.
 
 Creating an OTP application. Make a rebar plugin for easy configuration of
-building process. Create functions to connent to a database. 
+building process. Create functions to connect to a database. 
 
 Create datasets for testing. Develop and write tests.
 
@@ -291,10 +219,10 @@ Create datasets for testing. Develop and write tests.
 May 21th - July 9th
 -------------------
 
-* The coding period consists of 7 weeks until the mid-term (July 9th). *
+_The coding period consists of 7 weeks until the mid-term (July 9th)._
 
 * __1 week:__ Writing code for making queries: Simple queries.
-* __2 week:__ Writing code for making queries: Parametrizied queries.
+* __2 week:__ Writing code for making queries: Parametrized queries.
 * __3 week:__ Writing index code: Simple indexes.
 * __4 week:__ Writing index code: Indexes with parameters.
 * __5 week:__ Writing iterators or replacement for them.
@@ -303,7 +231,7 @@ May 21th - July 9th
 July 10th - August 13th
 -----------------------
 
-* 5 weeks to the "suggested 'pencils down' date" (August 13th). *
+_5 weeks to the "suggested 'pencils down' date" (August 13th)._
 
 * __1 week:__ Managing exceptions and error handling. 
     Writing documentation about error codes and exceptions. 
@@ -316,7 +244,7 @@ July 10th - August 13th
 August 14th - August 20th
 -------------------------
 
-* 1 week to the "firm 'pencils down' date" (August 20th). *
+_1 week to the "firm 'pencils down' date" (August 20th)._
 
 * __1 week:__ Fixing minor bugs, polish documentation.
 
