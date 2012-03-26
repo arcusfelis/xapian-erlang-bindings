@@ -11,8 +11,9 @@ __Any personal websites, blogs, identica, twitter, etc__:
 __Biography (tell us a bit about yourself):__
 
 I am from Rostov-on-Don in Russia.
+I am 21 years old.
 I am studding at Southern Federal University from 2008.
-I use Open Source software every day. 
+I use Open Source software every day.
 
 At 2007, I started to help my school with an Internet gateway and I made 
 a decision to use GNU/Linux for this task. Then I was in Traffpro command 
@@ -43,7 +44,7 @@ Background Information
 
 __Have you taken part in GSoC and/or  GHOP and/or  GCI before?__
 
-no
+No, I have not.
 
 
 __Please tell us about any previous experience you have with Xapian, 
@@ -66,7 +67,8 @@ mnesia, eunit, tv, appmon.
 
 And applications from other developers:
 
-* I created few small plugins for rebar. I am using lager and SASL for logging.
+* I created few small plugins for rebar. 
+* I am using lager and SASL for logging.
 * I am using gproc as a dictionary of processes.
 * I used mochiweb and cowboy as web servers.
 * I am an user of few JavaScript libraries: qooxdoo, ExtJS, jQuery and a former PHP enthusiast. 
@@ -104,7 +106,7 @@ GMT+4 / MSK
 __Will your Summer of Code project be the main focus of your time during 
 the program?__
 
-yes
+Yes, it will.
 
 __How many hours a week will you realistically be able to 
 devote to your project?__
@@ -113,7 +115,7 @@ devote to your project?__
 
 __Are you applying for other projects in GSoC 2012?__
 
-no
+No, I am not.
 
 
 
@@ -128,11 +130,11 @@ Motivations
 __Why have you chosen this particular project?__
 
 * This project is one of the projects that uses Erlang/OTP. It is my passion.
-* This project has strong background in an information retrieval field. 
+* This project has strong background in information retrieval field. 
 * I am interested in developing back-end applications.
 * I think, it is a good challenge for a developer to participate in this kind 
   of events.
-* I realize, that this work will be useful for community.
+* In my opinion, this work will be useful for community.
 * It is fun.
 
 
@@ -147,15 +149,14 @@ Project Details
 
 __Describe any existing work and concepts on which your project is based.__
 
-This project will contain both Erlang and C++ code. The main ideas are to 
-minimize code base of the driver from C++ part of the library and make 
-calls thread-save.
+This project will contain both Erlang and C++ code. My main goals are:
+* to minimize of the C++ part of the driver;
+* to make calls to a port thread-save.
 
 My project will use an Erlang driver interface. Each driver port will handle 
-queries synchronously and have their own set of objects. It is because Xapian 
-objects are not thread save.
+queries synchronously and will have their own set of objects.
 
-Ports can be collected into a pool using an Erlang code and work in parallel.
+Ports can be collected into a pool using an Erlang code and can work in parallel.
 I am planning to shape the project as an Erlang/OTP application.
 
 I will use rebar for building and for dependency management, eunit for unit
@@ -164,14 +165,14 @@ testing and proper or triq for property testing.
 I am planning to use the record syntax for retrieving information from a 
 document and proplists or dict as a dictionary.
 
-I also think, _qlc:table_ interface can help to impliment iterators.
+I also think, _qlc:table_ interface can help to implement iterators.
 
 __What is new or different about your approach which hasn't 
 been done or wasn't possible before?__
 
-Other bindings use SWIG. My approach is to use only _erl_driver_ interface.
-It provides more wide opportunities to customize and tweak API for Erlang 
-library. But it also requires more work and knowledges.
+Other bindings use SWIG. My approach is to use only _erl\_driver_ interface.
+It provides wide opportunities for customization. But it also requires more 
+work and knowledges.
 
 
 __Do you have any preliminary findings or results which suggest 
