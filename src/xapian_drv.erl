@@ -13,12 +13,16 @@
     port :: port()
 }).
 
+
+
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
 
 -export([start_link/0,
-         open/3]).
+         open/3,
+         last_document_id/1,
+         close/1]).
 
 -export([test/0]).
 
@@ -42,6 +46,14 @@ open(Server, Path, Params) ->
     gen_server:call(Server, {open, Path, Params}).
 
 
+last_document_id(Server) ->
+    gen_server:call(Server, last_document_id).
+
+
+close(Server) ->
+    gen_server:call(Server, close).
+
+
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -57,7 +69,18 @@ init(Args) ->
 handle_call({open, Path, Params}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_open(Port, Path, Params),
-    {reply, Reply, State}.
+    {reply, Reply, State};
+
+handle_call(last_document_id, _From, State) ->
+    #state{ port = Port } = State,
+    Reply = port_last_document_id(Port),
+    {reply, Reply, State};
+
+handle_call(close, _From, State) ->
+    #state{ port = Port } = State,
+    Reply = port_close(Port),
+    Reason = normal,
+    {stop, Reason, Reply, State}.
 
 
 handle_cast(_Msg, State) ->
@@ -93,7 +116,8 @@ load_driver() ->
 
 %% Command ids
 %% Returns an operation for port_control/3 
-command_id(open) -> 0.
+command_id(open) -> 0;
+command_id(last_document_id) -> 1.
 
 
 open_mode_id(read_open) ->                 0;
@@ -137,12 +161,18 @@ port_open(Port, Path, Params) ->
     control(Port, open, Data).
 
 
-port_close() ->
-    ok.
+
+port_last_document_id(Port) ->
+    <<Last:32/native-unsigned-integer>> 
+        = control(Port, last_document_id, <<>>),
+    Last.
 
 
 test() ->
     Path = filename:join(code:priv_dir(xapian), test_db),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:start_link(),
-    ?DRV:open(Server, Path, Params).
+    ?DRV:open(Server, Path, Params),
+    Last = ?DRV:last_document_id(Server),
+    ?DRV:close(Server),
+    Last.

@@ -150,6 +150,7 @@ Project Details
 __Describe any existing work and concepts on which your project is based.__
 
 This project will contain both Erlang and C++ code. My main goals are:
+
 * to minimize of the C++ part of the driver;
 * to make calls to a port thread-save.
 
@@ -255,6 +256,6 @@ _1 week to the "firm 'pencils down' date" (August 20th)._
 Previous Discussion of your Project
 ===================================
 
-http://comments.gmane.org/gmane.comp.search.xapian.devel/1840
+[http://comments.gmane.org/](http://comments.gmane.org/gmane.comp.search.xapian.devel/1840)
 
 

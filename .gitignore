@@ -12,3 +12,4 @@ doc/README.md
 *.gcda
 *.gcno
 priv/test_db/*
+.~*

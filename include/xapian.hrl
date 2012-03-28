@@ -1,0 +1,59 @@
+-define(REQUIRED, erlang:throw(required_field)).
+
+
+-record(x_stemmer, {
+    language = ?REQUIRED :: xapian:x_string()
+}).
+
+
+-record(x_data, {
+    value = ?REQUIRED :: xapian:x_string()
+}).
+
+
+-record(x_term, {
+    %% The name of the term. 
+    value = ?REQUIRED :: xapian:x_string(),
+
+    %% The position of the term. 
+    %% If position = undefined, then we will use Xapian::Document::add_term,
+    %% otherwise Xapian::Document::add_posting.
+    position :: xapian:x_position(),
+
+    %% The within-document frequency, or wdf, of a term t in D is the 
+    %% number of times it is pulled out of D in the indexing process. 
+    %% Usually this is the size of the wdp vector, but in Xapian it can 
+    %% exceed it, since we can apply extra wdf to some parts of the 
+    %% document text. For example, often this is done for the document 
+    %% title and abstract to attach extra importance to their contents 
+    %% compared to the rest of the document text.
+
+    %% WDF of the current term will be increase by this value when indexing.
+    %% If WDF = 0, then Xapian::Document::add_boolean_term will be called.
+    wdf = 0 :: xapian:x_wdf()
+}).
+
+
+-record(x_value, {
+    slot = ?REQUIRED  :: xapian:x_slot() | xapian:x_slot_name(),
+    value = ?REQUIRED :: xapian:x_string()
+}).
+
+
+%% Calls Xapian::TermGenerator::increase_termpos.
+-record(x_delta, {
+    %% Amount to increase the term position by (default: 100). 
+    position = 300 :: xapian:x_position()
+}).
+
+
+-record(x_text, {
+    %% The text to index.
+    value = ?REQUIRED :: xapian:x_string(),
+
+    %% The wdf increment.
+    position = 1 :: xapian:x_position(),
+
+    %% The term prefix to use (default is no prefix). 
+    prefix = <<>> :: xapian:x_string()
+}).

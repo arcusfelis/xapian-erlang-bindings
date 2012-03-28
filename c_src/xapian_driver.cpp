@@ -14,6 +14,107 @@
 using namespace std;
 
 
+class ParamDecoder
+{
+    char *buf; 
+    int len;
+
+    public:
+    ParamDecoder(char *buf, int len)
+    {
+        this->buf = buf;
+        this->len = len;
+    }
+
+    /**
+     * Decodes <<StringLen:32/native-signed-integer, StringBin/binary>>
+     */
+    operator const string() {
+        const int32_t str_len = *((int32_t*) buf);
+        buf += sizeof(int32_t);
+        const char * str_bin = buf;
+        const string str(str_bin, (size_t) str_len);
+        buf += str_len;
+        return str;
+    }
+
+    /**
+     * Decodes <<Int8t:8/native-signed-integer>>
+     */
+    operator int8_t() {
+        int8_t result = *((int8_t*) buf);
+        buf += sizeof(int8_t);
+        return result;
+    }
+};
+
+
+
+/**
+ * If the driver wants to return data, it should return it in rbuf. 
+ * When control is called, *rbuf points to a default buffer of rlen 
+ * bytes, which can be used to return data. Data is returned different 
+ * depending on the port control flags (those that are set with 
+ * set_port_control_flags). 
+ */
+class ResultEncoder
+{
+    char **rbuf;
+    int rlen;
+    int len;
+    bool allocated;
+    public:
+
+    void
+    setBuffer(char **rbuf, int rlen)
+    {
+        this->rbuf = rbuf;
+        this->rlen = rlen;
+        len = 0;
+        allocated = false;
+    }
+
+    void put(Xapian::docid docid)
+    {
+        put(&docid, sizeof(docid));
+    }
+
+    void put(void* term, int termLen)
+    {
+        int newLen = termLen + len;
+        // Check allocated memory
+        if (*rbuf == NULL || newLen > rlen) 
+        {
+
+            char* newBuf = (char*) driver_alloc_binary(newLen);
+            if(*rbuf == NULL) {}
+                //throw Error;
+
+            // void *memcpy(void *dest, const void *src, size_t n);
+            memcpy(newBuf, *rbuf, len);
+
+            if (allocated)
+                driver_free_binary((ErlDrvBinary*) *rbuf);
+
+            *rbuf = newBuf;
+            allocated = true;
+        }
+        // Append term to buf
+        // void *memcpy(void *dest, const void *src, size_t n);
+        memcpy((*rbuf + len), term, termLen);
+        len += termLen;
+    }
+
+    /**
+     * Get return result
+     */
+    operator int() {
+        return len;
+    }
+};
+
+
+
 /* Name of the so or dll library */
 #define DRIVER_NAME xapian_drv
 
@@ -26,10 +127,18 @@ class XapianErlangDriver
 {
     private:
     Xapian::Database *db;
+    Xapian::WritableDatabase *wdb;
+    ResultEncoder result;
 
     public:
+    ResultEncoder* getResultEncoder()
+    {
+        return &result;
+    }
+
     // Commands
     static const int OPEN = 0;
+    static const int LAST_DOC_ID = 1;
 
     // Modes for opening of a db
     static const int8_t READ_OPEN                 = 0;
@@ -41,13 +150,21 @@ class XapianErlangDriver
     XapianErlangDriver()
     {
         db = NULL;
+        wdb = NULL;
+    }
+
+    ~XapianErlangDriver()
+    {
+        if (db != NULL) 
+            delete db;
     }
 
     /**
      * Here we do some initialization, start is called from open_port. 
      * The drv_data will be passed to control and stop.
      */
-    static ErlDrvData start(
+    static 
+    ErlDrvData start(
         ErlDrvPort port, 
         char *buf)
     {
@@ -59,15 +176,18 @@ class XapianErlangDriver
     }
 
 
-    static void stop(
+    static void 
+    stop(
         ErlDrvData drv_data) 
     {
         XapianErlangDriver* drv = (XapianErlangDriver*) drv_data;
-        delete drv;
+        if (drv != NULL)
+            delete drv;
     }   
 
 
-    static int control(
+    static int 
+    control(
         ErlDrvData drv_data, 
         unsigned int command, 
         char *buf, 
@@ -76,30 +196,29 @@ class XapianErlangDriver
         int rlen)
     {
         XapianErlangDriver* drv = (XapianErlangDriver*) drv_data;
+        ParamDecoder params(buf, len); 
+        drv->getResultEncoder()->setBuffer(rbuf, rlen);
+
         switch(command) {
-        case OPEN:
-            return drv->open(buf, len, rbuf, rlen);
-            
+        case OPEN: 
+            {
+            const string dbpath = params;
+            int8_t mode = params;
+            return drv->open(dbpath, mode);
+            }
+
+        case LAST_DOC_ID:
+            return drv->getLastDocId();
+
         default:
             return -1;
         }
     }
 
 
-
-    int open(char *buf, int len, char **rbuf, int rlen)
+    int 
+    open(const string& dbpath, int8_t mode)
     {
-        // parse params
-        const int32_t path_len = *((int32_t*) buf);
-        buf += sizeof(int32_t);
-        const char * path_bin = buf;
-        buf += path_len;
-        const int8_t mode = *((int8_t*) buf);
-        
-
-        // string ( const char * s, size_t n );
-        const string dbpath(path_bin, (size_t) path_len);
-
         // Is already opened?
         if (db != NULL)
             return -1;
@@ -112,25 +231,25 @@ class XapianErlangDriver
 
             // open for read/write; create if no db exists
             case WRITE_CREATE_OR_OPEN:
-                db = new Xapian::WritableDatabase(dbpath, 
+                db = wdb = new Xapian::WritableDatabase(dbpath, 
                     Xapian::DB_CREATE_OR_OPEN);
                 break;
 
             // create new database; fail if db exists
             case WRITE_CREATE:
-                db = new Xapian::WritableDatabase(dbpath, 
+                db = wdb = new Xapian::WritableDatabase(dbpath, 
                     Xapian::DB_CREATE);
                 break;
 
             // overwrite existing db; create if none exists
             case WRITE_CREATE_OR_OVERWRITE:
-                db = new Xapian::WritableDatabase(dbpath, 
+                db = wdb = new Xapian::WritableDatabase(dbpath, 
                     Xapian::DB_CREATE_OR_OVERWRITE);
                 break;
 
             // open for read/write; fail if no db exists
             case WRITE_OPEN:
-                db = new Xapian::WritableDatabase(dbpath, 
+                db = wdb = new Xapian::WritableDatabase(dbpath, 
                     Xapian::DB_OPEN);
                 break;
 
@@ -139,6 +258,29 @@ class XapianErlangDriver
         }
         return 0;
     }
+
+    int
+    getLastDocId()
+    {
+        //Xapian::docid get_lastdocid() const
+        Xapian::docid 
+        docid = db->get_lastdocid();
+        result.put(docid);
+        return result;
+    }
+
+//  Xapian::TermGenerator::index_text(
+//      const Xapian::Utf8Iterator& itor, 
+//      Xapian::termcount wdf_inc = 1, 
+//      const std::string & preﬁx =
+//      std::string())
+
+    /**
+     * Parameters:
+     * itor Utf8Iterator pointing to the text to index.
+     * wdf_inc The wdf increment (default 1).
+     * preﬁx The term preﬁx to use (default is no preﬁx).
+     */
 
 };
 
