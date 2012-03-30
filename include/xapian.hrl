@@ -1,5 +1,8 @@
 -define(REQUIRED, erlang:throw(required_field)).
 
+% ----------------------------------------------------------
+%% These records are used by indexer
+% ----------------------------------------------------------
 
 -record(x_stemmer, {
     language = ?REQUIRED :: xapian:x_string()
@@ -43,7 +46,7 @@
 %% Calls Xapian::TermGenerator::increase_termpos.
 -record(x_delta, {
     %% Amount to increase the term position by (default: 100). 
-    position = 300 :: xapian:x_position()
+    position = 100 :: xapian:x_position()
 }).
 
 
@@ -56,4 +59,33 @@
 
     %% The term prefix to use (default is no prefix). 
     prefix = <<>> :: xapian:x_string()
+}).
+
+
+
+
+
+
+
+% ----------------------------------------------------------
+%% These records contain metainfo
+% ----------------------------------------------------------
+
+%% Example of using for queryparser.add_prefix("title", "S");
+%% #x_prefix_name{name=title, prefix=<<"S">>}
+%% It contains alternative name for keys.
+-record(x_prefix_name, {
+    %% full field name
+    name :: atom(),
+
+    %% short field name
+    prefix :: binary()
+}).
+
+
+-record(x_value_name, {
+    %% full field name
+    name :: atom(),
+
+    slot :: non_neg_integer()
 }).

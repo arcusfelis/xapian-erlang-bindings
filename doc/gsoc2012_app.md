@@ -223,11 +223,18 @@ May 21th - July 9th
 
 _The coding period consists of 7 weeks until the mid-term (July 9th)._
 
-* __1 week:__ Writing code for making queries: Simple queries.
-* __2 week:__ Writing code for making queries: Parametrized queries.
-* __3 week:__ Writing index code: Simple indexes.
-* __4 week:__ Writing index code: Indexes with parameters.
+* __1 week:__ Writing index code: Simple indexes.
+    Adding an example module: xapian\_simple\_index. 
+* __2 week:__ Writing code for making queries: Simple queries. 
+    Adding an example module: xapian\_simple\_search.
+* __3 week:__ Writing index code: Indexes with parameters.
+    Adding few examples for advanced cases for demonstration of using term as 
+    unique id, for storing values in slots.
+* __4 week:__ Writing code for making queries with parameters.
+    Adding few examples for advanced search.
 * __5 week:__ Writing iterators or replacement for them.
+* __6 week:__ Writing queries operators using records or parse_transform.
+* __7 week:__ Develop examples: simple index, simple search, console viewer.
 
 
 July 10th - August 13th
@@ -239,7 +246,7 @@ _5 weeks to the "suggested 'pencils down' date" (August 13th)._
     Writing documentation about error codes and exceptions. 
 * __2 week:__ Writing a pool with help of a pooler application. 
     Testing supervisors.
-* __3 week:__ Develop examples: simple index, simple search, console viewer.
+* __3 week:__ Develop example with a real set of data.
 * __4-5 week:__ Measuring efficiency, profiling, finding and fixing bottlenecks.
 
 

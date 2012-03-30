@@ -6,12 +6,50 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <stdexcept>
+#include <sstream>
 
 /* For int32_t */
 #include <stdint.h>
 
-
 using namespace std;
+
+
+class DriverRuntimeError: public runtime_error
+{
+    public:
+    DriverRuntimeError(const string& str):
+        std::runtime_error(str) {}
+};
+
+class MemoryAllocationDriverError: public DriverRuntimeError
+{
+    public:
+    MemoryAllocationDriverError(int size) : 
+        DriverRuntimeError(buildString(size)) {}
+
+    static const string buildString(int size)
+    {
+        std::stringstream ss;
+        ss << "Cannot allocate " << size << "bytes.";
+        return ss.str();
+    }
+};
+
+class BadCommandDriverError: public DriverRuntimeError
+{
+    public:
+    BadCommandDriverError(int8_t command_id) : 
+        DriverRuntimeError(buildString(command_id)) {}
+
+    static const string buildString(int8_t command_id)
+    {
+        std::stringstream ss;
+        ss << "Unknown command with id = " << command_id;
+        return ss.str();
+    }
+};
+
 
 
 class ParamDecoder
@@ -44,6 +82,25 @@ class ParamDecoder
     operator int8_t() {
         int8_t result = *((int8_t*) buf);
         buf += sizeof(int8_t);
+        return result;
+    }
+
+    /**
+     * Decodes <<Num:32/native-signed-integer>>
+     */
+    operator int32_t() {
+        int32_t result = *((int32_t*) buf);
+        buf += sizeof(int32_t);
+        return result;
+    }
+
+    /**
+     * Decodes <<Num:32/native-unsigned-integer>>
+     * Results are Xapian::valueno or Xapian::termcount
+     */
+    operator unsigned int32_t() {
+        int32_t result = *((unsigned int32_t*) buf);
+        buf += sizeof(unsigned int32_t);
         return result;
     }
 };
@@ -87,8 +144,8 @@ class ResultEncoder
         {
 
             char* newBuf = (char*) driver_alloc_binary(newLen);
-            if(*rbuf == NULL) {}
-                //throw Error;
+            if(*rbuf == NULL) 
+                throw MemoryAllocationDriverError(newLen);
 
             // void *memcpy(void *dest, const void *src, size_t n);
             memcpy(newBuf, *rbuf, len);
@@ -136,17 +193,6 @@ class XapianErlangDriver
         return &result;
     }
 
-    // Commands
-    static const int OPEN = 0;
-    static const int LAST_DOC_ID = 1;
-
-    // Modes for opening of a db
-    static const int8_t READ_OPEN                 = 0;
-    static const int8_t WRITE_CREATE_OR_OPEN      = 1;
-    static const int8_t WRITE_CREATE              = 2;
-    static const int8_t WRITE_CREATE_OR_OVERWRITE = 3;
-    static const int8_t WRITE_OPEN                = 4;
-
     XapianErlangDriver()
     {
         db = NULL;
@@ -163,8 +209,7 @@ class XapianErlangDriver
      * Here we do some initialization, start is called from open_port. 
      * The drv_data will be passed to control and stop.
      */
-    static 
-    ErlDrvData start(
+    static ErlDrvData start(
         ErlDrvPort port, 
         char *buf)
     {
@@ -176,8 +221,7 @@ class XapianErlangDriver
     }
 
 
-    static void 
-    stop(
+    static void stop(
         ErlDrvData drv_data) 
     {
         XapianErlangDriver* drv = (XapianErlangDriver*) drv_data;
@@ -186,8 +230,12 @@ class XapianErlangDriver
     }   
 
 
-    static int 
-    control(
+    // Commands
+    static const int OPEN         = 0;
+    static const int LAST_DOC_ID  = 1;
+    static const int ADD_DOCUMENT = 2;
+
+    static int control(
         ErlDrvData drv_data, 
         unsigned int command, 
         char *buf, 
@@ -210,14 +258,23 @@ class XapianErlangDriver
         case LAST_DOC_ID:
             return drv->getLastDocId();
 
+        case ADD_DOCUMENT:
+            return drv->addDocument(params);
+
         default:
             return -1;
         }
     }
 
 
-    int 
-    open(const string& dbpath, int8_t mode)
+    // Modes for opening of a db
+    static const int8_t READ_OPEN                 = 0;
+    static const int8_t WRITE_CREATE_OR_OPEN      = 1;
+    static const int8_t WRITE_CREATE              = 2;
+    static const int8_t WRITE_CREATE_OR_OVERWRITE = 3;
+    static const int8_t WRITE_OPEN                = 4;
+
+    int open(const string& dbpath, int8_t mode)
     {
         // Is already opened?
         if (db != NULL)
@@ -259,8 +316,7 @@ class XapianErlangDriver
         return 0;
     }
 
-    int
-    getLastDocId()
+    int getLastDocId()
     {
         //Xapian::docid get_lastdocid() const
         Xapian::docid 
@@ -269,18 +325,108 @@ class XapianErlangDriver
         return result;
     }
 
-//  Xapian::TermGenerator::index_text(
-//      const Xapian::Utf8Iterator& itor, 
-//      Xapian::termcount wdf_inc = 1, 
-//      const std::string & preﬁx =
-//      std::string())
+
+    int addDocument(ParamDecoder& params)
+    {
+        Xapian::Document doc;
+        applyDocument(params, doc);
+        Xapian::docid
+        docid = wdb->add_document(doc);
+        result.put(docid);
+        return result;
+    }
+
+    
+    static const int8_t STEMMER             = 1;
+    static const int8_t DATA                = 2;
+    static const int8_t VALUE               = 3;
+    static const int8_t DELTA               = 4;
+    static const int8_t TEXT                = 5;
+    static const int8_t TERM                = 6;
+    static const int8_t POSTING             = 7;
 
     /**
-     * Parameters:
-     * itor Utf8Iterator pointing to the text to index.
-     * wdf_inc The wdf increment (default 1).
-     * preﬁx The term preﬁx to use (default is no preﬁx).
+     * Read commands, encoded by xapian_document:encode.
+     * Used in update, replace, add document functions
      */
+    void applyDocument(ParamDecoder& params, Xapian::Document& doc)
+    {
+        Xapian::TermGenerator   termgenerator;
+        termgenerator.set_document(doc);
+
+        while (int8_t command = params)
+        /* Do, while command != stop != 0 */
+        {
+            switch (command)
+            {
+                case STEMMER:
+                {
+                    // see xapian_document:append_stemmer
+                    const string   language = params;
+                    termgenerator.set_stemmer(Xapian::Stem(language));
+                    break;
+                }
+
+                case DATA:
+                {
+                    // see xapian_document:append_data
+                    const string   data = params;
+                    doc.set_data(data);
+                    break;
+                }
+
+                case VALUE:
+                {
+                    // see xapian_document:append_value
+                    Xapian::valueno   slot  = params;
+                    const string      value = params;
+                    doc.add_value(slot, value); 
+                    break;
+                }
+
+                case DELTA:
+                {
+                    // see xapian_document:append_delta
+                    Xapian::termcount   delta = params;
+                    termgenerator.increase_termpos(delta);
+                    break;
+                }
+
+                case TEXT:
+                {
+                    // see xapian_document:append_delta
+                    const string      text    = params; // value
+                    Xapian::termcount wdf_inc = params; // pos
+                    const string      prefix  = params;
+                    termgenerator.index_text(text, wdf_inc, prefix); 
+                    break;
+                }
+
+                case TERM:
+                {
+                    // see xapian_document:append_term
+                    const string      tname   = params; // value
+                    Xapian::termcount wdf_inc = params; 
+                    // Pos = undefined
+                    doc.add_term(tname, wdf_inc);
+                    break;
+                }
+
+                case POSTING:
+                {
+                    // see xapian_document:append_term
+                    const string      tname   = params; // value
+                    Xapian::termpos   tpos    = params;
+                    Xapian::termcount wdf_inc = params;
+                    doc.add_posting(tname, tpos, wdf_inc);
+                    break;
+                }
+
+                default:
+                    throw BadCommandDriverError(command);
+            }
+        }
+    }
 
 };
 
