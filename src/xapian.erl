@@ -5,6 +5,9 @@
     x_slot/0, 
     x_document_index_part/0]).
 
+-export_type([
+    x_server/0]).
+
 -include_lib("xapian/include/xapian.hrl").
 
 
@@ -26,3 +29,4 @@
     | x_delta() 
     | x_text().
 
+-type x_server() :: pid().

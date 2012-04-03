@@ -89,3 +89,17 @@
 
     slot :: non_neg_integer()
 }).
+
+
+
+% ----------------------------------------------------------
+%% These records used for transactions
+% ----------------------------------------------------------
+
+-record(x_transaction_result, {
+    is_committed,
+    is_consistent,
+    result,
+    statuses,
+    reason
+}).

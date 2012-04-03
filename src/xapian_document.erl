@@ -1,3 +1,4 @@
+%% It contains helpers for inserting.
 -module(xapian_document).
 
 %% Internal functions
@@ -31,8 +32,7 @@ preprocess_hof(Name2Prefix, Name2Slot) ->
     fun(Rec=#x_value{slot = Name}) when is_atom(Name) ->
             %% Set real slot id (integer) for values.
             %% Throw an error if there is no this name.
-            {ok, Slot} = orddict:find(Name, Name2Slot),
-            Rec#x_value{slot = Slot};
+            Rec#x_value{slot = orddict:fetch(Name, Name2Slot)};
 
        (Rec=#x_text{prefix = Name}) ->
             %% Set short version for prefixes.

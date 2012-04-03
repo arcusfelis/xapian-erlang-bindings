@@ -164,9 +164,26 @@ I will use rebar for building and for dependency management, eunit for unit
 testing and proper or triq for property testing.
 
 I am planning to use the record syntax for retrieving information from a 
-document and proplists or dict as a dictionary.
+document and proplists or orddict as a dictionary.
 
 I also think, _qlc:table_ interface can help to implement iterators.
+
+I planning to impiment transactions. Here is an example of code:
+
+```
+    {ok, Server1} = open(Path1, Params),
+    {ok, Server2} = open(Path2, Params),
+    transaction([Server1, Server2], fun([S1, S2]) ->
+        transaction_body
+        end).
+```
+
+Here we passed the list of databases and the transaction function.
+If an error will occur, all changes added into the function will be
+rollback. Result of the function or an error code will be returned.
+All other queries will wait during a transaction.
+
+I will use atoms as pseudonyms for slots and for prefixes.
 
 __What is new or different about your approach which hasn't 
 been done or wasn't possible before?__
@@ -230,6 +247,7 @@ _The coding period consists of 7 weeks until the mid-term (July 9th)._
 * __3 week:__ Writing index code: Indexes with parameters.
     Adding few examples for advanced cases for demonstration of using term as 
     unique id, for storing values in slots.
+    Adding transaction support.
 * __4 week:__ Writing code for making queries with parameters.
     Adding few examples for advanced search.
 * __5 week:__ Writing iterators or replacement for them.
