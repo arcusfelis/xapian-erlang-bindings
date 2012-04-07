@@ -6,7 +6,8 @@
     x_document_index_part/0]).
 
 -export_type([
-    x_server/0]).
+    x_server/0,
+    x_transaction/0]).
 
 -include_lib("xapian/include/xapian.hrl").
 
@@ -30,3 +31,4 @@
     | x_text().
 
 -type x_server() :: pid().
+-type x_transaction() :: fun(([x_server()]) -> term()).

@@ -103,3 +103,9 @@
     statuses,
     reason
 }).
+
+
+-record(x_error, {
+    type,
+    reason
+}).
