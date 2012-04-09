@@ -109,3 +109,37 @@
     type,
     reason
 }).
+
+
+
+% ----------------------------------------------------------
+%% These records used for queries
+% ----------------------------------------------------------
+
+-record(x_query, {
+    op='AND',
+    %% List of other queries or terms (term is a string).
+    value :: [xapian:x_query() | xapian:x_string()],
+    %% For `NEAR' and `PHRASE', a window size can be specified in parameter.
+    %% For `ELITE_SET', the elite set size can be specified in parameter. 
+    parameter=0
+}).
+
+-record(x_query_value, {
+    op='AND',
+    slot :: non_neg_integer(),
+    value :: xapian:x_string()
+}).
+
+-record(x_query_value_range, {
+    op='AND',
+    slot :: non_neg_integer(),
+    from :: xapian:x_string(),
+    to :: xapian:x_string()
+}).
+
+-record(x_query_term, {
+    name :: xapian:x_string(),
+    wqf = 1,
+    position = 0 :: xapian:x_position()
+}).

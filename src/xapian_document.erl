@@ -4,9 +4,9 @@
 %% Internal functions
 -export([encode/3]).
 
--export([test/0]).
 
 -include_lib("xapian/include/xapian.hrl").
+-compile({parse_transform, seqbind}).
 
 part_id(stop)       -> 0;
 part_id(stemmer)    -> 1;
@@ -81,33 +81,37 @@ append_data(Value, Bin) ->
     append_iolist(Value, append_type(data, Bin)).
 
 
-append_term(Value, _Pos = undefined, WDF, Bin) ->
-    Bin1 = append_type(term, Bin),
-    Bin2 = append_iolist(Value, Bin1),
-    append_int(WDF, Bin2);
+append_term(Value, _Pos = undefined, WDF, Bin@) ->
+    Bin@ = append_type(term, Bin@),
+    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_int(WDF, Bin@),
+    Bin@;
 
-append_term(Value, Pos, WDF, Bin) ->
-    Bin1 = append_type(posting, Bin),
-    Bin2 = append_iolist(Value, Bin1),
-    Bin3 = append_int(Pos, Bin2),
-    append_int(WDF, Bin3).
+append_term(Value, Pos, WDF, Bin@) ->
+    Bin@ = append_type(posting, Bin@),
+    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_int(Pos, Bin@),
+    Bin@ = append_int(WDF, Bin@),
+    Bin@.
 
 
-append_value(Slot, Value, Bin) ->
-    Bin1 = append_type(value, Bin),
-    Bin2 = append_uint(Slot, Bin1),
-    append_iolist(Value, Bin2).
+append_value(Slot, Value, Bin@) ->
+    Bin@ = append_type(value, Bin@),
+    Bin@ = append_uint(Slot, Bin@),
+    Bin@ = append_iolist(Value, Bin@),
+    Bin@.
 
 
 append_delta(Pos, Bin) ->
     append_int(Pos, append_type(delta, Bin)).
 
 
-append_text(Value, Pos, Prefix, Bin) ->
-    Bin1 = append_type(term, Bin),
-    Bin2 = append_iolist(Value, Bin1),
-    Bin3 = append_int(Pos, Bin2),
-    append_iolist(Prefix, Bin3).
+append_text(Value, Pos, Prefix, Bin@) ->
+    Bin@ = append_type(term, Bin@),
+    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_int(Pos, Bin@),
+    Bin@ = append_iolist(Prefix, Bin@),
+    Bin@.
 
 
 append_type(Type, Bin) ->
@@ -131,7 +135,12 @@ append_uint(Num, Bin) ->
     <<Bin/binary, Num:32/native-unsigned-integer>>.
 
 
-test() ->
+
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+encode_test() ->
     encode([ #x_stemmer{language = <<"english">>}
            , #x_data{value = "My test data as iolist"} 
            , #x_term{value = "Simple term"} 
@@ -140,3 +149,5 @@ test() ->
            , #x_delta{}
            , #x_text{value = <<"Paragraph 2">>} 
            ], [], []).
+
+-endif.

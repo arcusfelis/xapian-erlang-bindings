@@ -1,3 +1,6 @@
+/**
+ * Prefix m_ (member) for properties means that property is private.
+ */
 #include "erl_driver.h"
 
 #include <xapian.h>
@@ -26,17 +29,21 @@
 using namespace std;
 
 
+// -------------------------------------------------------------------
+// Exceptions
+// -------------------------------------------------------------------
+
 class DriverRuntimeError: public runtime_error
 {
-    const char * __type;
+    const char* m_type;
 
     public:
     DriverRuntimeError(const char * type, const string& str):
-        std::runtime_error(str) { __type = type; }
+        std::runtime_error(str) { m_type = type; }
 
-    const char * get_type() const
+    const char* get_type() const
     {
-       return __type;
+       return m_type;
     }
 
 };
@@ -92,6 +99,7 @@ class NotWritableDatabaseError: public DriverRuntimeError
 };
 
 
+
 #define REG_TYPE(CLASS) const char CLASS::TYPE[] = STR(CLASS);
 REG_TYPE(MemoryAllocationDriverError)
 REG_TYPE(BadCommandDriverError)
@@ -102,23 +110,23 @@ REG_TYPE(NotWritableDatabaseError)
 #define READ_TYPE(T) (*((T*) move(sizeof(T))))
 class ParamDecoder
 {
-    char *buf; 
-    int len;
+    char *m_buf; 
+    int m_len;
 
     public:
     ParamDecoder(char *buf, int len)
     {
-        this->buf = buf;
-        this->len = len;
+        m_buf = buf;
+        m_len = len;
     }
 
     char* move(int size)
     {
-        len -= size;
-        if (len < 0)
+        m_len -= size;
+        if (m_len < 0)
             throw OverflowDriverError();
-        char* old_buf = buf;
-        buf += size;
+        char* old_buf = m_buf;
+        m_buf += size;
         return old_buf;
     }
 
@@ -127,7 +135,7 @@ class ParamDecoder
      */
     operator const string() {
         const int32_t str_len = READ_TYPE(int32_t);
-        const char* str_bin = buf;
+        const char* str_bin = m_buf;
         move(str_len);
         const string str(str_bin, (size_t) str_len);
         return str;
@@ -183,42 +191,43 @@ struct DataSegment
 class ResultEncoder
 {
     /* Here will be a pointer on data after all operations */
-    char **result_buf;
-    int result_len;
+    char**  m_result_buf;
+    int     m_result_len;
 
     /* Preallocated */
-    char *default_buf;
+    char*   m_default_buf;
 
     /* Where to write now */
-    char *current_buf;
-
-    /* Next segment */
-    DataSegment* first_segment;
-    DataSegment* last_segment;
+    char*   m_current_buf;
 
     /* Len of buffer, allocated by a port */
-    int default_len;
-    int left_len;
+    int     m_default_len;
+    int     m_left_len;
+
+    /* Next segment */
+    DataSegment* m_first_segment;
+    DataSegment* m_last_segment;
+
     public:
 
     void
-    setBuffer(char **rbuf, int rlen) 
+    setBuffer(char** rbuf, int rlen) 
     {
-        result_buf = rbuf;
-        current_buf = default_buf = *rbuf;
-        default_len = rlen;
-        result_len = 0;
-        first_segment = NULL;
-        left_len = rlen;
+        m_result_buf = rbuf;
+        m_current_buf = m_default_buf = *rbuf;
+        m_default_len = rlen;
+        m_result_len = 0;
+        m_first_segment = NULL;
+        m_left_len = rlen;
     }
 
-    ResultEncoder & operator<<(Xapian::docid docid)
+    ResultEncoder& operator<<(Xapian::docid docid)
     {
         PUT_VALUE(docid);
         return *this;
     }
 
-    ResultEncoder & operator<<(const string str)
+    ResultEncoder& operator<<(const string str)
     {
         uint32_t len = (uint32_t) str.length();
         PUT_VALUE(len);
@@ -234,7 +243,7 @@ class ResultEncoder
         return *this;
     }
 
-    ResultEncoder & operator<<(uint8_t value)
+    ResultEncoder& operator<<(uint8_t value)
     {
         PUT_VALUE(value);
         return *this;
@@ -250,141 +259,156 @@ class ResultEncoder
         return ds;
     }
 
-    /* Copy termLen bytes from term. */
-    void put(const char* term, const int term_len)
-    {
-        /* Len of the whole buffer after coping */
-        const int new_len = term_len + result_len;
-        const bool allocated = first_segment != NULL;
-        const bool large = allocated || default_buf == NULL || new_len > default_len;
-        const bool no_alloc = allocated && term_len <= left_len;
-        if (!large || no_alloc)
-        {
-            /* Whole term can be stored in the preallocated area. */
-            char* dest = current_buf;
-            const char* src = term;
-            memcpy(dest, src, term_len);
-            current_buf += term_len;
-            left_len -= term_len;
-        }
-        else 
-        {
-            /* part1 will stay in a default buffer. */
-            const int part1_len = left_len;
-            const int part2_len = term_len - part1_len;
-            const int new_segment_len = part2_len + RESERVED_LEN;
+    void put(const char* term, const int term_len);
 
-            /* Create new data segment. */
-            DataSegment* 
-            new_segment = this->alloc(new_segment_len);
-            new_segment->size = new_segment_len;
-            new_segment->next = NULL;
+    operator int();
 
-            const char* part1_src = term;
-            const char* part2_src = term + part1_len;
-
-            char* part1_dest = current_buf;
-            char* part2_dest = new_segment->data;
-
-            /* Copy data */
-            memcpy(part1_dest, part1_src, part1_len);
-            memcpy(part2_dest, part2_src, part2_len);
-
-            if (first_segment == NULL) {
-                /* Set as a first segment. */
-                first_segment = new_segment;
-            } else {
-                /* Link to a last segment. */
-                last_segment->next = new_segment;
-            }
-
-            /* Save state */
-            last_segment = new_segment;
-            current_buf = part2_dest + part2_len;
-            left_len = RESERVED_LEN;
-        }
-        
-        result_len = new_len;
-    }
-
-    /**
-     * Get return result
-     */
-    operator int() {
-        if (result_len > default_len)
-        {
-            ErlDrvBinary* bin = driver_alloc_binary(result_len);
-            if (bin == NULL)
-                throw MemoryAllocationDriverError(result_len);
-            // TODO: can be skipped
-            memset(bin->orig_bytes, 0, result_len);
-
-            char* dest = bin->orig_bytes;
-            char* src = default_buf;
-            memcpy(dest, src, default_len);
-            dest += default_len;
-
-            /* Shrink data size to copy. */
-            assert(left_len >= 0);
-            last_segment->size -= left_len;
-            do 
-            {
-                assert(first_segment != NULL);
-
-                /* No infinite cycles. */
-                assert(first_segment->next != first_segment);
-
-                int segment_size = first_segment->size;
-                assert(segment_size > 0);
-
-                /* Real buffer length is not greater, then allocated buffer length. */
-                assert((dest - (bin->orig_bytes) + segment_size) <= result_len);
-
-                src = first_segment->data;
-                memcpy(dest, src, segment_size);
-                dest += segment_size;
-
-                /* Use last_segment as a temp variable. */
-                last_segment = first_segment;
-
-                /* Move a pointer on the next segment. */
-                first_segment = first_segment->next;
-
-                /* Delete copied segment. */
-                driver_free(last_segment);
-            }
-            while(first_segment != NULL);
-            *result_buf = (char*) bin;
-        }
-        
-        return result_len;
-    }
-
-
-    void clear() {
-        if (result_len > default_len)
-        {
-            do 
-            {
-                assert(first_segment != NULL);
-
-                /* No infinite cycles. */
-                assert(first_segment->next != first_segment);
-
-                /* Use last_segment as a temp variable. */
-                last_segment = first_segment;
-
-                /* Move a pointer on the next segment. */
-                first_segment = first_segment->next;
-
-                /* Delete copied segment. */
-                driver_free(last_segment);
-            }
-            while(first_segment != NULL);
-        }
-    }
-
+    void clear();
 };
+
+
+
+/** 
+ * Copy termLen bytes from term. 
+ */
+void ResultEncoder::put(const char* term, const int term_len)
+{
+    /* Len of the whole buffer after coping */
+    const int new_len = term_len + m_result_len;
+    const bool allocated = m_first_segment != NULL;
+    const bool large = allocated 
+        || m_default_buf == NULL 
+        || new_len > m_default_len;
+    const bool no_alloc = allocated && term_len <= m_left_len;
+    if (!large || no_alloc)
+    {
+        /* Whole term can be stored in the preallocated area. */
+        char* dest = m_current_buf;
+        const char* src = term;
+        memcpy(dest, src, term_len);
+        m_current_buf += term_len;
+        m_left_len -= term_len;
+    }
+    else 
+    {
+        /* part1 will stay in a default buffer. */
+        const int part1_len = m_left_len;
+        const int part2_len = term_len - part1_len;
+        const int new_segment_len = part2_len + RESERVED_LEN;
+
+        /* Create new data segment. */
+        DataSegment* 
+        new_segment = this->alloc(new_segment_len);
+        new_segment->size = new_segment_len;
+        new_segment->next = NULL;
+
+        const char* part1_src = term;
+        const char* part2_src = term + part1_len;
+
+        char* part1_dest = m_current_buf;
+        char* part2_dest = new_segment->data;
+
+        /* Copy data */
+        memcpy(part1_dest, part1_src, part1_len);
+        memcpy(part2_dest, part2_src, part2_len);
+
+        if (m_first_segment == NULL) {
+            /* Set as a first segment. */
+            m_first_segment = new_segment;
+        } else {
+            /* Link to a last segment. */
+            m_last_segment->next = new_segment;
+        }
+
+        /* Save state */
+        m_last_segment = new_segment;
+        m_current_buf = part2_dest + part2_len;
+        m_left_len = RESERVED_LEN;
+    }
+    
+    m_result_len = new_len;
+}
+
+
+/**
+ * Clear the state of the object.
+ */
+void ResultEncoder::clear() {
+    if (m_result_len > m_default_len)
+    {
+        do 
+        {
+            assert(m_first_segment != NULL);
+
+            /* No infinite cycles. */
+            assert(m_first_segment->next != m_first_segment);
+
+            /* Use last_segment as a temp variable. */
+            m_last_segment = m_first_segment;
+
+            /* Move a pointer on the next segment. */
+            m_first_segment = m_first_segment->next;
+
+            /* Delete copied segment. */
+            driver_free(m_last_segment);
+        }
+        while(m_first_segment != NULL);
+    }
+}
+
+
+/**
+ * Returns result
+ */
+ResultEncoder::operator int() {
+    if (m_result_len > m_default_len)
+    {
+        ErlDrvBinary* bin = driver_alloc_binary(m_result_len);
+        if (bin == NULL)
+            throw MemoryAllocationDriverError(m_result_len);
+        // TODO: can be skipped
+        memset(bin->orig_bytes, 0, m_result_len);
+
+        char* dest = bin->orig_bytes;
+        char* src = m_default_buf;
+        memcpy(dest, src, m_default_len);
+        dest += m_default_len;
+
+        /* Shrink data size to copy. */
+        assert(m_left_len >= 0);
+        m_last_segment->size -= m_left_len;
+        do 
+        {
+            assert(m_first_segment != NULL);
+
+            /* No infinite cycles. */
+            assert(m_first_segment->next != m_first_segment);
+
+            int segment_size = m_first_segment->size;
+            assert(segment_size > 0);
+
+            /* Real buffer length is not greater, then allocated buffer length. */
+            assert((dest - bin->orig_bytes + segment_size) <= m_result_len);
+
+            src = m_first_segment->data;
+            memcpy(dest, src, segment_size);
+            dest += segment_size;
+
+            /* Use last_segment as a temp variable. */
+            m_last_segment = m_first_segment;
+
+            /* Move a pointer on the next segment. */
+            m_first_segment = m_first_segment->next;
+
+            /* Delete copied segment. */
+            driver_free(m_last_segment);
+        }
+        while(m_first_segment != NULL);
+        *m_result_buf = (char*) bin;
+    }
+    
+    return m_result_len;
+}
 
 
 
@@ -392,26 +416,73 @@ class ResultEncoder
 class XapianErlangDriver 
 {
     private:
-    Xapian::Database *db;
-    Xapian::WritableDatabase *wdb;
-    ResultEncoder result;
+    Xapian::Database* m_db;
+    Xapian::WritableDatabase* m_wdb;
+    ResultEncoder m_result;
 
     public:
+
+    // Commands
+    // used in the control function
+    static const int OPEN                           = 0;
+    static const int LAST_DOC_ID                    = 1;
+    static const int ADD_DOCUMENT                   = 2;
+    static const int TEST                           = 3;
+    static const int GET_DOCUMENT_BY_ID             = 4;
+    static const int START_TRANSACTION              = 5;
+    static const int CANCEL_TRANSACTION             = 6;
+    static const int COMMIT_TRANSACTION             = 7;
+    
+    // Error prefix tags.
+    // used in the control function
+    static const uint8_t SUCCESS                    = 0;
+    static const uint8_t ERROR                      = 1;
+
+    // Modes for opening of a db
+    // used in the open function
+    static const int8_t READ_OPEN                   = 0;
+    static const int8_t WRITE_CREATE_OR_OPEN        = 1;
+    static const int8_t WRITE_CREATE                = 2;
+    static const int8_t WRITE_CREATE_OR_OVERWRITE   = 3;
+    static const int8_t WRITE_OPEN                  = 4;
+    
+    // Types of fields
+    // Used in the applyDocument function.
+    static const int8_t STEMMER                     = 1;
+    static const int8_t DATA                        = 2;
+    static const int8_t VALUE                       = 3;
+    static const int8_t DELTA                       = 4;
+    static const int8_t TEXT                        = 5;
+    static const int8_t TERM                        = 6;
+    static const int8_t POSTING                     = 7;
+
+    // Types of the fields.
+    // Used in the retrieveDocument function.
+    static const int8_t GET_VALUE                   = 1;
+    static const int8_t GET_DATA                    = 2;
+    static const int8_t GET_DOCID                   = 3;
+
+    // Numbers of tests.
+    // Used in the test function.
+    static const int8_t TEST_RESULT_ENCODER         = 1;
+    static const int8_t TEST_EXCEPTION              = 2;
+                                                    
+
     ResultEncoder* getResultEncoder()
     {
-        return &result;
+        return &m_result;
     }
 
     XapianErlangDriver()
     {
-        db = NULL;
-        wdb = NULL;
+        m_db = NULL;
+        m_wdb = NULL;
     }
 
     ~XapianErlangDriver()
     {
-        if (db != NULL) 
-            delete db;
+        if (m_db != NULL) 
+            delete m_db;
     }
 
     /**
@@ -420,7 +491,7 @@ class XapianErlangDriver
      */
     static ErlDrvData start(
         ErlDrvPort port, 
-        char *buf)
+        char* buf)
     {
         /* If the flag is set to PORT_CONTROL_FLAG_BINARY, 
            a binary will be returned. */       
@@ -439,143 +510,24 @@ class XapianErlangDriver
     }   
 
 
-    // Commands
-    static const int OPEN               = 0;
-    static const int LAST_DOC_ID        = 1;
-    static const int ADD_DOCUMENT       = 2;
-    static const int TEST               = 3;
-    static const int GET_DOCUMENT_BY_ID = 4;
-    static const int START_TRANSACTION  = 5;
-    static const int CANCEL_TRANSACTION = 6;
-    static const int COMMIT_TRANSACTION = 7;
-    
-    static const uint8_t SUCCESS = 0;
-    static const uint8_t ERROR   = 1;
-
     static int control(
         ErlDrvData drv_data, 
         unsigned int command, 
-        char *buf, 
-        int len, 
-        char **rbuf, 
-        int rlen)
-    {
-        ParamDecoder params(buf, len); 
-        XapianErlangDriver& drv = * (XapianErlangDriver*) drv_data;
-        ResultEncoder& result = * drv.getResultEncoder();
-        result.setBuffer(rbuf, rlen);
-        result << SUCCESS;
-
-        try
-        {
-            switch(command) {
-            case OPEN: 
-                {
-                const string dbpath = params;
-                int8_t mode = params;
-                return drv.open(dbpath, mode);
-                }
-
-            case LAST_DOC_ID:
-                return drv.getLastDocId();
-
-            case ADD_DOCUMENT:
-                return drv.addDocument(params);
-
-            case TEST:
-                return drv.test(params);
-
-            case GET_DOCUMENT_BY_ID:
-                return drv.getDocumentById(params);
-
-            case START_TRANSACTION:
-                return drv.startTransaction();
-
-            case CANCEL_TRANSACTION:
-                return drv.cancelTransaction();
-
-            case COMMIT_TRANSACTION:
-                return drv.commitTransaction();
-            }
-        }
-        catch (DriverRuntimeError& e) 
-        {
-            result.clear();
-            result.setBuffer(rbuf, rlen);
-            result << ERROR;
-            result << e.get_type();
-            result << e.what();
-            return result;
-        }
-        catch (Xapian::Error& e) 
-        {
-            result.clear();
-            result.setBuffer(rbuf, rlen);
-            result << ERROR;
-            result << e.get_type();
-            result << e.get_msg();
-            return result;
-        }
-        return -1;
-    }
+        char*   buf, 
+        int     len, 
+        char**  rbuf, 
+        int     rlen);
 
 
-    // Modes for opening of a db
-    static const int8_t READ_OPEN                 = 0;
-    static const int8_t WRITE_CREATE_OR_OPEN      = 1;
-    static const int8_t WRITE_CREATE              = 2;
-    static const int8_t WRITE_CREATE_OR_OVERWRITE = 3;
-    static const int8_t WRITE_OPEN                = 4;
-
-    int open(const string& dbpath, int8_t mode)
-    {
-        // Is already opened?
-        if (db != NULL)
-            return -1;
-
-        switch(mode) {
-            // Open readOnly db
-            case READ_OPEN:
-                db = new Xapian::Database(dbpath);
-                break;
-
-            // open for read/write; create if no db exists
-            case WRITE_CREATE_OR_OPEN:
-                db = wdb = new Xapian::WritableDatabase(dbpath, 
-                    Xapian::DB_CREATE_OR_OPEN);
-                break;
-
-            // create new database; fail if db exists
-            case WRITE_CREATE:
-                db = wdb = new Xapian::WritableDatabase(dbpath, 
-                    Xapian::DB_CREATE);
-                break;
-
-            // overwrite existing db; create if none exists
-            case WRITE_CREATE_OR_OVERWRITE:
-                db = wdb = new Xapian::WritableDatabase(dbpath, 
-                    Xapian::DB_CREATE_OR_OVERWRITE);
-                break;
-
-            // open for read/write; fail if no db exists
-            case WRITE_OPEN:
-                db = wdb = new Xapian::WritableDatabase(dbpath, 
-                    Xapian::DB_OPEN);
-                break;
-
-            default:
-                return -1;
-        }
-        return result;
-    }
+    int open(const string& dbpath, int8_t mode);
 
     int getLastDocId()
     {
         //Xapian::docid get_lastdocid() const
         Xapian::docid 
-        docid = db->get_lastdocid();
-        result << docid;
-        return result;
+        docid = m_db->get_lastdocid();
+        m_result << docid;
+        return m_result;
     }
 
 
@@ -584,181 +536,62 @@ class XapianErlangDriver
         Xapian::Document doc;
         applyDocument(params, doc);
         Xapian::docid
-        docid = wdb->add_document(doc);
-        result << docid;
-        return result;
+        docid = m_wdb->add_document(doc);
+        m_result << docid;
+        return m_result;
     }
 
-    
-    static const int8_t STEMMER             = 1;
-    static const int8_t DATA                = 2;
-    static const int8_t VALUE               = 3;
-    static const int8_t DELTA               = 4;
-    static const int8_t TEXT                = 5;
-    static const int8_t TERM                = 6;
-    static const int8_t POSTING             = 7;
 
     /**
      * Read commands, encoded by xapian_document:encode.
      * Used in update, replace, add document functions
      */
-    void applyDocument(ParamDecoder& params, Xapian::Document& doc)
-    {
-        Xapian::TermGenerator   termgenerator;
-        termgenerator.set_document(doc);
+    void applyDocument(ParamDecoder& params, Xapian::Document& doc);
 
-        while (int8_t command = params)
-        /* Do, while command != stop != 0 */
-        {
-            switch (command)
-            {
-                case STEMMER:
-                {
-                    // see xapian_document:append_stemmer
-                    const string   language = params;
-                    termgenerator.set_stemmer(Xapian::Stem(language));
-                    break;
-                }
 
-                case DATA:
-                {
-                    // see xapian_document:append_data
-                    const string   data = params;
-                    doc.set_data(data);
-                    break;
-                }
+    /** 
+     * Gets a copy of params 
+     */
+    void retrieveDocument(ParamDecoder params, Xapian::Document& doc);
 
-                case VALUE:
-                {
-                    // see xapian_document:append_value
-                    Xapian::valueno   slot  = params;
-                    const string      value = params;
-                    doc.add_value(slot, value); 
-                    break;
-                }
-
-                case DELTA:
-                {
-                    // see xapian_document:append_delta
-                    Xapian::termcount   delta = params;
-                    termgenerator.increase_termpos(delta);
-                    break;
-                }
-
-                case TEXT:
-                {
-                    // see xapian_document:append_delta
-                    const string      text    = params; // value
-                    Xapian::termcount wdf_inc = params; // pos
-                    const string      prefix  = params;
-                    termgenerator.index_text(text, wdf_inc, prefix); 
-                    break;
-                }
-
-                case TERM:
-                {
-                    // see xapian_document:append_term
-                    const string      tname   = params; // value
-                    Xapian::termcount wdf_inc = params; 
-                    // Pos = undefined
-                    doc.add_term(tname, wdf_inc);
-                    break;
-                }
-
-                case POSTING:
-                {
-                    // see xapian_document:append_term
-                    const string      tname   = params; // value
-                    Xapian::termpos   tpos    = params;
-                    Xapian::termcount wdf_inc = params;
-                    doc.add_posting(tname, tpos, wdf_inc);
-                    break;
-                }
-
-                default:
-                    throw BadCommandDriverError(command);
-            }
-        }
-    }
-
-    static const int8_t GET_VALUE      = 1;
-    static const int8_t GET_DATA       = 2;
-    static const int8_t GET_DOCID      = 3;
-
-    /* Gets a copy of params */
-    void retrieveDocument(ParamDecoder params, Xapian::Document& doc)
-    {
-        while (int8_t command = params)
-        /* Do, while command != stop != 0 */
-        {
-            switch (command)
-            {
-                case GET_VALUE:
-                {
-                    Xapian::valueno   slot  = params;
-                    const string value = doc.get_value(slot);
-                    result << value;
-                    break;
-                }
-
-                case GET_DATA:
-                {
-                    const string data = doc.get_data();
-                    result << data;
-                    break;
-                }
-
-                case GET_DOCID:
-                {
-                    const Xapian::docid docid = doc.get_docid();
-                    result << docid;
-                    break;
-                }
-
-                default:
-                    throw BadCommandDriverError(command);
-            }
-        }
-    }
-
+    /**
+     * Throws error if the database was opened only for reading.
+     */
     void assertWriteable() const
     {
-        if (wdb == NULL)
+        if (m_wdb == NULL)
             throw NotWritableDatabaseError();
     }
 
     int startTransaction()
     {
         assertWriteable();
-        wdb->begin_transaction();
-        return result;
+        m_wdb->begin_transaction();
+        return m_result;
     }
 
     int cancelTransaction()
     {
         assertWriteable();
-        wdb->cancel_transaction();
-        return result;
+        m_wdb->cancel_transaction();
+        return m_result;
     }
 
     int commitTransaction()
     {
         assertWriteable();
-        wdb->commit_transaction();
-        return result;
+        m_wdb->commit_transaction();
+        return m_result;
     }
 
     int getDocumentById(ParamDecoder& params)
     {
         Xapian::docid docid = params;
-        Xapian::Document doc = db->get_document(docid);
+        Xapian::Document doc = m_db->get_document(docid);
         retrieveDocument(params, doc);
-        return result;
+        return m_result;
     }
 
-
-    static const int8_t TEST_RESULT_ENCODER = 1;
-    static const int8_t TEST_EXCEPTION      = 2;
 
     int test(ParamDecoder& params)
     {
@@ -769,8 +602,6 @@ class XapianErlangDriver
             {
                 Xapian::docid from = params;
                 Xapian::docid to = params;
-//              Xapian::docid from = 1;
-//              Xapian::docid to = 1000;
 
                 return testResultEncoder(from, to);
             }
@@ -784,8 +615,8 @@ class XapianErlangDriver
     int testResultEncoder(Xapian::docid from, Xapian::docid to)
     {
         for (; from <= to; from++)
-            result << from;
-        return result;
+            m_result << from;
+        return m_result;
     }
 
     int testException()
@@ -793,9 +624,244 @@ class XapianErlangDriver
         throw MemoryAllocationDriverError(1000);
         return 0;
     }
-
 };
 
+
+int XapianErlangDriver::control(
+    ErlDrvData drv_data, 
+    unsigned int command, 
+    char* buf, 
+    int len, 
+    char** rbuf, 
+    int rlen)
+{
+    ParamDecoder params(buf, len); 
+    XapianErlangDriver& drv = * (XapianErlangDriver*) drv_data;
+    ResultEncoder& result = * drv.getResultEncoder();
+    result.setBuffer(rbuf, rlen);
+    result << SUCCESS;
+
+    try
+    {
+        switch(command) {
+        case OPEN: 
+            {
+            const string dbpath = params;
+            int8_t mode = params;
+            return drv.open(dbpath, mode);
+            }
+
+        case LAST_DOC_ID:
+            return drv.getLastDocId();
+
+        case ADD_DOCUMENT:
+            return drv.addDocument(params);
+
+        case TEST:
+            return drv.test(params);
+
+        case GET_DOCUMENT_BY_ID:
+            return drv.getDocumentById(params);
+
+        case START_TRANSACTION:
+            return drv.startTransaction();
+
+        case CANCEL_TRANSACTION:
+            return drv.cancelTransaction();
+
+        case COMMIT_TRANSACTION:
+            return drv.commitTransaction();
+        }
+    }
+    catch (DriverRuntimeError& e) 
+    {
+        result.clear();
+        result.setBuffer(rbuf, rlen);
+        result << ERROR;
+        result << e.get_type();
+        result << e.what();
+        return result;
+    }
+    catch (Xapian::Error& e) 
+    {
+        result.clear();
+        result.setBuffer(rbuf, rlen);
+        result << ERROR;
+        result << e.get_type();
+        result << e.get_msg();
+        return result;
+    }
+    return -1;
+}
+
+
+int XapianErlangDriver::open(const string& dbpath, int8_t mode)
+{
+    // Is already opened?
+    if (m_db != NULL)
+        return -1; // return `badarg'
+
+    switch(mode) {
+        // Open readOnly db
+        case READ_OPEN:
+            m_db = new Xapian::Database(dbpath);
+            break;
+
+        // open for read/write; create if no db exists
+        case WRITE_CREATE_OR_OPEN:
+            m_db = m_wdb = new Xapian::WritableDatabase(dbpath, 
+                Xapian::DB_CREATE_OR_OPEN);
+            break;
+
+        // create new database; fail if db exists
+        case WRITE_CREATE:
+            m_db = m_wdb = new Xapian::WritableDatabase(dbpath, 
+                Xapian::DB_CREATE);
+            break;
+
+        // overwrite existing db; create if none exists
+        case WRITE_CREATE_OR_OVERWRITE:
+            m_db = m_wdb = new Xapian::WritableDatabase(dbpath, 
+                Xapian::DB_CREATE_OR_OVERWRITE);
+            break;
+
+        // open for read/write; fail if no db exists
+        case WRITE_OPEN:
+            m_db = m_wdb = new Xapian::WritableDatabase(dbpath, 
+                Xapian::DB_OPEN);
+            break;
+
+        default:
+            return -1; // badarg
+    }
+    return m_result;
+}
+
+
+void XapianErlangDriver::applyDocument(
+    ParamDecoder& params, 
+    Xapian::Document& doc)
+{
+    Xapian::TermGenerator   termGenerator;
+    termGenerator.set_document(doc);
+
+    while (int8_t command = params)
+    /* Do, while command != stop != 0 */
+    {
+        switch (command)
+        {
+            case STEMMER:
+            {
+                // see xapian_document:append_stemmer
+                const string   language = params;
+                termGenerator.set_stemmer(Xapian::Stem(language));
+                break;
+            }
+
+            case DATA:
+            {
+                // see xapian_document:append_data
+                const string   data = params;
+                doc.set_data(data);
+                break;
+            }
+
+            case VALUE:
+            {
+                // see xapian_document:append_value
+                Xapian::valueno   slot  = params;
+                const string      value = params;
+                doc.add_value(slot, value); 
+                break;
+            }
+
+            case DELTA:
+            {
+                // see xapian_document:append_delta
+                Xapian::termcount   delta = params;
+                termGenerator.increase_termpos(delta);
+                break;
+            }
+
+            case TEXT:
+            {
+                // see xapian_document:append_delta
+                const string      text    = params; // value
+                Xapian::termcount wdf_inc = params; // pos
+                const string      prefix  = params;
+                termGenerator.index_text(text, wdf_inc, prefix); 
+                break;
+            }
+
+            case TERM:
+            {
+                // see xapian_document:append_term
+                const string      tname   = params; // value
+                Xapian::termcount wdf_inc = params; 
+                // Pos = undefined
+                doc.add_term(tname, wdf_inc);
+                break;
+            }
+
+            case POSTING:
+            {
+                // see xapian_document:append_term
+                const string      tname   = params; // value
+                Xapian::termpos   tpos    = params;
+                Xapian::termcount wdf_inc = params;
+                doc.add_posting(tname, tpos, wdf_inc);
+                break;
+            }
+
+            default:
+                throw BadCommandDriverError(command);
+        }
+    }
+}
+
+
+void XapianErlangDriver::retrieveDocument(
+    ParamDecoder params, 
+    Xapian::Document& doc)
+{
+    while (int8_t command = params)
+    /* Do, while command != stop != 0 */
+    {
+        switch (command)
+        {
+            case GET_VALUE:
+            {
+                Xapian::valueno   slot  = params;
+                const string value = doc.get_value(slot);
+                m_result << value;
+                break;
+            }
+
+            case GET_DATA:
+            {
+                const string data = doc.get_data();
+                m_result << data;
+                break;
+            }
+
+            case GET_DOCID:
+            {
+                const Xapian::docid docid = doc.get_docid();
+                m_result << docid;
+                break;
+            }
+
+            default:
+                throw BadCommandDriverError(command);
+        }
+    }
+}
+
+
+
+// -------------------------------------------------------------------
+// Meta information for Erlang
+// -------------------------------------------------------------------
 
 ErlDrvEntry xapian_driver_entry = {
     /* F_PTR init, 

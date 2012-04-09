@@ -32,3 +32,8 @@
 
 -type x_server() :: pid().
 -type x_transaction() :: fun(([x_server()]) -> term()).
+
+-type x_query() :: #x_query{} 
+    | #x_query_value{} 
+    | #x_query_value_range{} 
+    | #x_query_term{}.

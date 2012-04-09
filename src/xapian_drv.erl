@@ -380,6 +380,9 @@ terminate(_Reason, State = #state{master = Master, port = Port}) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
+
+
+
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
@@ -543,6 +546,47 @@ read_string(Bin) ->
     {Str, Bin3}.
 
 
+%% -----------------------------------------------------------------
+%% Helpers
+%% -----------------------------------------------------------------
+
+
+
+%% -----------------------------------------------------------------
+%% Helpers for monitoring.
+%% -----------------------------------------------------------------
+
+%% @doc Sends `{DOWN, Tag, process, Pid, Reason}' to Reciever when one of the 
+%%      process deads.
+%%      It helps monitor the group of the process using one Tag.
+%%      Returned value must be used as `stop_monitor(Monitor)' to release 
+%%      resources.
+-spec monitor_group(pid(), [pid()], term()) -> pid().
+
+monitor_group(Reciever, Servers, Tag) ->
+    Monitor = fun() ->
+        [ erlang:monitor(process, Server) || Server <- Servers ],
+        monitor_cycle(Reciever, Tag)
+        end,
+    erlang:spawn_link(Monitor).
+
+%% @doc Resend _all_ received monitors to `Reciever', tagged with Tag.
+monitor_cycle(Reciever, Tag) ->
+    receive
+        {'DOWN', _Ref, process, Pid, Reason} ->
+            Reciever ! {'DOWN', Tag, process, Pid, Reason},
+            monitor_cycle(Reciever, Tag)
+    end.
+
+stop_monitor(Monitor) ->
+    erlang:exit(Monitor, normal).
+
+
+
+
+%% ------------------------------------------------------------------
+%% Tests
+%% ------------------------------------------------------------------
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -697,37 +741,3 @@ read_bad_test() ->
 
 
 
-%% -----------------------------------------------------------------
-%% Helpers
-%% -----------------------------------------------------------------
-
-
-
-%% -----------------------------------------------------------------
-%% Helpers for monitoring.
-%% -----------------------------------------------------------------
-
-%% @doc Sends `{DOWN, Tag, process, Pid, Reason}' to Reciever when one of the 
-%%      process deads.
-%%      It helps monitor the group of the process using one Tag.
-%%      Returned value must be used as `stop_monitor(Monitor)' to release 
-%%      resources.
--spec monitor_group(pid(), [pid()], term()) -> pid().
-
-monitor_group(Reciever, Servers, Tag) ->
-    Monitor = fun() ->
-        [ erlang:monitor(process, Server) || Server <- Servers ],
-        monitor_cycle(Reciever, Tag)
-        end,
-    erlang:spawn_link(Monitor).
-
-%% @doc Resend _all_ received monitors to `Reciever', tagged with Tag.
-monitor_cycle(Reciever, Tag) ->
-    receive
-        {'DOWN', _Ref, process, Pid, Reason} ->
-            Reciever ! {'DOWN', Tag, process, Pid, Reason},
-            monitor_cycle(Reciever, Tag)
-    end.
-
-stop_monitor(Monitor) ->
-    erlang:exit(Monitor, normal).
