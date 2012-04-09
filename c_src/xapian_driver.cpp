@@ -1,6 +1,12 @@
 /**
  * Prefix m_ (member) for properties means that property is private.
  */
+
+
+// -------------------------------------------------------------------
+// Includes
+// -------------------------------------------------------------------
+
 #include "erl_driver.h"
 
 #include <xapian.h>
@@ -12,19 +18,48 @@
 #include <stdexcept>
 #include <sstream>
 
-//#define NDEBUG
 #include <assert.h>
 
-/* For int32_t */
+/* For int32_t, uint8_t and so on. */
 #include <stdint.h>
 
 
-/* Name of the so or dll library */
+// -------------------------------------------------------------------
+// Defines
+// -------------------------------------------------------------------
+
+/* Name of the so or dll library. */
 #define DRIVER_NAME xapian_drv
 
-/* Helps transform an argument into a string */
+/* These macroses help to transform an argument into a string. */
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
+
+#define REG_TYPE(CLASS) const char CLASS::TYPE[] = STR(CLASS);
+
+/**
+ * Helper used by ParamDecoder.
+ */
+#define READ_TYPE(T) (*((T*) move(sizeof(T))))
+
+/** 
+ * The length of free space in bytes, 
+ * which will be allocatied new memory for storing result. 
+ */
+#define RESERVED_LEN 100
+
+/**
+ * Helper used by ResultEncoder.
+ */
+#define SIZE_OF_SEGMENT(LEN) (sizeof(DataSegment) + LEN)
+
+/**
+ * Helper used by ResultEncoder.
+ */
+#define PUT_VALUE(X) (put((char*) &(X), sizeof(X)))
+
+/* Disable asserts. */
+//#define NDEBUG
 
 using namespace std;
 
@@ -41,7 +76,8 @@ class DriverRuntimeError: public runtime_error
     DriverRuntimeError(const char * type, const string& str):
         std::runtime_error(str) { m_type = type; }
 
-    const char* get_type() const
+    const char* 
+    get_type() const
     {
        return m_type;
     }
@@ -56,7 +92,8 @@ class MemoryAllocationDriverError: public DriverRuntimeError
     MemoryAllocationDriverError(int size) : 
         DriverRuntimeError(TYPE, buildString(size)) {}
 
-    static const string buildString(int size)
+    static const string 
+    buildString(int size)
     {
         std::stringstream ss;
         ss << "Cannot allocate " << size << " bytes.";
@@ -72,7 +109,8 @@ class BadCommandDriverError: public DriverRuntimeError
     BadCommandDriverError(int8_t command_id) : 
         DriverRuntimeError(TYPE, buildString(command_id)) {}
 
-    static const string buildString(int8_t command_id)
+    static const string 
+    buildString(int8_t command_id)
     {
         std::stringstream ss;
         ss << "Unknown command with id = " << command_id << ".";
@@ -100,14 +138,16 @@ class NotWritableDatabaseError: public DriverRuntimeError
 
 
 
-#define REG_TYPE(CLASS) const char CLASS::TYPE[] = STR(CLASS);
 REG_TYPE(MemoryAllocationDriverError)
 REG_TYPE(BadCommandDriverError)
 REG_TYPE(OverflowDriverError)
 REG_TYPE(NotWritableDatabaseError)
 
 
-#define READ_TYPE(T) (*((T*) move(sizeof(T))))
+// -------------------------------------------------------------------
+// Decoder of the parameters from erlang's calls
+// -------------------------------------------------------------------
+
 class ParamDecoder
 {
     char *m_buf; 
@@ -120,7 +160,8 @@ class ParamDecoder
         m_len = len;
     }
 
-    char* move(int size)
+    char* 
+    move(int size)
     {
         m_len -= size;
         if (m_len < 0)
@@ -168,6 +209,12 @@ class ParamDecoder
 
 };
 
+
+
+// -------------------------------------------------------------------
+// Structure with variable length
+// -------------------------------------------------------------------
+
 typedef struct DataSegment DataSegment;
 struct DataSegment
 {
@@ -176,10 +223,11 @@ struct DataSegment
     char data[];
 };
 
-#define RESERVED_LEN 100
-#define SIZE_OF_SEGMENT(LEN) (sizeof(DataSegment) + LEN)
-#define PUT_VALUE(X) (put((char*) &(X), sizeof(X)))
 
+
+// -------------------------------------------------------------------
+// Result encoder: appends variables to the buffer
+// -------------------------------------------------------------------
 
 /**
  * If the driver wants to return data, it should return it in rbuf. 
@@ -221,13 +269,15 @@ class ResultEncoder
         m_left_len = rlen;
     }
 
-    ResultEncoder& operator<<(Xapian::docid docid)
+    ResultEncoder& 
+    operator<<(Xapian::docid docid)
     {
         PUT_VALUE(docid);
         return *this;
     }
 
-    ResultEncoder& operator<<(const string str)
+    ResultEncoder& 
+    operator<<(const string str)
     {
         uint32_t len = (uint32_t) str.length();
         PUT_VALUE(len);
@@ -235,7 +285,8 @@ class ResultEncoder
         return *this;
     }
 
-    ResultEncoder & operator<<(const char * str)
+    ResultEncoder& 
+    operator<<(const char * str)
     {
         uint32_t len = (uint32_t) strlen(str);
         PUT_VALUE(len);
@@ -243,14 +294,16 @@ class ResultEncoder
         return *this;
     }
 
-    ResultEncoder& operator<<(uint8_t value)
+    ResultEncoder& 
+    operator<<(uint8_t value)
     {
         PUT_VALUE(value);
         return *this;
     }
 
 
-    DataSegment* alloc(int size)
+    DataSegment* 
+    alloc(int size)
     {
         size = SIZE_OF_SEGMENT(size);
         DataSegment* ds = (DataSegment*) driver_alloc(size);
@@ -271,7 +324,8 @@ class ResultEncoder
 /** 
  * Copy termLen bytes from term. 
  */
-void ResultEncoder::put(const char* term, const int term_len)
+void 
+ResultEncoder::put(const char* term, const int term_len)
 {
     /* Len of the whole buffer after coping */
     const int new_len = term_len + m_result_len;
@@ -333,7 +387,8 @@ void ResultEncoder::put(const char* term, const int term_len)
 /**
  * Clear the state of the object.
  */
-void ResultEncoder::clear() {
+void 
+ResultEncoder::clear() {
     if (m_result_len > m_default_len)
     {
         do 
@@ -412,13 +467,16 @@ ResultEncoder::operator int() {
 
 
 
+// -------------------------------------------------------------------
+// Main Driver Class
+// -------------------------------------------------------------------
 
 class XapianErlangDriver 
 {
-    private:
     Xapian::Database* m_db;
     Xapian::WritableDatabase* m_wdb;
     ResultEncoder m_result;
+
 
     public:
 
@@ -466,24 +524,7 @@ class XapianErlangDriver
     // Used in the test function.
     static const int8_t TEST_RESULT_ENCODER         = 1;
     static const int8_t TEST_EXCEPTION              = 2;
-                                                    
 
-    ResultEncoder* getResultEncoder()
-    {
-        return &m_result;
-    }
-
-    XapianErlangDriver()
-    {
-        m_db = NULL;
-        m_wdb = NULL;
-    }
-
-    ~XapianErlangDriver()
-    {
-        if (m_db != NULL) 
-            delete m_db;
-    }
 
     /**
      * Here we do some initialization, start is called from open_port. 
@@ -517,6 +558,25 @@ class XapianErlangDriver
         int     len, 
         char**  rbuf, 
         int     rlen);
+
+
+
+    ResultEncoder* getResultEncoder()
+    {
+        return &m_result;
+    }
+
+    XapianErlangDriver()
+    {
+        m_db = NULL;
+        m_wdb = NULL;
+    }
+
+    ~XapianErlangDriver()
+    {
+        if (m_db != NULL) 
+            delete m_db;
+    }
 
 
     int open(const string& dbpath, int8_t mode);
@@ -627,7 +687,8 @@ class XapianErlangDriver
 };
 
 
-int XapianErlangDriver::control(
+int 
+XapianErlangDriver::control(
     ErlDrvData drv_data, 
     unsigned int command, 
     char* buf, 
@@ -695,7 +756,8 @@ int XapianErlangDriver::control(
 }
 
 
-int XapianErlangDriver::open(const string& dbpath, int8_t mode)
+int 
+XapianErlangDriver::open(const string& dbpath, int8_t mode)
 {
     // Is already opened?
     if (m_db != NULL)
@@ -738,7 +800,8 @@ int XapianErlangDriver::open(const string& dbpath, int8_t mode)
 }
 
 
-void XapianErlangDriver::applyDocument(
+void 
+XapianErlangDriver::applyDocument(
     ParamDecoder& params, 
     Xapian::Document& doc)
 {
@@ -820,7 +883,8 @@ void XapianErlangDriver::applyDocument(
 }
 
 
-void XapianErlangDriver::retrieveDocument(
+void 
+XapianErlangDriver::retrieveDocument(
     ParamDecoder params, 
     Xapian::Document& doc)
 {
@@ -1005,6 +1069,11 @@ ErlDrvEntry xapian_driver_entry = {
     NULL, 
 };
 
+
+
+// -------------------------------------------------------------------
+// Call Erlang handler
+// -------------------------------------------------------------------
 
 extern "C"
 {
