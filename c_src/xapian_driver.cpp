@@ -3,6 +3,7 @@
  */
 
 
+
 // -------------------------------------------------------------------
 // Includes
 // -------------------------------------------------------------------
@@ -40,7 +41,8 @@
 /**
  * Helper used by ParamDecoder.
  */
-#define READ_TYPE(T) (*((T*) move(sizeof(T))))
+//#define READ_TYPE(T) (*((T*) move(sizeof(T))))
+#define READ_TYPE(T) (*(reinterpret_cast<T*>( move(sizeof(T)) )))
 
 /** 
  * The length of free space in bytes, 
@@ -56,7 +58,8 @@
 /**
  * Helper used by ResultEncoder.
  */
-#define PUT_VALUE(X) (put((char*) &(X), sizeof(X)))
+//#define PUT_VALUE(X) (put((char*) &(X), sizeof(X)))
+#define PUT_VALUE(X) (put(reinterpret_cast<char*>( &(X) ), sizeof(X)))
 
 /* Disable asserts. */
 //#define NDEBUG
@@ -106,11 +109,11 @@ class BadCommandDriverError: public DriverRuntimeError
     static const char TYPE[];
 
     public:
-    BadCommandDriverError(int8_t command_id) : 
+    BadCommandDriverError(int command_id) : 
         DriverRuntimeError(TYPE, buildString(command_id)) {}
 
     static const string 
-    buildString(int8_t command_id)
+    buildString(int command_id)
     {
         std::stringstream ss;
         ss << "Unknown command with id = " << command_id << ".";
@@ -154,11 +157,13 @@ class ParamDecoder
     int m_len;
 
     public:
-    ParamDecoder(char *buf, int len)
-    {
-        m_buf = buf;
-        m_len = len;
-    }
+    /**
+     * Constructor
+     */
+    ParamDecoder(char *buf, int len) :
+        m_buf( buf ),
+        m_len( len ) {}
+
 
     char* 
     move(int size)
@@ -178,7 +183,7 @@ class ParamDecoder
         const int32_t str_len = READ_TYPE(int32_t);
         const char* str_bin = m_buf;
         move(str_len);
-        const string str(str_bin, (size_t) str_len);
+        const string str(str_bin, static_cast<size_t>(str_len));
         return str;
     }
 
@@ -187,6 +192,14 @@ class ParamDecoder
      */
     operator int8_t() {
         int8_t result = READ_TYPE(int8_t);
+        return result;
+    }
+
+    /**
+     * Decodes <<Int8t:8/native-unsigned-integer>>
+     */
+    operator uint8_t() {
+        uint8_t result = READ_TYPE(uint8_t);
         return result;
     }
 
@@ -220,7 +233,7 @@ struct DataSegment
 {
     DataSegment* next;
     int size;
-    char data[];
+    char data[]; /* flexible-array member */
 };
 
 
@@ -269,17 +282,13 @@ class ResultEncoder
         m_left_len = rlen;
     }
 
-    ResultEncoder& 
-    operator<<(Xapian::docid docid)
-    {
-        PUT_VALUE(docid);
-        return *this;
-    }
+    
+
 
     ResultEncoder& 
     operator<<(const string str)
     {
-        uint32_t len = (uint32_t) str.length();
+        uint32_t len = static_cast<uint32_t>( str.length() );
         PUT_VALUE(len);
         put(str.data(), len);
         return *this;
@@ -288,9 +297,16 @@ class ResultEncoder
     ResultEncoder& 
     operator<<(const char * str)
     {
-        uint32_t len = (uint32_t) strlen(str);
+        uint32_t len = static_cast<uint32_t>( strlen(str) );
         PUT_VALUE(len);
         put(str, len);
+        return *this;
+    }
+
+    ResultEncoder& 
+    operator<<(uint32_t value)
+    {
+        PUT_VALUE(value);
         return *this;
     }
 
@@ -301,12 +317,18 @@ class ResultEncoder
         return *this;
     }
 
+    ResultEncoder& 
+    operator<<(double value)
+    {
+        PUT_VALUE(value);
+        return *this;
+    }
 
     DataSegment* 
     alloc(int size)
     {
         size = SIZE_OF_SEGMENT(size);
-        DataSegment* ds = (DataSegment*) driver_alloc(size);
+        DataSegment* ds = static_cast<DataSegment*>( driver_alloc(size) );
         if (ds == NULL)
             throw MemoryAllocationDriverError(size);
         return ds;
@@ -334,6 +356,7 @@ ResultEncoder::put(const char* term, const int term_len)
         || m_default_buf == NULL 
         || new_len > m_default_len;
     const bool no_alloc = allocated && term_len <= m_left_len;
+
     if (!large || no_alloc)
     {
         /* Whole term can be stored in the preallocated area. */
@@ -482,48 +505,72 @@ class XapianErlangDriver
 
     // Commands
     // used in the control function
-    static const int OPEN                           = 0;
-    static const int LAST_DOC_ID                    = 1;
-    static const int ADD_DOCUMENT                   = 2;
-    static const int TEST                           = 3;
-    static const int GET_DOCUMENT_BY_ID             = 4;
-    static const int START_TRANSACTION              = 5;
-    static const int CANCEL_TRANSACTION             = 6;
-    static const int COMMIT_TRANSACTION             = 7;
-    
+    enum command {
+        OPEN                        = 0,
+        LAST_DOC_ID                 = 1,
+        ADD_DOCUMENT                = 2,
+        TEST                        = 3,
+        GET_DOCUMENT_BY_ID          = 4,
+        START_TRANSACTION           = 5,
+        CANCEL_TRANSACTION          = 6,
+        COMMIT_TRANSACTION          = 7,
+        QUERY_PAGE                  = 8
+    };
+
     // Error prefix tags.
     // used in the control function
-    static const uint8_t SUCCESS                    = 0;
-    static const uint8_t ERROR                      = 1;
+    enum errorCode {
+        SUCCESS                     = 0,
+        ERROR                       = 1
+    };
 
     // Modes for opening of a db
     // used in the open function
-    static const int8_t READ_OPEN                   = 0;
-    static const int8_t WRITE_CREATE_OR_OPEN        = 1;
-    static const int8_t WRITE_CREATE                = 2;
-    static const int8_t WRITE_CREATE_OR_OVERWRITE   = 3;
-    static const int8_t WRITE_OPEN                  = 4;
-    
+    enum openMode {
+        READ_OPEN                   = 0,
+        WRITE_CREATE_OR_OPEN        = 1,
+        WRITE_CREATE                = 2,
+        WRITE_CREATE_OR_OVERWRITE   = 3,
+        WRITE_OPEN                  = 4
+    };
+
     // Types of fields
     // Used in the applyDocument function.
-    static const int8_t STEMMER                     = 1;
-    static const int8_t DATA                        = 2;
-    static const int8_t VALUE                       = 3;
-    static const int8_t DELTA                       = 4;
-    static const int8_t TEXT                        = 5;
-    static const int8_t TERM                        = 6;
-    static const int8_t POSTING                     = 7;
+    enum fieldTypeIn {
+        STEMMER                     = 1,
+        DATA                        = 2,
+        VALUE                       = 3,
+        DELTA                       = 4,
+        TEXT                        = 5,
+        TERM                        = 6,
+        POSTING                     = 7
+    };
 
     // Types of the fields.
     // Used in the retrieveDocument function.
-    static const int8_t GET_VALUE                   = 1;
-    static const int8_t GET_DATA                    = 2;
-    static const int8_t GET_DOCID                   = 3;
+    enum fieldTypeOut {
+        GET_VALUE                   = 1,
+        GET_DATA                    = 2,
+        GET_DOCID                   = 3,
+        GET_WEIGHT                  = 4,
+        GET_RANK                    = 5,
+        GET_PERCENT                 = 6
+    };
 
     // Numbers of tests.
     // Used in the test function.
-    static const int8_t TEST_RESULT_ENCODER         = 1;
-    static const int8_t TEST_EXCEPTION              = 2;
+    enum testNumber {
+        TEST_RESULT_ENCODER         = 1,
+        TEST_EXCEPTION              = 2
+    };
+
+
+    enum queryType {
+        QUERY_GROUP                 = 1,
+        QUERY_VALUE                 = 2,
+        QUERY_VALUE_RANGE           = 3,
+        QUERY_TERM                  = 4
+    };
 
 
     /**
@@ -532,20 +579,22 @@ class XapianErlangDriver
      */
     static ErlDrvData start(
         ErlDrvPort port, 
-        char* buf)
+        char* /* buf */)
     {
         /* If the flag is set to PORT_CONTROL_FLAG_BINARY, 
            a binary will be returned. */       
         set_port_control_flags(port, PORT_CONTROL_FLAG_BINARY); 
         XapianErlangDriver* drv_data = new XapianErlangDriver();
-        return (ErlDrvData) drv_data;
+        return reinterpret_cast<ErlDrvData>( drv_data );
     }
 
 
     static void stop(
         ErlDrvData drv_data) 
     {
-        XapianErlangDriver* drv = (XapianErlangDriver*) drv_data;
+        XapianErlangDriver* 
+        drv = reinterpret_cast<XapianErlangDriver*>( drv_data );
+
         if (drv != NULL)
             delete drv;
     }   
@@ -586,7 +635,7 @@ class XapianErlangDriver
         //Xapian::docid get_lastdocid() const
         Xapian::docid 
         docid = m_db->get_lastdocid();
-        m_result << docid;
+        m_result << static_cast<uint32_t>(docid);
         return m_result;
     }
 
@@ -597,7 +646,7 @@ class XapianErlangDriver
         applyDocument(params, doc);
         Xapian::docid
         docid = m_wdb->add_document(doc);
-        m_result << docid;
+        m_result << static_cast<uint32_t>(docid);
         return m_result;
     }
 
@@ -609,10 +658,44 @@ class XapianErlangDriver
     void applyDocument(ParamDecoder& params, Xapian::Document& doc);
 
 
+    int query(ParamDecoder& params)
+    {
+        /* offset, pagesize, query, template */
+        uint32_t offset   = params;
+        uint32_t pagesize = params;
+
+        // Use an Enquire object on the database to run the query.
+        Xapian::Enquire enquire(*m_db);
+        Xapian::Query   query = buildQuery(params);
+        enquire.set_query(query);
+         
+
+        // Get an result
+        Xapian::MSet mset = enquire.get_mset(
+            static_cast<Xapian::termcount>(offset), 
+            static_cast<Xapian::termcount>(pagesize));
+
+        Xapian::doccount count = mset.size();
+        m_result << static_cast<uint32_t>(count);
+
+        for (Xapian::MSetIterator m = mset.begin(); m != mset.end(); ++m) {
+            Xapian::docid did = *m;
+            Xapian::Document doc = m.get_document();
+            retrieveDocument(params, doc, &m);
+        }
+        return m_result;
+    }
+
     /** 
-     * Gets a copy of params 
+     * Gets a copy of params.
+     *
+     * `params' is a clone.
      */
-    void retrieveDocument(ParamDecoder params, Xapian::Document& doc);
+    void retrieveDocument(ParamDecoder, Xapian::Document&, Xapian::MSetIterator*);
+
+    Xapian::Query 
+    buildQuery(ParamDecoder& params);
+
 
     /**
      * Throws error if the database was opened only for reading.
@@ -648,7 +731,7 @@ class XapianErlangDriver
     {
         Xapian::docid docid = params;
         Xapian::Document doc = m_db->get_document(docid);
-        retrieveDocument(params, doc);
+        retrieveDocument(params, doc, NULL);
         return m_result;
     }
 
@@ -675,7 +758,7 @@ class XapianErlangDriver
     int testResultEncoder(Xapian::docid from, Xapian::docid to)
     {
         for (; from <= to; from++)
-            m_result << from;
+            m_result << static_cast<uint32_t>(from);
         return m_result;
     }
 
@@ -685,6 +768,76 @@ class XapianErlangDriver
         return 0;
     }
 };
+
+
+Xapian::Query 
+XapianErlangDriver::buildQuery(ParamDecoder& params)
+{
+    uint8_t type = params;
+    switch (type)
+    {
+        case QUERY_GROUP:
+        {    
+            uint8_t     op              = params;
+            uint32_t    parameter       = params;
+            uint32_t    subQueryCount   = params;
+            vector<Xapian::Query> subQueries;
+
+            for (uint32_t i = 0; i < subQueryCount; i++)
+                subQueries.push_back(buildQuery(params));
+
+            vector<Xapian::Query>::iterator qbegin = subQueries.begin();
+            vector<Xapian::Query>::iterator qend   = subQueries.end();
+            Xapian::Query q(
+                static_cast<Xapian::Query::op>(op), 
+                qbegin, 
+                qend, 
+                static_cast<Xapian::termcount>(parameter));
+            return q;
+        }
+
+        case QUERY_VALUE:
+        {    
+            uint8_t            op       = params;
+            Xapian::valueno    slot     = params;
+            const string       value    = params;
+            Xapian::Query q(
+                static_cast<Xapian::Query::op>(op), 
+                slot, 
+                value);
+            return q;
+        }
+            
+        case QUERY_VALUE_RANGE:
+        {    
+            uint8_t            op       = params;
+            Xapian::valueno    slot     = params;
+            const string       from     = params;
+            const string       to       = params;
+            Xapian::Query q(
+                static_cast<Xapian::Query::op>(op), 
+                slot, 
+                from,
+                to);
+            return q;
+        }
+
+        case QUERY_TERM:
+        {    
+            const string       name     = params;
+            uint32_t           wqf      = params;
+            uint32_t           pos      = params;
+            Xapian::Query q(
+                name,
+                wqf, 
+                pos);
+            return q;
+        }
+
+        default:
+            throw BadCommandDriverError(type);
+    }
+}
 
 
 int 
@@ -697,10 +850,10 @@ XapianErlangDriver::control(
     int rlen)
 {
     ParamDecoder params(buf, len); 
-    XapianErlangDriver& drv = * (XapianErlangDriver*) drv_data;
+    XapianErlangDriver& drv = * reinterpret_cast<XapianErlangDriver*>( drv_data );
     ResultEncoder& result = * drv.getResultEncoder();
     result.setBuffer(rbuf, rlen);
-    result << SUCCESS;
+    result << static_cast<uint8_t>( SUCCESS );
 
     try
     {
@@ -732,13 +885,16 @@ XapianErlangDriver::control(
 
         case COMMIT_TRANSACTION:
             return drv.commitTransaction();
+
+        case QUERY_PAGE:
+            return drv.query(params);
         }
     }
     catch (DriverRuntimeError& e) 
     {
         result.clear();
         result.setBuffer(rbuf, rlen);
-        result << ERROR;
+        result << static_cast<uint8_t>( ERROR );
         result << e.get_type();
         result << e.what();
         return result;
@@ -747,7 +903,7 @@ XapianErlangDriver::control(
     {
         result.clear();
         result.setBuffer(rbuf, rlen);
-        result << ERROR;
+        result << static_cast<uint8_t>( ERROR );
         result << e.get_type();
         result << e.get_msg();
         return result;
@@ -832,17 +988,17 @@ XapianErlangDriver::applyDocument(
             case VALUE:
             {
                 // see xapian_document:append_value
-                Xapian::valueno   slot  = params;
+                uint32_t          slot  = params;
                 const string      value = params;
-                doc.add_value(slot, value); 
+                doc.add_value(static_cast<Xapian::valueno>(slot), value); 
                 break;
             }
 
             case DELTA:
             {
                 // see xapian_document:append_delta
-                Xapian::termcount   delta = params;
-                termGenerator.increase_termpos(delta);
+                uint32_t   delta = params;
+                termGenerator.increase_termpos(static_cast<Xapian::termcount>(delta));
                 break;
             }
 
@@ -850,9 +1006,11 @@ XapianErlangDriver::applyDocument(
             {
                 // see xapian_document:append_delta
                 const string      text    = params; // value
-                Xapian::termcount wdf_inc = params; // pos
+                uint32_t          wdf_inc = params; // pos
                 const string      prefix  = params;
-                termGenerator.index_text(text, wdf_inc, prefix); 
+                termGenerator.index_text(text, 
+                    static_cast<Xapian::termcount>(wdf_inc), 
+                    prefix); 
                 break;
             }
 
@@ -870,9 +1028,11 @@ XapianErlangDriver::applyDocument(
             {
                 // see xapian_document:append_term
                 const string      tname   = params; // value
-                Xapian::termpos   tpos    = params;
-                Xapian::termcount wdf_inc = params;
-                doc.add_posting(tname, tpos, wdf_inc);
+                uint32_t          tpos    = params;
+                uint32_t          wdf_inc = params;
+                doc.add_posting(tname, 
+                    static_cast<Xapian::termpos>(tpos), 
+                    static_cast<Xapian::termcount>(wdf_inc));
                 break;
             }
 
@@ -886,7 +1046,8 @@ XapianErlangDriver::applyDocument(
 void 
 XapianErlangDriver::retrieveDocument(
     ParamDecoder params, 
-    Xapian::Document& doc)
+    Xapian::Document& doc,
+    Xapian::MSetIterator* mset_iter)
 {
     while (int8_t command = params)
     /* Do, while command != stop != 0 */
@@ -895,8 +1056,8 @@ XapianErlangDriver::retrieveDocument(
         {
             case GET_VALUE:
             {
-                Xapian::valueno   slot  = params;
-                const string value = doc.get_value(slot);
+                uint32_t          slot  = params;
+                const string      value = doc.get_value(static_cast<Xapian::valueno>(slot));
                 m_result << value;
                 break;
             }
@@ -911,7 +1072,37 @@ XapianErlangDriver::retrieveDocument(
             case GET_DOCID:
             {
                 const Xapian::docid docid = doc.get_docid();
-                m_result << docid;
+                m_result << static_cast<uint32_t>(docid);
+                break;
+            }
+
+            case GET_WEIGHT:
+            {
+                if (mset_iter == NULL)
+                    throw BadCommandDriverError(command);
+
+                const Xapian::weight    w = mset_iter->get_weight();
+                m_result << static_cast<double>(w);
+                break;
+            }
+
+            case GET_RANK:
+            {
+                if (mset_iter == NULL)
+                    throw BadCommandDriverError(command);
+
+                const Xapian::doccount    r = mset_iter->get_rank();
+                m_result << static_cast<uint32_t>(r);
+                break;
+            }
+
+            case GET_PERCENT:
+            {
+                if (mset_iter == NULL)
+                    throw BadCommandDriverError(command);
+
+                const Xapian::doccount    p = mset_iter->get_rank();
+                m_result << static_cast<uint8_t>(p);
                 break;
             }
 

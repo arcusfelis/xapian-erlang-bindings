@@ -126,13 +126,14 @@
 }).
 
 -record(x_query_value, {
-    op='AND',
+    %% `VALUE GE' or `VALUE LE'
+    op = ?REQUIRED,
     slot :: non_neg_integer(),
     value :: xapian:x_string()
 }).
 
 -record(x_query_value_range, {
-    op='AND',
+    op='VALUE RANGE',
     slot :: non_neg_integer(),
     from :: xapian:x_string(),
     to :: xapian:x_string()

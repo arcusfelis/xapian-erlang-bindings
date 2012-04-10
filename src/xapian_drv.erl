@@ -25,6 +25,7 @@
 }).
 
 -include_lib("xapian/include/xapian.hrl").
+-compile({parse_transform, seqbind}).
 -define(DOCUMENT_ID(X), X:32/native-unsigned-integer).
 
 
@@ -41,6 +42,9 @@
 %% For writable DB
 -export([add_document/2,
          transaction/3]).
+
+%% Queries
+-export([query_page/5]).
 
 
 %% ------------------------------------------------------------------
@@ -81,6 +85,10 @@ close(Server) ->
 
 read_document(Server, DocId, RecordMetaDefinition) ->
     call(Server, {read_document_by_id, DocId, RecordMetaDefinition}).
+
+
+query_page(Server, Offset, PageSize, Query, RecordMetaDefinition) ->
+    call(Server, {query_page, Offset, PageSize, Query, RecordMetaDefinition}).
 
 
 %% ------------------------------------------------------------------
@@ -325,6 +333,11 @@ handle_call({read_document_by_id, Id, Meta}, _From, State) ->
     Reply = port_read_document_by_id(Port, Id, Meta, Name2Slot),
     {reply, Reply, State};
 
+handle_call({query_page, Offset, PageSize, Query, Meta}, _From, State) ->
+    #state{ port = Port, name_to_slot = Name2Slot } = State,
+    Reply = port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot),
+    {reply, Reply, State};
+
 handle_call({transaction, Ref}, From, State) ->
     #state{ port = Port } = State,
     {FromPid, FromRef} = From,
@@ -417,7 +430,8 @@ command_id(test) ->                        3;
 command_id(read_document_by_id) ->         4;
 command_id(start_transaction) ->           5;
 command_id(cancel_transaction) ->          6;
-command_id(commit_transaction) ->          7.
+command_id(commit_transaction) ->          7;
+command_id(query_page) ->                  8.
 
 
 open_mode_id(read_open) ->                 0;
@@ -526,10 +540,44 @@ port_read_document_by_id(Port, Id, Meta, Name2Slot) ->
     decode_record_result(control(Port, read_document_by_id, Data), Meta).
 
 
+port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint(Offset, Bin@),
+    Bin@ = append_uint(PageSize, Bin@),
+    Bin@ = xapian_query:encode(Query, Name2Slot, Bin@),
+    Bin@ = xapian_record:encode(Meta, Name2Slot, Bin@),
+    decode_records_result(control(Port, query_page, Bin@), Meta).
+
+
+
+%% -----------------------------------------------------------------
+%% Helpers
+%% -----------------------------------------------------------------
+
+read_string(Bin) ->
+    <<Num:32/native-unsigned-integer, Bin2/binary>> = Bin,  
+    <<Str:Num/binary, Bin3/binary>> = Bin2,
+    {Str, Bin3}.
+
+append_uint(Value, Bin) ->
+    <<Bin/binary, Value:32/native-unsigned-integer>>.
+
+
 decode_record_result({ok, Bin}, Meta) ->
-    {ok, xapian_record:decode(Meta, Bin)};
+    case xapian_record:decode(Meta, Bin) of
+        {Rec, Rem} -> {ok, Rec}
+    end;
 
 decode_record_result(Other, _Meta) -> 
+    Other.
+
+
+decode_records_result({ok, Bin}, Meta) ->
+    case xapian_record:decode_list(Meta, Bin) of
+        {Recs, Rem} -> {ok, Recs}
+    end;
+
+decode_records_result(Other, _Meta) -> 
     Other.
 
 
@@ -538,18 +586,6 @@ decode_docid_result({ok, <<?DOCUMENT_ID(Last)>>}) ->
 
 decode_docid_result(Other) -> 
     Other.
-
-
-read_string(Bin) ->
-    <<Num:32/native-unsigned-integer, Bin2/binary>> = Bin,  
-    <<Str:Num/binary, Bin3/binary>> = Bin2,
-    {Str, Bin3}.
-
-
-%% -----------------------------------------------------------------
-%% Helpers
-%% -----------------------------------------------------------------
-
 
 
 %% -----------------------------------------------------------------
@@ -735,6 +771,98 @@ read_bad_test() ->
         #x_error{type = <<"DocNotFoundError">>}, 
         ?DRV:read_document(Server, DocId, Meta)),
     ?DRV:close(Server).
+
+
+%% ------------------------------------------------------------------
+%% Books (query testing)
+%% ------------------------------------------------------------------
+
+-record(book, {docid, author, title, data}).
+-record(book_ext, {docid, author, title, data,   rank, weight, percent}).
+
+query_page_test_() ->
+    {foreach,
+    fun query_page_setup/0,
+    fun query_page_clean/1,
+    [ fun single_term_query_page_case/1
+    , fun value_range_query_page_case/1
+    , fun double_terms_or_query_page_case/1
+    , fun special_fields_query_page_case/1
+    ]}.
+
+query_page_setup() ->
+    % Open test
+    Path = filename:join([code:priv_dir(xapian), test_db, query_page]),
+    ValueNames = [ #x_value_name{slot = 1, name = author}
+                 , #x_value_name{slot = 2, name = title}],
+    Params = [write, create, overwrite] ++ ValueNames,
+    {ok, Server} = ?DRV:open(Path, Params),
+    Base = [#x_stemmer{language = <<"english">>}],
+    Document1 = Base ++
+        [ #x_data{value = "Non-indexed data here"} 
+        , #x_text{value = "erlang/OTP"} 
+        , #x_text{value = "concurrency"} 
+        , #x_value{slot = title, value = "Software for a Concurrent World"} 
+        , #x_value{slot = author, value = "Joe Armstrong"} 
+        ],
+    Document2 = Base ++
+        [ #x_stemmer{language = <<"english">>}
+        , #x_text{value = "C++"} 
+        , #x_value{slot = title, value = "Code Complete: "
+            "A Practical Handbook of Software Construction"} 
+        , #x_value{slot = author, value = "Steve McConnell"} 
+        ],
+    %% Put the documents into the database
+    [1, 2] = 
+    [ ?DRV:add_document(Server, Document) || Document <- [Document1, Document2] ],
+    Server.
+
+query_page_clean(Server) ->
+    ?DRV:close(Server).
+
+single_term_query_page_case(Server) ->
+    Case = fun() ->
+        Offset = 0,
+        PageSize = 10,
+        Query = "erlang",
+        Meta = xapian_record:record(book, record_info(fields, book)),
+        RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
+        io:format(user, "~n~p~n", [RecList])
+        end,
+    {"erlang", Case}.
+
+value_range_query_page_case(Server) ->
+    Case = fun() ->
+        Offset = 0,
+        PageSize = 10,
+        Query = #x_query_value_range{slot=author, from="Joe Armstrong", to="Joe Armstrong"},
+        Meta = xapian_record:record(book, record_info(fields, book)),
+        RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
+        io:format(user, "~n~p~n", [RecList])
+        end,
+    {"Joe Armstrong - Joe Armstrong", Case}.
+
+double_terms_or_query_page_case(Server) ->
+    Case = fun() ->
+        Offset = 0,
+        PageSize = 10,
+        Query = #x_query{op='OR', value=[<<"erlang">>, "c++"]},
+        Meta = xapian_record:record(book, record_info(fields, book)),
+        RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
+        io:format(user, "~n~p~n", [RecList])
+        end,
+    {"erlang OR c++", Case}.
+
+special_fields_query_page_case(Server) ->
+    Case = fun() ->
+        Offset = 0,
+        PageSize = 10,
+        Query = "erlang",
+        Meta = xapian_record:record(book_ext, record_info(fields, book_ext)),
+        RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
+        io:format(user, "~n~p~n", [RecList])
+        end,
+    {"erlang", Case}.
 
 
 -endif.

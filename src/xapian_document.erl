@@ -107,7 +107,7 @@ append_delta(Pos, Bin) ->
 
 
 append_text(Value, Pos, Prefix, Bin@) ->
-    Bin@ = append_type(term, Bin@),
+    Bin@ = append_type(text, Bin@),
     Bin@ = append_iolist(Value, Bin@),
     Bin@ = append_int(Pos, Bin@),
     Bin@ = append_iolist(Prefix, Bin@),

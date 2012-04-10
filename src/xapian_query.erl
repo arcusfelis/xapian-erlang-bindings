@@ -4,20 +4,21 @@
 -include_lib("xapian/include/xapian.hrl").
 -compile({parse_transform, seqbind}).
 
-operator_id('AND')          -> 1;
-operator_id('OR')           -> 2;
-operator_id('AND NOT')      -> 3;
-operator_id('XOR')          -> 4;
-operator_id('AND MAYBE')    -> 5;
-operator_id('FILTER')       -> 6;
-operator_id('NEAR')         -> 7;
-operator_id('PHRASE')       -> 8;
-operator_id('VALUE RANGE')  -> 9;
-operator_id('SCALE WEIGHT') -> 10;
-operator_id('ELITE SET')    -> 11;
-operator_id('VALUE GE')     -> 12;
-operator_id('VALUE LE')     -> 13;
-operator_id('SYNONYM')      -> 14.
+%% From `include/xapian/query.h'
+operator_id('AND')          -> 0;
+operator_id('OR')           -> 1;
+operator_id('AND NOT')      -> 2;
+operator_id('XOR')          -> 3;
+operator_id('AND MAYBE')    -> 4;
+operator_id('FILTER')       -> 5;
+operator_id('NEAR')         -> 6;
+operator_id('PHRASE')       -> 7;
+operator_id('VALUE RANGE')  -> 8;
+operator_id('SCALE WEIGHT') -> 9;
+operator_id('ELITE SET')    -> 10;
+operator_id('VALUE GE')     -> 11;
+operator_id('VALUE LE')     -> 12;
+operator_id('SYNONYM')      -> 13.
 
 
 query_id(query_group)       -> 1;
