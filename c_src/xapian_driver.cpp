@@ -169,7 +169,7 @@ class ParamDecoder
 
 
     char* 
-    move(size_t size)
+    move(const size_t size)
     {
         if (size > m_len)
             throw OverflowDriverError();
@@ -194,24 +194,21 @@ class ParamDecoder
      * Decodes <<Int8t:8/native-signed-integer>>
      */
     operator int8_t() {
-        int8_t result = READ_TYPE(int8_t);
-        return result;
+        return READ_TYPE(int8_t);
     }
 
     /**
      * Decodes <<Int8t:8/native-unsigned-integer>>
      */
     operator uint8_t() {
-        uint8_t result = READ_TYPE(uint8_t);
-        return result;
+        return READ_TYPE(uint8_t);
     }
 
     /**
      * Decodes <<Num:32/native-signed-integer>>
      */
     operator int32_t() {
-        int32_t result = READ_TYPE(int32_t);
-        return result;
+        return READ_TYPE(int32_t);
     }
 
     /**
@@ -219,8 +216,7 @@ class ParamDecoder
      * Results are Xapian::valueno or Xapian::termcount
      */
     operator uint32_t() {
-        uint32_t result = READ_TYPE(uint32_t);
-        return result;
+        return READ_TYPE(uint32_t);
     }
 
 };
@@ -275,7 +271,7 @@ class ResultEncoder
     public:
 
     void
-    setBuffer(char** rbuf, size_t rlen) 
+    setBuffer(char** rbuf, const size_t rlen) 
     {
         m_result_buf = rbuf;
         m_current_buf = m_default_buf = *rbuf;
@@ -603,12 +599,12 @@ class XapianErlangDriver
 
 
     static ErlDrvSSizeT control(
-        ErlDrvData         drv_data, 
-        unsigned int     command, 
+        ErlDrvData      drv_data, 
+        unsigned int    command, 
         char*           buf, 
         ErlDrvSizeT     len, 
         char**          rbuf, 
-        ErlDrvSizeT        rlen);
+        ErlDrvSizeT     rlen);
 
 
 
@@ -635,7 +631,7 @@ class XapianErlangDriver
     size_t getLastDocId()
     {
         //Xapian::docid get_lastdocid() const
-        Xapian::docid 
+        const Xapian::docid 
         docid = m_db->get_lastdocid();
         m_result << static_cast<uint32_t>(docid);
         return m_result;
@@ -646,7 +642,7 @@ class XapianErlangDriver
     {
         Xapian::Document doc;
         applyDocument(params, doc);
-        Xapian::docid
+        const Xapian::docid
         docid = m_wdb->add_document(doc);
         m_result << static_cast<uint32_t>(docid);
         return m_result;
@@ -663,8 +659,8 @@ class XapianErlangDriver
     size_t query(ParamDecoder& params)
     {
         /* offset, pagesize, query, template */
-        uint32_t offset   = params;
-        uint32_t pagesize = params;
+        const uint32_t offset   = params;
+        const uint32_t pagesize = params;
 
         // Use an Enquire object on the database to run the query.
         Xapian::Enquire enquire(*m_db);
@@ -731,7 +727,7 @@ class XapianErlangDriver
 
     size_t getDocumentById(ParamDecoder& params)
     {
-        Xapian::docid docid = params;
+        const Xapian::docid docid = params;
         Xapian::Document doc = m_db->get_document(docid);
         retrieveDocument(params, doc, NULL);
         return m_result;
@@ -740,13 +736,13 @@ class XapianErlangDriver
 
     size_t test(ParamDecoder& params)
     {
-        int8_t num = params;
+        const int8_t num = params;
         switch (num)
         {
             case TEST_RESULT_ENCODER:
             {
-                Xapian::docid from = params;
-                Xapian::docid to = params;
+                const Xapian::docid from = params;
+                const Xapian::docid to = params;
 
                 return testResultEncoder(from, to);
             }
@@ -775,14 +771,14 @@ class XapianErlangDriver
 Xapian::Query 
 XapianErlangDriver::buildQuery(ParamDecoder& params)
 {
-    uint8_t type = params;
+    const uint8_t type = params;
     switch (type)
     {
         case QUERY_GROUP:
         {    
-            uint8_t     op              = params;
-            uint32_t    parameter       = params;
-            uint32_t    subQueryCount   = params;
+            const uint8_t     op              = params;
+            const uint32_t    parameter       = params;
+            const uint32_t    subQueryCount   = params;
             vector<Xapian::Query> subQueries;
 
             for (uint32_t i = 0; i < subQueryCount; i++)
@@ -800,9 +796,9 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
 
         case QUERY_VALUE:
         {    
-            uint8_t            op       = params;
-            Xapian::valueno    slot     = params;
-            const string       value    = params;
+            const uint8_t           op       = params;
+            const Xapian::valueno   slot     = params;
+            const string&           value    = params;
             Xapian::Query q(
                 static_cast<Xapian::Query::op>(op), 
                 slot, 
@@ -812,10 +808,10 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
             
         case QUERY_VALUE_RANGE:
         {    
-            uint8_t            op       = params;
-            Xapian::valueno    slot     = params;
-            const string       from     = params;
-            const string       to       = params;
+            const uint8_t           op       = params;
+            const Xapian::valueno   slot     = params;
+            const string&           from     = params;
+            const string&           to       = params;
             Xapian::Query q(
                 static_cast<Xapian::Query::op>(op), 
                 slot, 
@@ -826,9 +822,9 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
 
         case QUERY_TERM:
         {    
-            const string       name     = params;
-            uint32_t           wqf      = params;
-            uint32_t           pos      = params;
+            const string&      name     = params;
+            const uint32_t     wqf      = params;
+            const uint32_t     pos      = params;
             Xapian::Query q(
                 name,
                 wqf, 
@@ -845,14 +841,14 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
 ErlDrvSSizeT 
 XapianErlangDriver::control(
     ErlDrvData drv_data, 
-    unsigned int  command, 
+    const unsigned int  command, 
     char*         buf, 
     ErlDrvSizeT   e_len, 
     char**        rbuf, 
     ErlDrvSizeT   e_rlen)
 {
-    size_t len  = static_cast<int>(e_len);
-    size_t rlen = static_cast<int>(e_rlen);
+    const size_t len  = static_cast<int>(e_len);
+    const size_t rlen = static_cast<int>(e_rlen);
 
     ParamDecoder params(buf, len); 
     XapianErlangDriver& drv = * reinterpret_cast<XapianErlangDriver*>( drv_data );
@@ -865,8 +861,8 @@ XapianErlangDriver::control(
         switch(command) {
         case OPEN: 
             {
-            const string dbpath = params;
-            int8_t mode = params;
+            const string&   dbpath = params;
+            const int8_t    mode = params;
             return drv.open(dbpath, mode);
             }
 
@@ -969,7 +965,7 @@ XapianErlangDriver::applyDocument(
     Xapian::TermGenerator   termGenerator;
     termGenerator.set_document(doc);
 
-    while (int8_t command = params)
+    while (const int8_t command = params)
     /* Do, while command != stop != 0 */
     {
         switch (command)
@@ -977,7 +973,7 @@ XapianErlangDriver::applyDocument(
             case STEMMER:
             {
                 // see xapian_document:append_stemmer
-                const string   language = params;
+                const string&   language = params;
                 termGenerator.set_stemmer(Xapian::Stem(language));
                 break;
             }
@@ -985,7 +981,7 @@ XapianErlangDriver::applyDocument(
             case DATA:
             {
                 // see xapian_document:append_data
-                const string   data = params;
+                const string&   data = params;
                 doc.set_data(data);
                 break;
             }
@@ -993,8 +989,8 @@ XapianErlangDriver::applyDocument(
             case VALUE:
             {
                 // see xapian_document:append_value
-                uint32_t          slot  = params;
-                const string      value = params;
+                const uint32_t    slot  = params;
+                const string&     value = params;
                 doc.add_value(static_cast<Xapian::valueno>(slot), value); 
                 break;
             }
@@ -1002,7 +998,7 @@ XapianErlangDriver::applyDocument(
             case DELTA:
             {
                 // see xapian_document:append_delta
-                uint32_t   delta = params;
+                const uint32_t   delta = params;
                 termGenerator.increase_termpos(static_cast<Xapian::termcount>(delta));
                 break;
             }
@@ -1010,9 +1006,9 @@ XapianErlangDriver::applyDocument(
             case TEXT:
             {
                 // see xapian_document:append_delta
-                const string      text    = params; // value
-                uint32_t          wdf_inc = params; // pos
-                const string      prefix  = params;
+                const string&     text    = params; // value
+                const uint32_t    wdf_inc = params; // pos
+                const string&     prefix  = params;
                 termGenerator.index_text(text, 
                     static_cast<Xapian::termcount>(wdf_inc), 
                     prefix); 
@@ -1022,8 +1018,8 @@ XapianErlangDriver::applyDocument(
             case TERM:
             {
                 // see xapian_document:append_term
-                const string      tname   = params; // value
-                Xapian::termcount wdf_inc = params; 
+                const string&           tname   = params; // value
+                const Xapian::termcount wdf_inc = params; 
                 // Pos = undefined
                 doc.add_term(tname, wdf_inc);
                 break;
@@ -1032,9 +1028,9 @@ XapianErlangDriver::applyDocument(
             case POSTING:
             {
                 // see xapian_document:append_term
-                const string      tname   = params; // value
-                uint32_t          tpos    = params;
-                uint32_t          wdf_inc = params;
+                const string&     tname   = params; // value
+                const uint32_t    tpos    = params;
+                const uint32_t    wdf_inc = params;
                 doc.add_posting(tname, 
                     static_cast<Xapian::termpos>(tpos), 
                     static_cast<Xapian::termcount>(wdf_inc));
@@ -1054,14 +1050,14 @@ XapianErlangDriver::retrieveDocument(
     Xapian::Document& doc,
     Xapian::MSetIterator* mset_iter)
 {
-    while (int8_t command = params)
+    while (const int8_t command = params)
     /* Do, while command != stop != 0 */
     {
         switch (command)
         {
             case GET_VALUE:
             {
-                uint32_t          slot  = params;
+                const uint32_t    slot  = params;
                 const string      value = doc.get_value(static_cast<Xapian::valueno>(slot));
                 m_result << value;
                 break;
