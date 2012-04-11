@@ -19,7 +19,7 @@ Tests
 Next command runs tests:
 
 ```
-./rebar eunit skip\_deps=true
+./rebar eunit skip_deps=true
 ```
 
 
