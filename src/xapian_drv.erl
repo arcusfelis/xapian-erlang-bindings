@@ -654,9 +654,15 @@ stop_monitor(Monitor) ->
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
+testdb_path(Name) -> 
+	TestDir = filename:join(code:priv_dir(xapian), test_db),
+	file:make_dir(TestDir),
+	filename:join(TestDir, Name).
+
+
 simple_test() ->
     % Open test
-    Path = filename:join([code:priv_dir(xapian), test_db, simple]),
+    Path = testdb_path(simple),
     Params = [write, create, overwrite, 
         #x_value_name{slot = 1, name = slot1}, 
         #x_prefix_name{name = author, prefix = <<$A>>}],
@@ -684,8 +690,8 @@ simple_test() ->
 
 transaction_test_() ->
     % Open test
-    Path1 = filename:join([code:priv_dir(xapian), test_db, transaction1]),
-    Path2 = filename:join([code:priv_dir(xapian), test_db, transaction2]),
+    Path1 = testdb_path(transaction1),
+    Path2 = testdb_path(transaction2),
     Params = [write, create, overwrite],
     {ok, Server1} = ?DRV:open(Path1, Params),
     {ok, Server2} = ?DRV:open(Path2, Params),
@@ -717,7 +723,7 @@ transaction_test_() ->
 
 transaction_readonly_error_test_() ->
     % Open test
-    Path = filename:join([code:priv_dir(xapian), test_db, transaction1]),
+    Path = testdb_path(transaction1),
     Params = [],
     {ok, Server} = ?DRV:open(Path, Params),
     Fun = fun([S]) ->
@@ -746,7 +752,7 @@ transaction_readonly_error_test_() ->
 %% @doc This test checks the work of `ResultEncoder'.
 result_encoder_test() ->
     % Open test
-    Path = filename:join([code:priv_dir(xapian), test_db, simple]),
+    Path = testdb_path(simple),
     Params = [],
     {ok, Server} = ?DRV:open(Path, Params),
     Reply = run_test(Server, result_encoder, [1, 1000]),
@@ -759,7 +765,7 @@ result_encoder_test() ->
 
 %% @doc Check an exception.
 exception_test() ->
-    Path = filename:join([code:priv_dir(xapian), test_db, simple]),
+    Path = testdb_path(simple),
     Params = [],
     {ok, Server} = ?DRV:open(Path, Params),
     % ?assertException(ClassPattern, TermPattern, Expr)
@@ -783,7 +789,7 @@ exception_test() ->
 
 read_document_test() ->
     % Open test
-    Path = filename:join([code:priv_dir(xapian), test_db, read_document]),
+    Path = testdb_path(read_document),
     Params = [write, create, overwrite, 
         #x_value_name{slot = 1, name = slot1}],
     {ok, Server} = ?DRV:open(Path, Params),
@@ -804,7 +810,7 @@ read_document_test() ->
 %% @doc Check an exception.
 read_bad_docid_test() ->
     % Open test
-    Path = filename:join([code:priv_dir(xapian), test_db, read_document]),
+    Path = testdb_path(read_document),
     Params = [#x_value_name{slot = 1, name = slot1}],
     {ok, Server} = ?DRV:open(Path, Params),
     Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
@@ -835,7 +841,7 @@ query_page_test_() ->
 
 query_page_setup() ->
     % Open test
-    Path = filename:join([code:priv_dir(xapian), test_db, query_page]),
+	Path = testdb_path(query_page),
     ValueNames = [ #x_value_name{slot = 1, name = author}
                  , #x_value_name{slot = 2, name = title}],
     Params = [write, create, overwrite] ++ ValueNames,

@@ -1,3 +1,5 @@
+/* vim: set filetype=cpp shiftwidth=4 tabstop=4 expandtab tw=80: */
+
 /**
  * Prefix m_ (member) for properties means that property is private.
  */
@@ -16,10 +18,10 @@
 #include <vector>
 #include <string>
 #include <cstring>
-#include <stdexcept>
 #include <sstream>
 
 #include <assert.h>
+#include <stdexcept>
 
 /* For int32_t, uint8_t and so on. */
 #include <stdint.h>
@@ -71,7 +73,7 @@ class DriverRuntimeError: public runtime_error
 
     public:
     DriverRuntimeError(const char * type, const string& str):
-        std::runtime_error(str) { m_type = type; }
+        runtime_error(str) { m_type = type; }
 
     const char* 
     get_type() const
@@ -86,11 +88,11 @@ class MemoryAllocationDriverError: public DriverRuntimeError
     static const char TYPE[];
     public:
 
-    MemoryAllocationDriverError(int size) : 
+    MemoryAllocationDriverError(size_t size) : 
         DriverRuntimeError(TYPE, buildString(size)) {}
 
     static const string 
-    buildString(int size)
+    buildString(size_t size)
     {
         std::stringstream ss;
         ss << "Cannot allocate " << size << " bytes.";
@@ -148,23 +150,23 @@ REG_TYPE(NotWritableDatabaseError)
 class ParamDecoder
 {
     char *m_buf; 
-    int m_len;
+    size_t m_len;
 
     public:
     /**
      * Constructor
      */
-    ParamDecoder(char *buf, int len) :
+    ParamDecoder(char *buf, size_t len) :
         m_buf( buf ),
         m_len( len ) {}
 
 
     char* 
-    move(int size)
+    move(size_t size)
     {
-        m_len -= size;
-        if (m_len < 0)
+        if (size > m_len)
             throw OverflowDriverError();
+        m_len -= size;
         char* old_buf = m_buf;
         m_buf += size;
         return old_buf;
@@ -226,7 +228,7 @@ typedef struct DataSegment DataSegment;
 struct DataSegment
 {
     DataSegment* next;
-    int size;
+    size_t size;
     char data[]; /* flexible-array member */
 };
 
@@ -247,7 +249,7 @@ class ResultEncoder
 {
     /* Here will be a pointer on data after all operations */
     char**  m_result_buf;
-    int     m_result_len;
+    size_t  m_result_len;
 
     /* Preallocated */
     char*   m_default_buf;
@@ -256,8 +258,8 @@ class ResultEncoder
     char*   m_current_buf;
 
     /* Len of buffer, allocated by a port */
-    int     m_default_len;
-    int     m_left_len;
+    size_t  m_default_len;
+    size_t  m_left_len;
 
     /* Next segment */
     DataSegment* m_first_segment;
@@ -266,7 +268,7 @@ class ResultEncoder
     public:
 
     void
-    setBuffer(char** rbuf, int rlen) 
+    setBuffer(char** rbuf, size_t rlen) 
     {
         m_result_buf = rbuf;
         m_current_buf = m_default_buf = *rbuf;
@@ -319,7 +321,7 @@ class ResultEncoder
     }
 
     DataSegment* 
-    alloc(int size)
+    alloc(size_t size)
     {
         size = SIZE_OF_SEGMENT(size);
         DataSegment* ds = static_cast<DataSegment*>( driver_alloc(size) );
@@ -328,9 +330,9 @@ class ResultEncoder
         return ds;
     }
 
-    void put(const char* term, const int term_len);
+    void put(const char* term, const size_t term_len);
 
-    operator int();
+    operator size_t();
 
     void clear();
 };
@@ -341,10 +343,10 @@ class ResultEncoder
  * Copy termLen bytes from term. 
  */
 void 
-ResultEncoder::put(const char* term, const int term_len)
+ResultEncoder::put(const char* term, const size_t term_len)
 {
     /* Len of the whole buffer after coping */
-    const int new_len = term_len + m_result_len;
+    const size_t new_len = term_len + m_result_len;
     const bool allocated = m_first_segment != NULL;
     const bool large = allocated 
         || m_default_buf == NULL 
@@ -363,9 +365,9 @@ ResultEncoder::put(const char* term, const int term_len)
     else 
     {
         /* part1 will stay in a default buffer. */
-        const int part1_len = m_left_len;
-        const int part2_len = term_len - part1_len;
-        const int new_segment_len = part2_len + RESERVED_LEN;
+        const size_t part1_len = m_left_len;
+        const size_t part2_len = term_len - part1_len;
+        const size_t new_segment_len = part2_len + RESERVED_LEN;
 
         /* Create new data segment. */
         DataSegment* 
@@ -432,7 +434,7 @@ ResultEncoder::clear() {
 /**
  * Returns result
  */
-ResultEncoder::operator int() {
+ResultEncoder::operator size_t() {
     if (m_result_len > m_default_len)
     {
         ErlDrvBinary* bin = driver_alloc_binary(m_result_len);
@@ -447,7 +449,6 @@ ResultEncoder::operator int() {
         dest += m_default_len;
 
         /* Shrink data size to copy. */
-        assert(m_left_len >= 0);
         m_last_segment->size -= m_left_len;
         do 
         {
@@ -456,7 +457,7 @@ ResultEncoder::operator int() {
             /* No infinite cycles. */
             assert(m_first_segment->next != m_first_segment);
 
-            int segment_size = m_first_segment->size;
+            size_t segment_size = m_first_segment->size;
             assert(segment_size > 0);
 
             /* Real buffer length is not greater, then allocated buffer length. */
@@ -594,13 +595,13 @@ class XapianErlangDriver
     }   
 
 
-    static int control(
-        ErlDrvData drv_data, 
-        unsigned int command, 
-        char*   buf, 
-        int     len, 
-        char**  rbuf, 
-        int     rlen);
+    static ErlDrvSSizeT control(
+        ErlDrvData         drv_data, 
+        unsigned int     command, 
+        char*           buf, 
+        ErlDrvSizeT     len, 
+        char**          rbuf, 
+        ErlDrvSizeT        rlen);
 
 
 
@@ -622,9 +623,9 @@ class XapianErlangDriver
     }
 
 
-    int open(const string& dbpath, int8_t mode);
+    size_t open(const string& dbpath, int8_t mode);
 
-    int getLastDocId()
+    size_t getLastDocId()
     {
         //Xapian::docid get_lastdocid() const
         Xapian::docid 
@@ -634,7 +635,7 @@ class XapianErlangDriver
     }
 
 
-    int addDocument(ParamDecoder& params)
+    size_t addDocument(ParamDecoder& params)
     {
         Xapian::Document doc;
         applyDocument(params, doc);
@@ -652,7 +653,7 @@ class XapianErlangDriver
     void applyDocument(ParamDecoder& params, Xapian::Document& doc);
 
 
-    int query(ParamDecoder& params)
+    size_t query(ParamDecoder& params)
     {
         /* offset, pagesize, query, template */
         uint32_t offset   = params;
@@ -700,28 +701,28 @@ class XapianErlangDriver
             throw NotWritableDatabaseError();
     }
 
-    int startTransaction()
+    size_t startTransaction()
     {
         assertWriteable();
         m_wdb->begin_transaction();
         return m_result;
     }
 
-    int cancelTransaction()
+    size_t cancelTransaction()
     {
         assertWriteable();
         m_wdb->cancel_transaction();
         return m_result;
     }
 
-    int commitTransaction()
+    size_t commitTransaction()
     {
         assertWriteable();
         m_wdb->commit_transaction();
         return m_result;
     }
 
-    int getDocumentById(ParamDecoder& params)
+    size_t getDocumentById(ParamDecoder& params)
     {
         Xapian::docid docid = params;
         Xapian::Document doc = m_db->get_document(docid);
@@ -730,7 +731,7 @@ class XapianErlangDriver
     }
 
 
-    int test(ParamDecoder& params)
+    size_t test(ParamDecoder& params)
     {
         int8_t num = params;
         switch (num)
@@ -749,14 +750,14 @@ class XapianErlangDriver
         return 0;
     }
 
-    int testResultEncoder(Xapian::docid from, Xapian::docid to)
+    size_t testResultEncoder(Xapian::docid from, Xapian::docid to)
     {
         for (; from <= to; from++)
             m_result << static_cast<uint32_t>(from);
         return m_result;
     }
 
-    int testException()
+    size_t testException()
     {
         throw MemoryAllocationDriverError(1000);
         return 0;
@@ -834,15 +835,18 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
 }
 
 
-int 
+ErlDrvSSizeT 
 XapianErlangDriver::control(
     ErlDrvData drv_data, 
-    unsigned int command, 
-    char* buf, 
-    int len, 
-    char** rbuf, 
-    int rlen)
+    unsigned int  command, 
+    char*         buf, 
+    ErlDrvSizeT   e_len, 
+    char**        rbuf, 
+    ErlDrvSizeT   e_rlen)
 {
+    size_t len  = static_cast<int>(e_len);
+    size_t rlen = static_cast<int>(e_rlen);
+
     ParamDecoder params(buf, len); 
     XapianErlangDriver& drv = * reinterpret_cast<XapianErlangDriver*>( drv_data );
     ResultEncoder& result = * drv.getResultEncoder();
@@ -906,7 +910,7 @@ XapianErlangDriver::control(
 }
 
 
-int 
+size_t 
 XapianErlangDriver::open(const string& dbpath, int8_t mode)
 {
     // Is already opened?

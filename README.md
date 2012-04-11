@@ -8,8 +8,8 @@ I use rebar for building.
 ```
 git clone git://github.com/freeakk/xapian.git
 cd xapian
-rebar get-deps
-rebar compile
+./rebar get-deps
+./rebar compile
 ```
 
 
@@ -19,7 +19,7 @@ Tests
 Next command runs tests:
 
 ```
-rebar eunit skip\_deps=true
+./rebar eunit skip\_deps=true
 ```
 
 
