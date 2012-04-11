@@ -21,6 +21,7 @@ part_id(posting)    -> 7.
 %% @doc Encode parts of the document to a binary.
 -spec encode([xapian:x_document_index_part()], 
         orddict:orddict(), orddict:orddict()) -> binary().
+
 encode(List, Name2Prefix, Name2Slot) ->
     Pre = preprocess_hof(Name2Prefix, Name2Slot),
     List2 = [Pre(X) || X <- List], % lists:map(Pre, List)
@@ -113,6 +114,10 @@ append_text(Value, Pos, Prefix, Bin@) ->
     Bin@ = append_iolist(Prefix, Bin@),
     Bin@.
 
+
+%% ------------------------------------------------------------------
+%% Helpers
+%% ------------------------------------------------------------------
 
 append_type(Type, Bin) ->
     PartId = part_id(Type),  

@@ -111,6 +111,10 @@ dec([], Rem, Acc) ->
     {erlang:list_to_tuple(lists:reverse(Acc)), Rem}.
 
 
+%% ------------------------------------------------------------------
+%% Helpers
+%% ------------------------------------------------------------------
+
 read_string(Bin) ->
     <<Num:32/native-unsigned-integer, Bin2/binary>> = Bin,  
     <<Str:Num/binary, Bin3/binary>> = Bin2,

@@ -38,30 +38,24 @@
 
 #define REG_TYPE(CLASS) const char CLASS::TYPE[] = STR(CLASS);
 
-/**
- * Helper used by ParamDecoder.
- */
+/* Helper used by ParamDecoder. */
 //#define READ_TYPE(T) (*((T*) move(sizeof(T))))
 #define READ_TYPE(T) (*(reinterpret_cast<T*>( move(sizeof(T)) )))
 
-/** 
+/*
  * The length of free space in bytes, 
  * which will be allocatied new memory for storing result. 
  */
 #define RESERVED_LEN 100
 
-/**
- * Helper used by ResultEncoder.
- */
+/* Helper used by ResultEncoder. */
 #define SIZE_OF_SEGMENT(LEN) (sizeof(DataSegment) + LEN)
 
-/**
- * Helper used by ResultEncoder.
- */
+/* Helper used by ResultEncoder. */
 //#define PUT_VALUE(X) (put((char*) &(X), sizeof(X)))
 #define PUT_VALUE(X) (put(reinterpret_cast<char*>( &(X) ), sizeof(X)))
 
-/* Disable asserts. */
+/* Uncomment to disable asserts. */
 //#define NDEBUG
 
 using namespace std;

@@ -58,15 +58,20 @@
 -type x_transaction() :: xapian:x_transaction().
 
 
-%% ------------------------------------------------------------------
-%% Tiny hacks
-%% ------------------------------------------------------------------
-
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+
+%% @doc Open the database with params.
+%% Path is a directory name of the database.
+%% Params is a list of:
+%%
+%% * Modes: read, write, overwrite, create, open
+%% * Names for values and for prefixes:
+%%      #x_value_name{slot = 1, name = slotname} 
+%%      #x_prefix_name{name = author, prefix = <<$A>>}
 -spec open(term(), [term()]) -> {ok, x_server()}.
 
 open(Path, Params) ->
@@ -79,14 +84,24 @@ last_document_id(Server) ->
     call(Server, last_document_id).
 
 
+%% @doc Close the database and kill a control process (aka Server).
+%%      Database will be automaticly close, if the server process is dead.
 close(Server) ->
     gen_server:call(Server, close).
 
 
+%% @doc Read the document with `DocId' from `Server' and put it into the record,
+%%      defined by `RecordMetaDefinition'.
+%%
+%%     ```
+%%      RecordMetaDefinition = 
+%%          xapian_record:record(record_name, record_info(fields, record_fields)).
+%%     '''
 read_document(Server, DocId, RecordMetaDefinition) ->
     call(Server, {read_document_by_id, DocId, RecordMetaDefinition}).
 
 
+%% @doc Return a list of records.
 query_page(Server, Offset, PageSize, Query, RecordMetaDefinition) ->
     call(Server, {query_page, Offset, PageSize, Query, RecordMetaDefinition}).
 
@@ -102,15 +117,27 @@ add_document(Server, Document) ->
 %% ------------------------------------------------------------------
 %% Tests
 %% ------------------------------------------------------------------
+
 run_test(Server, TestName, Params) ->
     call(Server, {test, TestName, Params}).
 
 
+%% ------------------------------------------------------------------
+%% Transactions
+%% ------------------------------------------------------------------
 
-%% @doc Runs function F for Servers as a transaction.
+
+%% @doc Runs function `F' for writable `Servers' as a transaction.
 %%      Transaction will stop other operations with selected databases.
 %%
 %% This function runs a transaction on few servers.
+%% `F' will be called as:
+%%
+%% ```
+%% Servers = [Server1, Server2, Server3].
+%%  F([TransServer1, TransServer2, TransServer3]).
+%% '''
+%%
 %% Results from a server:
 %%
 %% * `committed' - A transaction was pass on this server. Data is consistent;
@@ -651,6 +678,9 @@ simple_test() ->
     ?DRV:close(Server),
     Last.
 
+%% ------------------------------------------------------------------
+%% Transations tests
+%% ------------------------------------------------------------------
 
 transaction_test_() ->
     % Open test
@@ -708,8 +738,12 @@ transaction_readonly_error_test_() ->
     
 
     
-    
 
+%% ------------------------------------------------------------------
+%% Call C++ tests
+%% ------------------------------------------------------------------
+    
+%% @doc This test checks the work of `ResultEncoder'.
 result_encoder_test() ->
     % Open test
     Path = filename:join([code:priv_dir(xapian), test_db, simple]),
@@ -736,7 +770,16 @@ exception_test() ->
     ok.
 
 
+
+%% ------------------------------------------------------------------
+%% Extracting information
+%% ------------------------------------------------------------------
+
+%% The record will contain information about a document.
+%% slot1 is a value.
+%% docid and data are special fields.
 -record(rec_test, {docid, slot1, data}).
+
 
 read_document_test() ->
     % Open test
@@ -759,7 +802,7 @@ read_document_test() ->
 
 
 %% @doc Check an exception.
-read_bad_test() ->
+read_bad_docid_test() ->
     % Open test
     Path = filename:join([code:priv_dir(xapian), test_db, read_document]),
     Params = [#x_value_name{slot = 1, name = slot1}],
@@ -862,7 +905,7 @@ special_fields_query_page_case(Server) ->
         RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
         io:format(user, "~n~p~n", [RecList])
         end,
-    {"erlang", Case}.
+    {"erlang (with rank, weight, percent)", Case}.
 
 
 -endif.
