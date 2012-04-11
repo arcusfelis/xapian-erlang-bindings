@@ -10,8 +10,6 @@
 // Includes
 // -------------------------------------------------------------------
 
-#include "erl_driver.h"
-
 #include <xapian.h>
 
 #include <cstdlib>
@@ -25,6 +23,15 @@
 
 /* For int32_t, uint8_t and so on. */
 #include <stdint.h>
+
+
+#include "erl_driver.h"
+
+/* Hack to handle R15 driver used with pre R15 driver */
+#if ERL_DRV_EXTENDED_MAJOR_VERSION == 1
+typedef int  ErlDrvSizeT;
+typedef int  ErlDrvSSizeT;
+#endif
 
 
 // -------------------------------------------------------------------
