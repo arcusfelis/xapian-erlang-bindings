@@ -58,7 +58,7 @@ typedef int  ErlDrvSSizeT;
 #define RESERVED_LEN 100
 
 /* Helper used by ResultEncoder. */
-#define SIZE_OF_SEGMENT(LEN) (sizeof(DataSegment) + LEN)
+#define SIZE_OF_SEGMENT(LEN) (sizeof(DataSegment) + (LEN) - 1)
 
 /* Helper used by ResultEncoder. */
 //#define PUT_VALUE(X) (put((char*) &(X), sizeof(X)))
@@ -232,7 +232,7 @@ struct DataSegment
 {
     DataSegment* next;
     size_t size;
-    char data[]; /* flexible-array member */
+    char data[1]; /* struct-hack, flexible-array member */
 };
 
 
