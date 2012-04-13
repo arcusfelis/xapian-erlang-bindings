@@ -142,12 +142,22 @@ class NotWritableDatabaseError: public DriverRuntimeError
         DriverRuntimeError(TYPE, "The database is open as read only.") {}
 };
 
+class DbAlreadyOpenedDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    DbAlreadyOpenedDriverError() : 
+        DriverRuntimeError(TYPE, "This port cannot open second DB. Use another port.") {}
+};
+
 
 
 REG_TYPE(MemoryAllocationDriverError)
 REG_TYPE(BadCommandDriverError)
 REG_TYPE(OverflowDriverError)
 REG_TYPE(NotWritableDatabaseError)
+REG_TYPE(DbAlreadyOpenedDriverError)
 
 
 // -------------------------------------------------------------------
@@ -918,7 +928,7 @@ XapianErlangDriver::open(const string& dbpath, int8_t mode)
 {
     // Is already opened?
     if (m_db != NULL)
-        return -1; // return `badarg'
+        throw DbAlreadyOpenedDriverError();
 
     switch(mode) {
         // Open readOnly db
@@ -951,7 +961,7 @@ XapianErlangDriver::open(const string& dbpath, int8_t mode)
             break;
 
         default:
-            return -1; // badarg
+            throw BadCommandDriverError(mode);
     }
     return m_result;
 }
@@ -1169,7 +1179,7 @@ ErlDrvEntry xapian_driver_entry = {
 
        char *driver_name;
      */
-    (char*) STR(DRIVER_NAME), /* it is a macro */
+    const_cast<char*>( STR(DRIVER_NAME) ), /* it is a macro */
 
     /* F_PTR finish, called when unloaded.
        called before unloading the driver - DYNAMIC DRIVERS ONLY.
