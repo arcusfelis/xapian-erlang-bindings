@@ -25,7 +25,10 @@
 }).
 
 -include_lib("xapian/include/xapian.hrl").
+
+-compile({parse_transform, do}).
 -compile({parse_transform, seqbind}).
+
 -define(DOCUMENT_ID(X), X:32/native-unsigned-integer).
 
 
@@ -72,6 +75,9 @@
 %% * Names for values and for prefixes:
 %%      #x_value_name{slot = 1, name = slotname} 
 %%      #x_prefix_name{name = author, prefix = <<$A>>}
+%% * The default stemmer. It will be used in `TermGenerator' and in the 
+%%      `default_query_parser':
+%%      #x_stemmer{language="english"}
 -spec open(term(), [term()]) -> {ok, x_server()}.
 
 open(Path, Params) ->
@@ -304,9 +310,14 @@ client_error_handler({error, Reason}) ->
 %% ------------------------------------------------------------------
 
 init([Path, Params]) ->
+    Prefixes = 
+    [xapian_check:check_prefix(X) || X=#x_prefix_name{} <- Params],
+
+    DefaultPrefixes = 
+    [X || X <- Prefixes, X#x_prefix_name.is_default],
+
     Name2Prefix = 
-    [{Name, Prefix} 
-        || #x_prefix_name{name = Name, prefix = Prefix} <- Params],
+    [{Name, Prefix} || #x_prefix_name{name = Name, prefix = Prefix} <- Prefixes],
 
     Name2Slot = 
     [{Name, Slot} 
@@ -315,18 +326,24 @@ init([Path, Params]) ->
     Name2PrefixDict = orddict:from_list(Name2Prefix),
     Name2SlotDict   = orddict:from_list(Name2Slot),
 
+    %% This stemmer will be used by default
+    DefaultStemmer = lists:keyfind(m_stemmer, 1, Params),
+
+
     Port = erlang:open_port({spawn, ?DRIVER_NAME}, []),
-    Result = port_open(Port, Path, Params),
-    case Result of
-        {ok, <<>>} ->
-            S = #state{
-                port = Port,
-                name_to_prefix = Name2PrefixDict,
-                name_to_slot = Name2SlotDict
-            },
-            {ok, S};
-        {error, Error} -> {error, Error}
-    end;
+
+    do([error_m ||
+        <<>> <- 
+            open_database(Port, Path, Params),
+        <<>> <- 
+            set_default_stemmer(Port, DefaultStemmer),
+        <<>> <- 
+            set_default_prefixes(Port, DefaultPrefixes),
+        {ok, #state{
+            port = Port,
+            name_to_prefix = Name2PrefixDict,
+            name_to_slot = Name2SlotDict
+        }}]);
 
 %% Add a copy of the server for the transaction
 init([{from_state, State}]) ->
@@ -427,7 +444,6 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-
 document_encode(Document, #state{
         name_to_prefix = Name2Prefix,
         name_to_slot = Name2Slot
@@ -450,22 +466,25 @@ load_driver() ->
 
 %% Command ids
 %% Returns an operation for port_control/3 
-command_id(open) ->                        0;
-command_id(last_document_id) ->            1;
-command_id(add_document) ->                2;
-command_id(test) ->                        3;
-command_id(read_document_by_id) ->         4;
-command_id(start_transaction) ->           5;
-command_id(cancel_transaction) ->          6;
-command_id(commit_transaction) ->          7;
-command_id(query_page) ->                  8.
+command_id(open)                        -> 0;
+command_id(last_document_id)            -> 1;
+command_id(add_document)                -> 2;
+command_id(test)                        -> 3;
+command_id(read_document_by_id)         -> 4;
+command_id(start_transaction)           -> 5;
+command_id(cancel_transaction)          -> 6;
+command_id(commit_transaction)          -> 7;
+command_id(query_page)                  -> 8;
+command_id(set_default_stemmer)         -> 9;
+command_id(set_default_prefixes)        -> 10.
 
 
-open_mode_id(read_open) ->                 0;
-open_mode_id(write_create_or_open) ->      1;
-open_mode_id(write_create) ->              2;
+open_mode_id(read_open)                 -> 0;
+open_mode_id(write_create_or_open)      -> 1;
+open_mode_id(write_create)              -> 2;
 open_mode_id(write_create_or_overwrite) -> 3;
-open_mode_id(write_open) ->                4.
+open_mode_id(write_open)                -> 4.
+
 
 
 test_id(result_encoder) -> 1;
@@ -508,7 +527,7 @@ control(Port, Operation, Data) ->
     end.
 
 
-port_open(Port, Path, Params) ->
+open_database(Port, Path, Params) ->
     PathBin = erlang:iolist_to_binary(Path),
     PathLen = erlang:byte_size(PathBin),
     Mode = open_mode_id(open_mode(Params)),
@@ -516,6 +535,25 @@ port_open(Port, Path, Params) ->
              PathBin/binary, 
              Mode:8/native-signed-integer>>,
     control(Port, open, Data).
+
+
+set_default_stemmer(Port, false) ->
+    {ok, <<>>};
+
+set_default_stemmer(Port, DefaultStemmer) ->
+    Data = xapian_encode:append_prefix(DefaultStemmer, <<>>),
+    control(Port, set_default_stemmer, Data).
+
+
+set_default_prefixes(Port, []) ->
+    {ok, <<>>};
+
+set_default_prefixes(Port, DefaultPrefixes) ->
+    Data = 
+    lists:foldl(fun xapian_encode:append_prefix/2, 
+        append_uint(erlang:length(DefaultPrefixes), <<>>), 
+        DefaultPrefixes),
+    control(Port, set_default_prefixes, Data).
 
 
 port_add_document(Port, EncodedDocument) ->
@@ -683,6 +721,47 @@ simple_test() ->
     Last = ?DRV:last_document_id(Server),
     ?DRV:close(Server),
     Last.
+
+-record(stemmer_test_record, {docid, data}).
+
+stemmer_test() ->
+    % Open test with the default stemmer
+    Path = testdb_path(stemmer),
+    Params = [write, create, overwrite, 
+        #x_stemmer{language = <<"english">>},
+        #x_prefix_name{name = author, prefix = <<$A>>, is_boolean=true}],
+    {ok, Server} = ?DRV:open(Path, Params),
+    Document =
+        [ #x_data{value = "My test data as iolist (NOT INDEXED)"} 
+        , #x_text{value = "Return a list of available languages."} 
+        , #x_text{value = <<"Michael">>, prefix = author} 
+        ],
+    %% Test a term generator
+    DocId = ?DRV:add_document(Server, Document),
+    ?assert(is_integer(DocId)),
+    Last = ?DRV:last_document_id(Server),
+
+    %% Test a query parser
+    Offset = 0,
+    PageSize = 10,
+    Meta = xapian_record:record(stemmer_test_record, 
+        record_info(fields, stemmer_test_record)),
+
+    Query1   = #x_query_string{string="return AND list"},
+    Query2   = #x_query_string{string="author:michael"},
+    Query3   = #x_query_string{string="author:olly list"},
+    Query4   = #x_query_string{string="author:Michael"},
+
+    F = fun(Query) ->
+        RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
+        io:format(user, "~n~p~n", [RecList])
+        end,
+
+    lists:map(F, [Query1, Query2, Query3, Query4]),
+    
+    ?DRV:close(Server),
+    Last.
+
 
 %% ------------------------------------------------------------------
 %% Transations tests

@@ -51,8 +51,8 @@ preprocess_hof(Name2Prefix, Name2Slot) ->
 %% @doc Build a binary from a list of parts.
 enc([], Bin) -> append_stop(Bin);
 
-enc([#x_stemmer{language = Language}|T], Bin) ->
-    enc(T, append_stemmer(Language, Bin));
+enc([#x_stemmer{}=Stemmer|T], Bin) ->
+    enc(T, append_stemmer(Stemmer, Bin));
 
 enc([#x_data{value = Value}|T], Bin) ->
     enc(T, append_data(Value, Bin));
@@ -74,8 +74,9 @@ append_stop(Bin) ->
     append_type(stop, Bin).
 
 
-append_stemmer(Language, Bin) ->
-    append_iolist(Language, append_type(stemmer, Bin)).
+append_stemmer(Stemmer, Bin) ->
+    xapian_encode:append_stemmer(Stemmer, append_type(stemmer, Bin)).
+
 
 
 append_data(Value, Bin) ->

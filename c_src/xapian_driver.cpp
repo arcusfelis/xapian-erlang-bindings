@@ -214,6 +214,10 @@ class ParamDecoder
         return READ_TYPE(uint8_t);
     }
 
+    operator bool() {
+        return READ_TYPE(uint8_t);
+    }
+
     /**
      * Decodes <<Num:32/native-signed-integer>>
      */
@@ -229,6 +233,12 @@ class ParamDecoder
         return READ_TYPE(uint32_t);
     }
 
+
+    operator const Xapian::Stem()
+    {
+        const string&   language = *this;
+        return Xapian::Stem(language);
+    }
 };
 
 
@@ -504,9 +514,13 @@ ResultEncoder::operator size_t() {
 
 class XapianErlangDriver 
 {
-    Xapian::Database* m_db;
-    Xapian::WritableDatabase* m_wdb;
+    Xapian::Database* mp_db;
+    Xapian::WritableDatabase* mp_wdb;
+    const Xapian::Stem* mp_default_stemmer;
+
     ResultEncoder m_result;
+    Xapian::QueryParser m_default_parser;
+    Xapian::QueryParser m_empty_parser;
 
 
     public:
@@ -522,7 +536,9 @@ class XapianErlangDriver
         START_TRANSACTION           = 5,
         CANCEL_TRANSACTION          = 6,
         COMMIT_TRANSACTION          = 7,
-        QUERY_PAGE                  = 8
+        QUERY_PAGE                  = 8,
+        SET_DEFAULT_STEMMER         = 9,
+        SET_DEFAULT_PREFIXES        = 10
     };
 
     // Error prefix tags.
@@ -577,8 +593,39 @@ class XapianErlangDriver
         QUERY_GROUP                 = 1,
         QUERY_VALUE                 = 2,
         QUERY_VALUE_RANGE           = 3,
-        QUERY_TERM                  = 4
+        QUERY_TERM                  = 4,
+        QUERY_PARSER                = 5
     };
+
+    
+    enum queryParserCommand {
+        QP_STEMMER                  = 1,
+        QP_STEMMING_STRATEGY        = 2,
+        QP_MAX_WILDCARD_EXPANSION   = 3,
+        QP_DEFAULT_OP               = 4,
+        QP_PARSER_TYPE              = 5,
+        QP_PREFIX                   = 6
+    };
+
+    
+    enum queryParserType {
+        QP_TYPE_DEFAULT             = 0,
+        QP_TYPE_EMPTY               = 1
+    };
+
+    static const unsigned
+    PARSER_FEATURES[];
+
+    static const uint8_t
+    PARSER_FEATURE_COUNT;
+    
+
+
+    static const uint8_t
+    STEM_STRATEGY_COUNT;
+
+    static const Xapian::QueryParser::stem_strategy
+    STEM_STRATEGIES[];
 
 
     /**
@@ -623,16 +670,50 @@ class XapianErlangDriver
         return &m_result;
     }
 
+    /**
+     * A constructor
+     */
     XapianErlangDriver()
     {
-        m_db = NULL;
-        m_wdb = NULL;
+        mp_db = NULL;
+        mp_wdb = NULL;
+        mp_default_stemmer = NULL;
     }
 
     ~XapianErlangDriver()
     {
-        if (m_db != NULL) 
-            delete m_db;
+        if (mp_db != NULL) 
+            delete mp_db;
+
+        if (mp_default_stemmer != NULL)
+            delete mp_default_stemmer;
+    }
+
+    void setDefaultStemmer(const Xapian::Stem* stemmer)
+    {
+        if (mp_default_stemmer != NULL)
+            delete mp_default_stemmer;
+
+        mp_default_stemmer = stemmer;
+        m_default_parser.set_stemmer(*mp_default_stemmer);
+    }
+
+
+    size_t setDefaultStemmer(ParamDecoder& params)
+    {
+        const Xapian::Stem&  stemmer = params;
+        setDefaultStemmer(new Xapian::Stem(stemmer));
+        return m_result;
+    }
+
+    size_t setDefaultPrefixes(ParamDecoder& params)
+    {
+        const uint32_t count   = params;
+        for (uint32_t i = 0; i < count; i++)
+        {
+            addPrefix(m_default_parser, params);
+        }
+        return m_result;
     }
 
 
@@ -642,7 +723,7 @@ class XapianErlangDriver
     {
         //Xapian::docid get_lastdocid() const
         const Xapian::docid 
-        docid = m_db->get_lastdocid();
+        docid = mp_db->get_lastdocid();
         m_result << static_cast<uint32_t>(docid);
         return m_result;
     }
@@ -653,7 +734,7 @@ class XapianErlangDriver
         Xapian::Document doc;
         applyDocument(params, doc);
         const Xapian::docid
-        docid = m_wdb->add_document(doc);
+        docid = mp_wdb->add_document(doc);
         m_result << static_cast<uint32_t>(docid);
         return m_result;
     }
@@ -673,7 +754,7 @@ class XapianErlangDriver
         const uint32_t pagesize = params;
 
         // Use an Enquire object on the database to run the query.
-        Xapian::Enquire enquire(*m_db);
+        Xapian::Enquire enquire(*mp_db);
         Xapian::Query   query = buildQuery(params);
         enquire.set_query(query);
          
@@ -687,7 +768,7 @@ class XapianErlangDriver
         m_result << static_cast<uint32_t>(count);
 
         for (Xapian::MSetIterator m = mset.begin(); m != mset.end(); ++m) {
-            Xapian::docid did = *m;
+          //Xapian::docid did = *m;
             Xapian::Document doc = m.get_document();
             retrieveDocument(params, doc, &m);
         }
@@ -710,35 +791,35 @@ class XapianErlangDriver
      */
     void assertWriteable() const
     {
-        if (m_wdb == NULL)
+        if (mp_wdb == NULL)
             throw NotWritableDatabaseError();
     }
 
     size_t startTransaction()
     {
         assertWriteable();
-        m_wdb->begin_transaction();
+        mp_wdb->begin_transaction();
         return m_result;
     }
 
     size_t cancelTransaction()
     {
         assertWriteable();
-        m_wdb->cancel_transaction();
+        mp_wdb->cancel_transaction();
         return m_result;
     }
 
     size_t commitTransaction()
     {
         assertWriteable();
-        m_wdb->commit_transaction();
+        mp_wdb->commit_transaction();
         return m_result;
     }
 
     size_t getDocumentById(ParamDecoder& params)
     {
         const Xapian::docid docid = params;
-        Xapian::Document doc = m_db->get_document(docid);
+        Xapian::Document doc = mp_db->get_document(docid);
         retrieveDocument(params, doc, NULL);
         return m_result;
     }
@@ -775,6 +856,82 @@ class XapianErlangDriver
         throw MemoryAllocationDriverError(1000);
         return 0;
     }
+
+    static unsigned
+    idToParserFeature(uint8_t type)
+    {
+      if (type > PARSER_FEATURE_COUNT)
+        throw BadCommandDriverError(type);
+      return PARSER_FEATURES[type];
+    }
+
+    static unsigned 
+    decodeParserFeatureFlags(ParamDecoder& params)
+    {
+        unsigned flags = 0;
+        while (const uint8_t type = params)
+        {
+            flags |= idToParserFeature(type);
+        }
+        return flags;
+    }
+
+    static Xapian::QueryParser::stem_strategy
+    readStemmingStrategy(ParamDecoder& params)
+    {
+      const uint8_t type = params;
+      if (type > STEM_STRATEGY_COUNT)
+        throw BadCommandDriverError(type);
+      return STEM_STRATEGIES[type];
+    }
+
+    Xapian::QueryParser
+    readParser(ParamDecoder& params);
+
+    Xapian::QueryParser 
+    selectParser(ParamDecoder& params);
+
+    
+    void addPrefix(Xapian::QueryParser& qp, ParamDecoder& params)
+    {
+        const string&           field          = params;
+        const string&           prefix         = params;
+        const bool              is_boolean     = params;
+        const bool              is_exclusive   = params;
+
+        if (is_boolean)
+            qp.add_boolean_prefix(field, prefix, is_exclusive);
+        else
+            qp.add_prefix(field, prefix);
+    }
+};
+
+
+
+const uint8_t XapianErlangDriver::PARSER_FEATURE_COUNT = 13;
+const unsigned 
+XapianErlangDriver::PARSER_FEATURES[PARSER_FEATURE_COUNT] = {
+        0,
+    /*  1 */ Xapian::QueryParser::FLAG_BOOLEAN,
+    /*  2 */ Xapian::QueryParser::FLAG_PHRASE,
+    /*  3 */ Xapian::QueryParser::FLAG_LOVEHATE,
+    /*  4 */ Xapian::QueryParser::FLAG_BOOLEAN_ANY_CASE,
+    /*  5 */ Xapian::QueryParser::FLAG_WILDCARD,
+    /*  6 */ Xapian::QueryParser::FLAG_PURE_NOT,
+    /*  7 */ Xapian::QueryParser::FLAG_PARTIAL,
+    /*  8 */ Xapian::QueryParser::FLAG_SPELLING_CORRECTION,
+    /*  9 */ Xapian::QueryParser::FLAG_SYNONYM,
+    /* 10 */ Xapian::QueryParser::FLAG_AUTO_SYNONYMS,
+    /* 11 */ Xapian::QueryParser::FLAG_AUTO_MULTIWORD_SYNONYMS,
+    /* 12 */ Xapian::QueryParser::FLAG_DEFAULT
+};
+
+const uint8_t XapianErlangDriver::STEM_STRATEGY_COUNT = 3;
+const Xapian::QueryParser::stem_strategy
+XapianErlangDriver::STEM_STRATEGIES[STEM_STRATEGY_COUNT] = {
+    /*  0 */ Xapian::QueryParser::STEM_NONE, // default
+    /*  1 */ Xapian::QueryParser::STEM_SOME,
+    /*  2 */ Xapian::QueryParser::STEM_ALL
 };
 
 
@@ -842,9 +999,103 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
             return q;
         }
 
+        case QUERY_PARSER:
+        {
+            Xapian::QueryParser parser    = readParser(params);
+            const string&  query_string   = params;
+            const string&  default_prefix = params;
+            const unsigned flags          = decodeParserFeatureFlags(params); 
+
+            Xapian::Query q = 
+            parser.parse_query(
+                query_string, 
+                flags, 
+                default_prefix);
+            return q;
+        }
+
         default:
             throw BadCommandDriverError(type);
     }
+}
+
+Xapian::QueryParser 
+XapianErlangDriver::selectParser(ParamDecoder& params)
+{
+    uint8_t type = params;
+    switch (type)
+    {
+    case QP_TYPE_DEFAULT:
+        return m_default_parser;
+
+    case QP_TYPE_EMPTY:
+        return m_empty_parser;
+
+    default:
+        throw BadCommandDriverError(type);
+    }
+}
+
+
+Xapian::QueryParser 
+XapianErlangDriver::readParser(ParamDecoder& params)
+{
+  uint8_t command = params;
+  // No parameters?
+  // DEFAULT_PARSER_CHECK_MARK -- mark for Erlang
+  if (!command)
+    return m_default_parser;
+ 
+  // Clone parser
+  Xapian::QueryParser qp = m_default_parser;
+  do
+  {
+    switch (command)
+    {
+    case QP_PARSER_TYPE: 
+        qp = selectParser(params);
+        break; 
+
+    case QP_STEMMER: 
+        {
+        const Xapian::Stem&  stemmer = params;
+        qp.set_stemmer(stemmer);
+        break; 
+        }
+
+    case QP_STEMMING_STRATEGY: 
+        {
+        Xapian::QueryParser::stem_strategy 
+        strategy = readStemmingStrategy(params);
+        qp.set_stemming_strategy(strategy);
+        break;
+        }
+
+    case QP_MAX_WILDCARD_EXPANSION:
+        {
+        const uint32_t   limit = params;
+        qp.set_max_wildcard_expansion(static_cast<Xapian::termcount>(limit));
+        break;
+        }
+
+    case QP_DEFAULT_OP:
+        {
+        const uint8_t     default_op    = params;
+        qp.set_default_op(static_cast<Xapian::Query::op>(default_op));
+        break;
+        }
+
+    case QP_PREFIX:
+        addPrefix(qp, params);
+        break;
+
+    default:
+        throw BadCommandDriverError(command);
+    }
+  } while((command = params)); // yes, it's an assignment [-Wparentheses]
+  // warning: suggest parentheses around assignment used as truth value
+
+  return qp;
 }
 
 
@@ -899,6 +1150,15 @@ XapianErlangDriver::control(
 
         case QUERY_PAGE:
             return drv.query(params);
+
+        case SET_DEFAULT_STEMMER:
+            return drv.setDefaultStemmer(params);
+
+        case SET_DEFAULT_PREFIXES:
+            return drv.setDefaultPrefixes(params);
+
+        default:
+            throw BadCommandDriverError(command);
         }
     }
     catch (DriverRuntimeError& e) 
@@ -927,42 +1187,44 @@ size_t
 XapianErlangDriver::open(const string& dbpath, int8_t mode)
 {
     // Is already opened?
-    if (m_db != NULL)
+    if (mp_db != NULL)
         throw DbAlreadyOpenedDriverError();
 
     switch(mode) {
         // Open readOnly db
         case READ_OPEN:
-            m_db = new Xapian::Database(dbpath);
+            mp_db = new Xapian::Database(dbpath);
             break;
 
         // open for read/write; create if no db exists
         case WRITE_CREATE_OR_OPEN:
-            m_db = m_wdb = new Xapian::WritableDatabase(dbpath, 
+            mp_db = mp_wdb = new Xapian::WritableDatabase(dbpath, 
                 Xapian::DB_CREATE_OR_OPEN);
             break;
 
         // create new database; fail if db exists
         case WRITE_CREATE:
-            m_db = m_wdb = new Xapian::WritableDatabase(dbpath, 
+            mp_db = mp_wdb = new Xapian::WritableDatabase(dbpath, 
                 Xapian::DB_CREATE);
             break;
 
         // overwrite existing db; create if none exists
         case WRITE_CREATE_OR_OVERWRITE:
-            m_db = m_wdb = new Xapian::WritableDatabase(dbpath, 
+            mp_db = mp_wdb = new Xapian::WritableDatabase(dbpath, 
                 Xapian::DB_CREATE_OR_OVERWRITE);
             break;
 
         // open for read/write; fail if no db exists
         case WRITE_OPEN:
-            m_db = m_wdb = new Xapian::WritableDatabase(dbpath, 
+            mp_db = mp_wdb = new Xapian::WritableDatabase(dbpath, 
                 Xapian::DB_OPEN);
             break;
 
         default:
             throw BadCommandDriverError(mode);
     }
+    m_default_parser.set_database(*mp_db);
+    m_empty_parser.set_database(*mp_db);
     return m_result;
 }
 
@@ -974,6 +1236,8 @@ XapianErlangDriver::applyDocument(
 {
     Xapian::TermGenerator   termGenerator;
     termGenerator.set_document(doc);
+    if (mp_default_stemmer != NULL)
+        termGenerator.set_stemmer(*mp_default_stemmer);
 
     while (const int8_t command = params)
     /* Do, while command != stop != 0 */
@@ -983,8 +1247,8 @@ XapianErlangDriver::applyDocument(
             case STEMMER:
             {
                 // see xapian_document:append_stemmer
-                const string&   language = params;
-                termGenerator.set_stemmer(Xapian::Stem(language));
+                const Xapian::Stem&  stemmer = params;
+                termGenerator.set_stemmer(stemmer);
                 break;
             }
 
