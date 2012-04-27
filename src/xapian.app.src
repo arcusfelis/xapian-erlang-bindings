@@ -8,5 +8,6 @@
                   stdlib
                  ]},
   {mod, { xapian_app, []}},
+  {registered, [xapian_sup]},
   {env, []}
  ]}.

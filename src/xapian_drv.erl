@@ -1,3 +1,4 @@
+%% This module is a `gen_server' that handles a single port connection.
 -module(xapian_drv).
 -behaviour(gen_server).
 
@@ -44,7 +45,8 @@
 
 %% For writable DB
 -export([add_document/2,
-         transaction/3]).
+         transaction/3,
+         transaction/2]).
 
 %% Queries
 -export([query_page/5]).
@@ -83,7 +85,14 @@
 open(Path, Params) ->
     load_driver(),
     Args = [Path, Params],
-    gen_server:start_link(?MODULE, Args, []).
+    case proplists:get_value(name, Params) of
+        undefined ->
+            gen_server:start_link(?MODULE, Args, []);
+        A when is_atom(A) ->
+            gen_server:start_link({local, A}, ?MODULE, Args, []);
+        Name ->
+            gen_server:start_link(Name, ?MODULE, Args, [])
+    end.
 
 
 last_document_id(Server) ->
@@ -133,6 +142,10 @@ run_test(Server, TestName, Params) ->
 %% ------------------------------------------------------------------
 
 
+transaction(Servers, F) ->
+    transaction(Servers, F, 5000).
+
+
 %% @doc Runs function `F' for writable `Servers' as a transaction.
 %%      Transaction will stop other operations with selected databases.
 %%
@@ -144,7 +157,7 @@ run_test(Server, TestName, Params) ->
 %%  F([TransServer1, TransServer2, TransServer3]).
 %% '''
 %%
-%% Results from a server:
+%% Results (`#x_transaction_result.statuses') from a server:
 %%
 %% * `committed' - A transaction was pass on this server. Data is consistent;
 %% * `aborted' - A transaction was canceled on this server. Data is consistent;
@@ -152,7 +165,9 @@ run_test(Server, TestName, Params) ->
 %% 
 %% If one of the servers crashed during transaction, the transaction process 
 %% will be killed using `cancel_transaction' with reason `crashed_server'.
--spec transaction([x_server()], x_transaction(), timeout()) -> term().
+-spec transaction([x_server()], x_transaction(), timeout()) -> 
+    #x_transaction_result{}.
+
 transaction(Servers, F, Timeout) ->
     Ref = make_ref(),
     TransServers = 
@@ -722,6 +737,16 @@ simple_test() ->
     ?DRV:close(Server),
     Last.
 
+reopen_test() ->
+    % Open test
+    Path = testdb_path(simple),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    ?DRV:close(Server),
+
+    {ok, ReadOnlyServer} = ?DRV:open(Path, []),
+    ?DRV:close(ReadOnlyServer).
+
 -record(stemmer_test_record, {docid, data}).
 
 stemmer_test() ->
@@ -734,6 +759,9 @@ stemmer_test() ->
     Document =
         [ #x_data{value = "My test data as iolist (NOT INDEXED)"} 
         , #x_text{value = "Return a list of available languages."} 
+        , #x_text{value = "And filter it."} 
+        , #x_delta{position=300}
+        , #x_text{value = "And other string is here."} 
         , #x_text{value = <<"Michael">>, prefix = author} 
         ],
     %% Test a term generator
@@ -747,17 +775,28 @@ stemmer_test() ->
     Meta = xapian_record:record(stemmer_test_record, 
         record_info(fields, stemmer_test_record)),
 
-    Query1   = #x_query_string{string="return AND list"},
-    Query2   = #x_query_string{string="author:michael"},
-    Query3   = #x_query_string{string="author:olly list"},
-    Query4   = #x_query_string{string="author:Michael"},
+    Q0 = #x_query_string{string="return"},
+    Q1 = #x_query_string{string="return AND list"},
+    Q2 = #x_query_string{string="author:michael"},
+    Q3 = #x_query_string{string="author:olly list"},
+    Q4 = #x_query_string{string="author:Michael"},
+    Q5 = #x_query_string{string="retur*", features=[default, wildcard]},
+    Q6 = #x_query_string{string="other AND Return"},
+    Q7 = #x_query_string{string="list NEAR here"},
+    Q8 = #x_query_string{string="list NEAR filter"},
 
     F = fun(Query) ->
         RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
-        io:format(user, "~n~p~n", [RecList])
+        io:format(user, "~n~p~n", [RecList]),
+        RecList
         end,
 
-    lists:map(F, [Query1, Query2, Query3, Query4]),
+    Qs =
+    [Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8],
+    [R0, R1, R2, R3, R4, R5, R6, R7, R8] = 
+    lists:map(F, Qs),
+    ?assertEqual(R7, []),
+    ?assertEqual(R8, R0),
     
     ?DRV:close(Server),
     Last.

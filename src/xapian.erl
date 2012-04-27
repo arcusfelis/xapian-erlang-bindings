@@ -1,4 +1,6 @@
 -module(xapian).
+-export([start/0]).
+
 -export_type([
     x_string/0, 
     x_slot_name/0, 
@@ -10,6 +12,10 @@
     x_transaction/0]).
 
 -include_lib("xapian/include/xapian.hrl").
+
+
+start() ->
+    application:start(xapian).
 
 
 -type x_string()        :: binary().

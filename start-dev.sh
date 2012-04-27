@@ -7,6 +7,6 @@ make
 exec erl -pa $PWD/ebin edit $PWD/deps/*/ebin \
     -boot start_sasl \
     -sname xapian \
-#   -s xapian
+    -s xapian
 #   -s reloader
 
