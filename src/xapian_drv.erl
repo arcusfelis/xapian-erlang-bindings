@@ -75,11 +75,16 @@
 %%
 %% * Modes: read, write, overwrite, create, open
 %% * Names for values and for prefixes:
-%%      #x_value_name{slot = 1, name = slotname} 
-%%      #x_prefix_name{name = author, prefix = <<$A>>}
+%%      `#x_value_name{slot = 1, name = slotname}'
+%%      `#x_prefix_name{name = author, prefix = <<$A>>}'
 %% * The default stemmer. It will be used in `TermGenerator' and in the 
 %%      `default_query_parser':
-%%      #x_stemmer{language="english"}
+%%      `#x_stemmer{language="english"}'
+%%
+%% The `read' mode is only for reading. 
+%% The `write' mode is for reading and for writing.
+%% Write mode can be combined with:
+%% `open' (default), `create', `overwrite'.
 -spec open(term(), [term()]) -> {ok, x_server()}.
 
 open(Path, Params) ->
@@ -511,7 +516,6 @@ open_mode(Params) ->
     true -> open_write_mode(Params);
     false -> read_open
     end.
-
 
 %% Default mode is open.
 open_write_mode(Params) -> 

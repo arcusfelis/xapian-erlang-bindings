@@ -34,7 +34,7 @@ A pool of readers
 
 ```
 Path = filename:join([code:priv_dir(xapian), test_db, simple]).
-xapian_pool:open([{name, simple}], Path, []).
+{ok, Pid} = xapian_pool:open([{name, simple}], Path, []).
 result = xapian_pool:checkout([simple], fun([Server]) -> io:write(Server), result end).
 ```
 
@@ -43,7 +43,7 @@ There is only one writer for each database, so there is no a writer pool.
 You can use a named process and a supervisor instead:
 
 ```
-xapian_drv:open(Path, [{name, simple_writer}, write]).
+{ok, Pid} = xapian_drv:open(Path, [{name, simple_writer}, write]).
 xapian_drv:add_document(simple_writer, [#x_text{value = "Paragraph 1"}]).
 ```
 
