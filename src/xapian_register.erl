@@ -3,6 +3,7 @@
 -export([
     new/0,
     put/3,
+    get/2,
     erase/2]).
 
 new() ->
@@ -26,3 +27,11 @@ erase(Store, Ref) ->
         {error, elem_not_found}
     end.
         
+get(Store, Ref) ->
+    case gb_trees:is_defined(Ref, Store) of
+    true ->
+        Elem = gb_trees:get(Ref, Store),
+        {ok, Elem};
+    false ->
+        {error, elem_not_found}
+    end.

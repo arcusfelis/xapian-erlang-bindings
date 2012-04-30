@@ -621,9 +621,10 @@ class XapianErlangDriver
     Xapian::QueryParser m_default_parser;
     Xapian::QueryParser m_empty_parser;
     ObjectRegister<Xapian::Enquire> m_enquire_store;
+    ObjectRegister<Xapian::MSet>    m_mset_store;
 
     
-    const static uint8_t m_stores_count = 1;
+    const static uint8_t m_stores_count = 2;
     ObjectBaseRegister* m_stores[m_stores_count];
 
 
@@ -644,7 +645,8 @@ class XapianErlangDriver
         SET_DEFAULT_STEMMER         = 9,
         SET_DEFAULT_PREFIXES        = 10,
         ENQUIRE                     = 11,
-        RELEASE_RESOURCE            = 12
+        RELEASE_RESOURCE            = 12,
+        MATCH_SET                   = 13
     };
 
     // Error prefix tags.
@@ -784,7 +786,9 @@ class XapianErlangDriver
         mp_db = NULL;
         mp_wdb = NULL;
         mp_default_stemmer = NULL;
+        // RESOURCE_TYPE_ID_MARK
         m_stores[0] = &m_enquire_store;
+        m_stores[1] = &m_mset_store;
     }
 
     ~XapianErlangDriver()
@@ -828,7 +832,7 @@ class XapianErlangDriver
     {
         if (type > m_stores_count)
           throw BadCommandDriverError(type);
-        return * m_stores[type];
+        return * (m_stores[type]);
     }
 
 
@@ -899,11 +903,11 @@ class XapianErlangDriver
     size_t enquire(ParamDecoder& params)
     {
         // Use an Enquire object on the database to run the query.
-        Xapian::Enquire* enquire = new Xapian::Enquire(*mp_db);
+        Xapian::Enquire* p_enquire = new Xapian::Enquire(*mp_db);
         Xapian::Query   query = buildQuery(params);
-        enquire->set_query(query);
+        p_enquire->set_query(query);
 
-        uint32_t num = m_enquire_store.put(enquire);
+        uint32_t num = m_enquire_store.put(p_enquire);
         m_result << num;
 
         return m_result;
@@ -922,6 +926,27 @@ class XapianErlangDriver
 
         return m_result;
     }
+
+    /**
+     * Converts an enquire into a match set
+     */
+    size_t matchSet(ParamDecoder& params)
+    {
+        uint32_t   mset_num = params;
+        Xapian::Enquire enquire = *m_enquire_store.get(mset_num);
+
+        Xapian::doccount    first    = 0;
+        Xapian::doccount    maxitems =  mp_db->get_doccount();
+        Xapian::MSet mset = enquire.get_mset(
+            first, 
+            maxitems);
+
+        uint32_t num = m_mset_store.put(new Xapian::MSet(mset));
+        m_result << num;
+
+        return m_result;
+    }
+
 
     /** 
      * Gets a copy of params.
@@ -1310,6 +1335,9 @@ XapianErlangDriver::control(
 
         case RELEASE_RESOURCE:
             return drv.releaseResource(params);
+
+        case MATCH_SET:
+            return drv.matchSet(params);
 
         default:
             throw BadCommandDriverError(command);

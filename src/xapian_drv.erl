@@ -71,6 +71,9 @@
 %% Resources
 -export([release_resource/2]).
 
+%% Match set (M-set)
+-export([match_set/2]).
+
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -157,6 +160,11 @@ query_page(Server, Offset, PageSize, Query, RecordMetaDefinition) ->
 -spec enquire(x_server(), x_query()) -> x_resource().
 enquire(Server, Query) ->
     call(Server, {enquire, Query}).
+
+
+match_set(Server, EnquireResource) ->
+    call(Server, {match_set, EnquireResource}).
+
 
 %% @doc Release resources.
 -spec release_resource(x_server(), x_resource()) -> void().
@@ -463,6 +471,26 @@ handle_call({enquire, Query}, {FromPid, FromRef}, State) ->
             {reply, {ok, Ref}, NewState}
     end;
 
+handle_call({match_set, EnquireRef}, {FromPid, FromRef}, State) ->
+    #state{ 
+        port = Port, 
+        register = Register } = State,
+    do([error_m ||
+        #resource{type=enquire, number=EnquireNum} 
+            <- xapian_register:get(Register, EnquireRef),
+
+        MSetNum <-
+            port_match_set(Port, EnquireNum),
+
+        begin
+            MSetElem = #resource{type=mset, number=MSetNum},
+            %% Reply is a reference
+            {ok, NewRegister, MSetRef} = 
+            xapian_register:put(Register, FromPid, MSetElem),
+            NewState = State#state{register = NewRegister},
+            {reply, {ok, MSetRef}, NewState}
+        end]);
+
 handle_call({release_resource, Ref}, _From, State) ->
     #state{ 
         port = Port, 
@@ -590,7 +618,8 @@ command_id(query_page)                  -> 8;
 command_id(set_default_stemmer)         -> 9;
 command_id(set_default_prefixes)        -> 10;
 command_id(enquire)                     -> 11;
-command_id(release_resource)            -> 12.
+command_id(release_resource)            -> 12;
+command_id(match_set)                   -> 13.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -600,7 +629,9 @@ open_mode_id(write_create_or_overwrite) -> 3;
 open_mode_id(write_open)                -> 4.
 
 
-resource_type_id(enquire) -> 0.
+%% RESOURCE_TYPE_ID_MARK
+resource_type_id(enquire) -> 0;
+resource_type_id(mset)    -> 1.
 
 
 test_id(result_encoder) -> 1;
@@ -733,6 +764,12 @@ port_enquire(Port, Query, Name2Slot) ->
     Bin@ = <<>>,
     Bin@ = xapian_query:encode(Query, Name2Slot, Bin@),
     decode_resource_result(control(Port, enquire, Bin@)).
+
+
+port_match_set(Port, MSetResourceNum) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint(MSetResourceNum, Bin@),
+    decode_resource_result(control(Port, match_set, Bin@)).
 
 
 port_release_resource(Port, ResourceType, ResourceNum) ->
@@ -1078,6 +1115,7 @@ query_page_test_() ->
 
     , fun enquire_case/1
     , fun resource_cleanup_on_process_down_case/1
+    , fun enquire_to_mset_case/1
     ],
     Server = query_page_setup(),
     %% One setup for each test
@@ -1189,6 +1227,18 @@ resource_cleanup_on_process_down_case(Server) ->
         end,
 
         ?assertError(elem_not_found, ?DRV:release_resource(Server, ResourceId))
+        end,
+    {"Simple enquire resource", Case}.
+
+
+enquire_to_mset_case(Server) ->
+    Case = fun() ->
+        Query = "erlang",
+        EnquireResourceId = ?DRV:enquire(Server, Query),
+        MSetResourceId = ?DRV:match_set(Server, EnquireResourceId),
+        io:format(user, "~n ~p ~p~n", [EnquireResourceId, MSetResourceId]),
+        ?DRV:release_resource(Server, EnquireResourceId),
+        ?DRV:release_resource(Server, MSetResourceId)
         end,
     {"Simple enquire resource", Case}.
 
