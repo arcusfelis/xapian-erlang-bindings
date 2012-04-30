@@ -12,6 +12,9 @@ cd xapian
 ./rebar compile
 ```
 
+Deps:
+libsparsehash-dev
+
 
 Tests
 =====

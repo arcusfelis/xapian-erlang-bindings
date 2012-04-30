@@ -21,11 +21,20 @@
 #include <assert.h>
 #include <stdexcept>
 
+
+#include <google/dense_hash_map>
+/* dirty code begin */
+#include HASH_FUN_H
+#define HASH_TPL SPARSEHASH_HASH
+/* dirty code end */
+
+
 /* For int32_t, uint8_t and so on. */
 #include <stdint.h>
 
-
 #include "erl_driver.h"
+
+
 
 /* Hack to handle R15 driver used with pre R15 driver */
 #if ERL_DRV_EXTENDED_MAJOR_VERSION == 1
@@ -151,6 +160,23 @@ class DbAlreadyOpenedDriverError: public DriverRuntimeError
         DriverRuntimeError(TYPE, "This port cannot open second DB. Use another port.") {}
 };
 
+class ElementNotFoundDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    ElementNotFoundDriverError(uint32_t num) : 
+        DriverRuntimeError(TYPE, buildString(num)) {}
+
+    static const string 
+    buildString(uint32_t num)
+    {
+        std::stringstream ss;
+        ss << "Element with number = " << num << " is not found.";
+        return ss.str();
+    }
+};
+
 
 
 REG_TYPE(MemoryAllocationDriverError)
@@ -158,6 +184,7 @@ REG_TYPE(BadCommandDriverError)
 REG_TYPE(OverflowDriverError)
 REG_TYPE(NotWritableDatabaseError)
 REG_TYPE(DbAlreadyOpenedDriverError)
+REG_TYPE(ElementNotFoundDriverError)
 
 
 // -------------------------------------------------------------------
@@ -506,7 +533,79 @@ ResultEncoder::operator size_t() {
     return m_result_len;
 }
 
+class ObjectBaseRegister
+{
+    protected:
+    typedef uint32_t Counter;
 
+    public:
+    virtual void
+    remove(Counter) = 0;
+};
+
+template <class Child>
+class ObjectRegister : public ObjectBaseRegister
+{
+    typedef 
+    google::dense_hash_map< uint32_t, Child*, HASH_TPL<uint32_t> > Hash;
+
+    /* Contains a number of the latest added object */
+    Counter m_counter;
+    Hash m_elements;
+    
+    public:
+    ObjectRegister()
+    {
+        m_elements.set_empty_key(0);
+        m_elements.set_deleted_key(1);
+        m_counter = 1;
+    }
+
+    Counter 
+    put(Child* obj)
+    {
+        m_counter++;
+        m_elements[m_counter] = obj;
+
+        return m_counter;
+    }
+
+    void
+    remove(Counter num)
+    {
+        typename Hash::iterator i; 
+        i = m_elements.find(num);
+
+        if (i == m_elements.end())
+            throw ElementNotFoundDriverError(num);
+
+        m_elements.erase(i);
+        delete i->second;
+    }
+
+    Child*
+    get(Counter num)
+    {
+        typename Hash::iterator i; 
+        i = m_elements.find(num);
+
+        if (i == m_elements.end())
+            throw ElementNotFoundDriverError(num);
+
+        return i->second;
+    }
+
+    ~ObjectRegister()
+    {
+        typename Hash::iterator i, e, b;
+        b = m_elements.begin();
+        e = m_elements.end();
+        for(i = b; i != e; i++)
+        {
+            delete i->second;
+        }
+    }
+};
 
 // -------------------------------------------------------------------
 // Main Driver Class
@@ -521,6 +620,11 @@ class XapianErlangDriver
     ResultEncoder m_result;
     Xapian::QueryParser m_default_parser;
     Xapian::QueryParser m_empty_parser;
+    ObjectRegister<Xapian::Enquire> m_enquire_store;
+
+    
+    const static uint8_t m_stores_count = 1;
+    ObjectBaseRegister* m_stores[m_stores_count];
 
 
     public:
@@ -538,7 +642,9 @@ class XapianErlangDriver
         COMMIT_TRANSACTION          = 7,
         QUERY_PAGE                  = 8,
         SET_DEFAULT_STEMMER         = 9,
-        SET_DEFAULT_PREFIXES        = 10
+        SET_DEFAULT_PREFIXES        = 10,
+        ENQUIRE                     = 11,
+        RELEASE_RESOURCE            = 12
     };
 
     // Error prefix tags.
@@ -678,6 +784,7 @@ class XapianErlangDriver
         mp_db = NULL;
         mp_wdb = NULL;
         mp_default_stemmer = NULL;
+        m_stores[0] = &m_enquire_store;
     }
 
     ~XapianErlangDriver()
@@ -716,6 +823,14 @@ class XapianErlangDriver
         return m_result;
     }
 
+    ObjectBaseRegister&
+    getRegisterByType(uint8_t type)
+    {
+        if (type > m_stores_count)
+          throw BadCommandDriverError(type);
+        return * m_stores[type];
+    }
+
 
     size_t open(const string& dbpath, int8_t mode);
 
@@ -747,6 +862,9 @@ class XapianErlangDriver
     void applyDocument(ParamDecoder& params, Xapian::Document& doc);
 
 
+    /**
+     * query_page
+     */
     size_t query(ParamDecoder& params)
     {
         /* offset, pagesize, query, template */
@@ -772,6 +890,36 @@ class XapianErlangDriver
             Xapian::Document doc = m.get_document();
             retrieveDocument(params, doc, &m);
         }
+        return m_result;
+    }
+
+    /**
+     * Return a resource 
+     */
+    size_t enquire(ParamDecoder& params)
+    {
+        // Use an Enquire object on the database to run the query.
+        Xapian::Enquire* enquire = new Xapian::Enquire(*mp_db);
+        Xapian::Query   query = buildQuery(params);
+        enquire->set_query(query);
+
+        uint32_t num = m_enquire_store.put(enquire);
+        m_result << num;
+
+        return m_result;
+    }
+
+    /**
+     * Erase stored object
+     */
+    size_t releaseResource(ParamDecoder& params)
+    {
+        uint8_t   type = params;
+        uint32_t   num = params;
+        ObjectBaseRegister&
+        reg = getRegisterByType(type);
+        reg.remove(num);
+
         return m_result;
     }
 
@@ -1156,6 +1304,12 @@ XapianErlangDriver::control(
 
         case SET_DEFAULT_PREFIXES:
             return drv.setDefaultPrefixes(params);
+
+        case ENQUIRE:
+            return drv.enquire(params);
+
+        case RELEASE_RESOURCE:
+            return drv.releaseResource(params);
 
         default:
             throw BadCommandDriverError(command);

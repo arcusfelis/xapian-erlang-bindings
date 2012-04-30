@@ -22,8 +22,24 @@
     %% Pid of the real server (used by a transaction).
     %% If the process will be terminated, then new owner of the port will 
     %% be master.
-    master
+    master,
+    register = xapian_register:new()
 }).
+
+-record(resource, {
+    type :: atom(), 
+    number :: non_neg_integer()
+}).
+
+
+-record('DOWN',
+{
+    ref,   %% monitor reference
+    type,  %% type of object 'process'
+    id,    %% object id (pid)
+    reason %% reason for termination
+}).
+
 
 -include_lib("xapian/include/xapian.hrl").
 
@@ -49,7 +65,11 @@
          transaction/2]).
 
 %% Queries
--export([query_page/5]).
+-export([query_page/5]). 
+-export([enquire/2]).
+
+%% Resources
+-export([release_resource/2]).
 
 
 %% ------------------------------------------------------------------
@@ -59,8 +79,13 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--type x_server() :: xapian:x_server().
--type x_transaction() :: xapian:x_transaction().
+-opaque x_server() :: xapian:x_server().
+-opaque x_transaction() :: xapian:x_transaction().
+-opaque x_query() :: xapian:x_query().
+-opaque x_resource() :: xapian:x_resource().
+-opaque x_record() :: xapian:x_record().
+-opaque x_meta() :: xapian:x_meta().
+-opaque void() :: 'VoiD'.
 
 
 
@@ -122,8 +147,21 @@ read_document(Server, DocId, RecordMetaDefinition) ->
 
 
 %% @doc Return a list of records.
+-spec query_page(x_server(), non_neg_integer(), non_neg_integer(), 
+        x_query(), x_meta()) -> [x_record()].
 query_page(Server, Offset, PageSize, Query, RecordMetaDefinition) ->
     call(Server, {query_page, Offset, PageSize, Query, RecordMetaDefinition}).
+
+
+%% @doc Return enquire.
+-spec enquire(x_server(), x_query()) -> x_resource().
+enquire(Server, Query) ->
+    call(Server, {enquire, Query}).
+
+%% @doc Release resources.
+-spec release_resource(x_server(), x_resource()) -> void().
+release_resource(Server, ResourceRef) ->
+    call(Server, {release_resource, ResourceRef}).
 
 
 %% ------------------------------------------------------------------
@@ -375,11 +413,15 @@ handle_call(last_document_id, _From, State) ->
     Reply = port_last_document_id(Port),
     {reply, Reply, State};
 
-handle_call(close, _From, State) ->
+handle_call(close, _From, State=#state{master=undefined}) ->
     #state{ port = Port } = State,
+    erlang:port_close(Port),
     Reply = ok,
     Reason = normal,
     {stop, Reason, Reply, State};
+
+handle_call(close, _From, State) ->
+    {stop, normal, ok, State};
 
 handle_call({add_document, Document}, _From, State) ->
     #state{ port = Port } = State,
@@ -402,6 +444,40 @@ handle_call({query_page, Offset, PageSize, Query, Meta}, _From, State) ->
     Reply = port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot),
     {reply, Reply, State};
 
+handle_call({enquire, Query}, {FromPid, FromRef}, State) ->
+    #state{ 
+        port = Port, 
+        name_to_slot = Name2Slot, 
+        register = Register } = State,
+
+    %% Special handling of errors
+    case port_enquire(Port, Query, Name2Slot) of
+        {error, _Reason} = Error ->
+            {reply, Error, State};
+        {ok, ResourceNum} ->
+            Elem = #resource{type=enquire, number=ResourceNum},
+            %% Reply is a reference
+            {ok, NewRegister, Ref} = 
+            xapian_register:put(Register, FromPid, Elem),
+            NewState = State#state{register = NewRegister},
+            {reply, {ok, Ref}, NewState}
+    end;
+
+handle_call({release_resource, Ref}, _From, State) ->
+    #state{ 
+        port = Port, 
+        register = Register } = State,
+    case xapian_register:erase(Register, Ref) of
+        {ok, NewRegister, Elem} ->
+            #resource{type=ResourceType, number=ResourceNum} = Elem,
+            Reply = port_release_resource(Port, ResourceType, ResourceNum),
+            NewState = State#state{register = NewRegister},
+            {reply, Reply, NewState};
+
+        {error, _Reason} = Error ->
+            {reply, Error, State}
+    end;
+    
 handle_call({transaction, Ref}, From, State) ->
     #state{ port = Port } = State,
     {FromPid, FromRef} = From,
@@ -443,8 +519,24 @@ handle_call({transaction, Ref}, From, State) ->
 handle_cast(_, State) ->
     {noreply, State}.
 
-handle_info(_Info, State) ->
-    {noreply, State}.
+
+handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
+    #state{ 
+        port = Port, 
+        register = Register } = State,
+    case xapian_register:erase(Register, Ref) of
+        {ok, NewRegister, Elem} ->
+            #resource{type=ResourceType, number=ResourceNum} = Elem,
+            %% TODO: handle a return value
+            port_release_resource(Port, ResourceType, ResourceNum),
+            NewState = State#state{register = NewRegister},
+            {noreply, NewState};
+
+        {error, _Reason} = Error ->
+           {noreply, State}
+    end.
+
+
 
 terminate(_Reason, State = #state{master = undefined}) ->
     ok;
@@ -496,7 +588,9 @@ command_id(cancel_transaction)          -> 6;
 command_id(commit_transaction)          -> 7;
 command_id(query_page)                  -> 8;
 command_id(set_default_stemmer)         -> 9;
-command_id(set_default_prefixes)        -> 10.
+command_id(set_default_prefixes)        -> 10;
+command_id(enquire)                     -> 11;
+command_id(release_resource)            -> 12.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -505,6 +599,8 @@ open_mode_id(write_create)              -> 2;
 open_mode_id(write_create_or_overwrite) -> 3;
 open_mode_id(write_open)                -> 4.
 
+
+resource_type_id(enquire) -> 0.
 
 
 test_id(result_encoder) -> 1;
@@ -633,6 +729,18 @@ port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot) ->
     decode_records_result(control(Port, query_page, Bin@), Meta).
 
 
+port_enquire(Port, Query, Name2Slot) ->
+    Bin@ = <<>>,
+    Bin@ = xapian_query:encode(Query, Name2Slot, Bin@),
+    decode_resource_result(control(Port, enquire, Bin@)).
+
+
+port_release_resource(Port, ResourceType, ResourceNum) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint8(resource_type_id(ResourceType), Bin@),
+    Bin@ = append_uint(ResourceNum, Bin@),
+    control(Port, release_resource, Bin@).
+
 
 %% -----------------------------------------------------------------
 %% Helpers
@@ -645,6 +753,9 @@ read_string(Bin) ->
 
 append_uint(Value, Bin) ->
     <<Bin/binary, Value:32/native-unsigned-integer>>.
+
+append_uint8(Value, Bin) ->
+    <<Bin/binary, Value:8/native-unsigned-integer>>.
 
 
 decode_record_result({ok, Bin}, Meta) ->
@@ -669,6 +780,13 @@ decode_docid_result({ok, <<?DOCUMENT_ID(Last)>>}) ->
     {ok, Last};
 
 decode_docid_result(Other) -> 
+    Other.
+
+
+decode_resource_result({ok, <<Id:32/native-unsigned-integer>>}) -> 
+    {ok, Id};
+
+decode_resource_result(Other) -> 
     Other.
 
 
@@ -952,14 +1070,22 @@ read_bad_docid_test() ->
 -record(book_ext, {docid, author, title, data,   rank, weight, percent}).
 
 query_page_test_() ->
-    {foreach,
-    fun query_page_setup/0,
-    fun query_page_clean/1,
+    Cases = 
     [ fun single_term_query_page_case/1
     , fun value_range_query_page_case/1
     , fun double_terms_or_query_page_case/1
     , fun special_fields_query_page_case/1
-    ]}.
+
+    , fun enquire_case/1
+    , fun resource_cleanup_on_process_down_case/1
+    ],
+    Server = query_page_setup(),
+    %% One setup for each test
+    {setup, 
+        fun() -> Server end, 
+        fun query_page_clean/1,
+        [Case(Server) || Case <- Cases]}.
+    
 
 query_page_setup() ->
     % Open test
@@ -1035,6 +1161,36 @@ special_fields_query_page_case(Server) ->
         end,
     {"erlang (with rank, weight, percent)", Case}.
 
+
+enquire_case(Server) ->
+    Case = fun() ->
+        Query = "erlang",
+        ResourceId = ?DRV:enquire(Server, Query),
+        io:format(user, "~n~p~n", [ResourceId]),
+        ?DRV:release_resource(Server, ResourceId)
+        end,
+    {"Simple enquire resource", Case}.
+
+
+resource_cleanup_on_process_down_case(Server) ->
+    Case = fun() ->
+        Home = self(),
+        Ref = make_ref(),
+        spawn_link(fun() ->
+                Query = "erlang",
+                ResourceId = ?DRV:enquire(Server, Query),
+                Home ! {resource_id, Ref, ResourceId}
+                end),
+
+        ResourceId = 
+        receive
+            {resource_id, Ref, ResourceId} ->
+                ResourceId
+        end,
+
+        ?assertError(elem_not_found, ?DRV:release_resource(Server, ResourceId))
+        end,
+    {"Simple enquire resource", Case}.
 
 -endif.
 

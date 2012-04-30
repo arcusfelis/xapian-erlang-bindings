@@ -9,7 +9,10 @@
 
 -export_type([
     x_server/0,
-    x_transaction/0]).
+    x_transaction/0,
+    x_resource/0,
+    x_meta/0,
+    x_record/0]).
 
 -include_lib("xapian/include/xapian.hrl").
 
@@ -42,4 +45,10 @@ start() ->
 -type x_query() :: #x_query{} 
     | #x_query_value{} 
     | #x_query_value_range{} 
-    | #x_query_term{}.
+    | #x_query_term{}
+    | #x_query_string{}.
+
+-type x_resource() :: reference().
+-type x_record() :: tuple().
+-type x_meta() :: [atom()].
+
