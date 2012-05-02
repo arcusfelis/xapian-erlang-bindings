@@ -1,6 +1,7 @@
 %% It contains helpers for extracting.
 -module(xapian_record).
 -export([record/2, encode/2, encode/3, decode/2, decode_list/2]).
+-export([key_position/1]).
 
 -compile({parse_transform, seqbind}).
 -record(rec, {name, fields}).
@@ -18,6 +19,10 @@
 %% * percent
 record(TupleName, TupleFields) ->
     #rec{name=TupleName, fields=TupleFields}.
+
+
+key_position(#rec{fields=TupleFields}) ->
+    index_of(docid, TupleFields).
 
 
 %% Creates tuples {Name, Field1, ....}
@@ -142,3 +147,10 @@ read_percent(Bin) ->
 read_doccount(Bin) ->
     <<Count:32/native-unsigned-integer, Bin2/binary>> = Bin,  
     {Count, Bin2}.
+
+
+index_of(Item, List) -> index_of(Item, List, 1).
+
+index_of(_, [], _)  -> not_found;
+index_of(Item, [Item|_], Index) -> Index;
+index_of(Item, [_|Tl], Index) -> index_of(Item, Tl, Index+1).

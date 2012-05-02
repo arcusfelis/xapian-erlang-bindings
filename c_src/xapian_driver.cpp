@@ -32,6 +32,9 @@
 /* For int32_t, uint8_t and so on. */
 #include <stdint.h>
 
+/* For min */
+#include <algorithm>
+
 #include "erl_driver.h"
 
 
@@ -187,6 +190,7 @@ REG_TYPE(DbAlreadyOpenedDriverError)
 REG_TYPE(ElementNotFoundDriverError)
 
 
+
 // -------------------------------------------------------------------
 // Decoder of the parameters from erlang's calls
 // -------------------------------------------------------------------
@@ -265,6 +269,56 @@ class ParamDecoder
     {
         const string&   language = *this;
         return Xapian::Stem(language);
+    }
+
+    char* currentPosition()
+    {
+        return m_buf;
+    }
+};
+
+
+/**
+ * This object is for storing a paramDecoder buffer as a resource
+ */    
+class ParamDecoderController
+{
+    char *m_buf; 
+    size_t m_len;
+
+    void init(const char *buf, const size_t len)
+    {
+        m_len = len;
+        m_buf = static_cast<char*>( driver_alloc(len) );
+        if (m_buf == NULL)
+            throw MemoryAllocationDriverError(len);
+
+        // Copy data into a buffer 
+        // From buf into m_buf
+        memcpy(m_buf, buf, len);
+    }
+
+    public:
+    /**
+     * Constructor
+     */
+    ParamDecoderController(const char *buf, const size_t len)
+    {
+        init(buf, len);
+    }
+
+    ParamDecoderController(const ParamDecoderController& prototype)
+    {
+        init(prototype.m_buf, prototype.m_len);
+    }
+
+    ~ParamDecoderController()
+    {
+        driver_free(m_buf);
+    }
+
+    operator ParamDecoder() const {
+        return ParamDecoder(m_buf, m_len);
     }
 };
 
@@ -607,6 +661,49 @@ class ObjectRegister : public ObjectBaseRegister
     }
 };
 
+
+class XapianErlangDriver;
+
+class QlcTable
+{
+    protected:
+    XapianErlangDriver& m_driver;
+
+    public:
+    QlcTable(XapianErlangDriver& driver) 
+        : m_driver(driver) {}
+
+    virtual
+    ~QlcTable()
+    {}
+    
+    virtual uint32_t
+    numOfObjects() const = 0;
+
+    virtual void
+    getPage(uint32_t from, uint32_t count) const = 0;
+};
+
+class MSetQlcTable : public QlcTable
+{
+    Xapian::MSet m_mset;
+    const ParamDecoderController m_controller;
+
+    public:
+    MSetQlcTable(XapianErlangDriver& driver, 
+        Xapian::MSet& mset, const ParamDecoderController& controller) 
+        : QlcTable(driver), m_mset(mset), m_controller(controller)
+    {
+    }
+
+    uint32_t numOfObjects() const
+    {
+        return static_cast<uint32_t>(m_mset.size());
+    }
+
+    void getPage(uint32_t from, uint32_t count) const;
+};
+
 // -------------------------------------------------------------------
 // Main Driver Class
 // -------------------------------------------------------------------
@@ -622,6 +719,7 @@ class XapianErlangDriver
     Xapian::QueryParser m_empty_parser;
     ObjectRegister<Xapian::Enquire> m_enquire_store;
     ObjectRegister<Xapian::MSet>    m_mset_store;
+    ObjectRegister<const QlcTable>  m_qlc_store;
 
     
     const static uint8_t m_stores_count = 2;
@@ -629,6 +727,7 @@ class XapianErlangDriver
 
 
     public:
+    friend class MSetQlcTable;
 
     // Commands
     // used in the control function
@@ -646,7 +745,9 @@ class XapianErlangDriver
         SET_DEFAULT_PREFIXES        = 10,
         ENQUIRE                     = 11,
         RELEASE_RESOURCE            = 12,
-        MATCH_SET                   = 13
+        MATCH_SET                   = 13,
+        QLC_INIT                    = 14,
+        QLC_NEXT_PORTION            = 15
     };
 
     // Error prefix tags.
@@ -721,6 +822,13 @@ class XapianErlangDriver
         QP_TYPE_EMPTY               = 1
     };
 
+
+    enum resourceType {
+        ENQUIRE_RESOURCE_TYPE       = 0,
+        MSET_RESOURCE_TYPE          = 1,
+        QLC_RESOURCE_TYPE           = 2
+    };
+
     static const unsigned
     PARSER_FEATURES[];
 
@@ -789,6 +897,7 @@ class XapianErlangDriver
         // RESOURCE_TYPE_ID_MARK
         m_stores[0] = &m_enquire_store;
         m_stores[1] = &m_mset_store;
+        m_stores[2] = &m_qlc_store;
     }
 
     ~XapianErlangDriver()
@@ -932,8 +1041,8 @@ class XapianErlangDriver
      */
     size_t matchSet(ParamDecoder& params)
     {
-        uint32_t   mset_num = params;
-        Xapian::Enquire enquire = *m_enquire_store.get(mset_num);
+        uint32_t   enquire_num = params;
+        Xapian::Enquire& enquire = *m_enquire_store.get(enquire_num);
 
         Xapian::doccount    first    = 0;
         Xapian::doccount    maxitems =  mp_db->get_doccount();
@@ -941,9 +1050,46 @@ class XapianErlangDriver
             first, 
             maxitems);
 
-        uint32_t num = m_mset_store.put(new Xapian::MSet(mset));
-        m_result << num;
+        uint32_t mset_num = m_mset_store.put(new Xapian::MSet(mset));
+        m_result << mset_num;
 
+        return m_result;
+    }
+
+
+    size_t qlcInit(ParamDecoder& params)
+    {
+        uint8_t   resource_type = params;
+        uint32_t   resource_num = params;
+        switch (resource_type)
+        {
+            case MSET_RESOURCE_TYPE:
+            {
+                Xapian::MSet& mset = *m_mset_store.get(resource_num);
+                const ParamDecoderController& schema  
+                    = retrieveDocumentSchema(params);
+                const MSetQlcTable* qlcTable = new MSetQlcTable(*this, mset, schema);
+                const uint32_t qlc_num = m_qlc_store.put(qlcTable);
+                const uint32_t mset_size = qlcTable->numOfObjects();
+            
+                m_result << qlc_num << mset_size;
+                return m_result;
+            }
+
+            default:
+                throw BadCommandDriverError(resource_type);
+        }
+    }
+
+
+    size_t qlcNext(ParamDecoder& params)
+    {
+        uint32_t   resource_num = params;
+        uint32_t   from         = params;
+        uint32_t   count        = params;
+     
+        const QlcTable& qlcTable = *m_qlc_store.get(resource_num);
+        qlcTable.getPage(from, count);
         return m_result;
     }
 
@@ -954,6 +1100,9 @@ class XapianErlangDriver
      * `params' is a clone.
      */
     void retrieveDocument(ParamDecoder, Xapian::Document&, Xapian::MSetIterator*);
+
+    ParamDecoderController
+    retrieveDocumentSchema(ParamDecoder&) const;
 
     Xapian::Query 
     buildQuery(ParamDecoder& params);
@@ -1339,6 +1488,12 @@ XapianErlangDriver::control(
         case MATCH_SET:
             return drv.matchSet(params);
 
+        case QLC_INIT:
+            return drv.qlcInit(params);
+
+        case QLC_NEXT_PORTION:
+            return drv.qlcNext(params);
+
         default:
             throw BadCommandDriverError(command);
         }
@@ -1502,7 +1657,7 @@ XapianErlangDriver::applyDocument(
 
 void 
 XapianErlangDriver::retrieveDocument(
-    ParamDecoder params, 
+    ParamDecoder params,  /* yes, it is a copy */
     Xapian::Document& doc,
     Xapian::MSetIterator* mset_iter)
 {
@@ -1569,7 +1724,74 @@ XapianErlangDriver::retrieveDocument(
     }
 }
 
+ParamDecoderController
+XapianErlangDriver::retrieveDocumentSchema(
+    ParamDecoder& params) const
+{
+    const char* from = params.currentPosition();
 
+    while (const int8_t command = params)
+    /* Do, while command != stop != 0 */
+    {
+        switch (command)
+        {
+            case GET_VALUE:
+            {
+                //static_cast<uint32_t>( params ); // slot
+                uint32_t slot = params; // slot
+                (void) slot;
+                break;
+            }
+
+            case GET_DATA:
+            case GET_DOCID:
+            case GET_WEIGHT:
+            case GET_RANK:
+            case GET_PERCENT:
+                break;
+
+            default:
+                throw BadCommandDriverError(command);
+        }
+    }
+
+    const char* to = params.currentPosition();
+
+    size_t len = to - from;
+    ParamDecoderController ctrl(from, len);
+    return ctrl;
+}
+
+/**
+ * Skip "skip" documents. 
+ * Read not more then "count" documents.
+ */
+void
+MSetQlcTable::getPage(const uint32_t skip, const uint32_t count) const
+{
+    uint32_t size = m_mset.size();
+    assert(skip <= size);
+
+    /* Tail size */
+    size -= skip;
+
+    // Do while: 
+    // * the current element is not the last element;
+    // * and not more then wanted count of documents were extracted.
+    const uint32_t left = std::min(size, count);
+
+    m_driver.m_result << left;
+
+    Xapian::MSetIterator iter = m_mset[skip];
+    Xapian::MSetIterator last = (count < size) ? m_mset[skip+left+1] : m_mset.end();
+
+    for (; iter != last; iter++)
+    {
+        ParamDecoder params = m_controller;
+        Xapian::Document doc = iter.get_document();
+        m_driver.retrieveDocument(params, doc, &iter);
+    }
+}
 
 // -------------------------------------------------------------------
 // Meta information for Erlang

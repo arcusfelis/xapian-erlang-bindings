@@ -42,6 +42,7 @@
 
 
 -include_lib("xapian/include/xapian.hrl").
+-include("xapian.hrl").
 
 -compile({parse_transform, do}).
 -compile({parse_transform, seqbind}).
@@ -74,6 +75,9 @@
 %% Match set (M-set)
 -export([match_set/2]).
 
+%% Intermodule export (non for a client!)
+-export([internal_qlc_init/3,
+         internal_qlc_get_next_portion/4]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -357,6 +361,29 @@ cancel_transaction(Server, Ref) ->
 
 
 %% ------------------------------------------------------------------
+%% API for other modules
+%% ------------------------------------------------------------------
+
+-type qlc_params() :: #internal_qlc_mset_parameters{}.
+
+%% Create a qlc resource, collect basic information about a set.
+-spec internal_qlc_init(pid() | atom(), reference(), qlc_params()) ->
+    #internal_qlc_info{}.
+
+internal_qlc_init(Server, ResourceRef, Params) ->
+    call(Server, {qlc_init, ResourceRef, Params}).
+
+
+%% Read next `Count' elements starting from `From' from QlcResNum.
+-spec internal_qlc_get_next_portion(pid() | atom(), 
+    non_neg_integer(), non_neg_integer(), non_neg_integer()) ->
+    binary().
+
+internal_qlc_get_next_portion(Server, QlcResNum, From, Count) ->
+    call(Server, {qlc_next_portion, QlcResNum, From, Count}).
+
+
+%% ------------------------------------------------------------------
 %% gen_server Client Helpers
 %% ------------------------------------------------------------------
 
@@ -472,9 +499,7 @@ handle_call({enquire, Query}, {FromPid, FromRef}, State) ->
     end;
 
 handle_call({match_set, EnquireRef}, {FromPid, FromRef}, State) ->
-    #state{ 
-        port = Port, 
-        register = Register } = State,
+    #state{port = Port, register = Register } = State,
     do([error_m ||
         #resource{type=enquire, number=EnquireNum} 
             <- xapian_register:get(Register, EnquireRef),
@@ -492,9 +517,7 @@ handle_call({match_set, EnquireRef}, {FromPid, FromRef}, State) ->
         end]);
 
 handle_call({release_resource, Ref}, _From, State) ->
-    #state{ 
-        port = Port, 
-        register = Register } = State,
+    #state{port = Port, register = Register } = State,
     case xapian_register:erase(Register, Ref) of
         {ok, NewRegister, Elem} ->
             #resource{type=ResourceType, number=ResourceNum} = Elem,
@@ -506,6 +529,32 @@ handle_call({release_resource, Ref}, _From, State) ->
             {reply, Error, State}
     end;
     
+handle_call({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
+    #state{port = Port } = State,
+    Reply = port_qlc_next_portion(Port, QlcResNum, From, Count),
+    {reply, Reply, State};
+
+%% Res into QlcRes
+handle_call({qlc_init, ResRef, Params}, {FromPid, _FromRef}, State) ->
+    #state{port = Port, register = Register } = State,
+    do([error_m ||
+        %% Get an iterable resource by the reference
+        #resource{type=ResType, number=ResNum} 
+            <- xapian_register:get(Register, ResRef),
+
+        %% Create QLC table (iterator-like object in Erlang)
+        #internal_qlc_info{resource_number = QlcResNum} = Reply
+            <- port_qlc_init(State, ResType, ResNum, Params),
+
+        begin
+            QlcElem = #resource{type=qlc, number=QlcResNum},
+            %% Reply is a reference
+            {ok, NewRegister, _Ref} = 
+            xapian_register:put(Register, FromPid, QlcElem),
+            NewState = State#state{register = NewRegister},
+            {reply, {ok, Reply}, NewState}
+        end]);
+
 handle_call({transaction, Ref}, From, State) ->
     #state{ port = Port } = State,
     {FromPid, FromRef} = From,
@@ -619,7 +668,9 @@ command_id(set_default_stemmer)         -> 9;
 command_id(set_default_prefixes)        -> 10;
 command_id(enquire)                     -> 11;
 command_id(release_resource)            -> 12;
-command_id(match_set)                   -> 13.
+command_id(match_set)                   -> 13;
+command_id(qlc_init)                    -> 14;
+command_id(qlc_next_portion)            -> 15.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -631,7 +682,8 @@ open_mode_id(write_open)                -> 4.
 
 %% RESOURCE_TYPE_ID_MARK
 resource_type_id(enquire) -> 0;
-resource_type_id(mset)    -> 1.
+resource_type_id(mset)    -> 1;
+resource_type_id(qlc)     -> 2.
 
 
 test_id(result_encoder) -> 1;
@@ -779,6 +831,29 @@ port_release_resource(Port, ResourceType, ResourceNum) ->
     control(Port, release_resource, Bin@).
 
 
+port_qlc_next_portion(Port, QlcResNum, From, Count) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint(QlcResNum, Bin@),
+    Bin@ = append_uint(From, Bin@),
+    Bin@ = append_uint(Count, Bin@),
+    control(Port, qlc_next_portion, Bin@).
+
+
+port_qlc_init(State, ResourceType, ResourceNum, Params) ->
+    #state{ port = Port } = State,
+    Bin@ = <<>>,
+    Bin@ = append_uint8(resource_type_id(ResourceType), Bin@),
+    Bin@ = append_uint(ResourceNum, Bin@),
+    Bin@ = append_qlc_parameters(State, ResourceType, Params, Bin@),
+    io:write(user, Bin@),
+    decode_qlc_info_result(control(Port, qlc_init, Bin@)).
+
+
+append_qlc_parameters(State, mset, Params, Bin) ->
+    #state{ name_to_slot = Name2Slot } = State,
+    #internal_qlc_mset_parameters{ record_info = Meta } = Params,
+    xapian_record:encode(Meta, Name2Slot, Bin).
+
 %% -----------------------------------------------------------------
 %% Helpers
 %% -----------------------------------------------------------------
@@ -824,6 +899,17 @@ decode_resource_result({ok, <<Id:32/native-unsigned-integer>>}) ->
     {ok, Id};
 
 decode_resource_result(Other) -> 
+    Other.
+
+
+decode_qlc_info_result({ok, <<ResNum:32/native-unsigned-integer, 
+                                Size:32/native-unsigned-integer>>}) -> 
+    {ok, #internal_qlc_info{
+            num_of_objects = Size,
+            resource_number = ResNum %% Num of a QLC table
+        }};
+
+decode_qlc_info_result(Other) -> 
     Other.
 
 
@@ -1106,7 +1192,7 @@ read_bad_docid_test() ->
 -record(book, {docid, author, title, data}).
 -record(book_ext, {docid, author, title, data,   rank, weight, percent}).
 
-query_page_test_() ->
+cases_test_() ->
     Cases = 
     [ fun single_term_query_page_case/1
     , fun value_range_query_page_case/1
@@ -1116,6 +1202,7 @@ query_page_test_() ->
     , fun enquire_case/1
     , fun resource_cleanup_on_process_down_case/1
     , fun enquire_to_mset_case/1
+    , fun qlc_mset_case/1
     ],
     Server = query_page_setup(),
     %% One setup for each test
@@ -1228,7 +1315,7 @@ resource_cleanup_on_process_down_case(Server) ->
 
         ?assertError(elem_not_found, ?DRV:release_resource(Server, ResourceId))
         end,
-    {"Simple enquire resource", Case}.
+    {"Check garbidge collection for resources", Case}.
 
 
 enquire_to_mset_case(Server) ->
@@ -1240,7 +1327,26 @@ enquire_to_mset_case(Server) ->
         ?DRV:release_resource(Server, EnquireResourceId),
         ?DRV:release_resource(Server, MSetResourceId)
         end,
-    {"Simple enquire resource", Case}.
+    {"Check conversation", Case}.
+
+-include_lib("stdlib/include/qlc.hrl").
+
+qlc_mset_case(Server) ->
+    Case = fun() ->
+        Query = "erlang",
+        EnquireResourceId = ?DRV:enquire(Server, Query),
+        MSetResourceId = ?DRV:match_set(Server, EnquireResourceId),
+        Meta = xapian_record:record(book_ext, record_info(fields, book_ext)),
+        QlcParams = #internal_qlc_mset_parameters{ record_info = Meta },
+        Info = #internal_qlc_info{} = 
+        internal_qlc_init(Server, MSetResourceId, QlcParams),
+        io:format(user, "~n ~p~n", [Info]),
+        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+        ?DRV:release_resource(Server, MSetResourceId),
+        Records = qlc:e(qlc:q([X || X <- Table])),
+        io:format(user, "~n ~p~n", [Records])
+        end,
+    {"Check internal_qlc_init", Case}.
 
 -endif.
 
