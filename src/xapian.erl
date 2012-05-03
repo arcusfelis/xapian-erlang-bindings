@@ -5,7 +5,10 @@
     x_string/0, 
     x_slot_name/0, 
     x_slot/0, 
-    x_document_index_part/0]).
+    x_slot_value/0,
+    x_document_index_part/0,
+    x_document_id/0,
+    x_order_type/0]).
 
 -export_type([
     x_server/0,
@@ -26,6 +29,16 @@ start() ->
 -type x_slot()          :: non_neg_integer().
 -type x_position()      :: non_neg_integer().
 -type x_wdf()           :: non_neg_integer().
+-type x_document_id()   :: non_neg_integer().
+-type x_slot_value()    :: x_slot() | x_slot_name().
+-type x_order_type() ::
+    key 
+    | relevance 
+    | value 
+    | key_relevance 
+    | relevance_key 
+    | relevance_value
+    | value_relevance.
 
 -type x_term()          :: #x_term{}.
 -type x_value()         :: #x_value{}.

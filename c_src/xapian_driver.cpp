@@ -4,46 +4,28 @@
  * Prefix m_ (member) for properties means that property is private.
  */
 
-
-
 // -------------------------------------------------------------------
 // Includes
 // -------------------------------------------------------------------
 
-#include <xapian.h>
 
-#include <cstdlib>
-#include <vector>
-#include <string>
-#include <cstring>
-#include <sstream>
+/* Include other headers from the binding. */
+#include "param_decoder.h"
+#include "param_decoder_controller.h"
+#include "result_encoder.h"
+#include "xapian_exception.h"
+/* Include it after "param_decoder_controller.h" */
+#include "qlc_table.h"
+#include "object_register.h"
 
 #include <assert.h>
-#include <stdexcept>
+#include <cstdlib>
+
+template class ObjectRegister<Xapian::Enquire>;
+template class ObjectRegister<Xapian::MSet>;
+template class ObjectRegister<const QlcTable>;
 
 
-#include <google/dense_hash_map>
-/* dirty code begin */
-#include HASH_FUN_H
-#define HASH_TPL SPARSEHASH_HASH
-/* dirty code end */
-
-
-/* For int32_t, uint8_t and so on. */
-#include <stdint.h>
-
-/* For min */
-#include <algorithm>
-
-#include "erl_driver.h"
-
-
-
-/* Hack to handle R15 driver used with pre R15 driver */
-#if ERL_DRV_EXTENDED_MAJOR_VERSION == 1
-typedef int  ErlDrvSizeT;
-typedef int  ErlDrvSSizeT;
-#endif
 
 
 // -------------------------------------------------------------------
@@ -57,11 +39,7 @@ typedef int  ErlDrvSSizeT;
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
 
-#define REG_TYPE(CLASS) const char CLASS::TYPE[] = STR(CLASS);
 
-/* Helper used by ParamDecoder. */
-//#define READ_TYPE(T) (*((T*) move(sizeof(T))))
-#define READ_TYPE(T) (*(reinterpret_cast<T*>( move(sizeof(T)) )))
 
 /*
  * The length of free space in bytes, 
@@ -79,1155 +57,18 @@ typedef int  ErlDrvSSizeT;
 /* Uncomment to disable asserts. */
 //#define NDEBUG
 
-using namespace std;
 
 
-// -------------------------------------------------------------------
-// Exceptions
-// -------------------------------------------------------------------
 
-class DriverRuntimeError: public runtime_error
-{
-    const char* m_type;
 
-    public:
-    DriverRuntimeError(const char * type, const string& str):
-        runtime_error(str) { m_type = type; }
 
-    const char* 
-    get_type() const
-    {
-       return m_type;
-    }
 
-};
-
-class MemoryAllocationDriverError: public DriverRuntimeError
-{
-    static const char TYPE[];
-    public:
-
-    MemoryAllocationDriverError(size_t size) : 
-        DriverRuntimeError(TYPE, buildString(size)) {}
-
-    static const string 
-    buildString(size_t size)
-    {
-        std::stringstream ss;
-        ss << "Cannot allocate " << size << " bytes.";
-        return ss.str();
-    }
-};
-
-class BadCommandDriverError: public DriverRuntimeError
-{
-    static const char TYPE[];
-
-    public:
-    BadCommandDriverError(int command_id) : 
-        DriverRuntimeError(TYPE, buildString(command_id)) {}
-
-    static const string 
-    buildString(int command_id)
-    {
-        std::stringstream ss;
-        ss << "Unknown command with id = " << command_id << ".";
-        return ss.str();
-    }
-};
-
-class OverflowDriverError: public DriverRuntimeError
-{
-    static const char TYPE[];
-
-    public:
-    OverflowDriverError() : 
-        DriverRuntimeError(TYPE, "Too short binary.") {}
-};
-
-class NotWritableDatabaseError: public DriverRuntimeError
-{
-    static const char TYPE[];
-
-    public:
-    NotWritableDatabaseError() : 
-        DriverRuntimeError(TYPE, "The database is open as read only.") {}
-};
-
-class DbAlreadyOpenedDriverError: public DriverRuntimeError
-{
-    static const char TYPE[];
-
-    public:
-    DbAlreadyOpenedDriverError() : 
-        DriverRuntimeError(TYPE, "This port cannot open second DB. Use another port.") {}
-};
-
-class ElementNotFoundDriverError: public DriverRuntimeError
-{
-    static const char TYPE[];
-
-    public:
-    ElementNotFoundDriverError(uint32_t num) : 
-        DriverRuntimeError(TYPE, buildString(num)) {}
-
-    static const string 
-    buildString(uint32_t num)
-    {
-        std::stringstream ss;
-        ss << "Element with number = " << num << " is not found.";
-        return ss.str();
-    }
-};
-
-
-
-REG_TYPE(MemoryAllocationDriverError)
-REG_TYPE(BadCommandDriverError)
-REG_TYPE(OverflowDriverError)
-REG_TYPE(NotWritableDatabaseError)
-REG_TYPE(DbAlreadyOpenedDriverError)
-REG_TYPE(ElementNotFoundDriverError)
-
-
-
-// -------------------------------------------------------------------
-// Decoder of the parameters from erlang's calls
-// -------------------------------------------------------------------
-
-class ParamDecoder
-{
-    char *m_buf; 
-    size_t m_len;
-
-    public:
-    /**
-     * Constructor
-     */
-    ParamDecoder(char *buf, size_t len) :
-        m_buf( buf ),
-        m_len( len ) {}
-
-
-    char* 
-    move(const size_t size)
-    {
-        if (size > m_len)
-            throw OverflowDriverError();
-        m_len -= size;
-        char* old_buf = m_buf;
-        m_buf += size;
-        return old_buf;
-    }
-
-    /**
-     * Decodes <<StringLen:32/native-signed-integer, StringBin/binary>>
-     */
-    operator const string() {
-        const int32_t str_len = READ_TYPE(int32_t);
-        const char* str_bin = m_buf;
-        move(str_len);
-        const string str(str_bin, static_cast<size_t>(str_len));
-        return str;
-    }
-
-    /**
-     * Decodes <<Int8t:8/native-signed-integer>>
-     */
-    operator int8_t() {
-        return READ_TYPE(int8_t);
-    }
-
-    /**
-     * Decodes <<Int8t:8/native-unsigned-integer>>
-     */
-    operator uint8_t() {
-        return READ_TYPE(uint8_t);
-    }
-
-    operator bool() {
-        return READ_TYPE(uint8_t);
-    }
-
-    /**
-     * Decodes <<Num:32/native-signed-integer>>
-     */
-    operator int32_t() {
-        return READ_TYPE(int32_t);
-    }
-
-    /**
-     * Decodes <<Num:32/native-unsigned-integer>>
-     * Results are Xapian::valueno or Xapian::termcount
-     */
-    operator uint32_t() {
-        return READ_TYPE(uint32_t);
-    }
-
-
-    operator const Xapian::Stem()
-    {
-        const string&   language = *this;
-        return Xapian::Stem(language);
-    }
-
-    char* currentPosition()
-    {
-        return m_buf;
-    }
-};
-
-
-/**
- * This object is for storing a paramDecoder buffer as a resource
- */    
-class ParamDecoderController
-{
-    char *m_buf; 
-    size_t m_len;
-
-    void init(const char *buf, const size_t len)
-    {
-        m_len = len;
-        m_buf = static_cast<char*>( driver_alloc(len) );
-        if (m_buf == NULL)
-            throw MemoryAllocationDriverError(len);
-
-        // Copy data into a buffer 
-        // From buf into m_buf
-        memcpy(m_buf, buf, len);
-    }
-
-    public:
-    /**
-     * Constructor
-     */
-    ParamDecoderController(const char *buf, const size_t len)
-    {
-        init(buf, len);
-    }
-
-    ParamDecoderController(const ParamDecoderController& prototype)
-    {
-        init(prototype.m_buf, prototype.m_len);
-    }
-
-    ~ParamDecoderController()
-    {
-        driver_free(m_buf);
-    }
-
-    operator ParamDecoder() const {
-        return ParamDecoder(m_buf, m_len);
-    }
-};
-
-
-
-// -------------------------------------------------------------------
-// Structure with variable length
-// -------------------------------------------------------------------
-
-typedef struct DataSegment DataSegment;
-struct DataSegment
-{
-    DataSegment* next;
-    size_t size;
-    char data[1]; /* struct-hack, flexible-array member */
-};
-
-
-
-// -------------------------------------------------------------------
-// Result encoder: appends variables to the buffer
-// -------------------------------------------------------------------
-
-/**
- * If the driver wants to return data, it should return it in rbuf. 
- * When control is called, *rbuf points to a default buffer of rlen 
- * bytes, which can be used to return data. Data is returned different 
- * depending on the port control flags (those that are set with 
- * set_port_control_flags). 
- */
-class ResultEncoder
-{
-    /* Here will be a pointer on data after all operations */
-    char**  m_result_buf;
-    size_t  m_result_len;
-
-    /* Preallocated */
-    char*   m_default_buf;
-
-    /* Where to write now */
-    char*   m_current_buf;
-
-    /* Len of buffer, allocated by a port */
-    size_t  m_default_len;
-    size_t  m_left_len;
-
-    /* Next segment */
-    DataSegment* m_first_segment;
-    DataSegment* m_last_segment;
-
-    public:
-
-    void
-    setBuffer(char** rbuf, const size_t rlen) 
-    {
-        m_result_buf = rbuf;
-        m_current_buf = m_default_buf = *rbuf;
-        m_default_len = rlen;
-        m_result_len = 0;
-        m_first_segment = NULL;
-        m_left_len = rlen;
-    }
-
-    
-
-
-    ResultEncoder& 
-    operator<<(const string str)
-    {
-        uint32_t len = static_cast<uint32_t>( str.length() );
-        PUT_VALUE(len);
-        put(str.data(), len);
-        return *this;
-    }
-
-    ResultEncoder& 
-    operator<<(const char * str)
-    {
-        uint32_t len = static_cast<uint32_t>( strlen(str) );
-        PUT_VALUE(len);
-        put(str, len);
-        return *this;
-    }
-
-    ResultEncoder& 
-    operator<<(uint32_t value)
-    {
-        PUT_VALUE(value);
-        return *this;
-    }
-
-    ResultEncoder& 
-    operator<<(uint8_t value)
-    {
-        PUT_VALUE(value);
-        return *this;
-    }
-
-    ResultEncoder& 
-    operator<<(double value)
-    {
-        PUT_VALUE(value);
-        return *this;
-    }
-
-    DataSegment* 
-    alloc(size_t size)
-    {
-        size = SIZE_OF_SEGMENT(size);
-        DataSegment* ds = static_cast<DataSegment*>( driver_alloc(size) );
-        if (ds == NULL)
-            throw MemoryAllocationDriverError(size);
-        return ds;
-    }
-
-    void put(const char* term, const size_t term_len);
-
-    operator size_t();
-
-    void clear();
-};
-
-
-
-/** 
- * Copy termLen bytes from term. 
- */
-void 
-ResultEncoder::put(const char* term, const size_t term_len)
-{
-    /* Len of the whole buffer after coping */
-    const size_t new_len = term_len + m_result_len;
-    const bool allocated = m_first_segment != NULL;
-    const bool large = allocated 
-        || m_default_buf == NULL 
-        || new_len > m_default_len;
-    const bool no_alloc = allocated && term_len <= m_left_len;
-
-    if (!large || no_alloc)
-    {
-        /* Whole term can be stored in the preallocated area. */
-        char* dest = m_current_buf;
-        const char* src = term;
-        memcpy(dest, src, term_len);
-        m_current_buf += term_len;
-        m_left_len -= term_len;
-    }
-    else 
-    {
-        /* part1 will stay in a default buffer. */
-        const size_t part1_len = m_left_len;
-        const size_t part2_len = term_len - part1_len;
-        const size_t new_segment_len = part2_len + RESERVED_LEN;
-
-        /* Create new data segment. */
-        DataSegment* 
-        new_segment = this->alloc(new_segment_len);
-        new_segment->size = new_segment_len;
-        new_segment->next = NULL;
-
-        const char* part1_src = term;
-        const char* part2_src = term + part1_len;
-
-        char* part1_dest = m_current_buf;
-        char* part2_dest = new_segment->data;
-
-        /* Copy data */
-        memcpy(part1_dest, part1_src, part1_len);
-        memcpy(part2_dest, part2_src, part2_len);
-
-        if (m_first_segment == NULL) {
-            /* Set as a first segment. */
-            m_first_segment = new_segment;
-        } else {
-            /* Link to a last segment. */
-            m_last_segment->next = new_segment;
-        }
-
-        /* Save state */
-        m_last_segment = new_segment;
-        m_current_buf = part2_dest + part2_len;
-        m_left_len = RESERVED_LEN;
-    }
-    
-    m_result_len = new_len;
-}
-
-
-/**
- * Clear the state of the object.
- */
-void 
-ResultEncoder::clear() {
-    if (m_result_len > m_default_len)
-    {
-        do 
-        {
-            assert(m_first_segment != NULL);
-
-            /* No infinite cycles. */
-            assert(m_first_segment->next != m_first_segment);
-
-            /* Use last_segment as a temp variable. */
-            m_last_segment = m_first_segment;
-
-            /* Move a pointer on the next segment. */
-            m_first_segment = m_first_segment->next;
-
-            /* Delete copied segment. */
-            driver_free(m_last_segment);
-        }
-        while(m_first_segment != NULL);
-    }
-}
-
-
-/**
- * Returns result
- */
-ResultEncoder::operator size_t() {
-    if (m_result_len > m_default_len)
-    {
-        ErlDrvBinary* bin = driver_alloc_binary(m_result_len);
-        if (bin == NULL)
-            throw MemoryAllocationDriverError(m_result_len);
-        // TODO: can be skipped
-        memset(bin->orig_bytes, 0, m_result_len);
-
-        char* dest = bin->orig_bytes;
-        char* src = m_default_buf;
-        memcpy(dest, src, m_default_len);
-        dest += m_default_len;
-
-        /* Shrink data size to copy. */
-        m_last_segment->size -= m_left_len;
-        do 
-        {
-            assert(m_first_segment != NULL);
-
-            /* No infinite cycles. */
-            assert(m_first_segment->next != m_first_segment);
-
-            size_t segment_size = m_first_segment->size;
-            assert(segment_size > 0);
-
-            /* Real buffer length is not greater, then allocated buffer length. */
-            assert((dest - bin->orig_bytes + segment_size) <= m_result_len);
-
-            src = m_first_segment->data;
-            memcpy(dest, src, segment_size);
-            dest += segment_size;
-
-            /* Use last_segment as a temp variable. */
-            m_last_segment = m_first_segment;
-
-            /* Move a pointer on the next segment. */
-            m_first_segment = m_first_segment->next;
-
-            /* Delete copied segment. */
-            driver_free(m_last_segment);
-        }
-        while(m_first_segment != NULL);
-        *m_result_buf = (char*) bin;
-    }
-    
-    return m_result_len;
-}
-
-class ObjectBaseRegister
-{
-    protected:
-    typedef uint32_t Counter;
-
-    public:
-    virtual void
-    remove(Counter) = 0;
-};
-
-template <class Child>
-class ObjectRegister : public ObjectBaseRegister
-{
-    typedef 
-    google::dense_hash_map< uint32_t, Child*, HASH_TPL<uint32_t> > Hash;
-
-    /* Contains a number of the latest added object */
-    Counter m_counter;
-    Hash m_elements;
-    
-    public:
-    ObjectRegister()
-    {
-        m_elements.set_empty_key(0);
-        m_elements.set_deleted_key(1);
-        m_counter = 1;
-    }
-
-    Counter 
-    put(Child* obj)
-    {
-        m_counter++;
-        m_elements[m_counter] = obj;
-
-        return m_counter;
-    }
-
-    void
-    remove(Counter num)
-    {
-        typename Hash::iterator i; 
-        i = m_elements.find(num);
-
-        if (i == m_elements.end())
-            throw ElementNotFoundDriverError(num);
-
-        m_elements.erase(i);
-        delete i->second;
-    }
-
-    Child*
-    get(Counter num)
-    {
-        typename Hash::iterator i; 
-        i = m_elements.find(num);
-
-        if (i == m_elements.end())
-            throw ElementNotFoundDriverError(num);
-
-        return i->second;
-    }
-
-    ~ObjectRegister()
-    {
-        typename Hash::iterator i, e, b;
-        b = m_elements.begin();
-        e = m_elements.end();
-        for(i = b; i != e; i++)
-        {
-            delete i->second;
-        }
-    }
-};
-
-
-class XapianErlangDriver;
-
-class QlcTable
-{
-    protected:
-    XapianErlangDriver& m_driver;
-
-    public:
-    QlcTable(XapianErlangDriver& driver) 
-        : m_driver(driver) {}
-
-    virtual
-    ~QlcTable()
-    {}
-    
-    virtual uint32_t
-    numOfObjects() const = 0;
-
-    virtual void
-    getPage(uint32_t from, uint32_t count) const = 0;
-};
-
-class MSetQlcTable : public QlcTable
-{
-    Xapian::MSet m_mset;
-    const ParamDecoderController m_controller;
-
-    public:
-    MSetQlcTable(XapianErlangDriver& driver, 
-        Xapian::MSet& mset, const ParamDecoderController& controller) 
-        : QlcTable(driver), m_mset(mset), m_controller(controller)
-    {
-    }
-
-    uint32_t numOfObjects() const
-    {
-        return static_cast<uint32_t>(m_mset.size());
-    }
-
-    void getPage(uint32_t from, uint32_t count) const;
-};
 
 // -------------------------------------------------------------------
 // Main Driver Class
 // -------------------------------------------------------------------
 
-class XapianErlangDriver 
-{
-    Xapian::Database* mp_db;
-    Xapian::WritableDatabase* mp_wdb;
-    const Xapian::Stem* mp_default_stemmer;
-
-    ResultEncoder m_result;
-    Xapian::QueryParser m_default_parser;
-    Xapian::QueryParser m_empty_parser;
-    ObjectRegister<Xapian::Enquire> m_enquire_store;
-    ObjectRegister<Xapian::MSet>    m_mset_store;
-    ObjectRegister<const QlcTable>  m_qlc_store;
-
-    
-    const static uint8_t m_stores_count = 2;
-    ObjectBaseRegister* m_stores[m_stores_count];
-
-
-    public:
-    friend class MSetQlcTable;
-
-    // Commands
-    // used in the control function
-    enum command {
-        OPEN                        = 0,
-        LAST_DOC_ID                 = 1,
-        ADD_DOCUMENT                = 2,
-        TEST                        = 3,
-        GET_DOCUMENT_BY_ID          = 4,
-        START_TRANSACTION           = 5,
-        CANCEL_TRANSACTION          = 6,
-        COMMIT_TRANSACTION          = 7,
-        QUERY_PAGE                  = 8,
-        SET_DEFAULT_STEMMER         = 9,
-        SET_DEFAULT_PREFIXES        = 10,
-        ENQUIRE                     = 11,
-        RELEASE_RESOURCE            = 12,
-        MATCH_SET                   = 13,
-        QLC_INIT                    = 14,
-        QLC_NEXT_PORTION            = 15
-    };
-
-    // Error prefix tags.
-    // used in the control function
-    enum errorCode {
-        SUCCESS                     = 0,
-        ERROR                       = 1
-    };
-
-    // Modes for opening of a db
-    // used in the open function
-    enum openMode {
-        READ_OPEN                   = 0,
-        WRITE_CREATE_OR_OPEN        = 1,
-        WRITE_CREATE                = 2,
-        WRITE_CREATE_OR_OVERWRITE   = 3,
-        WRITE_OPEN                  = 4
-    };
-
-    // Types of fields
-    // Used in the applyDocument function.
-    enum fieldTypeIn {
-        STEMMER                     = 1,
-        DATA                        = 2,
-        VALUE                       = 3,
-        DELTA                       = 4,
-        TEXT                        = 5,
-        TERM                        = 6,
-        POSTING                     = 7
-    };
-
-    // Types of the fields.
-    // Used in the retrieveDocument function.
-    enum fieldTypeOut {
-        GET_VALUE                   = 1,
-        GET_DATA                    = 2,
-        GET_DOCID                   = 3,
-        GET_WEIGHT                  = 4,
-        GET_RANK                    = 5,
-        GET_PERCENT                 = 6
-    };
-
-    // Numbers of tests.
-    // Used in the test function.
-    enum testNumber {
-        TEST_RESULT_ENCODER         = 1,
-        TEST_EXCEPTION              = 2
-    };
-
-
-    enum queryType {
-        QUERY_GROUP                 = 1,
-        QUERY_VALUE                 = 2,
-        QUERY_VALUE_RANGE           = 3,
-        QUERY_TERM                  = 4,
-        QUERY_PARSER                = 5
-    };
-
-    
-    enum queryParserCommand {
-        QP_STEMMER                  = 1,
-        QP_STEMMING_STRATEGY        = 2,
-        QP_MAX_WILDCARD_EXPANSION   = 3,
-        QP_DEFAULT_OP               = 4,
-        QP_PARSER_TYPE              = 5,
-        QP_PREFIX                   = 6
-    };
-
-    
-    enum queryParserType {
-        QP_TYPE_DEFAULT             = 0,
-        QP_TYPE_EMPTY               = 1
-    };
-
-
-    enum resourceType {
-        ENQUIRE_RESOURCE_TYPE       = 0,
-        MSET_RESOURCE_TYPE          = 1,
-        QLC_RESOURCE_TYPE           = 2
-    };
-
-    static const unsigned
-    PARSER_FEATURES[];
-
-    static const uint8_t
-    PARSER_FEATURE_COUNT;
-    
-
-
-    static const uint8_t
-    STEM_STRATEGY_COUNT;
-
-    static const Xapian::QueryParser::stem_strategy
-    STEM_STRATEGIES[];
-
-
-    /**
-     * Here we do some initialization, start is called from open_port. 
-     * The drv_data will be passed to control and stop.
-     */
-    static ErlDrvData start(
-        ErlDrvPort port, 
-        char* /* buf */)
-    {
-        /* If the flag is set to PORT_CONTROL_FLAG_BINARY, 
-           a binary will be returned. */       
-        set_port_control_flags(port, PORT_CONTROL_FLAG_BINARY); 
-        XapianErlangDriver* drv_data = new XapianErlangDriver();
-        return reinterpret_cast<ErlDrvData>( drv_data );
-    }
-
-
-    static void stop(
-        ErlDrvData drv_data) 
-    {
-        XapianErlangDriver* 
-        drv = reinterpret_cast<XapianErlangDriver*>( drv_data );
-
-        if (drv != NULL)
-            delete drv;
-    }   
-
-
-    static ErlDrvSSizeT control(
-        ErlDrvData      drv_data, 
-        unsigned int    command, 
-        char*           buf, 
-        ErlDrvSizeT     len, 
-        char**          rbuf, 
-        ErlDrvSizeT     rlen);
-
-
-
-    ResultEncoder* getResultEncoder()
-    {
-        return &m_result;
-    }
-
-    /**
-     * A constructor
-     */
-    XapianErlangDriver()
-    {
-        mp_db = NULL;
-        mp_wdb = NULL;
-        mp_default_stemmer = NULL;
-        // RESOURCE_TYPE_ID_MARK
-        m_stores[0] = &m_enquire_store;
-        m_stores[1] = &m_mset_store;
-        m_stores[2] = &m_qlc_store;
-    }
-
-    ~XapianErlangDriver()
-    {
-        if (mp_db != NULL) 
-            delete mp_db;
-
-        if (mp_default_stemmer != NULL)
-            delete mp_default_stemmer;
-    }
-
-    void setDefaultStemmer(const Xapian::Stem* stemmer)
-    {
-        if (mp_default_stemmer != NULL)
-            delete mp_default_stemmer;
-
-        mp_default_stemmer = stemmer;
-        m_default_parser.set_stemmer(*mp_default_stemmer);
-    }
-
-
-    size_t setDefaultStemmer(ParamDecoder& params)
-    {
-        const Xapian::Stem&  stemmer = params;
-        setDefaultStemmer(new Xapian::Stem(stemmer));
-        return m_result;
-    }
-
-    size_t setDefaultPrefixes(ParamDecoder& params)
-    {
-        const uint32_t count   = params;
-        for (uint32_t i = 0; i < count; i++)
-        {
-            addPrefix(m_default_parser, params);
-        }
-        return m_result;
-    }
-
-    ObjectBaseRegister&
-    getRegisterByType(uint8_t type)
-    {
-        if (type > m_stores_count)
-          throw BadCommandDriverError(type);
-        return * (m_stores[type]);
-    }
-
-
-    size_t open(const string& dbpath, int8_t mode);
-
-    size_t getLastDocId()
-    {
-        //Xapian::docid get_lastdocid() const
-        const Xapian::docid 
-        docid = mp_db->get_lastdocid();
-        m_result << static_cast<uint32_t>(docid);
-        return m_result;
-    }
-
-
-    size_t addDocument(ParamDecoder& params)
-    {
-        Xapian::Document doc;
-        applyDocument(params, doc);
-        const Xapian::docid
-        docid = mp_wdb->add_document(doc);
-        m_result << static_cast<uint32_t>(docid);
-        return m_result;
-    }
-
-
-    /**
-     * Read commands, encoded by xapian_document:encode.
-     * Used in update, replace, add document functions
-     */
-    void applyDocument(ParamDecoder& params, Xapian::Document& doc);
-
-
-    /**
-     * query_page
-     */
-    size_t query(ParamDecoder& params)
-    {
-        /* offset, pagesize, query, template */
-        const uint32_t offset   = params;
-        const uint32_t pagesize = params;
-
-        // Use an Enquire object on the database to run the query.
-        Xapian::Enquire enquire(*mp_db);
-        Xapian::Query   query = buildQuery(params);
-        enquire.set_query(query);
-         
-
-        // Get an result
-        Xapian::MSet mset = enquire.get_mset(
-            static_cast<Xapian::termcount>(offset), 
-            static_cast<Xapian::termcount>(pagesize));
-
-        Xapian::doccount count = mset.size();
-        m_result << static_cast<uint32_t>(count);
-
-        for (Xapian::MSetIterator m = mset.begin(); m != mset.end(); ++m) {
-          //Xapian::docid did = *m;
-            Xapian::Document doc = m.get_document();
-            retrieveDocument(params, doc, &m);
-        }
-        return m_result;
-    }
-
-    /**
-     * Return a resource 
-     */
-    size_t enquire(ParamDecoder& params)
-    {
-        // Use an Enquire object on the database to run the query.
-        Xapian::Enquire* p_enquire = new Xapian::Enquire(*mp_db);
-        Xapian::Query   query = buildQuery(params);
-        p_enquire->set_query(query);
-
-        uint32_t num = m_enquire_store.put(p_enquire);
-        m_result << num;
-
-        return m_result;
-    }
-
-    /**
-     * Erase stored object
-     */
-    size_t releaseResource(ParamDecoder& params)
-    {
-        uint8_t   type = params;
-        uint32_t   num = params;
-        ObjectBaseRegister&
-        reg = getRegisterByType(type);
-        reg.remove(num);
-
-        return m_result;
-    }
-
-    /**
-     * Converts an enquire into a match set
-     */
-    size_t matchSet(ParamDecoder& params)
-    {
-        uint32_t   enquire_num = params;
-        Xapian::Enquire& enquire = *m_enquire_store.get(enquire_num);
-
-        Xapian::doccount    first    = 0;
-        Xapian::doccount    maxitems =  mp_db->get_doccount();
-        Xapian::MSet mset = enquire.get_mset(
-            first, 
-            maxitems);
-
-        uint32_t mset_num = m_mset_store.put(new Xapian::MSet(mset));
-        m_result << mset_num;
-
-        return m_result;
-    }
-
-
-    size_t qlcInit(ParamDecoder& params)
-    {
-        uint8_t   resource_type = params;
-        uint32_t   resource_num = params;
-        switch (resource_type)
-        {
-            case MSET_RESOURCE_TYPE:
-            {
-                Xapian::MSet& mset = *m_mset_store.get(resource_num);
-                const ParamDecoderController& schema  
-                    = retrieveDocumentSchema(params);
-                const MSetQlcTable* qlcTable = new MSetQlcTable(*this, mset, schema);
-                const uint32_t qlc_num = m_qlc_store.put(qlcTable);
-                const uint32_t mset_size = qlcTable->numOfObjects();
-            
-                m_result << qlc_num << mset_size;
-                return m_result;
-            }
-
-            default:
-                throw BadCommandDriverError(resource_type);
-        }
-    }
-
-
-    size_t qlcNext(ParamDecoder& params)
-    {
-        uint32_t   resource_num = params;
-        uint32_t   from         = params;
-        uint32_t   count        = params;
-     
-        const QlcTable& qlcTable = *m_qlc_store.get(resource_num);
-        qlcTable.getPage(from, count);
-        return m_result;
-    }
-
-
-    /** 
-     * Gets a copy of params.
-     *
-     * `params' is a clone.
-     */
-    void retrieveDocument(ParamDecoder, Xapian::Document&, Xapian::MSetIterator*);
-
-    ParamDecoderController
-    retrieveDocumentSchema(ParamDecoder&) const;
-
-    Xapian::Query 
-    buildQuery(ParamDecoder& params);
-
-
-    /**
-     * Throws error if the database was opened only for reading.
-     */
-    void assertWriteable() const
-    {
-        if (mp_wdb == NULL)
-            throw NotWritableDatabaseError();
-    }
-
-    size_t startTransaction()
-    {
-        assertWriteable();
-        mp_wdb->begin_transaction();
-        return m_result;
-    }
-
-    size_t cancelTransaction()
-    {
-        assertWriteable();
-        mp_wdb->cancel_transaction();
-        return m_result;
-    }
-
-    size_t commitTransaction()
-    {
-        assertWriteable();
-        mp_wdb->commit_transaction();
-        return m_result;
-    }
-
-    size_t getDocumentById(ParamDecoder& params)
-    {
-        const Xapian::docid docid = params;
-        Xapian::Document doc = mp_db->get_document(docid);
-        retrieveDocument(params, doc, NULL);
-        return m_result;
-    }
-
-
-    size_t test(ParamDecoder& params)
-    {
-        const int8_t num = params;
-        switch (num)
-        {
-            case TEST_RESULT_ENCODER:
-            {
-                const Xapian::docid from = params;
-                const Xapian::docid to = params;
-
-                return testResultEncoder(from, to);
-            }
-
-            case TEST_EXCEPTION:
-                return testException();
-        }
-        return 0;
-    }
-
-    size_t testResultEncoder(Xapian::docid from, Xapian::docid to)
-    {
-        for (; from <= to; from++)
-            m_result << static_cast<uint32_t>(from);
-        return m_result;
-    }
-
-    size_t testException()
-    {
-        throw MemoryAllocationDriverError(1000);
-        return 0;
-    }
-
-    static unsigned
-    idToParserFeature(uint8_t type)
-    {
-      if (type > PARSER_FEATURE_COUNT)
-        throw BadCommandDriverError(type);
-      return PARSER_FEATURES[type];
-    }
-
-    static unsigned 
-    decodeParserFeatureFlags(ParamDecoder& params)
-    {
-        unsigned flags = 0;
-        while (const uint8_t type = params)
-        {
-            flags |= idToParserFeature(type);
-        }
-        return flags;
-    }
-
-    static Xapian::QueryParser::stem_strategy
-    readStemmingStrategy(ParamDecoder& params)
-    {
-      const uint8_t type = params;
-      if (type > STEM_STRATEGY_COUNT)
-        throw BadCommandDriverError(type);
-      return STEM_STRATEGIES[type];
-    }
-
-    Xapian::QueryParser
-    readParser(ParamDecoder& params);
-
-    Xapian::QueryParser 
-    selectParser(ParamDecoder& params);
-
-    
-    void addPrefix(Xapian::QueryParser& qp, ParamDecoder& params)
-    {
-        const string&           field          = params;
-        const string&           prefix         = params;
-        const bool              is_boolean     = params;
-        const bool              is_exclusive   = params;
-
-        if (is_boolean)
-            qp.add_boolean_prefix(field, prefix, is_exclusive);
-        else
-            qp.add_prefix(field, prefix);
-    }
-};
-
+#include "xapian_driver.h"
 
 
 const uint8_t XapianErlangDriver::PARSER_FEATURE_COUNT = 13;
@@ -1248,6 +89,7 @@ XapianErlangDriver::PARSER_FEATURES[PARSER_FEATURE_COUNT] = {
     /* 12 */ Xapian::QueryParser::FLAG_DEFAULT
 };
 
+
 const uint8_t XapianErlangDriver::STEM_STRATEGY_COUNT = 3;
 const Xapian::QueryParser::stem_strategy
 XapianErlangDriver::STEM_STRATEGIES[STEM_STRATEGY_COUNT] = {
@@ -1255,6 +97,376 @@ XapianErlangDriver::STEM_STRATEGIES[STEM_STRATEGY_COUNT] = {
     /*  1 */ Xapian::QueryParser::STEM_SOME,
     /*  2 */ Xapian::QueryParser::STEM_ALL
 };
+
+
+const uint8_t XapianErlangDriver::DOCID_ORDER_TYPE_COUNT = 3;
+const Xapian::Enquire::docid_order
+XapianErlangDriver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
+    /*  0 */ Xapian::Enquire::ASCENDING, // default
+    /*  1 */ Xapian::Enquire::DESCENDING,
+    /*  2 */ Xapian::Enquire::DONT_CARE
+};
+
+
+
+
+
+ErlDrvData 
+XapianErlangDriver::start(
+    ErlDrvPort port, 
+    char* /* buf */)
+{
+    /* If the flag is set to PORT_CONTROL_FLAG_BINARY, 
+       a binary will be returned. */       
+    set_port_control_flags(port, PORT_CONTROL_FLAG_BINARY); 
+    XapianErlangDriver* drv_data = new XapianErlangDriver();
+    return reinterpret_cast<ErlDrvData>( drv_data );
+}
+
+
+void 
+XapianErlangDriver::stop(
+    ErlDrvData drv_data) 
+{
+    XapianErlangDriver* 
+    drv = reinterpret_cast<XapianErlangDriver*>( drv_data );
+
+    if (drv != NULL)
+        delete drv;
+}   
+
+ResultEncoder* 
+XapianErlangDriver::getResultEncoder()
+{
+    return &m_result;
+}
+
+XapianErlangDriver::XapianErlangDriver()
+{
+    mp_db = NULL;
+    mp_wdb = NULL;
+    mp_default_stemmer = NULL;
+    // RESOURCE_TYPE_ID_MARK
+    m_stores[0] = &m_enquire_store;
+    m_stores[1] = &m_mset_store;
+    m_stores[2] = &m_qlc_store;
+}
+
+XapianErlangDriver::~XapianErlangDriver()
+{
+    if (mp_db != NULL) 
+        delete mp_db;
+
+    if (mp_default_stemmer != NULL)
+        delete mp_default_stemmer;
+}
+
+void 
+XapianErlangDriver::setDefaultStemmer(const Xapian::Stem* stemmer)
+{
+    if (mp_default_stemmer != NULL)
+        delete mp_default_stemmer;
+
+    mp_default_stemmer = stemmer;
+    m_default_parser.set_stemmer(*mp_default_stemmer);
+}
+
+
+size_t 
+XapianErlangDriver::setDefaultStemmer(ParamDecoder& params)
+{
+    const Xapian::Stem&  stemmer = params;
+    setDefaultStemmer(new Xapian::Stem(stemmer));
+    return m_result;
+}
+
+size_t 
+XapianErlangDriver::setDefaultPrefixes(ParamDecoder& params)
+{
+    const uint32_t count   = params;
+    for (uint32_t i = 0; i < count; i++)
+    {
+        addPrefix(m_default_parser, params);
+    }
+    return m_result;
+}
+
+ObjectBaseRegister&
+XapianErlangDriver::getRegisterByType(uint8_t type)
+{
+    if (type > m_stores_count)
+      throw BadCommandDriverError(type);
+    return * (m_stores[type]);
+}
+
+size_t 
+XapianErlangDriver::getLastDocId()
+{
+    //Xapian::docid get_lastdocid() const
+    const Xapian::docid 
+    docid = mp_db->get_lastdocid();
+    m_result << static_cast<uint32_t>(docid);
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::addDocument(ParamDecoder& params)
+{
+    Xapian::Document doc;
+    applyDocument(params, doc);
+    const Xapian::docid
+    docid = mp_wdb->add_document(doc);
+    m_result << static_cast<uint32_t>(docid);
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::query(ParamDecoder& params)
+{
+    /* offset, pagesize, query, template */
+    const uint32_t offset   = params;
+    const uint32_t pagesize = params;
+
+    // Use an Enquire object on the database to run the query.
+    Xapian::Enquire enquire(*mp_db);
+    Xapian::Query   query = buildQuery(params);
+    enquire.set_query(query);
+     
+
+    // Get an result
+    Xapian::MSet mset = enquire.get_mset(
+        static_cast<Xapian::termcount>(offset), 
+        static_cast<Xapian::termcount>(pagesize));
+
+    Xapian::doccount count = mset.size();
+    m_result << static_cast<uint32_t>(count);
+
+    for (Xapian::MSetIterator m = mset.begin(); m != mset.end(); ++m) {
+      //Xapian::docid did = *m;
+        Xapian::Document doc = m.get_document();
+        retrieveDocument(params, doc, &m);
+    }
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::enquire(ParamDecoder& params)
+{
+    // Use an Enquire object on the database to run the query.
+    Xapian::Enquire* p_enquire = new Xapian::Enquire(*mp_db);
+    fillEnquire(*p_enquire, params);
+
+    uint32_t num = m_enquire_store.put(p_enquire);
+    m_result << num;
+
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::releaseResource(ParamDecoder& params)
+{
+    uint8_t   type = params;
+    uint32_t   num = params;
+    ObjectBaseRegister&
+    reg = getRegisterByType(type);
+    reg.remove(num);
+
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::matchSet(ParamDecoder& params)
+{
+    uint32_t   enquire_num = params;
+    Xapian::Enquire& enquire = *m_enquire_store.get(enquire_num);
+
+    Xapian::doccount    first    = 0;
+    Xapian::doccount    maxitems =  mp_db->get_doccount();
+    Xapian::MSet mset = enquire.get_mset(
+        first, 
+        maxitems);
+
+    uint32_t mset_num = m_mset_store.put(new Xapian::MSet(mset));
+    m_result << mset_num;
+
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::qlcInit(ParamDecoder& params)
+{
+    uint8_t   resource_type = params;
+    uint32_t   resource_num = params;
+    switch (resource_type)
+    {
+        case MSET_RESOURCE_TYPE:
+        {
+            Xapian::MSet& mset = *m_mset_store.get(resource_num);
+            const ParamDecoderController& schema  
+                = retrieveDocumentSchema(params);
+            const MSetQlcTable* qlcTable = new MSetQlcTable(*this, mset, schema);
+            const uint32_t qlc_num = m_qlc_store.put(qlcTable);
+            const uint32_t mset_size = qlcTable->numOfObjects();
+        
+            m_result << qlc_num << mset_size;
+            return m_result;
+        }
+
+        default:
+            throw BadCommandDriverError(resource_type);
+    }
+}
+
+
+size_t 
+XapianErlangDriver::qlcNext(ParamDecoder& params)
+{
+    uint32_t   resource_num = params;
+    uint32_t   from         = params;
+    uint32_t   count        = params;
+ 
+    const QlcTable& qlcTable = *m_qlc_store.get(resource_num);
+    qlcTable.getPage(from, count);
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::qlcLookup(ParamDecoder& params)
+{
+    uint32_t   resource_num = params;
+ 
+    const QlcTable& qlcTable = *m_qlc_store.get(resource_num);
+    qlcTable.lookup(params);
+    return m_result;
+}
+
+
+void 
+XapianErlangDriver::assertWriteable() const
+{
+    if (mp_wdb == NULL)
+        throw NotWritableDatabaseError();
+}
+
+size_t 
+XapianErlangDriver::startTransaction()
+{
+    assertWriteable();
+    mp_wdb->begin_transaction();
+    return m_result;
+}
+
+size_t 
+XapianErlangDriver::cancelTransaction()
+{
+    assertWriteable();
+    mp_wdb->cancel_transaction();
+    return m_result;
+}
+
+size_t 
+XapianErlangDriver::commitTransaction()
+{
+    assertWriteable();
+    mp_wdb->commit_transaction();
+    return m_result;
+}
+
+size_t 
+XapianErlangDriver::getDocumentById(ParamDecoder& params)
+{
+    const Xapian::docid docid = params;
+    Xapian::Document doc = mp_db->get_document(docid);
+    retrieveDocument(params, doc, NULL);
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::test(ParamDecoder& params)
+{
+    const int8_t num = params;
+    switch (num)
+    {
+        case TEST_RESULT_ENCODER:
+        {
+            const Xapian::docid from = params;
+            const Xapian::docid to = params;
+
+            return testResultEncoder(from, to);
+        }
+
+        case TEST_EXCEPTION:
+            return testException();
+    }
+    return 0;
+}
+
+size_t 
+XapianErlangDriver::testResultEncoder(Xapian::docid from, Xapian::docid to)
+{
+    for (; from <= to; from++)
+        m_result << static_cast<uint32_t>(from);
+    return m_result;
+}
+
+size_t 
+XapianErlangDriver::testException()
+{
+    throw MemoryAllocationDriverError(1000);
+    return 0;
+}
+
+unsigned
+XapianErlangDriver::idToParserFeature(uint8_t type)
+{
+  if (type > PARSER_FEATURE_COUNT)
+    throw BadCommandDriverError(type);
+  return PARSER_FEATURES[type];
+}
+
+unsigned 
+XapianErlangDriver::decodeParserFeatureFlags(ParamDecoder& params)
+{
+    unsigned flags = 0;
+    while (const uint8_t type = params)
+    {
+        flags |= idToParserFeature(type);
+    }
+    return flags;
+}
+
+
+Xapian::QueryParser::stem_strategy
+XapianErlangDriver::readStemmingStrategy(ParamDecoder& params)
+{
+  const uint8_t type = params;
+  if (type > STEM_STRATEGY_COUNT)
+    throw BadCommandDriverError(type);
+  return STEM_STRATEGIES[type];
+}
+
+
+void 
+XapianErlangDriver::addPrefix(Xapian::QueryParser& qp, ParamDecoder& params)
+{
+    const std::string&      field          = params;
+    const std::string&      prefix         = params;
+    const bool              is_boolean     = params;
+    const bool              is_exclusive   = params;
+
+    if (is_boolean)
+        qp.add_boolean_prefix(field, prefix, is_exclusive);
+    else
+        qp.add_prefix(field, prefix);
+}
 
 
 Xapian::Query 
@@ -1268,13 +480,13 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
             const uint8_t     op              = params;
             const uint32_t    parameter       = params;
             const uint32_t    subQueryCount   = params;
-            vector<Xapian::Query> subQueries;
+            std::vector<Xapian::Query> subQueries;
 
             for (uint32_t i = 0; i < subQueryCount; i++)
                 subQueries.push_back(buildQuery(params));
 
-            vector<Xapian::Query>::iterator qbegin = subQueries.begin();
-            vector<Xapian::Query>::iterator qend   = subQueries.end();
+            std::vector<Xapian::Query>::iterator qbegin = subQueries.begin();
+            std::vector<Xapian::Query>::iterator qend   = subQueries.end();
             Xapian::Query q(
                 static_cast<Xapian::Query::op>(op), 
                 qbegin, 
@@ -1287,7 +499,7 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
         {    
             const uint8_t           op       = params;
             const Xapian::valueno   slot     = params;
-            const string&           value    = params;
+            const std::string&      value    = params;
             Xapian::Query q(
                 static_cast<Xapian::Query::op>(op), 
                 slot, 
@@ -1299,8 +511,8 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
         {    
             const uint8_t           op       = params;
             const Xapian::valueno   slot     = params;
-            const string&           from     = params;
-            const string&           to       = params;
+            const std::string&      from     = params;
+            const std::string&      to       = params;
             Xapian::Query q(
                 static_cast<Xapian::Query::op>(op), 
                 slot, 
@@ -1311,7 +523,7 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
 
         case QUERY_TERM:
         {    
-            const string&      name     = params;
+            const std::string& name     = params;
             const uint32_t     wqf      = params;
             const uint32_t     pos      = params;
             Xapian::Query q(
@@ -1324,9 +536,9 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
         case QUERY_PARSER:
         {
             Xapian::QueryParser parser    = readParser(params);
-            const string&  query_string   = params;
-            const string&  default_prefix = params;
-            const unsigned flags          = decodeParserFeatureFlags(params); 
+            const std::string&  query_string   = params;
+            const std::string&  default_prefix = params;
+            const unsigned flags               = decodeParserFeatureFlags(params); 
 
             Xapian::Query q = 
             parser.parse_query(
@@ -1338,6 +550,113 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
 
         default:
             throw BadCommandDriverError(type);
+    }
+}
+
+
+void 
+XapianErlangDriver::fillEnquire(Xapian::Enquire& enquire, ParamDecoder& params)
+{
+    Xapian::termcount   qlen = 0;
+
+    while (uint8_t command = params)
+    switch (command)
+    {
+    case EC_QUERY:
+        {
+        Xapian::Query   query = buildQuery(params);
+        enquire.set_query(query, qlen);
+        break;
+        }
+
+    case EC_QUERY_LEN:
+        {
+        uint32_t value = params;
+        qlen = value;
+        break;
+        }
+
+    case EC_ORDER:
+        {
+        uint8_t type   = params;
+        bool reverse   = params;
+        uint32_t value = params;
+        fillEnquireOrder(enquire, type, value, reverse);
+        break;
+        }
+
+    case EC_DOCID_ORDER:
+        {
+        uint8_t type   = params;
+        if (type >= DOCID_ORDER_TYPE_COUNT)
+            throw BadCommandDriverError(type);
+        
+        Xapian::Enquire::docid_order order = DOCID_ORDER_TYPES[type];
+        enquire.set_docid_order(order);
+        break;
+        }
+
+    case EC_WEIGHTING_SCHEME:
+        {
+      //const Weight &  weight;
+      //enquire.set_weighting_scheme(weight);
+        break;
+        }
+
+    case EC_CUTOFF:
+        {
+        uint8_t percent_cutoff   = params;
+        double  weight_cutoff    = params;
+        enquire.set_cutoff(percent_cutoff, weight_cutoff);
+        break;
+        }
+
+    case EC_COLLAPSE_KEY:
+        {
+        uint32_t collapse_key = params;
+        uint32_t collapse_max = params;
+        enquire.set_collapse_key(
+            !collapse_key ? Xapian::BAD_VALUENO : collapse_key, 
+            collapse_max);
+        break;
+        }
+
+    default:
+        throw BadCommandDriverError(command);
+    }
+}
+
+void
+XapianErlangDriver::fillEnquireOrder(Xapian::Enquire& enquire, 
+    const uint8_t type, const uint32_t value, const bool reverse)
+{
+    switch(type)
+    {
+    case OT_KEY:
+      //Xapian::KeyMaker *      
+      //enquire.set_sort_by_key(sorter, reverse);
+      //break;
+    case OT_KEY_RELEVANCE:
+      //enquire.set_sort_by_key_then_relevance(sorter, reverse);
+      //break;
+    case OT_RELEVANCE_KEY:
+      //enquire.set_sort_by_relevance_then_key(sorter, reverse);
+      //break;
+
+    case OT_VALUE:
+        enquire.set_sort_by_value(value, reverse);
+        break;
+
+    case OT_RELEVANCE_VALUE:
+        enquire.set_sort_by_relevance_then_value(value, reverse);
+        break;
+
+    case OT_VALUE_RELEVANCE:
+        enquire.set_sort_by_value_then_relevance(value, reverse);
+        break;
+
+    default:
+        throw BadCommandDriverError(type);
     }
 }
 
@@ -1444,8 +763,8 @@ XapianErlangDriver::control(
         switch(command) {
         case OPEN: 
             {
-            const string&   dbpath = params;
-            const int8_t    mode = params;
+            const std::string&   dbpath = params;
+            const int8_t         mode = params;
             return drv.open(dbpath, mode);
             }
 
@@ -1494,6 +813,9 @@ XapianErlangDriver::control(
         case QLC_NEXT_PORTION:
             return drv.qlcNext(params);
 
+        case QLC_LOOKUP:
+            return drv.qlcLookup(params);
+
         default:
             throw BadCommandDriverError(command);
         }
@@ -1521,7 +843,7 @@ XapianErlangDriver::control(
 
 
 size_t 
-XapianErlangDriver::open(const string& dbpath, int8_t mode)
+XapianErlangDriver::open(const std::string& dbpath, int8_t mode)
 {
     // Is already opened?
     if (mp_db != NULL)
@@ -1592,7 +914,7 @@ XapianErlangDriver::applyDocument(
             case DATA:
             {
                 // see xapian_document:append_data
-                const string&   data = params;
+                const std::string&   data = params;
                 doc.set_data(data);
                 break;
             }
@@ -1600,8 +922,8 @@ XapianErlangDriver::applyDocument(
             case VALUE:
             {
                 // see xapian_document:append_value
-                const uint32_t    slot  = params;
-                const string&     value = params;
+                const uint32_t         slot  = params;
+                const std::string&     value = params;
                 doc.add_value(static_cast<Xapian::valueno>(slot), value); 
                 break;
             }
@@ -1617,9 +939,9 @@ XapianErlangDriver::applyDocument(
             case TEXT:
             {
                 // see xapian_document:append_delta
-                const string&     text    = params; // value
-                const uint32_t    wdf_inc = params; // pos
-                const string&     prefix  = params;
+                const std::string&     text    = params; // value
+                const uint32_t         wdf_inc = params; // pos
+                const std::string&     prefix  = params;
                 termGenerator.index_text(text, 
                     static_cast<Xapian::termcount>(wdf_inc), 
                     prefix); 
@@ -1629,8 +951,8 @@ XapianErlangDriver::applyDocument(
             case TERM:
             {
                 // see xapian_document:append_term
-                const string&           tname   = params; // value
-                const Xapian::termcount wdf_inc = params; 
+                const std::string&           tname   = params; // value
+                const Xapian::termcount      wdf_inc = params; 
                 // Pos = undefined
                 doc.add_term(tname, wdf_inc);
                 break;
@@ -1639,9 +961,9 @@ XapianErlangDriver::applyDocument(
             case POSTING:
             {
                 // see xapian_document:append_term
-                const string&     tname   = params; // value
-                const uint32_t    tpos    = params;
-                const uint32_t    wdf_inc = params;
+                const std::string&     tname   = params; // value
+                const uint32_t         tpos    = params;
+                const uint32_t         wdf_inc = params;
                 doc.add_posting(tname, 
                     static_cast<Xapian::termpos>(tpos), 
                     static_cast<Xapian::termcount>(wdf_inc));
@@ -1668,15 +990,15 @@ XapianErlangDriver::retrieveDocument(
         {
             case GET_VALUE:
             {
-                const uint32_t    slot  = params;
-                const string      value = doc.get_value(static_cast<Xapian::valueno>(slot));
+                const uint32_t     slot  = params;
+                const std::string  value = doc.get_value(static_cast<Xapian::valueno>(slot));
                 m_result << value;
                 break;
             }
 
             case GET_DATA:
             {
-                const string data = doc.get_data();
+                const std::string data = doc.get_data();
                 m_result << data;
                 break;
             }
@@ -1762,36 +1084,6 @@ XapianErlangDriver::retrieveDocumentSchema(
     return ctrl;
 }
 
-/**
- * Skip "skip" documents. 
- * Read not more then "count" documents.
- */
-void
-MSetQlcTable::getPage(const uint32_t skip, const uint32_t count) const
-{
-    uint32_t size = m_mset.size();
-    assert(skip <= size);
-
-    /* Tail size */
-    size -= skip;
-
-    // Do while: 
-    // * the current element is not the last element;
-    // * and not more then wanted count of documents were extracted.
-    const uint32_t left = std::min(size, count);
-
-    m_driver.m_result << left;
-
-    Xapian::MSetIterator iter = m_mset[skip];
-    Xapian::MSetIterator last = (count < size) ? m_mset[skip+left+1] : m_mset.end();
-
-    for (; iter != last; iter++)
-    {
-        ParamDecoder params = m_controller;
-        Xapian::Document doc = iter.get_document();
-        m_driver.retrieveDocument(params, doc, &iter);
-    }
-}
 
 // -------------------------------------------------------------------
 // Meta information for Erlang

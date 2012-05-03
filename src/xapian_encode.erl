@@ -3,6 +3,9 @@
         , append_prefix/2]).
 -include_lib("xapian/include/xapian.hrl").
 -compile({parse_transform, seqbind}).
+-import(xapian_common, [ 
+    append_iolist/2,
+    append_boolean/2]).
 
 append_stemmer(#x_stemmer{language=Language}, Bin) ->
     append_iolist(Language, Bin).
@@ -24,24 +27,3 @@ prefix_name_to_binary(A) when is_atom(A) ->
 
 prefix_name_to_binary(X) ->
     X.
-
-
-%% Append iolist as a string
-append_iolist(Str, Bin) ->
-    StrBin = erlang:iolist_to_binary(Str),
-    StrLen = erlang:byte_size(StrBin),
-    <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
-
-
-append_uint8(Value, Bin) ->
-    <<Bin/binary, Value:8/native-unsigned-integer>>.
-
-
-%% Append bool
-append_boolean(Value, Bin) ->
-    append_uint8(boolean_to_integer(Value), Bin).
-
-
-boolean_to_integer(false) -> 0;
-boolean_to_integer(true) ->  1.
-

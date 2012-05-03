@@ -5,6 +5,15 @@
 
 -compile({parse_transform, seqbind}).
 -record(rec, {name, fields}).
+-import(xapian_common, [ 
+    append_uint/2,
+    append_uint8/2,
+    append_int8/2,
+    read_doccount/1,
+    read_document_id/1,
+    read_weight/1,
+    read_rank/1,
+    read_percent/1]).
 
 %% ------------------------------------------------------------------
 %% API
@@ -22,7 +31,10 @@ record(TupleName, TupleFields) ->
 
 
 key_position(#rec{fields=TupleFields}) ->
-    index_of(docid, TupleFields).
+    case index_of(docid, TupleFields) of
+    I -> I + 1;
+    not_found -> undefined
+    end.
 
 
 %% Creates tuples {Name, Field1, ....}
@@ -75,15 +87,10 @@ enc([], _N2S, Bin) ->
 
 
 append_type(Type, Bin) ->
-    PartId = part_id(Type),  
-    <<Bin/binary, PartId:8/native-signed-integer>>.
+    append_int8(part_id(Type), Bin).
 
 append_value(Slot, Bin) ->
     append_uint(Slot, Bin).
-
-%% Encode to unsigned int32_t (for example, it is Xapian::valueno)
-append_uint(Num, Bin) ->
-    <<Bin/binary, Num:32/native-unsigned-integer>>.
 
    
 part_id(stop)       -> 0;
@@ -104,7 +111,7 @@ part_id(percent)    -> 6.
 dec([H|T], Bin, Acc) ->
     {Val, NewBin} =
         case H of
-            docid   -> read_docid(Bin);
+            docid   -> read_document_id(Bin);
             weight  -> read_weight(Bin);  % double
             rank    -> read_rank(Bin);    % unsigned
             percent -> read_percent(Bin); % int -> uint8_t
@@ -124,29 +131,6 @@ read_string(Bin) ->
     <<Num:32/native-unsigned-integer, Bin2/binary>> = Bin,  
     <<Str:Num/binary, Bin3/binary>> = Bin2,
     {Str, Bin3}.
-
-
-read_docid(Bin) ->
-    <<Id:32/native-unsigned-integer, Bin2/binary>> = Bin,  
-    {Id, Bin2}.
-
-read_weight(Bin) ->
-    %% `native-float' is `double' from C++.
-    <<W/native-float, Bin2/binary>> = Bin,  
-    {W, Bin2}.
-
-read_rank(Bin) ->
-    <<Rank:32/native-unsigned-integer, Bin2/binary>> = Bin,  
-    {Rank, Bin2}.
-
-read_percent(Bin) ->
-    <<P:8/native-unsigned-integer, Bin2/binary>> = Bin,  
-    {P, Bin2}.
-
-
-read_doccount(Bin) ->
-    <<Count:32/native-unsigned-integer, Bin2/binary>> = Bin,  
-    {Count, Bin2}.
 
 
 index_of(Item, List) -> index_of(Item, List, 1).

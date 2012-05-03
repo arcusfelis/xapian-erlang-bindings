@@ -3,6 +3,11 @@
 
 -include_lib("xapian/include/xapian.hrl").
 -compile({parse_transform, seqbind}).
+-import(xapian_common, [ 
+    append_uint/2,
+    append_uint8/2,
+    append_slot/3,
+    append_iolist/2]).
 
 %% From `include/xapian/query.h'
 operator_id('AND')          -> 0;
@@ -72,40 +77,12 @@ encode(Term, N2S, Bin) ->
     encode(#x_query_term{name=Term}, N2S, Bin).
 
 
-
-append_slot(Slot, N2S, Bin) ->
-    append_uint(slot_id(Slot, N2S), Bin).
-
-
-slot_id(Name, N2S) when is_atom(Name) -> 
-    orddict:fetch(Name, N2S);
-
-slot_id(Slot, _N2S) when is_integer(Slot) -> 
-    Slot.
-
-
-append_type(Type, Bin) ->
-    append_uint8(query_id(Type), Bin).
-
-
 append_operator(Op, Bin) ->
     append_uint8(operator_id(Op), Bin).
 
 
-append_uint8(Value, Bin) ->
-    <<Bin/binary, Value:8/native-unsigned-integer>>.
-
-
-%% Append iolist as a string
-append_iolist(Str, Bin) ->
-    StrBin = erlang:iolist_to_binary(Str),
-    StrLen = erlang:byte_size(StrBin),
-    <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
-
-
-%% uint32_t
-append_uint(Value, Bin) ->
-    <<Bin/binary, Value:32/native-unsigned-integer>>.
+append_type(Type, Bin) ->
+    append_uint8(query_id(Type), Bin).
 
 
 

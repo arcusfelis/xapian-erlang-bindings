@@ -47,7 +47,6 @@
 -compile({parse_transform, do}).
 -compile({parse_transform, seqbind}).
 
--define(DOCUMENT_ID(X), X:32/native-unsigned-integer).
 
 
 
@@ -77,7 +76,18 @@
 
 %% Intermodule export (non for a client!)
 -export([internal_qlc_init/3,
-         internal_qlc_get_next_portion/4]).
+         internal_qlc_get_next_portion/4,
+         internal_qlc_lookup/3]).
+
+
+-import(xapian_common, [ 
+    append_int8/2,
+    append_uint/2,
+    append_uint8/2,
+    append_document_id/2,
+    read_document_id/1,
+    read_uint/1,
+    read_string/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -93,6 +103,7 @@
 -opaque x_record() :: xapian:x_record().
 -opaque x_meta() :: xapian:x_meta().
 -opaque void() :: 'VoiD'.
+-opaque x_document_id() :: xapian:x_document_id().
 
 
 
@@ -367,7 +378,7 @@ cancel_transaction(Server, Ref) ->
 -type qlc_params() :: #internal_qlc_mset_parameters{}.
 
 %% Create a qlc resource, collect basic information about a set.
--spec internal_qlc_init(pid() | atom(), reference(), qlc_params()) ->
+-spec internal_qlc_init(x_server(), reference(), qlc_params()) ->
     #internal_qlc_info{}.
 
 internal_qlc_init(Server, ResourceRef, Params) ->
@@ -375,13 +386,20 @@ internal_qlc_init(Server, ResourceRef, Params) ->
 
 
 %% Read next `Count' elements starting from `From' from QlcResNum.
--spec internal_qlc_get_next_portion(pid() | atom(), 
+-spec internal_qlc_get_next_portion(x_server(), 
     non_neg_integer(), non_neg_integer(), non_neg_integer()) ->
     binary().
 
 internal_qlc_get_next_portion(Server, QlcResNum, From, Count) ->
     call(Server, {qlc_next_portion, QlcResNum, From, Count}).
 
+
+-spec internal_qlc_lookup(x_server(), 
+    non_neg_integer(), [x_document_id()]) ->
+    binary().
+
+internal_qlc_lookup(Server, ResNum, DocIds) ->
+    call(Server, {qlc_lookup, ResNum, DocIds}).
 
 %% ------------------------------------------------------------------
 %% gen_server Client Helpers
@@ -486,7 +504,7 @@ handle_call({enquire, Query}, {FromPid, FromRef}, State) ->
         register = Register } = State,
 
     %% Special handling of errors
-    case port_enquire(Port, Query, Name2Slot) of
+    case port_enquire(Port, Query, Name2Slot, Register) of
         {error, _Reason} = Error ->
             {reply, Error, State};
         {ok, ResourceNum} ->
@@ -532,6 +550,11 @@ handle_call({release_resource, Ref}, _From, State) ->
 handle_call({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
     #state{port = Port } = State,
     Reply = port_qlc_next_portion(Port, QlcResNum, From, Count),
+    {reply, Reply, State};
+    
+handle_call({qlc_lookup, QlcResNum, DocIds}, _From, State) ->
+    #state{port = Port } = State,
+    Reply = port_qlc_lookup(Port, QlcResNum, DocIds),
     {reply, Reply, State};
 
 %% Res into QlcRes
@@ -670,7 +693,8 @@ command_id(enquire)                     -> 11;
 command_id(release_resource)            -> 12;
 command_id(match_set)                   -> 13;
 command_id(qlc_init)                    -> 14;
-command_id(qlc_next_portion)            -> 15.
+command_id(qlc_next_portion)            -> 15;
+command_id(qlc_lookup)                  -> 16.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -764,13 +788,16 @@ port_last_document_id(Port) ->
 
 port_test(Port, result_encoder, [From, To]) ->
     Num = test_id(result_encoder),
-    Data = <<Num:8/native-signed-integer, ?DOCUMENT_ID(From), ?DOCUMENT_ID(To)>>,
-    control(Port, test, Data);
+    Bin@ = <<>>,
+    Bin@ = append_int8(Num, Bin@),
+    Bin@ = append_document_id(From, Bin@),
+    Bin@ = append_document_id(To, Bin@),
+    control(Port, test, Bin@);
 
 port_test(Port, exception, []) ->
     Num = test_id(exception),
-    Data = <<Num:8/native-signed-integer>>,
-    control(Port, test, Data).
+    Bin = append_int8(Num, <<>>),
+    control(Port, test, Bin).
 
 
 
@@ -798,9 +825,10 @@ port_cancel_transaction(Port) ->
 
 %% @doc Read and decode one document from the port.
 port_read_document_by_id(Port, Id, Meta, Name2Slot) ->
-    RecordDefinition = xapian_record:encode(Meta, Name2Slot),
-    Data = <<?DOCUMENT_ID(Id), RecordDefinition/binary>>,
-    decode_record_result(control(Port, read_document_by_id, Data), Meta).
+    Bin@ = <<>>,
+    Bin@ = append_document_id(Id, Bin@),
+    Bin@ = xapian_record:encode(Meta, Name2Slot, Bin@),
+    decode_record_result(control(Port, read_document_by_id, Bin@), Meta).
 
 
 port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot) ->
@@ -812,9 +840,9 @@ port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot) ->
     decode_records_result(control(Port, query_page, Bin@), Meta).
 
 
-port_enquire(Port, Query, Name2Slot) ->
+port_enquire(Port, Enquire, Name2Slot, Register) ->
     Bin@ = <<>>,
-    Bin@ = xapian_query:encode(Query, Name2Slot, Bin@),
+    Bin@ = xapian_enquire:encode(Enquire, Name2Slot, Register, Bin@),
     decode_resource_result(control(Port, enquire, Bin@)).
 
 
@@ -839,6 +867,14 @@ port_qlc_next_portion(Port, QlcResNum, From, Count) ->
     control(Port, qlc_next_portion, Bin@).
 
 
+port_qlc_lookup(Port, QlcResNum, DocIds) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint(QlcResNum, Bin@),
+    Bin@ = lists:foldl(fun xapian_common:append_document_id/2, Bin@, DocIds),
+    Bin@ = append_document_id(0, Bin@),
+    control(Port, qlc_lookup, Bin@).
+
+
 port_qlc_init(State, ResourceType, ResourceNum, Params) ->
     #state{ port = Port } = State,
     Bin@ = <<>>,
@@ -857,17 +893,6 @@ append_qlc_parameters(State, mset, Params, Bin) ->
 %% -----------------------------------------------------------------
 %% Helpers
 %% -----------------------------------------------------------------
-
-read_string(Bin) ->
-    <<Num:32/native-unsigned-integer, Bin2/binary>> = Bin,  
-    <<Str:Num/binary, Bin3/binary>> = Bin2,
-    {Str, Bin3}.
-
-append_uint(Value, Bin) ->
-    <<Bin/binary, Value:32/native-unsigned-integer>>.
-
-append_uint8(Value, Bin) ->
-    <<Bin/binary, Value:8/native-unsigned-integer>>.
 
 
 decode_record_result({ok, Bin}, Meta) ->
@@ -888,22 +913,25 @@ decode_records_result(Other, _Meta) ->
     Other.
 
 
-decode_docid_result({ok, <<?DOCUMENT_ID(Last)>>}) -> 
+decode_docid_result({ok, Bin}) -> 
+    {Last, <<>>} = read_document_id(Bin),
     {ok, Last};
 
 decode_docid_result(Other) -> 
     Other.
 
 
-decode_resource_result({ok, <<Id:32/native-unsigned-integer>>}) -> 
+decode_resource_result({ok, Bin}) -> 
+    {Id, <<>>} = read_uint(Bin),
     {ok, Id};
 
 decode_resource_result(Other) -> 
     Other.
 
 
-decode_qlc_info_result({ok, <<ResNum:32/native-unsigned-integer, 
-                                Size:32/native-unsigned-integer>>}) -> 
+decode_qlc_info_result({ok, Bin@}) -> 
+    {ResNum, Bin@} = read_uint(Bin@),
+    {Size,   <<>>} = read_uint(Bin@),
     {ok, #internal_qlc_info{
             num_of_objects = Size,
             resource_number = ResNum %% Num of a QLC table
@@ -1111,6 +1139,8 @@ transaction_readonly_error_test_() ->
 %% ------------------------------------------------------------------
 %% Call C++ tests
 %% ------------------------------------------------------------------
+
+-define(DOCUMENT_ID(X), X:32/native-unsigned-integer).
     
 %% @doc This test checks the work of `ResultEncoder'.
 result_encoder_test() ->
@@ -1343,8 +1373,18 @@ qlc_mset_case(Server) ->
         io:format(user, "~n ~p~n", [Info]),
         Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
         ?DRV:release_resource(Server, MSetResourceId),
-        Records = qlc:e(qlc:q([X || X <- Table])),
-        io:format(user, "~n ~p~n", [Records])
+
+        QueryAll = qlc:q([X || X <- Table]),
+        %% Check lookup
+        QueryFilter = qlc:q([X || X=#book_ext{docid=DocId} <- Table, DocId =:= 1]),
+        Queries = [QueryAll, QueryFilter],
+        [begin
+            Records = qlc:e(Query),
+            io:format(user, "~n ~p~n", [Records])
+            end || Query <- Queries
+        ],
+        QueryBadFilter = qlc:q([X || X=#book_ext{docid=DocId} <- Table, DocId =:= 0]),
+        ?assertError(bad_docid, qlc:e(QueryBadFilter))
         end,
     {"Check internal_qlc_init", Case}.
 

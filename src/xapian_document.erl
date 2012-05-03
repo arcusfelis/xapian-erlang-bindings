@@ -7,6 +7,11 @@
 
 -include_lib("xapian/include/xapian.hrl").
 -compile({parse_transform, seqbind}).
+-import(xapian_common, [ 
+    append_iolist/2,
+    append_uint/2,
+    append_int/2,
+    append_int8/2]).
 
 part_id(stop)       -> 0;
 part_id(stemmer)    -> 1;
@@ -78,7 +83,6 @@ append_stemmer(Stemmer, Bin) ->
     xapian_encode:append_stemmer(Stemmer, append_type(stemmer, Bin)).
 
 
-
 append_data(Value, Bin) ->
     append_iolist(Value, append_type(data, Bin)).
 
@@ -121,24 +125,7 @@ append_text(Value, Pos, Prefix, Bin@) ->
 %% ------------------------------------------------------------------
 
 append_type(Type, Bin) ->
-    PartId = part_id(Type),  
-    <<Bin/binary, PartId:8/native-signed-integer>>.
-
-
-%% Append iolist as a string
-append_iolist(Str, Bin) ->
-    StrBin = erlang:iolist_to_binary(Str),
-    StrLen = erlang:byte_size(StrBin),
-    <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
-
-
-append_int(Num, Bin) ->
-    <<Bin/binary, Num:32/native-signed-integer>>.
-
-
-%% Encode to unsigned int32_t (for example, it is Xapian::valueno)
-append_uint(Num, Bin) ->
-    <<Bin/binary, Num:32/native-unsigned-integer>>.
+    append_int8(part_id(Type), Bin).
 
 
 

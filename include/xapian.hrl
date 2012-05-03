@@ -226,3 +226,31 @@
     %% `[default]' and `[]' are _different_.
     features :: [atom()]
 }).
+
+
+-record(x_sort_order, {
+    type = relevance :: xapian:x_order_type(),
+    value :: xapian:x_slot_value() | xapian:x_resource(), %% KeyMaker resource
+    is_reversed = false :: boolean()
+}).
+
+
+-record(x_enquire, {
+    x_query = xapian:x_query(),
+    %% the query length to use in weight calculations 
+    %% by default the sum of the wqf of all terms is used. 
+    query_len = 0 :: non_neg_integer(),
+    %% Primary document order
+    order = relevance :: #x_sort_order{} | relevance,
+    %% Secondary order
+    %% asc = default
+    %% dont_care = undefined
+    docid_order = asc :: asc | desc | undefined | default | dont_care,
+    %% Weighting scheme
+    weighting_scheme :: xapian:x_resource(),
+    percent_cutoff = 0,
+    weight_cutoff = 0,
+    collapse_key :: xapian:x_slot_value(),
+    %% Max number of items with the same key to leave after collapsing
+    collapse_max = 1 :: non_neg_integer()
+}).

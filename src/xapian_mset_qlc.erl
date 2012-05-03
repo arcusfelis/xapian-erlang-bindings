@@ -16,7 +16,7 @@ table(Server, MSet, Meta) ->
     KeyPos = xapian_record:key_position(Meta),
     From = 0,
     Len = 20,
-    TraverseFun = traverse(Server, ResNum, Meta, From, Len, Size),
+    TraverseFun = traverse_fun(Server, ResNum, Meta, From, Len, Size),
     InfoFun = 
     fun(num_of_objects) -> Size;
        (keypos) -> KeyPos;
@@ -24,28 +24,36 @@ table(Server, MSet, Meta) ->
        (is_unique_objects) -> true;
        (_) -> undefined
        end,
-%   LookupFun =
-%   fun(1, Ks) ->
-%       lists:flatmap(fun(K) ->
-%           case gb_trees:lookup(K, T) of
-%               {value, V} -> [{K,V}];
-%               none -> []
-%           end
-%       end, Ks)
-%   end,
+    LookupFun = lookup_fun(Server, ResNum, Meta, KeyPos),
     qlc:table(TraverseFun, 
         [{info_fun, InfoFun} 
-%       ,{lookup_fun, LookupFun}
+        ,{lookup_fun, LookupFun}
         ,{key_equality,'=:='}]).
+
+
+lookup_fun(Server, ResNum, Meta, KeyPos) ->
+    fun(KeyPosI, DocIds) when KeyPosI =:= KeyPos ->
+        case lists:all(fun is_valid_document_id/1, DocIds) of
+        true ->
+            Bin = xapian_drv:internal_qlc_lookup(Server, ResNum, DocIds),
+            {Records, <<>>} = xapian_record:decode_list(Meta, Bin),
+            Records;
+        false ->
+            erlang:error(bad_docid)
+        end
+        end.
+
+
+is_valid_document_id(DocId) -> is_integer(DocId) andalso DocId > 0.
 
 
 %% Maximum `Len' records can be retrieve for a call.
 %% `From' records will be skipped from the beginning of the collection.
-traverse(Server, ResNum, Meta, From, Len, TotalLen) ->
+traverse_fun(Server, ResNum, Meta, From, Len, TotalLen) ->
     fun() ->
         Bin = xapian_drv:internal_qlc_get_next_portion(Server, ResNum, From, Len),
         NextFrom = From+Len,
-        MoreFun = traverse(Server, ResNum, Meta, NextFrom, Len, TotalLen),
+        MoreFun = traverse_fun(Server, ResNum, Meta, NextFrom, Len, TotalLen),
         {Records, <<>>} = xapian_record:decode_list(Meta, Bin),
         if
             NextFrom < TotalLen ->
