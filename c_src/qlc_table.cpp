@@ -1,5 +1,5 @@
 #include "qlc_table.h"
-#include "xapian_driver.h"
+#include "xapian_core.h"
 #include <assert.h>
 #include <vector>
 
@@ -14,14 +14,15 @@ QlcTable::~QlcTable()
 MSetQlcTable::MSetQlcTable(XapianErlangDriver& driver, 
     Xapian::MSet& mset, const ParamDecoderController& controller) 
     : QlcTable(driver), m_mset(mset), m_controller(controller)
-{
-}
+{}
+
 
 uint32_t 
 MSetQlcTable::numOfObjects() const
 {
     return static_cast<uint32_t>(m_mset.size());
 }
+
 
 /**
  * Skip "skip" documents. 
@@ -54,6 +55,7 @@ MSetQlcTable::getPage(const uint32_t skip, const uint32_t count) const
         m_driver.retrieveDocument(params, doc, &iter);
     }
 }
+
 
 void
 MSetQlcTable::lookup(ParamDecoder& driver_params) const

@@ -54,6 +54,21 @@ ObjectRegister<Child>::get(Counter num)
 
 
 template <class Child>
+void*
+ObjectRegister<Child>::getVoidPointer(Counter num)
+{
+    return (void*) get(num);
+}
+
+
+template <class Child>
+typename ObjectRegister<Child>::Counter 
+ObjectRegister<Child>::putVoidPointer(void* obj)
+{
+    return put(static_cast<Child*>(obj));
+}
+
+template <class Child>
 ObjectRegister<Child>::~ObjectRegister()
 {
     typename Hash::iterator i, e, b;

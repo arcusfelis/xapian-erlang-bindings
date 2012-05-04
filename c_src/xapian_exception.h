@@ -69,6 +69,14 @@ class DbAlreadyOpenedDriverError: public DriverRuntimeError
     DbAlreadyOpenedDriverError();
 };
 
+class DbIsNotReadyDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    DbIsNotReadyDriverError();
+};
+
 class ElementNotFoundDriverError: public DriverRuntimeError
 {
     static const char TYPE[];

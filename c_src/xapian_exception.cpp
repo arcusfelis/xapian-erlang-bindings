@@ -79,6 +79,14 @@ DbAlreadyOpenedDriverError::DbAlreadyOpenedDriverError() :
 
 
 // -------------------------------------------------------------------
+// DbIsNotReadyDriverError
+// -------------------------------------------------------------------
+DbIsNotReadyDriverError::DbIsNotReadyDriverError() : 
+    DriverRuntimeError(TYPE, 
+        "Call xapian_drv:port_open.") {}
+
+
+// -------------------------------------------------------------------
 // ElementNotFoundDriverError
 // -------------------------------------------------------------------
 ElementNotFoundDriverError::ElementNotFoundDriverError(uint32_t num) : 
@@ -99,4 +107,6 @@ REG_TYPE(BadCommandDriverError)
 REG_TYPE(OverflowDriverError)
 REG_TYPE(NotWritableDatabaseError)
 REG_TYPE(DbAlreadyOpenedDriverError)
+REG_TYPE(DbIsNotReadyDriverError)
 REG_TYPE(ElementNotFoundDriverError)
+

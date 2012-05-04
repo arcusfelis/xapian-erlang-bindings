@@ -1,9 +1,10 @@
-#ifndef XAPIAN_DRIVER_H
-#define XAPIAN_DRIVER_H
+#ifndef XAPIAN_CORE_H
+#define XAPIAN_CORE_H
 
 #include "result_encoder.h"
 #include "qlc_table.h"
 #include "object_register.h"
+#include "user_resources.h"
 #include <xapian.h>
 #include <string>
 #include <cstring>
@@ -33,10 +34,17 @@ class XapianErlangDriver
     ObjectRegister<Xapian::MSet>    m_mset_store;
     ObjectRegister<const QlcTable>  m_qlc_store;
 
-    
-    const static uint8_t m_stores_count = 2;
-    ObjectBaseRegister* m_stores[m_stores_count];
+    /**
+     * It is global.
+     * It knows how to create user customized resources.
+     */
+    ResourceGenerator&  m_generator;
 
+    /**
+     * It is different for each port.
+     * It is a manager of ObjectRegisters.
+     */
+    ResourceManager     m_stores;
 
     public:
     friend class MSetQlcTable;
@@ -110,7 +118,6 @@ class XapianErlangDriver
         TEST_EXCEPTION              = 2
     };
 
-
     enum queryType {
         QUERY_GROUP                 = 1,
         QUERY_VALUE                 = 2,
@@ -119,7 +126,6 @@ class XapianErlangDriver
         QUERY_PARSER                = 5
     };
 
-    
     enum queryParserCommand {
         QP_STEMMER                  = 1,
         QP_STEMMING_STRATEGY        = 2,
@@ -129,12 +135,10 @@ class XapianErlangDriver
         QP_PREFIX                   = 6
     };
 
-    
     enum queryParserType {
         QP_TYPE_DEFAULT             = 0,
         QP_TYPE_EMPTY               = 1
     };
-
 
     enum resourceType {
         ENQUIRE_RESOURCE_TYPE       = 0,
@@ -155,7 +159,6 @@ class XapianErlangDriver
         EC_COLLAPSE_KEY     = 7
     };
 
-
     enum enquireOrderTypes {
         OT_KEY              = 1,
         OT_VALUE            = 2,
@@ -165,23 +168,17 @@ class XapianErlangDriver
         OT_VALUE_RELEVANCE  = 6
     };
 
-
-
     static const unsigned
     PARSER_FEATURES[];
 
     static const uint8_t
     PARSER_FEATURE_COUNT;
-    
-
 
     static const uint8_t
     STEM_STRATEGY_COUNT;
 
     static const Xapian::QueryParser::stem_strategy
     STEM_STRATEGIES[];
-
-
 
     static const uint8_t
     DOCID_ORDER_TYPE_COUNT;
@@ -191,17 +188,32 @@ class XapianErlangDriver
 
 
     /**
+     * The driver is loaded.
+     * This is called only once.
+     */
+    static int 
+    init();
+
+    /**
+     * The driver is unloaded.
+     * This is called only once.
+     */
+    static void
+    finish();
+
+    /**
      * Here we do some initialization, start is called from open_port. 
      * The drv_data will be passed to control and stop.
+     * This is called multiple times.
      */
-    static ErlDrvData start(
-        ErlDrvPort port, 
-        char* /* buf */);
+    static ErlDrvData 
+    start(ErlDrvPort port, char* /* buf */);
 
-
-    static void stop(
-        ErlDrvData drv_data);
-
+    /**
+     * This is called multiple times.
+     */
+    static void 
+    stop(ErlDrvData drv_data);
 
     static ErlDrvSSizeT control(
         ErlDrvData      drv_data, 
@@ -211,13 +223,12 @@ class XapianErlangDriver
         char**          rbuf, 
         ErlDrvSizeT     rlen);
 
-
     ResultEncoder* getResultEncoder();
 
     /**
      * A constructor
      */
-    XapianErlangDriver();
+    XapianErlangDriver(ResourceGenerator&);
 
     ~XapianErlangDriver();
 
@@ -241,7 +252,6 @@ class XapianErlangDriver
      * Used in update, replace, add document functions
      */
     void applyDocument(ParamDecoder& params, Xapian::Document& doc);
-
 
     /**
      * query_page

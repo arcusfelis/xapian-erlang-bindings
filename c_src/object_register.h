@@ -18,6 +18,12 @@ class ObjectBaseRegister
     public:
     virtual void
     remove(Counter) = 0;
+
+    virtual void*
+    getVoidPointer(Counter) = 0;
+
+    virtual Counter 
+    putVoidPointer(void* obj) = 0;
 };
 
 
@@ -34,14 +40,20 @@ class ObjectRegister : public ObjectBaseRegister
     public:
     ObjectRegister();
 
+    Child*
+    get(Counter num);
+
     Counter 
     put(Child* obj);
 
+    void*
+    getVoidPointer(Counter num);
+
+    virtual Counter 
+    putVoidPointer(void* obj);
+
     void
     remove(Counter num);
-
-    Child*
-    get(Counter num);
 
     ~ObjectRegister();
 };
