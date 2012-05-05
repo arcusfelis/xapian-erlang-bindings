@@ -24,14 +24,16 @@ encode(Enquire=#x_enquire{x_query=Query}, Name2Slot, Register, Bin@) ->
     Bin@ = append_query(Query, Name2Slot, Bin@),
     Bin@ = append_order(Order, Name2Slot, Register, Bin@),
     Bin@ = append_docid_order(DocidOrder, Bin@),
-    Bin@ = append_weighting_scheme(Weight, Bin@),
+    Bin@ = append_weighting_scheme(Weight, Register, Bin@),
     Bin@ = append_cutoff(PercentCutoff, WeightCuttoff, Bin@),
     Bin@ = append_collapse_key(CollapseKey, CollapseMax, Name2Slot, Bin@),
-    Bin@ = append_command(stop, Bin@);
+    Bin@ = append_command(stop, Bin@),
+    Bin@;
 
 encode(Query, Name2Slot, _Register, Bin@) ->
     Bin@ = append_query(Query, Name2Slot, Bin@),
-    Bin@ = append_command(stop, Bin@).
+    Bin@ = append_command(stop, Bin@),
+    Bin@.
 
 
 command_id(stop)            -> 0;
@@ -109,8 +111,10 @@ append_docid_order_id(DocidOrderId, _DefOrderId, Bin@) ->
     Bin@.
 
 
-append_weighting_scheme(Weight, Bin) ->
-    Bin.
+append_weighting_scheme(ResourceId, Register, Bin) 
+    when is_reference(ResourceId) ->
+    append_uint(xapian_register:get(Register, ResourceId), Bin).
+
 
 append_cutoff(0, 0, Bin) ->
     Bin;
@@ -122,7 +126,7 @@ append_cutoff(PercentCutoff, WeightCutoff, Bin@) ->
     Bin@.
 
 
-append_collapse_key(undefined, 1, N2S, Bin) ->
+append_collapse_key(undefined, 1, _N2S, Bin) ->
     Bin;
 
 %% TODO: Is Xapian::BAD_VALUENO 0?

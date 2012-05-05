@@ -25,6 +25,14 @@
 template class ObjectRegister<Xapian::Enquire>;
 template class ObjectRegister<Xapian::MSet>;
 template class ObjectRegister<const QlcTable>;
+template class ObjectRegister<const Xapian::Weight>;
+template class ObjectRegister<Xapian::KeyMaker>;
+template class ObjectRegister<const Xapian::Query>;
+template class ObjectRegister<const Xapian::MatchDecider>;
+template class ObjectRegister<const Xapian::Stem>;
+template class ObjectRegister<const Xapian::ExpandDecider>;
+template class ObjectRegister<const Xapian::DateValueRangeProcessor>;
+template class ObjectRegister<Xapian::MatchSpy>;
 
 // used in user_resources
 template class ObjectRegister<UserResource>;
@@ -150,9 +158,18 @@ XapianErlangDriver::XapianErlangDriver(ResourceGenerator& generator)
     mp_default_stemmer = NULL;
 
     // RESOURCE_TYPE_ID_MARK
-    m_stores.add(ResourceType::ENQUIRE,    &m_enquire_store);
-    m_stores.add(ResourceType::MSET,       &m_mset_store);
-    m_stores.add(ResourceType::QLC_TABLE,  &m_qlc_store);
+    m_stores.add(ResourceType::ENQUIRE,        &m_enquire_store);
+    m_stores.add(ResourceType::MSET,           &m_mset_store);
+    m_stores.add(ResourceType::QLC_TABLE,      &m_qlc_store);
+    m_stores.add(ResourceType::WEIGHT,         &m_weight_store);
+    m_stores.add(ResourceType::KEY_MAKER,      &m_key_maker_store);
+    m_stores.add(ResourceType::QUERY,          &m_query_store);
+    m_stores.add(ResourceType::MATCH_DECIDER,  &m_match_decider_store);
+    m_stores.add(ResourceType::STEM,           &m_stem_store);
+    m_stores.add(ResourceType::EXPAND_DECIDER, &m_expand_decider_store);
+    m_stores.add(ResourceType::DATE_VALUE_RANGE_PROCESSOR, 
+        &m_date_value_range_processor_store);
+    m_stores.add(ResourceType::MATCH_SPY,      &m_match_spy_store);
 }
 
 
@@ -310,7 +327,7 @@ XapianErlangDriver::qlcInit(ParamDecoder& params)
     uint32_t   resource_num = params;
     switch (resource_type)
     {
-        case MSET_RESOURCE_TYPE:
+        case ResourceType::MSET:
         {
             Xapian::MSet& mset = *m_mset_store.get(resource_num);
             const ParamDecoderController& schema  
@@ -611,8 +628,10 @@ XapianErlangDriver::fillEnquire(Xapian::Enquire& enquire, ParamDecoder& params)
 
     case EC_WEIGHTING_SCHEME:
         {
-      //const Weight &  weight;
-      //enquire.set_weighting_scheme(weight);
+        uint32_t num = params;
+        const Xapian::Weight& 
+        weight = *m_weight_store.get(num);
+        enquire.set_weighting_scheme(weight);
         break;
         }
 

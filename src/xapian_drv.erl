@@ -794,13 +794,29 @@ open_mode_id(write_open)                -> 4.
 
 
 %% RESOURCE_TYPE_ID_MARK
-resource_type_id(enquire) -> 0;
-resource_type_id(mset)    -> 1;
-resource_type_id(qlc)     -> 2.
+resource_type_id(enquire)         -> 0;
+resource_type_id(mset)            -> 1;
+resource_type_id(qlc)             -> 2;
+resource_type_id(weight)          -> 3;
+resource_type_id(key_maker)       -> 4;
+resource_type_id(x_query)         -> 5;
+resource_type_id(match_decider)   -> 6;
+resource_type_id(stem)            -> 7;
+resource_type_id(date_value_range_processor) -> 8;
+resource_type_id(match_spy)       -> 9;
+resource_type_id(last)            -> 9.
+
 
 resource_type_name(0) -> enquire;
 resource_type_name(1) -> mset;
-resource_type_name(2) -> qlc.
+resource_type_name(2) -> qlc;
+resource_type_name(3) -> weight;
+resource_type_name(4) -> key_maker;
+resource_type_name(5) -> x_query;
+resource_type_name(6) -> match_decider;
+resource_type_name(7) -> stem;
+resource_type_name(8) -> date_value_range_processor;
+resource_type_name(9) -> match_spy.
 
 
 test_id(result_encoder) -> 1;
@@ -1489,6 +1505,7 @@ enquire_to_mset_case(Server) ->
         end,
     {"Check conversation", Case}.
 
+
 -include_lib("stdlib/include/qlc.hrl").
 
 qlc_mset_case(Server) ->
@@ -1521,12 +1538,34 @@ qlc_mset_case(Server) ->
 
 create_user_resource_case(Server) ->
     Case = fun() ->
-        ResourceId = internal_create_resource(Server, my_mset),
+        ResourceId = internal_create_resource(Server, bool_weight),
         io:format(user, "User-defined resource ~p~n", [ResourceId])
         end,
     {"Check creation of user-defined resources", Case}.
         
 
+
+resource_type_conversation_test_() ->
+    FirstId = 1,
+    LastId = resource_type_id(last),
+    StopId = LastId + 1,
+    ?assert(FirstId < StopId),
+    {"Check resource_type_id and resource_type_name.", 
+        resource_type_conversation_gen(FirstId, StopId)}.
+    
+
+resource_type_conversation_gen(CurId, CurId) ->
+    [];
+
+resource_type_conversation_gen(CurId, StopId) ->
+    Case = 
+    fun () ->
+        More = resource_type_conversation_gen(CurId + 1, StopId),
+        [?_assertEqual(CurId, 
+            resource_type_id(resource_type_name(CurId))) | More]
+        end,
+    {generator, Case}.
+    
 -endif.
 
 

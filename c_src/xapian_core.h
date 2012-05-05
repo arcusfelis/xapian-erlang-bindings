@@ -30,9 +30,18 @@ class XapianErlangDriver
     ResultEncoder m_result;
     Xapian::QueryParser m_default_parser;
     Xapian::QueryParser m_empty_parser;
-    ObjectRegister<Xapian::Enquire> m_enquire_store;
-    ObjectRegister<Xapian::MSet>    m_mset_store;
-    ObjectRegister<const QlcTable>  m_qlc_store;
+    ObjectRegister<Xapian::Enquire>             m_enquire_store;
+    ObjectRegister<Xapian::MSet>                m_mset_store;
+    ObjectRegister<const QlcTable>              m_qlc_store;
+    ObjectRegister<const Xapian::Weight>        m_weight_store;
+    ObjectRegister<Xapian::KeyMaker>            m_key_maker_store;
+    ObjectRegister<const Xapian::Query>         m_query_store;
+    ObjectRegister<const Xapian::MatchDecider>  m_match_decider_store;
+    ObjectRegister<const Xapian::Stem>          m_stem_store;
+    ObjectRegister<const Xapian::ExpandDecider> m_expand_decider_store;
+    ObjectRegister<const Xapian::DateValueRangeProcessor> 
+        m_date_value_range_processor_store;
+    ObjectRegister<Xapian::MatchSpy>            m_match_spy_store;
 
     /**
      * It is global.
@@ -142,13 +151,6 @@ class XapianErlangDriver
         QP_TYPE_DEFAULT             = 0,
         QP_TYPE_EMPTY               = 1
     };
-
-    enum resourceType {
-        ENQUIRE_RESOURCE_TYPE       = 0,
-        MSET_RESOURCE_TYPE          = 1,
-        QLC_RESOURCE_TYPE           = 2
-    };
-
 
     /* see xapian_enquire:encode */
     enum enquireCommand {

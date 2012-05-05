@@ -14,18 +14,26 @@ typedef uint32_t    ResourceObjectNum;
 class ResourceManager;
 class ResourceGenerator;
 
+
 // Use the class to form a namespace for the enum
 class ResourceType
 {
 public:
     enum ResourceValidObjectType
     {
-        ENQUIRE     = 0,
-        MSET        = 1,
-        QLC_TABLE   = 2,
-        LAST_TYPE   = 2
+        ENQUIRE         = 0,
+        MSET            = 1,
+        QLC_TABLE       = 2,
+        WEIGHT          = 3,
+        KEY_MAKER       = 4,
+        QUERY           = 5,
+        MATCH_DECIDER   = 6,
+        STEM            = 7,
+        EXPAND_DECIDER  = 8,
+        DATE_VALUE_RANGE_PROCESSOR = 9,
+        MATCH_SPY       = 10,
+        LAST_TYPE       = 10
     };
-
 
     /**
      * Check ResourceObjectType value
@@ -71,7 +79,7 @@ class UserResource
     ResourceObjectP
     create(ResourceManager& manager, ParamDecoder& params)
     {
-        m_creator(manager, params);
+        return m_creator(manager, params);
     }
 
     const std::string& getName()
@@ -160,18 +168,18 @@ class ResourceGenerator
  */
 class ResourceManager
 {
+    ResourceGenerator& 
+    m_generator;
+
+    Xapian::Database*
+    mp_db;
+
     /**
      * Pointers on stores of opened resources objects.
      * If LAST_TYPE is 2, then the size of this array is 3.
      */
     ObjectBaseRegister*
     m_stores[ResourceType::LAST_TYPE + 1];
-
-    ResourceGenerator& 
-    m_generator;
-
-    Xapian::Database*
-    mp_db;
 
     public:
 
