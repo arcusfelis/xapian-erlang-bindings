@@ -68,8 +68,11 @@ class XapianErlangDriver
         MATCH_SET                   = 13,
         QLC_INIT                    = 14,
         QLC_NEXT_PORTION            = 15,
-        QLC_LOOKUP                  = 16
+        QLC_LOOKUP                  = 16,
+        GET_RESOURCE_INFO           = 17,
+        CREATE_RESOURCE             = 18
     };
+
 
     // Error prefix tags.
     // used in the control function
@@ -315,6 +318,13 @@ class XapianErlangDriver
     size_t testResultEncoder(Xapian::docid from, Xapian::docid to);
 
     size_t testException();
+
+    size_t getResourceInfo();
+
+    /**
+     * Create a resource object using an user function.
+     */
+    size_t createResource(ParamDecoder& params);
 
     static unsigned
     idToParserFeature(uint8_t type);

@@ -30,14 +30,17 @@ class ObjectBaseRegister
 template <class Child>
 class ObjectRegister : public ObjectBaseRegister
 {
+    public:
     typedef 
     google::dense_hash_map< uint32_t, Child*, HASH_TPL<uint32_t> > Hash;
 
+    private:
     /* Contains a number of the latest added object */
     Counter m_counter;
     Hash m_elements;
-    
+
     public:
+
     ObjectRegister();
 
     Child*
@@ -54,6 +57,12 @@ class ObjectRegister : public ObjectBaseRegister
 
     void
     remove(Counter num);
+
+    Hash&
+    getElements()
+    {
+        return m_elements;
+    }
 
     ~ObjectRegister();
 };

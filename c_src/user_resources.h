@@ -50,26 +50,38 @@ typedef ResourceObjectP (*CreateUserResourceFn)
     (ResourceManager& manager, ParamDecoder& params);
 
 
+#include <iostream>
 /**
  * Encapsulate information about how to create new resource.
  */
 class UserResource
 {
-    CreateUserResourceFn m_creator;
-    std::string m_name;
     ResourceValidObjectType m_type;
+    std::string m_name;
+    CreateUserResourceFn m_creator;
 
     public:
     UserResource(ResourceValidObjectType type, 
         const std::string& name, 
         CreateUserResourceFn creator)
-        : m_creator(creator), m_name(name), m_type(type)
-    {}
+        : m_type(type), m_name(name), m_creator(creator)
+    {
+    }
 
     ResourceObjectP
     create(ResourceManager& manager, ParamDecoder& params)
     {
-        return m_creator(manager, params);
+        m_creator(manager, params);
+    }
+
+    const std::string& getName()
+    {
+        return m_name;
+    }
+
+    uint8_t getType()
+    {
+        return m_type;
     }
 };
 
@@ -88,6 +100,20 @@ class ResourceGenerator
 
 
     public:
+    ResourceGenerator()
+    {}
+
+    ResourceGenerator(const ResourceGenerator& generator)
+    {
+        // copy?
+        assert(false);
+    }
+
+    ResourceGenerator(ResourceGenerator& generator)
+    {
+        // copy?
+        assert(false);
+    }
 
     /**
      * Register callback
@@ -95,7 +121,8 @@ class ResourceGenerator
     void
     add(UserResource* resource)
     {
-        m_resources.put(resource);
+        uint32_t num = m_resources.put(resource);
+        assert(resource == m_resources.get(num));
     }
 
 
@@ -118,7 +145,11 @@ class ResourceGenerator
      * Get added resources for next registration.
      * Don't call it, it is called from driver_open
      */
-//  ObjectRegister<UserResource>()
+    ObjectRegister<UserResource>&
+    getRegister()
+    {
+        return m_resources;   
+    }
 };
 
 
@@ -131,9 +162,10 @@ class ResourceManager
 {
     /**
      * Pointers on stores of opened resources objects.
+     * If LAST_TYPE is 2, then the size of this array is 3.
      */
     ObjectBaseRegister*
-    m_stores[ResourceType::LAST_TYPE];
+    m_stores[ResourceType::LAST_TYPE + 1];
 
     ResourceGenerator& 
     m_generator;
@@ -232,10 +264,8 @@ class ResourceManager
 };
 
 
-ResourceObjectP
-createMyMset(ResourceManager& manager, ParamDecoder& params);
-
 void
 registerUserCallbacks(ResourceGenerator& generator);
+
 
 #endif

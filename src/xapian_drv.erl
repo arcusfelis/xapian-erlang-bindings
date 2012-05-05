@@ -19,6 +19,12 @@
     %% Information was retrieved from #x_value_name{}
     name_to_slot :: ordict:orddict(),
 
+    %% Used for creating resources.
+    %% It contains mapping from an atom to information, about how to create 
+    %% new resource on C++ side of the application.
+    name_to_resource :: ordict:orddict(),
+
+
     %% Pid of the real server (used by a transaction).
     %% If the process will be terminated, then new owner of the port will 
     %% be master.
@@ -29,6 +35,13 @@
 -record(resource, {
     type :: atom(), 
     number :: non_neg_integer()
+}).
+
+
+-record(resource_info, {
+    type :: atom(),
+    number :: non_neg_integer(),
+    name :: atom()
 }).
 
 
@@ -87,6 +100,7 @@
     append_document_id/2,
     read_document_id/1,
     read_uint/1,
+    read_uint8/1,
     read_string/1]).
 
 %% ------------------------------------------------------------------
@@ -401,6 +415,23 @@ internal_qlc_get_next_portion(Server, QlcResNum, From, Count) ->
 internal_qlc_lookup(Server, ResNum, DocIds) ->
     call(Server, {qlc_lookup, ResNum, DocIds}).
 
+
+%% ParamCreatorFun will be called as ParamCreatorFun(Register).
+%% ParamCreatorFun returns `{ok, Bin}', where `Bin' is encoded binary, 
+%% this binary will be passed as `ParamEncoder' into a resource 
+%% creator function on C++ side.
+-spec internal_create_resource(x_server(), atom(), fun()) -> x_resource().
+
+internal_create_resource(Server, ResourceTypeName, ParamCreatorFun) ->
+    call(Server, {create_resource, ResourceTypeName, ParamCreatorFun}).
+
+
+-spec internal_create_resource(x_server(), atom()) -> x_resource().
+
+internal_create_resource(Server, ResourceTypeName) ->
+    call(Server, {create_resource, ResourceTypeName, undefined}).
+
+
 %% ------------------------------------------------------------------
 %% gen_server Client Helpers
 %% ------------------------------------------------------------------
@@ -450,11 +481,26 @@ init([Path, Params]) ->
             set_default_stemmer(Port, DefaultStemmer),
         <<>> <- 
             set_default_prefixes(Port, DefaultPrefixes),
+        ResourceInfo <-
+            port_get_resource_info(Port),
+        begin
+
+        %% ATTENTION: this #resource{} is malformed!
+        %% type is a resource type,
+        %% number is a object id in __ObjectRegister<UserResource>__,
+        %% not a number in the register of type `type'.
+        Name2Resource = 
+        [{InfoName, #resource{type=InfoType, number=InfoNum}} 
+            || #resource_info{type=InfoType, number=InfoNum, name=InfoName} 
+                <- ResourceInfo],
+        Name2ResourceDict = orddict:from_list(Name2Slot),
         {ok, #state{
             port = Port,
             name_to_prefix = Name2PrefixDict,
-            name_to_slot = Name2SlotDict
-        }}]);
+            name_to_slot = Name2SlotDict,
+            name_to_resource = Name2Resource
+        }}
+        end]);
 
 %% Add a copy of the server for the transaction
 init([{from_state, State}]) ->
@@ -518,7 +564,7 @@ handle_call({enquire, Query}, {FromPid, FromRef}, State) ->
 
 handle_call({match_set, EnquireRef}, {FromPid, FromRef}, State) ->
     #state{port = Port, register = Register } = State,
-    do([error_m ||
+    do_reply(State, do([error_m ||
         #resource{type=enquire, number=EnquireNum} 
             <- xapian_register:get(Register, EnquireRef),
 
@@ -532,7 +578,7 @@ handle_call({match_set, EnquireRef}, {FromPid, FromRef}, State) ->
             xapian_register:put(Register, FromPid, MSetElem),
             NewState = State#state{register = NewRegister},
             {reply, {ok, MSetRef}, NewState}
-        end]);
+        end]));
 
 handle_call({release_resource, Ref}, _From, State) ->
     #state{port = Port, register = Register } = State,
@@ -560,7 +606,7 @@ handle_call({qlc_lookup, QlcResNum, DocIds}, _From, State) ->
 %% Res into QlcRes
 handle_call({qlc_init, ResRef, Params}, {FromPid, _FromRef}, State) ->
     #state{port = Port, register = Register } = State,
-    do([error_m ||
+    do_reply(State, do([error_m ||
         %% Get an iterable resource by the reference
         #resource{type=ResType, number=ResNum} 
             <- xapian_register:get(Register, ResRef),
@@ -576,7 +622,41 @@ handle_call({qlc_init, ResRef, Params}, {FromPid, _FromRef}, State) ->
             xapian_register:put(Register, FromPid, QlcElem),
             NewState = State#state{register = NewRegister},
             {reply, {ok, Reply}, NewState}
-        end]);
+        end]));
+
+
+%% Create new resource object of type `ResouceType'
+%% with a number `ResourceObjectNumber',
+%% using creator with a number `UserResourceNumber'.
+%% Return an Erlang reference of new object.
+handle_call({create_resource, ResourceTypeName, ParamCreatorFun}, 
+    {FromPid, _FromRef}, State) ->
+    #state{ name_to_resource = N2R, port = Port, register = Register } = State,
+    do_reply(State, do([error_m ||
+        #resource{ type = ResouceType, number = UserResourceNumber }  
+            <- orddict:find(ResourceTypeName, N2R),
+        
+        ParamBin 
+            <-  if 
+                    is_function(ParamCreatorFun) ->
+                        ParamCreatorFun(Register);
+                    true ->
+                        {ok, <<>>}
+                end,
+
+        ResourceObjectNumber
+            <- port_create_resource(
+                Port, ResouceType, UserResourceNumber, ParamBin),
+
+        begin
+            Elem = #resource{type=ResouceType, number=ResourceObjectNumber},
+            %% Reply is a reference
+            {ok, NewRegister, Ref} = 
+            xapian_register:put(Register, FromPid, Elem),
+            NewState = State#state{register = NewRegister},
+            {reply, {ok, Ref}, NewState}
+        end]));
+
 
 handle_call({transaction, Ref}, From, State) ->
     #state{ port = Port } = State,
@@ -618,6 +698,13 @@ handle_call({transaction, Ref}, From, State) ->
 
 handle_cast(_, State) ->
     {noreply, State}.
+
+
+do_reply(OldState, {error, _Reason} = Error) ->
+    {reply, Error, OldState};
+
+do_reply(_State, Other) ->
+    Other.
 
 
 handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
@@ -694,7 +781,9 @@ command_id(release_resource)            -> 12;
 command_id(match_set)                   -> 13;
 command_id(qlc_init)                    -> 14;
 command_id(qlc_next_portion)            -> 15;
-command_id(qlc_lookup)                  -> 16.
+command_id(qlc_lookup)                  -> 16;
+command_id(get_resource_info)           -> 17;
+command_id(create_resource)             -> 18.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -708,6 +797,10 @@ open_mode_id(write_open)                -> 4.
 resource_type_id(enquire) -> 0;
 resource_type_id(mset)    -> 1;
 resource_type_id(qlc)     -> 2.
+
+resource_type_name(0) -> enquire;
+resource_type_name(1) -> mset;
+resource_type_name(2) -> qlc.
 
 
 test_id(result_encoder) -> 1;
@@ -875,13 +968,25 @@ port_qlc_lookup(Port, QlcResNum, DocIds) ->
     control(Port, qlc_lookup, Bin@).
 
 
+port_create_resource(Port, ResouceType, UserResourceNumber, ParamBin) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint8(resource_type_id(ResouceType), Bin@),
+    Bin@ = append_uint(UserResourceNumber, Bin@),
+    Bin@ = <<Bin@/binary, ParamBin/binary>>,
+    decode_resource_result(control(Port, create_resource, Bin@)).
+    
+
+
+port_get_resource_info(Port) ->
+    decode_resource_info(control(Port, get_resource_info, <<>>)).
+
+
 port_qlc_init(State, ResourceType, ResourceNum, Params) ->
     #state{ port = Port } = State,
     Bin@ = <<>>,
     Bin@ = append_uint8(resource_type_id(ResourceType), Bin@),
     Bin@ = append_uint(ResourceNum, Bin@),
     Bin@ = append_qlc_parameters(State, ResourceType, Params, Bin@),
-    io:write(user, Bin@),
     decode_qlc_info_result(control(Port, qlc_init, Bin@)).
 
 
@@ -939,6 +1044,29 @@ decode_qlc_info_result({ok, Bin@}) ->
 
 decode_qlc_info_result(Other) -> 
     Other.
+
+
+decode_resource_info({ok, Bin}) ->
+    {ok, decode_resource_info_cycle(Bin, [])};
+
+decode_resource_info(Other) -> 
+    Other.
+
+
+decode_resource_info_cycle(<<>>, Acc) ->
+    lists:reverse(Acc);
+
+decode_resource_info_cycle(Bin@, Acc) ->
+    {TypeId, Bin@} = read_uint8(Bin@),
+    {Num, Bin@} = read_uint(Bin@),
+    {Name, Bin@} = read_string(Bin@),
+    Rec = #resource_info{
+        number = Num,
+        type = resource_type_name(TypeId),
+        name = list_to_atom(binary_to_list(Name))
+    },
+    decode_resource_info_cycle(Bin@, [Rec|Acc]).
+
 
 
 %% -----------------------------------------------------------------
@@ -1233,6 +1361,8 @@ cases_test_() ->
     , fun resource_cleanup_on_process_down_case/1
     , fun enquire_to_mset_case/1
     , fun qlc_mset_case/1
+
+    , fun create_user_resource_case/1
     ],
     Server = query_page_setup(),
     %% One setup for each test
@@ -1387,6 +1517,15 @@ qlc_mset_case(Server) ->
         ?assertError(bad_docid, qlc:e(QueryBadFilter))
         end,
     {"Check internal_qlc_init", Case}.
+
+
+create_user_resource_case(Server) ->
+    Case = fun() ->
+        ResourceId = internal_create_resource(Server, my_mset),
+        io:format(user, "User-defined resource ~p~n", [ResourceId])
+        end,
+    {"Check creation of user-defined resources", Case}.
+        
 
 -endif.
 

@@ -87,8 +87,11 @@ XapianErlangDriver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
 int 
 XapianErlangDriver::init()
 {
-    gp_generator = new ResourceGenerator();
-    registerUserCallbacks(*gp_generator);
+    if (gp_generator == NULL)
+    {
+        gp_generator = new ResourceGenerator();
+        registerUserCallbacks(*gp_generator);
+    }
     return 0;
 }
 
@@ -101,6 +104,8 @@ XapianErlangDriver::finish()
 {
     if (gp_generator != NULL)
         delete gp_generator;
+
+    gp_generator = NULL;
 }
 
 
@@ -112,6 +117,7 @@ XapianErlangDriver::start(
     /* If the flag is set to PORT_CONTROL_FLAG_BINARY, 
        a binary will be returned. */       
     set_port_control_flags(port, PORT_CONTROL_FLAG_BINARY); 
+    assert(gp_generator != NULL);
     XapianErlangDriver* drv_data = new XapianErlangDriver(*gp_generator);
     return reinterpret_cast<ErlDrvData>( drv_data );
 }
@@ -142,6 +148,7 @@ XapianErlangDriver::XapianErlangDriver(ResourceGenerator& generator)
     mp_db = NULL;
     mp_wdb = NULL;
     mp_default_stemmer = NULL;
+
     // RESOURCE_TYPE_ID_MARK
     m_stores.add(ResourceType::ENQUIRE,    &m_enquire_store);
     m_stores.add(ResourceType::MSET,       &m_mset_store);
@@ -824,6 +831,12 @@ XapianErlangDriver::control(
         case QLC_LOOKUP:
             return drv.qlcLookup(params);
 
+        case GET_RESOURCE_INFO:
+            return drv.getResourceInfo();
+
+        case CREATE_RESOURCE:
+            return drv.createResource(params);
+
         default:
             throw BadCommandDriverError(command);
         }
@@ -1093,3 +1106,42 @@ XapianErlangDriver::retrieveDocumentSchema(
     return ctrl;
 }
 
+
+// -------------------------------------------------------------------
+// Resource Driver Helpers
+// -------------------------------------------------------------------
+
+/**
+ * This function will be called inside xapian_drv:init
+ */
+size_t
+XapianErlangDriver::getResourceInfo()
+{
+    ObjectRegister<UserResource>& 
+    reg = m_generator.getRegister();
+    ObjectRegister<UserResource>::Hash&
+    elements = reg.getElements();
+
+    typename ObjectRegister<UserResource>::Hash::iterator i, e, b;
+    b = elements.begin();
+    e = elements.end();
+    for(i = b; i != e; i++)
+    {
+        uint32_t            num     = i->first;
+        UserResource&       res     = * (i->second);
+        const std::string&  name    = res.getName();
+        uint8_t             type    = res.getType();
+        m_result << type << num << name;
+    }
+
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::createResource(ParamDecoder& params)
+{
+    uint32_t resource_num = m_stores.createAndRegister(params);
+    m_result << resource_num;
+    return m_result;
+}

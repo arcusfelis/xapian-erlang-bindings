@@ -41,7 +41,7 @@ ObjectRegister<Child>::remove(Counter num)
 
 template <class Child>
 Child*
-ObjectRegister<Child>::get(Counter num)
+ObjectRegister<Child>::get(Counter num) 
 {
     typename Hash::iterator i; 
     i = m_elements.find(num);

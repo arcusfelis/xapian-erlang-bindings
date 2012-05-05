@@ -15,5 +15,5 @@ void
 registerUserCallbacks(ResourceGenerator& generator)
 {
     generator.add(new UserResource(ResourceType::MSET, 
-        std::string("my_mset"), createMyMset));
+        std::string("my_mset"), &createMyMset));
 }
