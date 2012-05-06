@@ -307,8 +307,12 @@ XapianErlangDriver::matchSet(ParamDecoder& params)
     uint32_t   enquire_num = params;
     Xapian::Enquire& enquire = *m_enquire_store.get(enquire_num);
 
-    Xapian::doccount    first    = 0;
-    Xapian::doccount    maxitems =  mp_db->get_doccount();
+    Xapian::doccount    first, maxitems;
+    first = params;
+    uint8_t is_undefined = params;
+    maxitems = is_undefined 
+        ? mp_db->get_doccount() 
+        : params;
     Xapian::MSet mset = enquire.get_mset(
         first, 
         maxitems);
