@@ -6,3 +6,8 @@
 -record(internal_qlc_mset_parameters, {
     record_info %% see function xapian_record:record
 }).
+
+-record(resource, {
+    type :: atom(), 
+    number :: non_neg_integer()
+}).

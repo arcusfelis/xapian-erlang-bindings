@@ -1,7 +1,10 @@
 -module(xapian_enquire).
 -export([encode/4]).
 -compile({parse_transform, seqbind}).
+
 -include_lib("xapian/include/xapian.hrl").
+-include("xapian.hrl").
+
 -import(xapian_common, [ 
     append_uint/2,
     append_boolean/2,
@@ -18,13 +21,15 @@ encode(Enquire=#x_enquire{x_query=Query}, Name2Slot, Register, Bin@) ->
         percent_cutoff = PercentCutoff,
         weight_cutoff = WeightCuttoff,
         collapse_key = CollapseKey,
-        collapse_max = CollapseMax
+        collapse_max = CollapseMax,
+        match_spy = MatchSpy
     } = Enquire,
     Bin@ = append_query_len(QueryLen, Bin@),
     Bin@ = append_query(Query, Name2Slot, Bin@),
     Bin@ = append_order(Order, Name2Slot, Register, Bin@),
     Bin@ = append_docid_order(DocidOrder, Bin@),
     Bin@ = append_weighting_scheme(Weight, Register, Bin@),
+    Bin@ = append_match_spy(MatchSpy, Register, Bin@),
     Bin@ = append_cutoff(PercentCutoff, WeightCuttoff, Bin@),
     Bin@ = append_collapse_key(CollapseKey, CollapseMax, Name2Slot, Bin@),
     Bin@ = append_command(stop, Bin@),
@@ -43,7 +48,8 @@ command_id(order)           -> 3;
 command_id(docid_order)     -> 4;
 command_id(weighting_scheme)-> 5;
 command_id(cutoff)          -> 6;
-command_id(collapse_key)    -> 7.
+command_id(collapse_key)    -> 7;
+command_id(match_spy)       -> 8.
 
 
 -spec order_type_id(xapian:x_order_type()) -> non_neg_integer().
@@ -90,7 +96,7 @@ append_order(#x_sort_order{type=Type, value=Value, is_reversed=Reverse},
 
 
 append_value(ResourceId, _N2S, Register, Bin) when is_reference(ResourceId) ->
-    append_uint(xapian_register:get(Register, ResourceId), Bin);
+    append_uint(xapian_register:fetch(Register, ResourceId), Bin);
 
 append_value(Value, N2S, _Register, Bin) ->
     append_uint(slot_id(Value, N2S), Bin).
@@ -111,9 +117,36 @@ append_docid_order_id(DocidOrderId, _DefOrderId, Bin@) ->
     Bin@.
 
 
+append_weighting_scheme(undefined, _Register, Bin) ->
+    Bin;
+
 append_weighting_scheme(ResourceId, Register, Bin) 
     when is_reference(ResourceId) ->
-    append_uint(xapian_register:get(Register, ResourceId), Bin).
+    #resource{type = weight, number = WeightNum} = 
+        xapian_register:fetch(Register, ResourceId),
+    Bin@ = <<>>,
+    Bin@ = append_command(weighting_scheme, Bin@),
+    Bin@ = append_uint(WeightNum, Bin@),
+    Bin@.
+
+
+append_match_spy(undefined, _Register, Bin) ->
+    Bin;
+
+append_match_spy(ResourceId, Register, Bin) 
+    when is_reference(ResourceId) ->
+    #resource{type = match_spy, number = MatchSpyNum} = 
+        xapian_register:fetch(Register, ResourceId),
+    Bin@ = <<>>,
+    Bin@ = append_command(match_spy, Bin@),
+    Bin@ = append_uint(MatchSpyNum, Bin@),
+    Bin@;
+
+append_match_spy([_|_] = Spies, Register, Bin) ->
+    Fn = fun(Spy, AccBin) ->
+            append_match_spy(Spy, Register, AccBin) 
+        end, 
+    lists:foldl(Fn, Bin, Spies).
 
 
 append_cutoff(0, 0, Bin) ->

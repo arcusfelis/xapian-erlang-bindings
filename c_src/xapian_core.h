@@ -161,7 +161,8 @@ class XapianErlangDriver
         EC_DOCID_ORDER      = 4,
         EC_WEIGHTING_SCHEME = 5,
         EC_CUTOFF           = 6,
-        EC_COLLAPSE_KEY     = 7
+        EC_COLLAPSE_KEY     = 7,
+        EC_MATCH_SPY        = 8
     };
 
     enum enquireOrderTypes {

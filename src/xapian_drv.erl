@@ -32,11 +32,6 @@
     register = xapian_register:new()
 }).
 
--record(resource, {
-    type :: atom(), 
-    number :: non_neg_integer()
-}).
-
 
 -record(resource_info, {
     type :: atom(),
@@ -90,7 +85,10 @@
 %% Intermodule export (non for a client!)
 -export([internal_qlc_init/3,
          internal_qlc_get_next_portion/4,
-         internal_qlc_lookup/3]).
+         internal_qlc_lookup/3,
+
+         internal_create_resource/2,
+         internal_create_resource/3]).
 
 
 -import(xapian_common, [ 
@@ -493,12 +491,12 @@ init([Path, Params]) ->
         [{InfoName, #resource{type=InfoType, number=InfoNum}} 
             || #resource_info{type=InfoType, number=InfoNum, name=InfoName} 
                 <- ResourceInfo],
-        Name2ResourceDict = orddict:from_list(Name2Slot),
+        Name2ResourceDict = orddict:from_list(Name2Resource),
         {ok, #state{
             port = Port,
             name_to_prefix = Name2PrefixDict,
             name_to_slot = Name2SlotDict,
-            name_to_resource = Name2Resource
+            name_to_resource = Name2ResourceDict
         }}
         end]);
 
@@ -634,7 +632,7 @@ handle_call({create_resource, ResourceTypeName, ParamCreatorFun},
     #state{ name_to_resource = N2R, port = Port, register = Register } = State,
     do_reply(State, do([error_m ||
         #resource{ type = ResouceType, number = UserResourceNumber }  
-            <- orddict:find(ResourceTypeName, N2R),
+            <- orddict_find(ResourceTypeName, N2R),
         
         ParamBin 
             <-  if 
@@ -1011,6 +1009,8 @@ append_qlc_parameters(State, mset, Params, Bin) ->
     #internal_qlc_mset_parameters{ record_info = Meta } = Params,
     xapian_record:encode(Meta, Name2Slot, Bin).
 
+
+
 %% -----------------------------------------------------------------
 %% Helpers
 %% -----------------------------------------------------------------
@@ -1083,6 +1083,15 @@ decode_resource_info_cycle(Bin@, Acc) ->
     },
     decode_resource_info_cycle(Bin@, [Rec|Acc]).
 
+
+%% orddict:find for error_m
+orddict_find(Id, Dict) ->
+    case orddict:find(Id, Dict) of
+        error ->
+            {error, {bad_id, Id, Dict}};
+        {ok, Value} ->
+            {ok, Value}
+    end.
 
 
 %% -----------------------------------------------------------------
@@ -1163,6 +1172,7 @@ reopen_test() ->
 
     {ok, ReadOnlyServer} = ?DRV:open(Path, []),
     ?DRV:close(ReadOnlyServer).
+
 
 -record(stemmer_test_record, {docid, data}).
 
@@ -1363,9 +1373,16 @@ read_bad_docid_test() ->
 %% Books (query testing)
 %% ------------------------------------------------------------------
 
+
+%% These records are used for tests.
+%% They describe values of documents.
 -record(book, {docid, author, title, data}).
 -record(book_ext, {docid, author, title, data,   rank, weight, percent}).
 
+
+%% These cases will be runned sequencly.
+%% `Server' will be passed as a parameter.
+%% `Server' will be opened just once for all cases.
 cases_test_() ->
     Cases = 
     [ fun single_term_query_page_case/1
@@ -1379,6 +1396,10 @@ cases_test_() ->
     , fun qlc_mset_case/1
 
     , fun create_user_resource_case/1
+
+    %% Advanced enquires
+    , fun advanced_enquire_case/1
+    , fun advanced_enquire_weight_case/1
     ],
     Server = query_page_setup(),
     %% One setup for each test
@@ -1451,6 +1472,8 @@ double_terms_or_query_page_case(Server) ->
         end,
     {"erlang OR c++", Case}.
 
+
+%% You can get dynamicly calculated fields.
 special_fields_query_page_case(Server) ->
     Case = fun() ->
         Offset = 0,
@@ -1463,6 +1486,8 @@ special_fields_query_page_case(Server) ->
     {"erlang (with rank, weight, percent)", Case}.
 
 
+%% Xapian uses `Xapian::Enquire' class as a hub for making queries.
+%% Enquire object can be handled as a resource.
 enquire_case(Server) ->
     Case = fun() ->
         Query = "erlang",
@@ -1473,6 +1498,7 @@ enquire_case(Server) ->
     {"Simple enquire resource", Case}.
 
 
+%% If the client is dead, then its resources will be released.
 resource_cleanup_on_process_down_case(Server) ->
     Case = fun() ->
         Home = self(),
@@ -1506,31 +1532,61 @@ enquire_to_mset_case(Server) ->
     {"Check conversation", Case}.
 
 
+%% Tests with QLC.
 -include_lib("stdlib/include/qlc.hrl").
 
 qlc_mset_case(Server) ->
     Case = fun() ->
+        %% Query is a query to make for retrieving documents from Xapian.
+        %% Each document object will be mapped into a document record. 
+        %% A document record is a normal erlang record, 
+        %% it has structure, described by the user,
+        %% using  the `xapian_record:record' call.
         Query = "erlang",
         EnquireResourceId = ?DRV:enquire(Server, Query),
         MSetResourceId = ?DRV:match_set(Server, EnquireResourceId),
+
+        %% Meta is a record, which contains some information about
+        %% structure of a document record.
+        %% The definition of Meta is incapsulated inside `xapian_record' module.
         Meta = xapian_record:record(book_ext, record_info(fields, book_ext)),
+
+        %% We use internal erlang records for passing information 
+        %% beetween `xapian_drv' and `xapian_mset_qlc' modules.
         QlcParams = #internal_qlc_mset_parameters{ record_info = Meta },
+
+        %% internal_qlc_init returns a record, which contains information 
+        %% about QlcTable.
         Info = #internal_qlc_info{} = 
         internal_qlc_init(Server, MSetResourceId, QlcParams),
         io:format(user, "~n ~p~n", [Info]),
+
+        %% Create QlcTable from MSet. 
+        %% After creation of QlcTable, MSet can be removed.
         Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
         ?DRV:release_resource(Server, MSetResourceId),
 
+        %% QueryAll is a list of all matched records.
         QueryAll = qlc:q([X || X <- Table]),
-        %% Check lookup
-        QueryFilter = qlc:q([X || X=#book_ext{docid=DocId} <- Table, DocId =:= 1]),
+
+        %% Check `lookup' function. This function is used by `qlc' module.
+        %% It will be called to find a record by an index.
+        QueryFilter = qlc:q(
+            [X || X=#book_ext{docid=DocId} <- Table, DocId =:= 1]),
         Queries = [QueryAll, QueryFilter],
+
+        %% For each Query...
         [begin
+            %% ... evaluate (execute) ...
             Records = qlc:e(Query),
+            %% ... and print out.
             io:format(user, "~n ~p~n", [Records])
             end || Query <- Queries
         ],
-        QueryBadFilter = qlc:q([X || X=#book_ext{docid=DocId} <- Table, DocId =:= 0]),
+
+        %% This case will cause an error, because DocId > 0.
+        QueryBadFilter = qlc:q(
+            [X || X=#book_ext{docid=DocId} <- Table, DocId =:= 0]),
         ?assertError(bad_docid, qlc:e(QueryBadFilter))
         end,
     {"Check internal_qlc_init", Case}.
@@ -1538,6 +1594,9 @@ qlc_mset_case(Server) ->
 
 create_user_resource_case(Server) ->
     Case = fun() ->
+        %% User-defined resource is an object, which is created on C++ side.
+        %% We using Erlang references for returning it back to the user.
+        %% A reference can be used only with this Server.
         ResourceId = internal_create_resource(Server, bool_weight),
         io:format(user, "User-defined resource ~p~n", [ResourceId])
         end,
@@ -1545,6 +1604,8 @@ create_user_resource_case(Server) ->
         
 
 
+%% This module uses eunit lazy generators.
+%% We check, that the mapping from type's id into its name and back is right.
 resource_type_conversation_test_() ->
     FirstId = 1,
     LastId = resource_type_id(last),
@@ -1565,8 +1626,36 @@ resource_type_conversation_gen(CurId, StopId) ->
             resource_type_id(resource_type_name(CurId))) | More]
         end,
     {generator, Case}.
-    
+
+
+%% Additional parameters can be passed to `Xapian::Enquire'.
+%% We use `#x_enquire' record for this.
+advanced_enquire_case(Server) ->
+    Case = fun() ->
+        Query = #x_enquire{
+            x_query = "Erlang"
+        },
+        EnquireResourceId = ?DRV:enquire(Server, Query),
+        ?assert(is_reference(EnquireResourceId)),
+        ?DRV:release_resource(Server, EnquireResourceId)
+        end,
+        {"Check #x_enquire{}", Case}.
+
+
+%% We can pass other `Xapian::Weight' object, stored as an user resource.
+%% We create new `Xapian::BoolWeight' object as a resource and pass it back
+%% as an additional parameter.
+advanced_enquire_weight_case(Server) ->
+    Case = fun() ->
+        Query = #x_enquire{
+            x_query = "Erlang",
+            weighting_scheme = xapian_resource:bool_weight(Server)
+        },
+        EnquireResourceId = ?DRV:enquire(Server, Query),
+        ?assert(is_reference(EnquireResourceId)),
+        ?DRV:release_resource(Server, EnquireResourceId)
+        end,
+        {"Check #x_enquire{weight=Xapian::BoolWeight}", Case}.
+
 -endif.
-
-
 

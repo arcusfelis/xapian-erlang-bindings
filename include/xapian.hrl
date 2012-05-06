@@ -247,10 +247,21 @@
     %% dont_care = undefined
     docid_order = asc :: asc | desc | undefined | default | dont_care,
     %% Weighting scheme
-    weighting_scheme :: xapian:x_resource(),
+    weighting_scheme :: undefined | xapian:x_resource(),
     percent_cutoff = 0,
     weight_cutoff = 0,
-    collapse_key :: xapian:x_slot_value(),
+    collapse_key :: undefined | xapian:x_slot_value(),
     %% Max number of items with the same key to leave after collapsing
-    collapse_max = 1 :: non_neg_integer()
+    collapse_max = 1 :: non_neg_integer(),
+    %% Contains  none, one or list of `Xapian::MatchSpy'.
+    match_spy :: undefined | xapian:x_resource() | [xapian:x_resource()]
+}).
+
+
+-record(x_bm25_weight, {
+    k1 = 1 :: float(), 
+    k2 = 0 :: float(), 
+    l3 = 1 :: float(), 
+    b  = 0.5 :: float(), 
+    min_normlen = 0.5 :: float()
 }).

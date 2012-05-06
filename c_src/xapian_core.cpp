@@ -635,6 +635,15 @@ XapianErlangDriver::fillEnquire(Xapian::Enquire& enquire, ParamDecoder& params)
         break;
         }
 
+    case EC_MATCH_SPY:
+        {
+        uint32_t num = params;
+        Xapian::MatchSpy* 
+        p_spy = m_match_spy_store.get(num);
+        enquire.add_matchspy(p_spy);
+        break;
+        }
+
     case EC_CUTOFF:
         {
         uint8_t percent_cutoff   = params;
