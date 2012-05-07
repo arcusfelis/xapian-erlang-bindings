@@ -123,9 +123,9 @@
     is_boolean = false :: boolean(),
 
     %% If `true', each document can have at most one term with this prefix, 
-    %% so multiple filters with this prefix should be combined with OP_OR. 
+    %% so multiple filters with this prefix should be combined with `OR'. 
     %% If `false', each document can have multiple terms with this prefix, 
-    %% so multiple filters should be combined with OP_AND, like happens with 
+    %% so multiple filters should be combined with `AND', like happens with 
     %% filters with different prefixes.
     %%
     %% Ignored, if `is_boolean' is not `true'.
@@ -202,13 +202,14 @@
     position = 0 :: xapian:x_position()
 }).
 
+
 -record(x_query_parser, {
     name = default :: default | empty,
     stemmer :: #x_stemmer{} | undefined,
-    stemming_strategy,
+    stemming_strategy = default :: none | some | all |default,
     %% 0 or `unlimited' for no limit
     max_wildcard_expansion = unlimited :: non_neg_integer(),
-    default_op = 'OP_OR',
+    default_op = 'OR',
     prefixes :: [#x_prefix_name{}]
 }).
 

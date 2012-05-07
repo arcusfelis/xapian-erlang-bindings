@@ -102,6 +102,7 @@ encode_test() ->
 %% ------------------------------------------------------------
 
 %% @see XapianErlangDriver::queryParserCommand
+parser_command_id(stop)                     -> 0;
 parser_command_id(stemmer)                  -> 1;
 parser_command_id(stemming_strategy)        -> 2;
 parser_command_id(max_wildcard_expansion)   -> 3;
@@ -209,10 +210,11 @@ append_parser(#x_query_parser{}=Rec, Bin@) ->
     } = Rec,
     Bin@ = append_parser_type(Type, Bin@),
     Bin@ = append_stemmer(Stem, Bin@),
-    Bin@ = append_stemming_strategy(Stem, Bin@),
-    Bin@ = append_max_wildcard_expansion(Stem, Bin@),
-    Bin@ = append_default_op(Stem, Bin@),
+    Bin@ = append_stemming_strategy(StemStrategy, Bin@),
+    Bin@ = append_max_wildcard_expansion(MaxWildCardExp, Bin@),
+    Bin@ = append_default_op(Operator, Bin@),
     Bin@ = append_prefixes(Prefixes, Bin@),
+    Bin@ = append_parser_command(stop, Bin@),
     Bin@.
 
 
@@ -259,7 +261,7 @@ append_max_wildcard_expansion(Count, Bin@) when Count > 0, is_integer(Count) ->
 
 %% Skip default
 append_max_wildcard_expansion(Default, Bin) 
-    when Default =:= 0; Default =:= unlimit, Default =:= undefined ->
+    when Default =:= 0; Default =:= unlimited; Default =:= undefined ->
     Bin.
 
 
@@ -270,14 +272,18 @@ append_default_op(Op, Bin@) ->
     Bin@.
 
 
-append_prefixes([], Bin) -> 
-    Bin;
-
 append_prefixes([H|T], Bin@) ->
     Prefix = xapian_check:check_prefix(H),
     Bin@ = append_parser_command(prefix, Bin@),
     Bin@ = xapian_encode:append_prefix(Prefix, Bin@),
-    append_prefixes(T, Bin@).
+    append_prefixes(T, Bin@);
+
+append_prefixes([], Bin) -> 
+    Bin;
+
+append_prefixes(undefined, Bin) -> 
+    Bin.
+
 
 
 %% Checks `undefined' value

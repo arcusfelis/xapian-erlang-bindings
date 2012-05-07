@@ -567,9 +567,9 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
             return q;
         }
 
-        case QUERY_PARSER:
+        case QUERY_PARSER: // query_string
         {
-            Xapian::QueryParser parser    = readParser(params);
+            Xapian::QueryParser parser = readParser(params);
             const std::string&  query_string   = params;
             const std::string&  default_prefix = params;
             const unsigned flags               = decodeParserFeatureFlags(params); 
@@ -1092,7 +1092,7 @@ XapianErlangDriver::retrieveDocument(
                 if (mset_iter == NULL)
                     throw BadCommandDriverError(command);
 
-                const Xapian::doccount    p = mset_iter->get_rank();
+                const Xapian::percent    p = mset_iter->get_percent();
                 m_result << static_cast<uint8_t>(p);
                 break;
             }
