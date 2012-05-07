@@ -327,6 +327,7 @@ cases_test_() ->
     %% Advanced enquires
     , fun advanced_enquire_case/1
     , fun advanced_enquire_weight_case/1
+    , fun match_set_info_case/1
     ],
     Server = query_page_setup(),
     %% One setup for each test
@@ -541,7 +542,7 @@ advanced_enquire_case(Server) ->
         ?assert(is_reference(EnquireResourceId)),
         ?DRV:release_resource(Server, EnquireResourceId)
         end,
-        {"Check #x_enquire{}", Case}.
+    {"Check #x_enquire{}", Case}.
 
 
 %% We can pass other `Xapian::Weight' object, stored as an user resource.
@@ -557,7 +558,22 @@ advanced_enquire_weight_case(Server) ->
         ?assert(is_reference(EnquireResourceId)),
         ?DRV:release_resource(Server, EnquireResourceId)
         end,
-        {"Check #x_enquire{weight=Xapian::BoolWeight}", Case}.
+    {"Check #x_enquire{weight=Xapian::BoolWeight}", Case}.
+
+
+match_set_info_case(Server) ->
+    Case = fun() ->
+        Query = "erlang",
+        EnquireResourceId = ?DRV:enquire(Server, Query),
+        ?assert(is_reference(EnquireResourceId)),
+        MSetResourceId = ?DRV:match_set(Server, EnquireResourceId),
+        Info = 
+        ?DRV:mset_info(Server, MSetResourceId, [matches_lower_bound, size]),
+        ?DRV:release_resource(Server, EnquireResourceId),
+        ?DRV:release_resource(Server, MSetResourceId),
+        io:format(user, "~nMSet Info: ~p~n", [Info])
+        end,
+    {"Check mset_info function.", Case}.
 
 -endif.
 

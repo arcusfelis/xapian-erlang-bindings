@@ -869,6 +869,9 @@ XapianErlangDriver::control(
         case CREATE_RESOURCE:
             return drv.createResource(params);
 
+        case MSET_INFO:
+            return drv.msetInfo(params);
+
         default:
             throw BadCommandDriverError(command);
         }
@@ -1177,3 +1180,75 @@ XapianErlangDriver::createResource(ParamDecoder& params)
     m_result << resource_num;
     return m_result;
 }
+
+
+size_t 
+XapianErlangDriver::msetInfo(ParamDecoder& params)
+{
+    uint32_t   mset_num = params;
+    Xapian::MSet& mset = *m_mset_store.get(mset_num);
+    while (uint8_t command = params)
+    switch(command)
+    {
+        case MI_MATCHES_LOWER_BOUND:
+            m_result << static_cast<uint32_t>(mset.get_matches_lower_bound());
+            break;
+
+        case MI_MATCHES_ESTIMATED:
+            m_result << static_cast<uint32_t>(mset.get_matches_estimated());
+            break;
+
+        case MI_MATCHES_UPPER_BOUND:
+            m_result << static_cast<uint32_t>(mset.get_matches_upper_bound());
+            break;
+
+        case MI_UNCOLLAPSED_MATCHES_LOWER_BOUND:
+            m_result << static_cast<uint32_t>(
+                mset.get_uncollapsed_matches_lower_bound());
+            break;
+
+        case MI_UNCOLLAPSED_MATCHES_ESTIMATED:
+            m_result << static_cast<uint32_t>(
+                    mset.get_uncollapsed_matches_estimated());
+            break;
+
+        case MI_UNCOLLAPSED_MATCHES_UPPER_BOUND:
+            m_result << static_cast<uint32_t>(
+                mset.get_uncollapsed_matches_upper_bound());
+            break;
+
+        case MI_SIZE:
+            m_result << static_cast<uint32_t>(mset.size());
+            break;
+
+        case MI_GET_MAX_POSSIBLE:
+            m_result << static_cast<double>(mset.get_max_possible());
+            break;
+
+        case MI_GET_MAX_ATTAINED:
+            m_result << static_cast<double>(mset.get_max_attained());
+            break;
+
+        case MI_TERM_WEIGHT:
+        {
+            const std::string tname = params;
+            m_result << static_cast<double>(mset.get_termweight(tname));
+            break;
+        }
+
+        case MI_TERM_FREQ:
+        {
+            const std::string tname = params;
+            m_result << static_cast<uint32_t>(mset.get_termfreq(tname));
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(command);
+    }
+
+    return m_result;
+}
+
+
+

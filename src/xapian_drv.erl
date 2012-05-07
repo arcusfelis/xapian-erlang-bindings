@@ -82,7 +82,8 @@
 %% Match set (M-set)
 -export([match_set/2,
          match_set/3,
-         match_set/4
+         match_set/4,
+         mset_info/3
         ]).
 
 %% Intermodule export (non for a client!)
@@ -201,6 +202,10 @@ match_set(Server, EnquireResource, From) ->
 
 match_set(Server, EnquireResource, From, MaxItems) ->
     call(Server, {match_set, EnquireResource, From, MaxItems}).
+
+
+mset_info(Server, MSetResource, Params) ->
+    call(Server, {mset_info, MSetResource, Params}).
 
 
 %% @doc Release resources.
@@ -611,6 +616,7 @@ handle_call({qlc_lookup, QlcResNum, DocIds}, _From, State) ->
     Reply = port_qlc_lookup(Port, QlcResNum, DocIds),
     {reply, Reply, State};
 
+
 %% Res into QlcRes
 handle_call({qlc_init, ResRef, Params}, {FromPid, _FromRef}, State) ->
     #state{port = Port, register = Register } = State,
@@ -664,6 +670,18 @@ handle_call({create_resource, ResourceTypeName, ParamCreatorFun},
             NewState = State#state{register = NewRegister},
             {reply, {ok, Ref}, NewState}
         end]));
+
+
+handle_call({mset_info, MSetRef, Params}, _From, State) ->
+    #state{port = Port, register = Register } = State,
+    Reply = 
+    do([error_m ||
+        #resource{type=mset, number=MSetNum} 
+            <- xapian_register:get(Register, MSetRef),
+
+        port_mset_info(Port, MSetNum, Params)
+    ]),
+    {reply, Reply, State};
 
 
 handle_call({transaction, Ref}, From, State) ->
@@ -791,7 +809,8 @@ command_id(qlc_init)                    -> 14;
 command_id(qlc_next_portion)            -> 15;
 command_id(qlc_lookup)                  -> 16;
 command_id(get_resource_info)           -> 17;
-command_id(create_resource)             -> 18.
+command_id(create_resource)             -> 18;
+command_id(mset_info)                   -> 19.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -845,7 +864,7 @@ open_write_mode(Params) ->
     if
         Open, Create, not Overwrite -> write_create_or_open;
         not Open, Create, Overwrite -> write_create_or_overwrite;
-        Create -> create;
+        Create -> write_create;
         true -> write_open
     end.
 
@@ -1030,17 +1049,17 @@ port_qlc_init(State, ResourceType, ResourceNum, Params) ->
     decode_qlc_info_result(control(Port, qlc_init, Bin@)).
 
 
-append_qlc_parameters(State, mset, Params, Bin) ->
-    #state{ name_to_slot = Name2Slot } = State,
-    #internal_qlc_mset_parameters{ record_info = Meta } = Params,
-    xapian_record:encode(Meta, Name2Slot, Bin).
+port_mset_info(Port, MSetNum, Params) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint(MSetNum, Bin@),
+    Bin@ = xapian_mset_info:encode(Params, Bin@),
+    decode_mset_info_result(control(Port, mset_info, Bin@), Params).
 
 
 
 %% -----------------------------------------------------------------
 %% Helpers
 %% -----------------------------------------------------------------
-
 
 decode_record_result({ok, Bin}, Meta) ->
     case xapian_record:decode(Meta, Bin) of
@@ -1088,6 +1107,12 @@ decode_qlc_info_result(Other) ->
     Other.
 
 
+append_qlc_parameters(State, mset, Params, Bin) ->
+    #state{ name_to_slot = Name2Slot } = State,
+    #internal_qlc_mset_parameters{ record_info = Meta } = Params,
+    xapian_record:encode(Meta, Name2Slot, Bin).
+
+
 decode_resource_info({ok, Bin}) ->
     {ok, decode_resource_info_cycle(Bin, [])};
 
@@ -1118,6 +1143,16 @@ orddict_find(Id, Dict) ->
         {ok, Value} ->
             {ok, Value}
     end.
+
+
+decode_mset_info_result({ok, Bin}, Params) ->
+    case xapian_mset_info:decode(Params, Bin) of
+        {Res, <<>> = _Rem} -> {ok, Res}
+    end;
+
+decode_mset_info_result(Other, _Params) -> 
+    Other.
+
 
 
 %% -----------------------------------------------------------------

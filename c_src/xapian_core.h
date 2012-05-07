@@ -79,7 +79,8 @@ class XapianErlangDriver
         QLC_NEXT_PORTION            = 15,
         QLC_LOOKUP                  = 16,
         GET_RESOURCE_INFO           = 17,
-        CREATE_RESOURCE             = 18
+        CREATE_RESOURCE             = 18,
+        MSET_INFO                   = 19
     };
 
 
@@ -172,6 +173,20 @@ class XapianErlangDriver
         OT_RELEVANCE_KEY    = 4,
         OT_RELEVANCE_VALUE  = 5,
         OT_VALUE_RELEVANCE  = 6
+    };
+
+    enum msetInfoParams {
+        MI_MATCHES_LOWER_BOUND              = 1,
+        MI_MATCHES_ESTIMATED                = 2,
+        MI_MATCHES_UPPER_BOUND              = 3,
+        MI_UNCOLLAPSED_MATCHES_LOWER_BOUND  = 4,
+        MI_UNCOLLAPSED_MATCHES_ESTIMATED    = 5,
+        MI_UNCOLLAPSED_MATCHES_UPPER_BOUND  = 6,
+        MI_SIZE                             = 7,
+        MI_GET_MAX_POSSIBLE                 = 8,
+        MI_GET_MAX_ATTAINED                 = 9,
+        MI_TERM_WEIGHT                      = 10,
+        MI_TERM_FREQ                        = 11
     };
 
     static const unsigned
@@ -328,6 +343,7 @@ class XapianErlangDriver
      * Create a resource object using an user function.
      */
     size_t createResource(ParamDecoder& params);
+    size_t msetInfo(ParamDecoder& params);
 
     static unsigned
     idToParserFeature(uint8_t type);

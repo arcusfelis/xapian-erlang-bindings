@@ -54,6 +54,10 @@ read_document_id(Bin) ->
     read_uint(Bin).
 
 
+read_document_count(Bin) ->
+    read_uint(Bin).
+
+
 append_slot(Slot, N2S, Bin) ->
     append_uint(slot_id(Slot, N2S), Bin).
 
