@@ -53,6 +53,7 @@ simple_test_() ->
     , ?_assertEqual(DocId, DocIdReplaced2)
     ].
 
+
 reopen_test() ->
     % Open test
     Path = testdb_path(simple),
@@ -594,6 +595,17 @@ database_info_case(Server) ->
         io:format(user, "~nDB Info: ~p~n", [Info])
         end,
     {"Check database_info function.", Case}.
+
+
+metadata_test_() ->
+    Path = testdb_path(metadata),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    ?DRV:set_metadata(Server, "key", "value"),
+    Info = 
+    ?DRV:database_info(Server, [{metadata, "key"}]),
+    ?DRV:close(Server),
+    [?_assertEqual(Info, [{{metadata, "key"}, <<"value">>}])].
 
 -endif.
 

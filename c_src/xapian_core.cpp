@@ -236,6 +236,8 @@ XapianErlangDriver::getLastDocId()
 size_t 
 XapianErlangDriver::addDocument(ParamDecoder& params)
 {
+    assertWriteable();
+
     Xapian::Document doc;
     applyDocument(params, doc);
     const Xapian::docid
@@ -248,6 +250,8 @@ XapianErlangDriver::addDocument(ParamDecoder& params)
 size_t 
 XapianErlangDriver::replaceDocument(ParamDecoder& params)
 {
+    assertWriteable();
+
     Xapian::Document doc;
     Xapian::docid docid;
 
@@ -281,6 +285,8 @@ XapianErlangDriver::replaceDocument(ParamDecoder& params)
 void 
 XapianErlangDriver::deleteDocument(ParamDecoder& params)
 {
+    assertWriteable();
+
     switch(uint8_t idType = params)
     {
         case UNIQUE_DOCID:
@@ -444,6 +450,7 @@ size_t
 XapianErlangDriver::startTransaction()
 {
     assertWriteable();
+
     mp_wdb->begin_transaction();
     return m_result;
 }
@@ -453,6 +460,7 @@ size_t
 XapianErlangDriver::cancelTransaction()
 {
     assertWriteable();
+
     mp_wdb->cancel_transaction();
     return m_result;
 }
@@ -462,6 +470,7 @@ size_t
 XapianErlangDriver::commitTransaction()
 {
     assertWriteable();
+
     mp_wdb->commit_transaction();
     return m_result;
 }
@@ -939,6 +948,10 @@ XapianErlangDriver::control(
 
         case DB_INFO:
             return drv.databaseInfo(params);
+
+        case SET_METADATA:
+            drv.setMetadata(params);
+            return result;
 
         default:
             throw BadCommandDriverError(command);
@@ -1424,4 +1437,15 @@ XapianErlangDriver::databaseInfo(ParamDecoder& params)
     }
 
     return m_result;
+}
+
+
+void 
+XapianErlangDriver::setMetadata(ParamDecoder& params)
+{
+    assertWriteable();
+
+    const std::string& key = params;
+    const std::string& value = params;
+    mp_wdb->set_metadata(key, value);
 }

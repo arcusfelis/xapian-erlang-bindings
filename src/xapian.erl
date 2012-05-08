@@ -8,6 +8,7 @@
     x_slot_value/0,
     x_document_index_part/0,
     x_document_id/0,
+    x_unique_document_id/0,
     x_order_type/0]).
 
 -export_type([
@@ -24,7 +25,7 @@ start() ->
     application:start(xapian).
 
 
--type x_string()        :: binary().
+-type x_string()        :: iolist().
 -type x_slot_name()     :: atom().
 -type x_slot()          :: non_neg_integer().
 -type x_position()      :: non_neg_integer().
@@ -65,3 +66,5 @@ start() ->
 -type x_record() :: tuple().
 -type x_meta() :: [atom()].
 
+%% An document id or an unique term
+-type x_unique_document_id() :: x_document_id() | x_string().

@@ -83,7 +83,8 @@ class XapianErlangDriver
         MSET_INFO                   = 19,
         DB_INFO                     = 20,
         DELETE_DOCUMENT             = 21,
-        REPLACE_DOCUMENT            = 22
+        REPLACE_DOCUMENT            = 22,
+        SET_METADATA                = 23
     };
 
 
@@ -297,6 +298,7 @@ class XapianErlangDriver
     size_t addDocument(ParamDecoder& params);
     size_t replaceDocument(ParamDecoder& params);
     void deleteDocument(ParamDecoder& params);
+    void setMetadata(ParamDecoder& params);
 
     /**
      * Read commands, encoded by xapian_document:encode.

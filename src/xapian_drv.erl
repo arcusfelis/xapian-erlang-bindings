@@ -16,7 +16,8 @@
          delete_document/2,
          replace_document/3,
          transaction/3,
-         transaction/2]).
+         transaction/2,
+         set_metadata/3]).
 
 %% Queries
 -export([query_page/5]). 
@@ -54,12 +55,13 @@
     append_int8/2,
     append_uint/2,
     append_uint8/2,
+    append_iolist/2,
     append_document_id/2,
     append_unique_document_id/2,
-    read_document_id/1,
     read_uint/1,
     read_uint8/1,
-    read_string/1]).
+    read_string/1,
+    read_document_id/1]).
 
 %% Used in handlers
 -define(SERVER, ?MODULE).
@@ -132,7 +134,9 @@
 -opaque x_meta() :: xapian:x_meta().
 -opaque void() :: 'VoiD'.
 -opaque x_document_id() :: xapian:x_document_id().
-
+-opaque x_string() :: xapian:x_string().
+-opaque x_unique_document_id() :: xapian:x_unique_document_id().
+-opaque x_document_index_part() :: xapian:x_document_index_part().
 
 
 %% ------------------------------------------------------------------
@@ -233,16 +237,31 @@ release_resource(Server, ResourceRef) ->
 %% API Function Definitions for writable DB
 %% ------------------------------------------------------------------
 
+-spec add_document(x_server(), [x_document_index_part()]) -> 
+    x_document_id().
+
 add_document(Server, Document) ->
     call(Server, {add_document, Document}).
 
+
+-spec replace_document(x_server(), x_unique_document_id(), 
+    [x_document_index_part()]) -> x_document_id().
 
 replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
     call(Server, {replace_document, DocIdOrUniqueTerm, NewDocument}).
 
 
+-spec delete_document(x_server(), x_unique_document_id()) -> ok.
+
 delete_document(Server, DocIdOrUniqueTerm) ->
     call(Server, {delete_document, DocIdOrUniqueTerm}).
+
+
+-spec set_metadata(x_server(), x_string(), x_string()) -> ok.
+
+set_metadata(Server, Key, Value) ->
+    call(Server, {set_metadata, Key, Value}).
+
 
 
 %% ------------------------------------------------------------------
@@ -575,6 +594,11 @@ handle_call({delete_document, Id}, _From, State) ->
     Reply = port_delete_document(Port, Id),
     {reply, Reply, State};
 
+handle_call({set_metadata, Key, Value}, _From, State) ->
+    #state{ port = Port } = State,
+    Reply = port_set_metadata(Port, Key, Value),
+    {reply, Reply, State};
+
 handle_call({test, TestName, Params}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_test(Port, TestName, Params),
@@ -853,7 +877,8 @@ command_id(create_resource)             -> 18;
 command_id(mset_info)                   -> 19;
 command_id(database_info)               -> 20;
 command_id(delete_document)             -> 21;
-command_id(replace_document)            -> 22.
+command_id(replace_document)            -> 22;
+command_id(set_metadata)                -> 23.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -970,6 +995,12 @@ port_replace_document(Port, Id, EncodedDocument) ->
 port_delete_document(Port, Id) ->
     control(Port, delete_document, append_unique_document_id(Id, <<>>)).
 
+
+port_set_metadata(Port, Key, Value) ->
+    Bin@ = <<>>,
+    Bin@ = append_iolist(Key, Bin@),
+    Bin@ = append_iolist(Value, Bin@),
+    control(Port, set_metadata, Bin@).
 
 
 port_last_document_id(Port) ->
