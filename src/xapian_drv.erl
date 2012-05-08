@@ -2,6 +2,65 @@
 -module(xapian_drv).
 -behaviour(gen_server).
 
+%% ------------------------------------------------------------------
+%% API Function Exports
+%% ------------------------------------------------------------------
+
+-export([open/2,
+         last_document_id/1,
+         read_document/3,
+         close/1]).
+
+%% For writable DB
+-export([add_document/2,
+         delete_document/2,
+         replace_document/3,
+         transaction/3,
+         transaction/2]).
+
+%% Queries
+-export([query_page/5]). 
+-export([enquire/2]).
+
+%% Resources
+-export([release_resource/2]).
+
+%% Match set (M-set)
+-export([match_set/2,
+         match_set/3,
+         match_set/4
+        ]).
+
+%% Information
+-export([mset_info/3,
+         database_info/2]).
+
+
+%% ------------------------------------------------------------------
+%% Other flags
+%% ------------------------------------------------------------------
+
+%% Intermodule export (non for a client!)
+-export([internal_qlc_init/3,
+         internal_qlc_get_next_portion/4,
+         internal_qlc_lookup/3,
+
+         internal_create_resource/2,
+         internal_create_resource/3,
+         internal_run_test/3]).
+
+
+-import(xapian_common, [ 
+    append_int8/2,
+    append_uint/2,
+    append_uint8/2,
+    append_document_id/2,
+    append_unique_document_id/2,
+    read_document_id/1,
+    read_uint/1,
+    read_uint8/1,
+    read_string/1]).
+
 %% Used in handlers
 -define(SERVER, ?MODULE).
 
@@ -57,58 +116,6 @@
 
 
 
-
-%% ------------------------------------------------------------------
-%% API Function Exports
-%% ------------------------------------------------------------------
-
--export([open/2,
-         last_document_id/1,
-         read_document/3,
-         close/1]).
-
-%% For writable DB
--export([add_document/2,
-         transaction/3,
-         transaction/2]).
-
-%% Queries
--export([query_page/5]). 
--export([enquire/2]).
-
-%% Resources
--export([release_resource/2]).
-
-%% Match set (M-set)
--export([match_set/2,
-         match_set/3,
-         match_set/4
-        ]).
-
-%% Information
--export([mset_info/3,
-         database_info/2]).
-
-
-%% Intermodule export (non for a client!)
--export([internal_qlc_init/3,
-         internal_qlc_get_next_portion/4,
-         internal_qlc_lookup/3,
-
-         internal_create_resource/2,
-         internal_create_resource/3,
-         internal_run_test/3]).
-
-
--import(xapian_common, [ 
-    append_int8/2,
-    append_uint/2,
-    append_uint8/2,
-    append_document_id/2,
-    read_document_id/1,
-    read_uint/1,
-    read_uint8/1,
-    read_string/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -228,6 +235,14 @@ release_resource(Server, ResourceRef) ->
 
 add_document(Server, Document) ->
     call(Server, {add_document, Document}).
+
+
+replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
+    call(Server, {replace_document, DocIdOrUniqueTerm, NewDocument}).
+
+
+delete_document(Server, DocIdOrUniqueTerm) ->
+    call(Server, {delete_document, DocIdOrUniqueTerm}).
 
 
 %% ------------------------------------------------------------------
@@ -549,6 +564,17 @@ handle_call({add_document, Document}, _From, State) ->
     Reply = port_add_document(Port, EncodedDocument),
     {reply, Reply, State};
 
+handle_call({replace_document, Id, Document}, _From, State) ->
+    #state{ port = Port } = State,
+    EncodedDocument = document_encode(Document, State),
+    Reply = port_replace_document(Port, Id, EncodedDocument),
+    {reply, Reply, State};
+
+handle_call({delete_document, Id}, _From, State) ->
+    #state{ port = Port } = State,
+    Reply = port_delete_document(Port, Id),
+    {reply, Reply, State};
+
 handle_call({test, TestName, Params}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_test(Port, TestName, Params),
@@ -825,7 +851,9 @@ command_id(qlc_lookup)                  -> 16;
 command_id(get_resource_info)           -> 17;
 command_id(create_resource)             -> 18;
 command_id(mset_info)                   -> 19;
-command_id(database_info)               -> 20.
+command_id(database_info)               -> 20;
+command_id(delete_document)             -> 21;
+command_id(replace_document)            -> 22.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -931,6 +959,17 @@ set_default_prefixes(Port, DefaultPrefixes) ->
 
 port_add_document(Port, EncodedDocument) ->
     decode_docid_result(control(Port, add_document, EncodedDocument)).
+
+
+port_replace_document(Port, Id, EncodedDocument) ->
+    decode_docid_result(
+        control(Port, replace_document, 
+            append_unique_document_id(Id, EncodedDocument))).
+
+
+port_delete_document(Port, Id) ->
+    control(Port, delete_document, append_unique_document_id(Id, <<>>)).
+
 
 
 port_last_document_id(Port) ->

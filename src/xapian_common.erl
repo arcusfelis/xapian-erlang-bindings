@@ -50,6 +50,14 @@ append_document_id(Id, Bin) ->
     append_uint(Id, Bin).
 
 
+%% Appends a document id or a unique term.
+append_unique_document_id(Id, Bin) when is_integer(Id) ->
+    append_document_id(Id, append_uint8(1, Bin));
+
+append_unique_document_id(Term, Bin) ->
+    append_iolist(Term, append_uint8(2, Bin)).
+
+
 read_document_id(Bin) ->
     read_uint(Bin).
 

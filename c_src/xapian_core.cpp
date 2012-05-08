@@ -246,6 +246,64 @@ XapianErlangDriver::addDocument(ParamDecoder& params)
 
 
 size_t 
+XapianErlangDriver::replaceDocument(ParamDecoder& params)
+{
+    Xapian::Document doc;
+    Xapian::docid docid;
+
+    applyDocument(params, doc);
+    switch(uint8_t idType = params)
+    {
+        case UNIQUE_DOCID:
+        {
+            docid = params;
+            mp_wdb->replace_document(docid, doc);
+            break;
+        }
+
+        case UNIQUE_TERM:
+        {
+            const std::string& unique_term = params;
+            docid = mp_wdb->replace_document(unique_term, doc);
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(idType);
+    }
+        
+    m_result << static_cast<uint32_t>(docid);
+    return m_result;
+}
+
+
+
+void 
+XapianErlangDriver::deleteDocument(ParamDecoder& params)
+{
+    switch(uint8_t idType = params)
+    {
+        case UNIQUE_DOCID:
+        {
+            const Xapian::docid
+            docid = params;
+            mp_wdb->delete_document(docid);
+            break;
+        }
+
+        case UNIQUE_TERM:
+        {
+            const std::string& unique_term = params;
+            mp_wdb->delete_document(unique_term);
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(idType);
+    }
+}
+
+size_t 
 XapianErlangDriver::query(ParamDecoder& params)
 {
     /* offset, pagesize, query, template */
@@ -821,6 +879,13 @@ XapianErlangDriver::control(
         case ADD_DOCUMENT:
             return drv.addDocument(params);
 
+        case DELETE_DOCUMENT:
+            drv.deleteDocument(params);
+            return result;
+
+        case REPLACE_DOCUMENT:
+            return drv.replaceDocument(params);
+
         case TEST:
             return drv.test(params);
 
@@ -1051,14 +1116,14 @@ XapianErlangDriver::retrieveDocument(
             case GET_VALUE:
             {
                 const uint32_t     slot  = params;
-                const std::string  value = doc.get_value(static_cast<Xapian::valueno>(slot));
+                const std::string& value = doc.get_value(static_cast<Xapian::valueno>(slot));
                 m_result << value;
                 break;
             }
 
             case GET_DATA:
             {
-                const std::string data = doc.get_data();
+                const std::string& data = doc.get_data();
                 m_result << data;
                 break;
             }
@@ -1234,14 +1299,14 @@ XapianErlangDriver::msetInfo(ParamDecoder& params)
 
         case MI_TERM_WEIGHT:
         {
-            const std::string tname = params;
+            const std::string& tname = params;
             m_result << static_cast<double>(mset.get_termweight(tname));
             break;
         }
 
         case MI_TERM_FREQ:
         {
-            const std::string tname = params;
+            const std::string& tname = params;
             m_result << static_cast<uint32_t>(mset.get_termfreq(tname));
             break;
         }
@@ -1279,21 +1344,21 @@ XapianErlangDriver::databaseInfo(ParamDecoder& params)
 
         case DBI_TERM_EXISTS:
         {
-            const std::string tname = params;
+            const std::string& tname = params;
             m_result << static_cast<uint8_t>(mp_db->term_exists(tname));
             break;
         }
 
         case DBI_TERM_FREQ:
         {
-            const std::string tname = params;
+            const std::string& tname = params;
             m_result << static_cast<uint32_t>(mp_db->get_termfreq(tname));
             break;
         }
 
         case DBI_COLLECTION_FREQ:
         {
-            const std::string tname = params;
+            const std::string& tname = params;
             m_result << static_cast<uint32_t>(mp_db->get_collection_freq(tname));
             break;
         }
@@ -1329,7 +1394,7 @@ XapianErlangDriver::databaseInfo(ParamDecoder& params)
 
         case DBI_WDF_UPPER_BOUND:
         {
-            const std::string tname = params;
+            const std::string& tname = params;
             m_result << static_cast<uint32_t>(mp_db->get_wdf_upper_bound(tname));
             break;
         }
@@ -1347,7 +1412,7 @@ XapianErlangDriver::databaseInfo(ParamDecoder& params)
 
         case DBI_METADATA:
         {
-            const std::string key = params;
+            const std::string& key = params;
             m_result << mp_db->get_metadata(key);
             break;
         }

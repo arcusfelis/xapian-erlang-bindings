@@ -20,7 +20,7 @@ testdb_path(Name) ->
 
 
 %% This test tries to create a document with all kinds of fields.
-simple_test() ->
+simple_test_() ->
     % Open test
     Path = testdb_path(simple),
     Params = [write, create, overwrite, 
@@ -42,10 +42,16 @@ simple_test() ->
         , #x_text{value = <<"Michael">>, prefix = author} 
         ],
     DocId = ?DRV:add_document(Server, Document),
-    ?assert(is_integer(DocId)),
+    DocIdReplaced1 = ?DRV:replace_document(Server, DocId, Document),
+    DocIdReplaced2 = ?DRV:replace_document(Server, "Simple", Document),
     Last = ?DRV:last_document_id(Server),
+    ?DRV:delete_document(Server, DocId),
+    ?DRV:delete_document(Server, "Simple"),
     ?DRV:close(Server),
-    Last.
+    [ ?_assert(is_integer(DocId))
+    , ?_assertEqual(DocId, DocIdReplaced1)
+    , ?_assertEqual(DocId, DocIdReplaced2)
+    ].
 
 reopen_test() ->
     % Open test

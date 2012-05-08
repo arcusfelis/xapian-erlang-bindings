@@ -81,7 +81,9 @@ class XapianErlangDriver
         GET_RESOURCE_INFO           = 17,
         CREATE_RESOURCE             = 18,
         MSET_INFO                   = 19,
-        DB_INFO                     = 20
+        DB_INFO                     = 20,
+        DELETE_DOCUMENT             = 21,
+        REPLACE_DOCUMENT            = 22
     };
 
 
@@ -90,6 +92,12 @@ class XapianErlangDriver
     enum errorCode {
         SUCCESS                     = 0,
         ERROR                       = 1
+    };
+
+    // see fun xapian_common:append_unique_document_id/2
+    enum uniqueIdType {
+        UNIQUE_DOCID                = 1,
+        UNIQUE_TERM                 = 2
     };
 
     // Modes for opening of a db
@@ -287,6 +295,8 @@ class XapianErlangDriver
     size_t getLastDocId();
 
     size_t addDocument(ParamDecoder& params);
+    size_t replaceDocument(ParamDecoder& params);
+    void deleteDocument(ParamDecoder& params);
 
     /**
      * Read commands, encoded by xapian_document:encode.
