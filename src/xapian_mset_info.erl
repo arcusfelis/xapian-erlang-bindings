@@ -1,6 +1,7 @@
 -module(xapian_mset_info).
 -export([encode/2,
-         decode/2]).
+         decode/2,
+         properties/0]).
 
 -import(xapian_common, [
     append_uint8/2,
@@ -22,6 +23,7 @@ decode(Params, Bin) ->
 
 
 append_mset_info_param(Param, Bin) when is_atom(Param) ->
+    true = lists:member(Param, properties()),
     append_uint8(mset_info_param_id(Param), Bin);
 
 append_mset_info_param({Param, Term}, Bin) when is_atom(Param) ->
@@ -37,6 +39,13 @@ decode_mset_info_param({Param, _Term} = Id, {Acc, Bin}) when is_atom(Param) ->
     {[{Id, DecodedParam}|Acc], RemBin}.
 
 
+%% These properties can be accessed without an additional parameter.
+properties() ->
+    [matches_lower_bound, matches_estimated, matches_upper_bound,
+     uncollapsed_matches_lower_bound, uncollapsed_matches_estimated,
+     uncollapsed_matches_upper_bound, size, max_possible, max_attained].
+
+
 mset_info_param_id(stop)                            -> 0;
 mset_info_param_id(matches_lower_bound)             -> 1;
 mset_info_param_id(matches_estimated)               -> 2;
@@ -45,8 +54,8 @@ mset_info_param_id(uncollapsed_matches_lower_bound) -> 4;
 mset_info_param_id(uncollapsed_matches_estimated)   -> 5;
 mset_info_param_id(uncollapsed_matches_upper_bound) -> 6;
 mset_info_param_id(size)                            -> 7;
-mset_info_param_id(get_max_possible)                -> 8;
-mset_info_param_id(get_max_attained)                -> 9;
+mset_info_param_id(max_possible)                    -> 8;
+mset_info_param_id(max_attained)                    -> 9;
 mset_info_param_id(term_weight)                     -> 10;
 mset_info_param_id(term_freq)                       -> 11.
 
@@ -72,10 +81,10 @@ decode_param(uncollapsed_matches_upper_bound, Bin) ->
 decode_param(size, Bin) ->
     read_document_count(Bin);
 
-decode_param(get_max_possible, Bin) ->
+decode_param(max_possible, Bin) ->
     read_weight(Bin);
 
-decode_param(get_max_attained, Bin) ->
+decode_param(max_attained, Bin) ->
     read_weight(Bin);
 
 decode_param(term_weight, Bin) ->

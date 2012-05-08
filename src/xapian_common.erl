@@ -58,6 +58,14 @@ read_document_count(Bin) ->
     read_uint(Bin).
 
 
+read_document_length(Bin) ->
+    read_double(Bin).
+
+
+read_term_count(Bin) ->
+    read_uint(Bin).
+
+
 append_slot(Slot, N2S, Bin) ->
     append_uint(slot_id(Slot, N2S), Bin).
 
@@ -80,6 +88,13 @@ append_boolean(Value, Bin) ->
 
 boolean_to_integer(false) -> 0;
 boolean_to_integer(true) ->  1.
+
+
+read_boolean(Bin) ->
+    case read_uint8(Bin) of
+        {1, RemBin} -> {true, RemBin};
+        {0, RemBin} -> {false, RemBin}
+    end.
 
 
 read_weight(Bin) ->

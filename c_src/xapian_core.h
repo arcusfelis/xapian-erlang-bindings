@@ -80,7 +80,8 @@ class XapianErlangDriver
         QLC_LOOKUP                  = 16,
         GET_RESOURCE_INFO           = 17,
         CREATE_RESOURCE             = 18,
-        MSET_INFO                   = 19
+        MSET_INFO                   = 19,
+        DB_INFO                     = 20
     };
 
 
@@ -187,6 +188,25 @@ class XapianErlangDriver
         MI_GET_MAX_ATTAINED                 = 9,
         MI_TERM_WEIGHT                      = 10,
         MI_TERM_FREQ                        = 11
+    };
+
+    enum dbInfoParams {
+        DBI_HAS_POSITIONS                   = 1,
+        DBI_DOCCOUNT                        = 2,
+        DBI_LASTDOCID                       = 3,
+        DBI_AVLENGTH                        = 4,
+        DBI_TERM_EXISTS                     = 5,
+        DBI_TERM_FREQ                       = 6,
+        DBI_COLLECTION_FREQ                 = 7,
+        DBI_VALUE_FREQ                      = 8,
+        DBI_VALUE_LOWER_BOUND               = 9,
+        DBI_VALUE_UPPER_BOUND               = 10,
+        DBI_DOCLENGTH_LOWER_BOUND           = 11,
+        DBI_DOCLENGTH_UPPER_BOUND           = 12,
+        DBI_WDF_UPPER_BOUND                 = 13,
+        DBI_DOCLENGTH                       = 14,
+        DBI_UUID                            = 15,
+        DBI_METADATA                        = 16
     };
 
     static const unsigned
@@ -344,6 +364,7 @@ class XapianErlangDriver
      */
     size_t createResource(ParamDecoder& params);
     size_t msetInfo(ParamDecoder& params);
+    size_t databaseInfo(ParamDecoder& params);
 
     static unsigned
     idToParserFeature(uint8_t type);

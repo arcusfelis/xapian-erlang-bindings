@@ -872,6 +872,9 @@ XapianErlangDriver::control(
         case MSET_INFO:
             return drv.msetInfo(params);
 
+        case DB_INFO:
+            return drv.databaseInfo(params);
+
         default:
             throw BadCommandDriverError(command);
         }
@@ -1251,4 +1254,109 @@ XapianErlangDriver::msetInfo(ParamDecoder& params)
 }
 
 
+size_t 
+XapianErlangDriver::databaseInfo(ParamDecoder& params)
+{
+    while (uint8_t command = params)
+    switch(command)
+    {
+        case DBI_HAS_POSITIONS:
+            m_result << static_cast<uint8_t>(mp_db->has_positions());
+            break;
 
+        case DBI_DOCCOUNT:
+            m_result << static_cast<uint32_t>(mp_db->get_doccount());
+            break;
+
+        case DBI_LASTDOCID:
+            m_result << static_cast<uint32_t>(mp_db->get_lastdocid());
+            break;
+
+        case DBI_AVLENGTH:
+            m_result << static_cast<double>(mp_db->get_avlength());
+            break;
+
+
+        case DBI_TERM_EXISTS:
+        {
+            const std::string tname = params;
+            m_result << static_cast<uint8_t>(mp_db->term_exists(tname));
+            break;
+        }
+
+        case DBI_TERM_FREQ:
+        {
+            const std::string tname = params;
+            m_result << static_cast<uint32_t>(mp_db->get_termfreq(tname));
+            break;
+        }
+
+        case DBI_COLLECTION_FREQ:
+        {
+            const std::string tname = params;
+            m_result << static_cast<uint32_t>(mp_db->get_collection_freq(tname));
+            break;
+        }
+
+        case DBI_VALUE_FREQ:
+        {
+            const Xapian::valueno slot = params;
+            m_result << static_cast<uint32_t>(mp_db->get_value_freq(slot));
+            break;
+        }
+
+        case DBI_VALUE_LOWER_BOUND:
+        {
+            const Xapian::valueno slot = params;
+            m_result << mp_db->get_value_lower_bound(slot);
+            break;
+        }
+
+        case DBI_VALUE_UPPER_BOUND:
+        {
+            const Xapian::valueno slot = params;
+            m_result << mp_db->get_value_upper_bound(slot);
+            break;
+        }
+
+        case DBI_DOCLENGTH_LOWER_BOUND:
+            m_result << mp_db->get_doclength_lower_bound();
+            break;
+
+        case DBI_DOCLENGTH_UPPER_BOUND:
+            m_result << mp_db->get_doclength_upper_bound();
+            break;
+
+        case DBI_WDF_UPPER_BOUND:
+        {
+            const std::string tname = params;
+            m_result << static_cast<uint32_t>(mp_db->get_wdf_upper_bound(tname));
+            break;
+        }
+
+        case DBI_DOCLENGTH:
+        {
+            const Xapian::docid docid = params;
+            m_result << static_cast<uint32_t>(mp_db->get_doclength(docid));
+            break;
+        }
+
+        case DBI_UUID:
+            m_result << mp_db->get_uuid();
+            break;
+
+        case DBI_METADATA:
+        {
+            const std::string key = params;
+            m_result << mp_db->get_metadata(key);
+            break;
+        }
+
+// TODO: synonym, spellcorrection
+
+        default:
+            throw BadCommandDriverError(command);
+    }
+
+    return m_result;
+}

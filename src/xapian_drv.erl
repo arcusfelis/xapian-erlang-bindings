@@ -82,9 +82,13 @@
 %% Match set (M-set)
 -export([match_set/2,
          match_set/3,
-         match_set/4,
-         mset_info/3
+         match_set/4
         ]).
+
+%% Information
+-export([mset_info/3,
+         database_info/2]).
+
 
 %% Intermodule export (non for a client!)
 -export([internal_qlc_init/3,
@@ -206,6 +210,10 @@ match_set(Server, EnquireResource, From, MaxItems) ->
 
 mset_info(Server, MSetResource, Params) ->
     call(Server, {mset_info, MSetResource, Params}).
+
+
+database_info(Server, Params) ->
+    call(Server, {database_info, Params}).
 
 
 %% @doc Release resources.
@@ -684,6 +692,12 @@ handle_call({mset_info, MSetRef, Params}, _From, State) ->
     {reply, Reply, State};
 
 
+handle_call({database_info, Params}, _From, State) ->
+    #state{port = Port, register = Register } = State,
+    Reply = port_database_info(Port, Params),
+    {reply, Reply, State};
+
+
 handle_call({transaction, Ref}, From, State) ->
     #state{ port = Port } = State,
     {FromPid, FromRef} = From,
@@ -810,7 +824,8 @@ command_id(qlc_next_portion)            -> 15;
 command_id(qlc_lookup)                  -> 16;
 command_id(get_resource_info)           -> 17;
 command_id(create_resource)             -> 18;
-command_id(mset_info)                   -> 19.
+command_id(mset_info)                   -> 19;
+command_id(database_info)               -> 20.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -996,7 +1011,7 @@ port_match_set(Port, MSetResourceNum, From, MaxItems) ->
     Bin@ = 
         if 
             is_integer(MaxItems), From >= 0 ->
-                append_uint(From, append_uint8(0, Bin@));
+                append_uint(MaxItems, append_uint8(0, Bin@));
             true ->
                 %% Value is undefined.
                 append_uint8(1, Bin@)
@@ -1055,6 +1070,11 @@ port_mset_info(Port, MSetNum, Params) ->
     Bin@ = xapian_mset_info:encode(Params, Bin@),
     decode_mset_info_result(control(Port, mset_info, Bin@), Params).
 
+
+port_database_info(Port, Params) ->
+    Bin@ = <<>>,
+    Bin@ = xapian_db_info:encode(Params, Bin@),
+    decode_database_info_result(control(Port, database_info, Bin@), Params).
 
 
 %% -----------------------------------------------------------------
@@ -1151,6 +1171,15 @@ decode_mset_info_result({ok, Bin}, Params) ->
     end;
 
 decode_mset_info_result(Other, _Params) -> 
+    Other.
+
+
+decode_database_info_result({ok, Bin}, Params) ->
+    case xapian_db_info:decode(Params, Bin) of
+        {Res, <<>> = _Rem} -> {ok, Res}
+    end;
+
+decode_database_info_result(Other, _Params) -> 
     Other.
 
 

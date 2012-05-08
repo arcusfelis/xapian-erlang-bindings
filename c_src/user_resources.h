@@ -111,13 +111,13 @@ class ResourceGenerator
     ResourceGenerator()
     {}
 
-    ResourceGenerator(const ResourceGenerator& generator)
+    ResourceGenerator(const ResourceGenerator& /*generator*/)
     {
         // copy?
         assert(false);
     }
 
-    ResourceGenerator(ResourceGenerator& generator)
+    ResourceGenerator(ResourceGenerator& /*generator*/)
     {
         // copy?
         assert(false);

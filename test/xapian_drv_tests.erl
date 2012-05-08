@@ -327,7 +327,10 @@ cases_test_() ->
     %% Advanced enquires
     , fun advanced_enquire_case/1
     , fun advanced_enquire_weight_case/1
+
+    %% Info
     , fun match_set_info_case/1
+    , fun database_info_case/1
     ],
     Server = query_page_setup(),
     %% One setup for each test
@@ -569,11 +572,22 @@ match_set_info_case(Server) ->
         MSetResourceId = ?DRV:match_set(Server, EnquireResourceId),
         Info = 
         ?DRV:mset_info(Server, MSetResourceId, [matches_lower_bound, size]),
+        ?DRV:mset_info(Server, MSetResourceId, xapian_mset_info:properties()),
         ?DRV:release_resource(Server, EnquireResourceId),
         ?DRV:release_resource(Server, MSetResourceId),
         io:format(user, "~nMSet Info: ~p~n", [Info])
         end,
     {"Check mset_info function.", Case}.
+
+
+database_info_case(Server) ->
+    Case = fun() ->
+        Info = 
+        ?DRV:database_info(Server, [document_count]),
+        ?DRV:database_info(Server, xapian_db_info:properties()),
+        io:format(user, "~nDB Info: ~p~n", [Info])
+        end,
+    {"Check database_info function.", Case}.
 
 -endif.
 
