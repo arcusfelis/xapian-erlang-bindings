@@ -1238,7 +1238,7 @@ XapianErlangDriver::getResourceInfo()
     ObjectRegister<UserResource>::Hash&
     elements = reg.getElements();
 
-    typename ObjectRegister<UserResource>::Hash::iterator i, e, b;
+    ObjectRegister<UserResource>::Hash::iterator i, e, b;
     b = elements.begin();
     e = elements.end();
     for(i = b; i != e; i++)
