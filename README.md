@@ -1,3 +1,9 @@
+Xapian bindings for Erlang
+==========================
+
+__License__: MIT, GPL2 or higher (Xapian is still under GPL only.)
+
+__Author__: Uvarov Michael ([`freeakk@gmail.com`](mailto:freeakk@gmail.com))
 
 
 Installation
@@ -12,8 +18,11 @@ cd xapian
 ./rebar compile
 ```
 
-Deps:
-libsparsehash-dev
+I use [google sparse hash](http://code.google.com/p/sparsehash/?redir=1) 
+for storing resources' ids.
+
+Here is a package name of this library in the Ubuntu repository
+`libsparsehash-dev`.
 
 
 Tests
