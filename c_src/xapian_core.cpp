@@ -1263,6 +1263,21 @@ XapianErlangDriver::getTermFrequency(
 }
 
 
+// If term is not found, then BadArgumentDriverError will be thrown.
+Xapian::termcount
+XapianErlangDriver::getExistedTermFrequency(
+    Xapian::Document& doc, const std::string& tname)
+{
+    Xapian::TermIterator iter = doc.termlist_begin();
+    iter.skip_to(tname);
+
+    if ((iter == doc.termlist_end()) || (tname != (*iter))) 
+            throw BadArgumentDriverError();
+
+    return iter.get_wdf();
+}
+
+
 void
 XapianErlangDriver::tryRemoveValue(
     Xapian::Document& doc, Xapian::valueno slot_no, bool ignoreErrors)
@@ -1306,6 +1321,61 @@ XapianErlangDriver::tryRemovePosting(
 }
 
 
+/**
+ * Tiny dirty class
+ */
+class HellTermPosition
+{ 
+    static const Xapian::termpos HELL_POS = 666;
+    bool m_is_exist;
+    Xapian::Document& m_doc;
+    const std::string& m_tname;
+    
+    public:
+    HellTermPosition(
+        Xapian::Document& doc, 
+        const std::string& tname)
+    : m_doc(doc), m_tname(tname)
+    {
+        if (!XapianErlangDriver::isTermExist(doc, tname))
+            throw BadArgumentDriverError();
+
+        m_is_exist = XapianErlangDriver::isPostingExist(doc, tname, HELL_POS);
+    }
+
+    void
+    dec_wdf(const Xapian::termcount wdf)
+    {
+        m_doc.add_posting(m_tname, HELL_POS, 0);
+        m_doc.remove_posting(m_tname, HELL_POS, wdf);
+    }
+
+    void
+    inc_wdf(const Xapian::termcount wdf)
+    {
+        m_doc.add_term(m_tname, wdf);
+    }
+
+    void
+    set_wdf(const Xapian::termcount wdf)
+    {
+        const Xapian::termcount old_wdf = 
+            XapianErlangDriver::getTermFrequency(m_doc, m_tname);
+        if (old_wdf < wdf) // inc
+            inc_wdf(wdf - old_wdf);
+        else 
+        if (old_wdf > wdf) // dec
+            dec_wdf(old_wdf - wdf);
+    }
+
+    ~HellTermPosition()
+    {
+        if (m_is_exist)
+            m_doc.add_posting(m_tname, HELL_POS, 0);
+    }
+};
+
+
 void
 XapianErlangDriver::tryDecreaseWDF(
     Xapian::Document& doc, 
@@ -1313,6 +1383,14 @@ XapianErlangDriver::tryDecreaseWDF(
     Xapian::termcount wdf, 
     bool ignoreErrors)
 {
+    // TODO: dirty :(
+    HellTermPosition hpos(doc, tname);
+    if (ignoreErrors)
+        try {
+            hpos.dec_wdf(wdf);
+        } catch (Xapian::InvalidArgumentError& e) {}
+    else
+        hpos.dec_wdf(wdf);
 }
 
 
@@ -1323,6 +1401,14 @@ XapianErlangDriver::trySetWDF(
     Xapian::termcount wdf, 
     bool ignoreErrors)
 {
+    // TODO: dirty :(
+    HellTermPosition hpos(doc, tname);
+    if (ignoreErrors)
+        try {
+            hpos.set_wdf(wdf);
+        } catch (Xapian::InvalidArgumentError& e) {}
+    else
+        hpos.set_wdf(wdf);
 }
 
 
@@ -1332,6 +1418,25 @@ XapianErlangDriver::tryClearTermPositions(
     const std::string& tname, 
     bool ignoreErrors)
 {
+    // TODO: dirty :(
+    if (ignoreErrors)
+        try {
+            clearTermPositions(doc, tname);
+        } catch (Xapian::InvalidArgumentError& e) {}
+    else
+        clearTermPositions(doc, tname);
+}
+
+
+void
+XapianErlangDriver::clearTermPositions(
+    Xapian::Document& doc, 
+    const std::string& tname)
+{
+    // TODO: dirty :(
+    Xapian::termcount old_wdf = getExistedTermFrequency(doc, tname);
+    doc.remove_term(tname);
+    doc.add_term(tname, old_wdf);
 }
 
 
@@ -1339,6 +1444,20 @@ void
 XapianErlangDriver::clearTermPositions(
     Xapian::Document& doc)
 {
+    // TODO: dirty :(
+    typedef std::map<std::string, Xapian::termcount> map_type;
+    map_type map;
+
+    for (Xapian::TermIterator i = doc.termlist_begin(), 
+            e = doc.termlist_end(); i != e; i++)
+    {
+        map[*i] = i.get_wdf();
+    }
+    doc.clear_terms();
+    for (map_type::iterator i = map.begin(); i != map.end(); i++)
+    {
+        doc.add_term(i->first, i->second);
+    }
 }
 
 

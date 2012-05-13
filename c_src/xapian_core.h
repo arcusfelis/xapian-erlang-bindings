@@ -17,6 +17,11 @@ typedef int  ErlDrvSizeT;
 typedef int  ErlDrvSSizeT;
 #endif
 
+
+// internal
+class HellTermPosition;
+
+
 // -------------------------------------------------------------------
 // Main Driver Class
 // -------------------------------------------------------------------
@@ -420,23 +425,29 @@ class XapianErlangDriver
 
     void addPrefix(Xapian::QueryParser& qp, ParamDecoder& params);
 
+
+
     private:
-    Xapian::termcount
+    // Private static helpers
+
+    static Xapian::termcount
     getTermFrequency(Xapian::Document&  doc, const std::string& tname);
 
+    static Xapian::termcount
+    getExistedTermFrequency(Xapian::Document&  doc, const std::string& tname);
 
     
-    void
+    static void
     tryRemoveValue(
         Xapian::Document& doc, Xapian::valueno slot_no, bool ignoreErrors);
 
 
-    void
+    static void
     tryRemoveTerm(
         Xapian::Document& doc, const std::string& tname, bool ignoreErrors);
 
 
-    void
+    static void
     tryRemovePosting(
         Xapian::Document& doc, 
         const std::string& tname, 
@@ -445,7 +456,7 @@ class XapianErlangDriver
         bool ignoreErrors);
 
 
-    void
+    static void
     tryDecreaseWDF(
         Xapian::Document& doc, 
         const std::string& tname, 
@@ -453,7 +464,7 @@ class XapianErlangDriver
         bool ignoreErrors);
 
 
-    void
+    static void
     trySetWDF(
         Xapian::Document& doc, 
         const std::string& tname, 
@@ -461,20 +472,28 @@ class XapianErlangDriver
         bool ignoreErrors);
 
 
-    void
+    static void
     tryClearTermPositions(
         Xapian::Document& doc, 
         const std::string& tname, 
         bool ignoreErrors);
 
 
-    void clearTermPositions(Xapian::Document& doc);
+    static void
+    clearTermPositions(
+        Xapian::Document& doc, 
+        const std::string& tname);
 
-    bool isValueExist(Xapian::Document& doc, Xapian::valueno slot_no);
 
-    bool isTermExist(Xapian::Document& doc, const std::string& tname);
+    friend class HellTermPosition;
 
-    bool
+    static void clearTermPositions(Xapian::Document& doc);
+
+    static bool isValueExist(Xapian::Document& doc, Xapian::valueno slot_no);
+
+    static bool isTermExist(Xapian::Document& doc, const std::string& tname);
+
+    static bool
     isPostingExist(
         Xapian::Document& doc, 
         const std::string& tname, 
