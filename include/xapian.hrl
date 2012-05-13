@@ -1,3 +1,4 @@
+%%% Xapian Binding Header File
 -define(REQUIRED, erlang:throw(required_field)).
 
 % ----------------------------------------------------------
@@ -21,7 +22,14 @@
     %% The position of the term. 
     %% If position = undefined, then we will use Xapian::Document::add_term,
     %% otherwise Xapian::Document::add_posting.
-    position :: xapian:x_position(),
+    %%
+    %% You can put few positions as a list.
+    %%
+    %% `#x_term{term=term, action=set, position=[]}' deletes all positions 
+    %% of the term="term".
+    %%
+    %% `#x_term{action=set, position=[]}' deletes all positions for all terms.
+    position :: xapian:x_position() | [xapian:x_position()] | undefined,
 
     %% The within-document frequency, or wdf, of a term t in D is the 
     %% number of times it is pulled out of D in the indexing process. 
@@ -33,13 +41,42 @@
 
     %% WDF of the current term will be increase by this value when indexing.
     %% If WDF = 0, then Xapian::Document::add_boolean_term will be called.
-    wdf = 0 :: xapian:x_wdf()
+
+    %% WDF can be `{cur, integer()}' or `{abs, non_neg_integer()}'. 
+    %% 1 means `{cur, 1}'.
+
+    %% All postings and terms with the same value have common WDF.
+    frequency = 1 :: xapian:x_term_count(),
+
+    %% If position is undefined, then:
+    %%   If action = remove and WDF = 0, then the term will be deleted.
+    %%   If action = remove and WDF != 0, then the term with exactly same 
+    %%        WDF will be deleted.
+
+    %% If position is an integer, then:
+    %%   If action = add, then posting will be added, WDF will be increased 
+    %%      with frequency.
+    %%   If action = remove, then `Xapian::Document::remove_posting' 
+    %%      will be used. 
+
+    %% If action = remove and an error occures, then exception will be thrown.
+    %% If action = purge, then errors will be ignored.
+
+
+    %% If action = add, then the term must not exist.
+    %% If action = set, then don't care about old version of the term.
+    %% If action = update, then the term must exist.
+    action = set :: add | set | update | remove | purge
 }).
 
 
 -record(x_value, {
     slot = ?REQUIRED  :: xapian:x_slot() | xapian:x_slot_name(),
-    value = ?REQUIRED :: xapian:x_string()
+    value = ?REQUIRED :: xapian:x_string(),
+    %% If action = remove and value = "", then remove slot with any value.
+    %% If action = remove and value != "", then remove slot with passed value.
+    %% If action = add, then value will be seted only if the slot is free.
+    action = set :: add | set | update | remove | purge
 }).
 
 
@@ -55,7 +92,7 @@
     value = ?REQUIRED :: xapian:x_string(),
 
     %% The wdf increment.
-    position = 1 :: xapian:x_position(),
+    frequency = 1 :: xapian:x_term_count(),
 
     %% The term prefix to use (default is no prefix). 
     prefix = <<>> :: xapian:x_string()

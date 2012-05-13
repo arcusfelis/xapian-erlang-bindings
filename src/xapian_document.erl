@@ -16,11 +16,57 @@
 part_id(stop)       -> 0;
 part_id(stemmer)    -> 1;
 part_id(data)       -> 2;
-part_id(value)      -> 3;
-part_id(delta)      -> 4;
-part_id(text)       -> 5;
-part_id(term)       -> 6;
-part_id(posting)    -> 7.
+part_id(delta)      -> 3;
+part_id(text)       -> 4;
+
+part_id(set_posting)       -> 15;
+part_id(add_posting)       -> 25;
+part_id(update_posting)    -> 35;
+part_id(remove_posting)    -> 45;
+part_id(purge_posting)     -> 55;
+
+part_id(set_term)          -> 16;
+part_id(add_term)          -> 26;
+part_id(update_term)       -> 36;
+part_id(remove_term)       -> 46;
+part_id(purge_term)        -> 56;
+
+part_id(add_value)         -> 17;
+part_id(set_value)         -> 27;
+part_id(update_value)      -> 37;
+part_id(remove_value)      -> 47;
+part_id(purge_value)       -> 57;
+
+part_id(dec_wdf)                   -> 101;
+part_id(dec_wdf_save)              -> 102;
+part_id(set_wdf)                   -> 111;
+part_id(set_wdf_save)              -> 112;
+part_id(remove_values)             -> 103;
+part_id(remove_terms)              -> 104;
+part_id(remove_positions)          -> 105;
+part_id(remove_term_positions)     -> 106;
+part_id(remove_term_positions_save)-> 116.
+
+
+value_type(add)       -> add_value;
+value_type(set)       -> set_value;
+value_type(update)    -> update_value;
+value_type(remove)    -> remove_value;
+value_type(purge)     -> purge_value.
+
+
+posting_type(add)     -> add_posting;
+posting_type(set)     -> set_posting;
+posting_type(update)  -> update_posting;
+posting_type(remove)  -> remove_posting;
+posting_type(purge)   -> purge_posting.
+
+
+term_type(add)     -> add_term;
+term_type(set)     -> set_term;
+term_type(update)  -> update_term;
+term_type(remove)  -> remove_term;
+term_type(purge)   -> purge_term.
 
 
 %% @doc Encode parts of the document to a binary.
@@ -62,17 +108,30 @@ enc([#x_stemmer{}=Stemmer|T], Bin) ->
 enc([#x_data{value = Value}|T], Bin) ->
     enc(T, append_data(Value, Bin));
 
-enc([#x_term{value = Value, position = Pos, wdf = WDF}|T], Bin) ->
-    enc(T, append_term(Value, Pos, WDF, Bin));
+enc([#x_term{
+    action = Action, value = Value, 
+    position = undefined, frequency = WDF}|T], Bin) ->
+    enc(T, append_term(Action, Value, WDF, Bin));
 
-enc([#x_value{slot = Slot, value = Value}|T], Bin) ->
-    enc(T, append_value(Slot, Value, Bin));
+enc([#x_term{
+    action = Action, value = Value, position = Pos, frequency = WDF}|T], Bin)
+    when is_integer(Pos) ->
+    enc(T, append_posting(Action, Value, Pos, WDF, Bin));
+
+enc([#x_term{position = [_|_] = Positions} = Rec|T], Bin) ->
+    FF = fun(Pos, BinI) -> 
+        enc(Rec#x_term{position = Pos}, BinI)
+        end,
+    enc(T, lists:foldl(FF, Bin, Positions));
+
+enc([#x_value{action = Action, slot = Slot, value = Value}|T], Bin) ->
+    enc(T, append_value(Action, Slot, Value, Bin));
 
 enc([#x_delta{position = Pos}|T], Bin) ->
     enc(T, append_delta(Pos, Bin));
 
-enc([#x_text{value = Value, position = Pos, prefix = Prefix}|T], Bin) ->
-    enc(T, append_text(Value, Pos, Prefix, Bin)).
+enc([#x_text{value = Value, frequency = WDF, prefix = Prefix}|T], Bin) ->
+    enc(T, append_text(Value, WDF, Prefix, Bin)).
 
     
 append_stop(Bin) ->
@@ -87,22 +146,23 @@ append_data(Value, Bin) ->
     append_iolist(Value, append_type(data, Bin)).
 
 
-append_term(Value, _Pos = undefined, WDF, Bin@) ->
-    Bin@ = append_type(term, Bin@),
+append_term(Action, Value, WDF, Bin@) ->
+    Bin@ = append_type(term_type(Action), Bin@),
     Bin@ = append_iolist(Value, Bin@),
     Bin@ = append_int(WDF, Bin@),
-    Bin@;
+    Bin@.
 
-append_term(Value, Pos, WDF, Bin@) ->
-    Bin@ = append_type(posting, Bin@),
+
+append_posting(Action, Value, Pos, WDF, Bin@) ->
+    Bin@ = append_type(posting_type(Action), Bin@),
     Bin@ = append_iolist(Value, Bin@),
     Bin@ = append_int(Pos, Bin@),
     Bin@ = append_int(WDF, Bin@),
     Bin@.
 
 
-append_value(Slot, Value, Bin@) ->
-    Bin@ = append_type(value, Bin@),
+append_value(Action, Slot, Value, Bin@) ->
+    Bin@ = append_type(value_type(Action), Bin@),
     Bin@ = append_uint(Slot, Bin@),
     Bin@ = append_iolist(Value, Bin@),
     Bin@.
@@ -112,10 +172,10 @@ append_delta(Pos, Bin) ->
     append_int(Pos, append_type(delta, Bin)).
 
 
-append_text(Value, Pos, Prefix, Bin@) ->
+append_text(Value, WDF, Prefix, Bin@) ->
     Bin@ = append_type(text, Bin@),
     Bin@ = append_iolist(Value, Bin@),
-    Bin@ = append_int(Pos, Bin@),
+    Bin@ = append_int(WDF, Bin@),
     Bin@ = append_iolist(Prefix, Bin@),
     Bin@.
 

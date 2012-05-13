@@ -1057,15 +1057,6 @@ XapianErlangDriver::applyDocument(
                 break;
             }
 
-            case VALUE:
-            {
-                // see xapian_document:append_value
-                const uint32_t         slot  = params;
-                const std::string&     value = params;
-                doc.add_value(static_cast<Xapian::valueno>(slot), value); 
-                break;
-            }
-
             case DELTA:
             {
                 // see xapian_document:append_delta
@@ -1086,25 +1077,168 @@ XapianErlangDriver::applyDocument(
                 break;
             }
 
-            case TERM:
+            case SET_TERM:
+            case ADD_TERM:
+            case UPDATE_TERM:
             {
                 // see xapian_document:append_term
                 const std::string&           tname   = params; // value
                 const Xapian::termcount      wdf_inc = params; 
                 // Pos = undefined
+
+                switch (command)
+                {
+                    case ADD_TERM:
+                        if (isTermExist(doc, tname))
+                            throw BadArgumentDriverError();
+                        break;
+                            
+                    case UPDATE_TERM:
+                        if (!isTermExist(doc, tname))
+                            throw BadArgumentDriverError();
+                        break;
+                }
                 doc.add_term(tname, wdf_inc);
                 break;
             }
 
-            case POSTING:
+            case ADD_VALUE:
+            case SET_VALUE:
+            case UPDATE_VALUE:
+            {
+                // see xapian_document:append_value
+                const uint32_t         slot  = params;
+                const std::string&     value = params;
+
+                const Xapian::valueno slot_no  = 
+                    static_cast<Xapian::valueno>(slot);
+
+                switch (command)
+                {
+                    case ADD_TERM:
+                        if (isValueExist(doc, slot_no))
+                            throw BadArgumentDriverError();
+                        break;
+                            
+                    case UPDATE_TERM:
+                        if (!isValueExist(doc, slot_no))
+                            throw BadArgumentDriverError();
+                        break;
+                }
+                doc.add_value(slot_no, value); 
+                break;
+            }
+
+            case SET_POSTING:
             {
                 // see xapian_document:append_term
                 const std::string&     tname   = params; // value
                 const uint32_t         tpos    = params;
                 const uint32_t         wdf_inc = params;
-                doc.add_posting(tname, 
-                    static_cast<Xapian::termpos>(tpos), 
+
+                const Xapian::termpos term_pos = 
+                    static_cast<Xapian::termpos>(tpos);
+
+                switch (command)
+                {
+                    case ADD_POSTING:
+                        if (isPostingExist(doc, tname, term_pos))
+                            throw BadArgumentDriverError();
+                        break;
+                            
+                    case UPDATE_POSTING:
+                        if (!isPostingExist(doc, tname, term_pos))
+                            throw BadArgumentDriverError();
+                        break;
+                }
+
+                doc.add_posting(tname, term_pos, 
                     static_cast<Xapian::termcount>(wdf_inc));
+                break;
+            }
+
+            case REMOVE_VALUE:
+            case PURGE_VALUE:
+            {
+                // see xapian_document:remove_value
+                const uint32_t        slot = params;
+                const std::string&   value = params;
+
+                Xapian::valueno    slot_no = static_cast<Xapian::valueno>(slot);
+                // If value is an empty string, then remove any value in 
+                // the slot.
+                // Otherwise, remove only if passed and current values 
+                // are equal.
+                if ((value == "") || (value == doc.get_value(slot_no)))
+                    tryRemoveValue(doc, slot_no, command == PURGE_VALUE); 
+                break;
+            }
+
+            case REMOVE_TERM:
+            case PURGE_TERM:
+            {
+                const std::string&           tname   = params; // value
+                const Xapian::termcount      wdf     = params; 
+
+                if ((!wdf) || (wdf == getTermFrequency(doc, tname)))
+                    tryRemoveTerm(doc, tname, command == PURGE_TERM);
+                break;
+            }
+
+            // work with WDF
+            case DEC_WDF:
+            case DEC_WDF_SAVE:
+            {
+                const std::string&           tname   = params; // value
+                const Xapian::termcount      wdf     = params; 
+                
+                tryDecreaseWDF(doc, tname, wdf, command == DEC_WDF_SAVE);
+                break;
+            }
+
+            case SET_WDF:
+            case SET_WDF_SAVE:
+            {
+                const std::string&           tname   = params; // value
+                const Xapian::termcount      wdf     = params; 
+                
+                trySetWDF(doc, tname, wdf, command == SET_WDF_SAVE);
+            }
+
+
+            case REMOVE_POSTING:
+            case PURGE_POSTING:
+            {
+                // see xapian_document:append_term
+                const std::string&     tname   = params; // value
+                const uint32_t         tpos    = params;
+                const uint32_t         wdf_inc = params;
+
+                tryRemovePosting(doc, tname, 
+                    static_cast<Xapian::termpos>(tpos), 
+                    static_cast<Xapian::termcount>(wdf_inc),
+                    command == PURGE_TERM);
+                break;
+            }
+
+            case REMOVE_VALUES:
+                doc.clear_values();
+                break;
+
+            case REMOVE_TERMS:
+                doc.clear_terms();
+                break;
+
+            case REMOVE_POSITIONS:
+                clearTermPositions(doc);
+                break;
+
+            case REMOVE_TERM_POSITIONS:
+            case REMOVE_TERM_POSITIONS_SAVE:
+            {
+                const std::string&     tname   = params; // value
+                tryClearTermPositions(doc, tname,
+                    command == REMOVE_TERM_POSITIONS_SAVE);
                 break;
             }
 
@@ -1114,6 +1248,135 @@ XapianErlangDriver::applyDocument(
     }
 }
 
+
+// Helper for getting frequency (wdf) of the passed term.
+// If term is not found, then return 0.
+Xapian::termcount
+XapianErlangDriver::getTermFrequency(
+    Xapian::Document& doc, const std::string& tname)
+{
+    Xapian::TermIterator iter = doc.termlist_begin();
+    iter.skip_to(tname);
+    // Current element is a term and its value is tname.
+    return ((iter != doc.termlist_end()) && (tname == (*iter))) 
+        ? iter.get_wdf() : 0;
+}
+
+
+void
+XapianErlangDriver::tryRemoveValue(
+    Xapian::Document& doc, Xapian::valueno slot_no, bool ignoreErrors)
+{
+    if (ignoreErrors)
+        try {
+            doc.remove_value(slot_no);
+        } catch (Xapian::InvalidArgumentError& e) {}
+    else
+        doc.remove_value(slot_no);
+}
+
+
+void
+XapianErlangDriver::tryRemoveTerm(
+    Xapian::Document& doc, const std::string& tname, bool ignoreErrors)
+{
+    if (ignoreErrors)
+        try {
+            doc.remove_term(tname);
+        } catch (Xapian::InvalidArgumentError& e) {}
+    else
+        doc.remove_term(tname);
+}
+
+
+void
+XapianErlangDriver::tryRemovePosting(
+    Xapian::Document& doc, 
+    const std::string& tname, 
+    Xapian::termpos tpos, 
+    Xapian::termcount wdf_inc,
+    bool ignoreErrors)
+{
+    if (ignoreErrors)
+        try {
+            doc.remove_posting(tname, tpos, wdf_inc);
+        } catch (Xapian::InvalidArgumentError& e) {}
+    else
+        doc.remove_posting(tname, tpos, wdf_inc);
+}
+
+
+void
+XapianErlangDriver::tryDecreaseWDF(
+    Xapian::Document& doc, 
+    const std::string& tname, 
+    Xapian::termcount wdf, 
+    bool ignoreErrors)
+{
+}
+
+
+void
+XapianErlangDriver::trySetWDF(
+    Xapian::Document& doc, 
+    const std::string& tname, 
+    Xapian::termcount wdf, 
+    bool ignoreErrors)
+{
+}
+
+
+void
+XapianErlangDriver::tryClearTermPositions(
+    Xapian::Document& doc, 
+    const std::string& tname, 
+    bool ignoreErrors)
+{
+}
+
+
+void
+XapianErlangDriver::clearTermPositions(
+    Xapian::Document& doc)
+{
+}
+
+
+bool
+XapianErlangDriver::isValueExist(Xapian::Document& doc, Xapian::valueno slot_no)
+{
+    Xapian::ValueIterator    iter = doc.values_begin();
+    iter.skip_to(slot_no);
+    return (iter != doc.values_end()) && (iter.get_valueno() == slot_no);
+}
+
+
+bool
+XapianErlangDriver::isTermExist(Xapian::Document& doc, const std::string& tname)
+{
+    Xapian::TermIterator    iter = doc.termlist_begin();
+    iter.skip_to(tname);
+    return (iter != doc.termlist_end()) && ((*iter) == tname);
+}
+
+
+bool
+XapianErlangDriver::isPostingExist(
+    Xapian::Document& doc, 
+    const std::string& tname, 
+    Xapian::termpos term_pos)
+{
+    Xapian::TermIterator    titer = doc.termlist_begin();
+    titer.skip_to(tname);
+    if ((titer != doc.termlist_end()) && ((*titer) == tname))
+    {
+        // term exist
+        Xapian::PositionIterator    piter = titer.positionlist_begin();
+        piter.skip_to(term_pos);
+        return (piter != titer.positionlist_end()) && ((*piter) == term_pos);
+    }
+    return false;
+}
 
 void 
 XapianErlangDriver::retrieveDocument(

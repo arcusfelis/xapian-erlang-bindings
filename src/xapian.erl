@@ -6,6 +6,7 @@
     x_slot_name/0, 
     x_slot/0, 
     x_slot_value/0,
+    x_term_count/0,
     x_document_index_part/0,
     x_document_id/0,
     x_unique_document_id/0,
@@ -29,7 +30,7 @@ start() ->
 -type x_slot_name()     :: atom().
 -type x_slot()          :: non_neg_integer().
 -type x_position()      :: non_neg_integer().
--type x_wdf()           :: non_neg_integer().
+-type x_term_count()    :: non_neg_integer().
 -type x_document_id()   :: non_neg_integer().
 -type x_slot_value()    :: x_slot() | x_slot_name().
 -type x_order_type() ::

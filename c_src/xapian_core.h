@@ -114,13 +114,38 @@ class XapianErlangDriver
     // Types of fields
     // Used in the applyDocument function.
     enum fieldTypeIn {
-        STEMMER                     = 1,
-        DATA                        = 2,
-        VALUE                       = 3,
-        DELTA                       = 4,
-        TEXT                        = 5,
-        TERM                        = 6,
-        POSTING                     = 7
+        STEMMER                     = 1,  // set a stemmer
+        DATA                        = 2,  // set data
+        DELTA                       = 3,  // add delta
+        TEXT                        = 4,  // set text
+
+        SET_POSTING                 = 15, // add posting term
+        ADD_POSTING                 = 25,
+        UPDATE_POSTING              = 35,
+        REMOVE_POSTING              = 45,
+        PURGE_POSTING               = 55,
+
+        SET_TERM                    = 16,
+        ADD_TERM                    = 26,
+        UPDATE_TERM                 = 36,
+        REMOVE_TERM                 = 46,
+        PURGE_TERM                  = 56,
+
+        ADD_VALUE                   = 17,
+        SET_VALUE                   = 27,
+        UPDATE_VALUE                = 37,
+        REMOVE_VALUE                = 47,
+        PURGE_VALUE                 = 57,
+
+        DEC_WDF                     = 101,
+        DEC_WDF_SAVE                = 102,
+        SET_WDF                     = 111,
+        SET_WDF_SAVE                = 112,
+        REMOVE_VALUES               = 103, // clear all values
+        REMOVE_TERMS                = 104, // clear all terms and postings
+        REMOVE_POSITIONS            = 105,
+        REMOVE_TERM_POSITIONS       = 106,
+        REMOVE_TERM_POSITIONS_SAVE  = 116
     };
 
     // Types of the fields.
@@ -394,6 +419,66 @@ class XapianErlangDriver
     selectParser(ParamDecoder& params);
 
     void addPrefix(Xapian::QueryParser& qp, ParamDecoder& params);
+
+    private:
+    Xapian::termcount
+    getTermFrequency(Xapian::Document&  doc, const std::string& tname);
+
+
+    
+    void
+    tryRemoveValue(
+        Xapian::Document& doc, Xapian::valueno slot_no, bool ignoreErrors);
+
+
+    void
+    tryRemoveTerm(
+        Xapian::Document& doc, const std::string& tname, bool ignoreErrors);
+
+
+    void
+    tryRemovePosting(
+        Xapian::Document& doc, 
+        const std::string& tname, 
+        Xapian::termpos tpos, 
+        Xapian::termcount wdf_inc,
+        bool ignoreErrors);
+
+
+    void
+    tryDecreaseWDF(
+        Xapian::Document& doc, 
+        const std::string& tname, 
+        Xapian::termcount wdf, 
+        bool ignoreErrors);
+
+
+    void
+    trySetWDF(
+        Xapian::Document& doc, 
+        const std::string& tname, 
+        Xapian::termcount wdf, 
+        bool ignoreErrors);
+
+
+    void
+    tryClearTermPositions(
+        Xapian::Document& doc, 
+        const std::string& tname, 
+        bool ignoreErrors);
+
+
+    void clearTermPositions(Xapian::Document& doc);
+
+    bool isValueExist(Xapian::Document& doc, Xapian::valueno slot_no);
+
+    bool isTermExist(Xapian::Document& doc, const std::string& tname);
+
+    bool
+    isPostingExist(
+        Xapian::Document& doc, 
+        const std::string& tname, 
+        Xapian::termpos term_pos);
 };
 
 #endif

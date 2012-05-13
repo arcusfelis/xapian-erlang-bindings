@@ -57,6 +57,14 @@ BadCommandDriverError::buildString(int command_id)
 
 
 // -------------------------------------------------------------------
+// BadArgDriverError
+// -------------------------------------------------------------------
+BadArgumentDriverError::BadArgumentDriverError() : 
+    DriverRuntimeError(TYPE, 
+        "Bad Argument was passed.") {}
+
+
+// -------------------------------------------------------------------
 // OverflowDriverError
 // -------------------------------------------------------------------
 OverflowDriverError::OverflowDriverError() : 
@@ -104,6 +112,7 @@ ElementNotFoundDriverError::buildString(uint32_t num)
 
 REG_TYPE(MemoryAllocationDriverError)
 REG_TYPE(BadCommandDriverError)
+REG_TYPE(BadArgumentDriverError)
 REG_TYPE(OverflowDriverError)
 REG_TYPE(NotWritableDatabaseError)
 REG_TYPE(DbAlreadyOpenedDriverError)

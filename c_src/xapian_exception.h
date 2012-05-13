@@ -45,6 +45,16 @@ class BadCommandDriverError: public DriverRuntimeError
     buildString(int command_id);
 };
 
+
+class BadArgumentDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    BadArgumentDriverError();
+};
+
+
 class OverflowDriverError: public DriverRuntimeError
 {
     static const char TYPE[];
