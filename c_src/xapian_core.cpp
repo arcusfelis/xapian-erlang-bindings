@@ -281,6 +281,83 @@ XapianErlangDriver::replaceDocument(ParamDecoder& params)
 }
 
 
+size_t 
+XapianErlangDriver::updateDocument(ParamDecoder& params, bool create)
+{
+    assertWriteable();
+    const ParamDecoderController& schema  
+        = applyDocumentSchema(params);
+    
+
+    Xapian::Document doc;
+    Xapian::docid docid;
+
+    switch(uint8_t idType = params)
+    {
+        case UNIQUE_DOCID:
+        {
+            docid = params;
+            
+            // If create = true, then ignore errors.
+            if (create)
+                try {
+                    doc = mp_wdb->get_document(docid);
+                } catch (Xapian::DocNotFoundError e) {}
+            else 
+                doc = mp_wdb->get_document(docid);
+
+            ParamDecoder params = schema;
+            applyDocument(params, doc);
+            mp_wdb->replace_document(docid, doc);
+            break;
+        }
+
+        case UNIQUE_TERM:
+        {
+            const std::string& unique_term = params;
+            if (mp_wdb->term_exists(unique_term))
+            {
+                // Start searching
+                Xapian::Enquire     enquire(*mp_wdb);
+                enquire.set_query(Xapian::Query(unique_term));
+
+                // Get a set of documents with term
+                Xapian::MSet mset = enquire.get_mset(
+                    0, mp_wdb->get_doccount());
+                
+                for (Xapian::MSetIterator m = mset.begin(); 
+                        m != mset.end(); ++m) {
+                    docid = *m;
+                    Xapian::Document doc = m.get_document();
+                    ParamDecoder params = schema;
+                    applyDocument(params, doc);
+                    mp_wdb->replace_document(docid, doc);
+                }
+                // new document was not added added
+                docid = 0;
+            }
+            else if (create)
+            {
+                
+                ParamDecoder params = schema;
+                applyDocument(params, doc);
+                docid = mp_wdb->add_document(doc);
+            }
+            else 
+            {
+                throw BadArgumentDriverError();
+            }
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(idType);
+    }
+        
+    m_result << static_cast<uint32_t>(docid);
+    return m_result;
+}
+
 
 void 
 XapianErlangDriver::deleteDocument(ParamDecoder& params)
@@ -888,6 +965,11 @@ XapianErlangDriver::control(
         case ADD_DOCUMENT:
             return drv.addDocument(params);
 
+        case UPDATE_DOCUMENT:
+        case UPDATE_OR_CREATE_DOCUMENT:
+            return drv.updateDocument(params, 
+                command == UPDATE_OR_CREATE_DOCUMENT);
+
         case DELETE_DOCUMENT:
             drv.deleteDocument(params);
             return result;
@@ -1130,6 +1212,8 @@ XapianErlangDriver::applyDocument(
             }
 
             case SET_POSTING:
+            case ADD_POSTING:
+            case UPDATE_POSTING:
             {
                 // see xapian_document:append_term
                 const std::string&     tname   = params; // value
@@ -1591,6 +1675,129 @@ XapianErlangDriver::retrieveDocumentSchema(
             case GET_RANK:
             case GET_PERCENT:
                 break;
+
+            default:
+                throw BadCommandDriverError(command);
+        }
+    }
+
+    const char* to = params.currentPosition();
+
+    size_t len = to - from;
+    ParamDecoderController ctrl(from, len);
+    return ctrl;
+}
+
+
+ParamDecoderController
+XapianErlangDriver::applyDocumentSchema(
+    ParamDecoder& params) const
+{
+    const char* from = params.currentPosition();
+
+    while (const int8_t command = params)
+    /* Do, while command != stop != 0 */
+    {
+        switch (command)
+        {
+            case STEMMER:
+            {
+                const Xapian::Stem&  stemmer = params;
+                (void) stemmer;
+                break;
+            }
+
+            case DATA:
+            {
+                const std::string&   data = params;
+                (void) data;
+                break;
+            }
+
+            case DELTA:
+            {
+                const uint32_t   delta = params;
+                (void) delta;
+                break;
+            }
+
+            case TEXT:
+            {
+                const std::string&     text    = params; // value
+                const uint32_t         wdf_inc = params; // pos
+                const std::string&     prefix  = params;
+                (void) text;
+                (void) wdf_inc;
+                (void) prefix;
+                break;
+            }
+
+            case SET_TERM:
+            case ADD_TERM:
+            case UPDATE_TERM:
+            case REMOVE_TERM:
+            case PURGE_TERM:
+            {
+                const std::string&           tname   = params; // value
+                const Xapian::termcount      wdf_inc = params; 
+                (void) tname;
+                (void) wdf_inc;
+                break;
+            }
+
+            case ADD_VALUE:
+            case SET_VALUE:
+            case UPDATE_VALUE:
+            case REMOVE_VALUE:
+            case PURGE_VALUE:
+            {
+                const uint32_t         slot  = params;
+                const std::string&     value = params;
+                (void) slot;
+                (void) value;
+                break;
+            }
+
+            case SET_POSTING:
+            case ADD_POSTING:
+            case UPDATE_POSTING:
+            case REMOVE_POSTING:
+            case PURGE_POSTING:
+            {
+                const std::string&     tname   = params; // value
+                const uint32_t         tpos    = params;
+                const uint32_t         wdf_inc = params;
+                (void) tname;
+                (void) tpos;
+                (void) wdf_inc;
+                break;
+            }
+
+            // work with WDF
+            case DEC_WDF:
+            case DEC_WDF_SAVE:
+            case SET_WDF:
+            case SET_WDF_SAVE:
+            {
+                const std::string&           tname   = params; // value
+                const Xapian::termcount      wdf     = params; 
+                (void) tname;
+                (void) wdf;
+                break;
+            }
+
+            case REMOVE_VALUES:
+            case REMOVE_TERMS:
+            case REMOVE_POSITIONS:
+                break;
+
+            case REMOVE_TERM_POSITIONS:
+            case REMOVE_TERM_POSITIONS_SAVE:
+            {
+                const std::string&     tname   = params; // value
+                (void) tname;
+                break;
+            }
 
             default:
                 throw BadCommandDriverError(command);

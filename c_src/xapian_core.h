@@ -89,7 +89,9 @@ class XapianErlangDriver
         DB_INFO                     = 20,
         DELETE_DOCUMENT             = 21,
         REPLACE_DOCUMENT            = 22,
-        SET_METADATA                = 23
+        SET_METADATA                = 23,
+        UPDATE_DOCUMENT             = 24,
+        UPDATE_OR_CREATE_DOCUMENT   = 25
     };
 
 
@@ -327,14 +329,9 @@ class XapianErlangDriver
 
     size_t addDocument(ParamDecoder& params);
     size_t replaceDocument(ParamDecoder& params);
+    size_t updateDocument(ParamDecoder& params, bool create);
     void deleteDocument(ParamDecoder& params);
     void setMetadata(ParamDecoder& params);
-
-    /**
-     * Read commands, encoded by xapian_document:encode.
-     * Used in update, replace, add document functions
-     */
-    void applyDocument(ParamDecoder& params, Xapian::Document& doc);
 
     /**
      * query_page
@@ -371,6 +368,17 @@ class XapianErlangDriver
 
     ParamDecoderController
     retrieveDocumentSchema(ParamDecoder&) const;
+
+
+    /**
+     * Read commands, encoded by xapian_document:encode.
+     * Used in update, replace, add document functions
+     */
+    void applyDocument(ParamDecoder& params, Xapian::Document& doc);
+
+    ParamDecoderController
+    applyDocumentSchema(ParamDecoder& params) const;
+    
 
     Xapian::Query 
     buildQuery(ParamDecoder& params);

@@ -44,6 +44,7 @@ simple_test_() ->
     DocId = ?DRV:add_document(Server, Document),
     DocIdReplaced1 = ?DRV:replace_document(Server, DocId, Document),
     DocIdReplaced2 = ?DRV:replace_document(Server, "Simple", Document),
+
     Last = ?DRV:last_document_id(Server),
     ?DRV:delete_document(Server, DocId),
     ?DRV:delete_document(Server, "Simple"),
@@ -52,6 +53,32 @@ simple_test_() ->
     , ?_assertEqual(DocId, DocIdReplaced1)
     , ?_assertEqual(DocId, DocIdReplaced2)
     ].
+
+
+update_document_test() ->
+    Path = testdb_path(update_document),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    DocId = ?DRV:add_document(Server, []),
+
+    %% The document with DocId will be extended.
+    ?DRV:update_document(Server, DocId, [#x_term{value = "more"}]),
+
+    %% Cannot add this term again, because the action is `add'.
+    ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
+        ?DRV:update_document(Server, DocId, 
+            [#x_term{action = add, value = "more"}])),
+
+    %% Cannot update the document that is not found.
+    ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
+        ?DRV:update_document(Server, "fail", [])),
+
+    %% Now we can.
+    ?DRV:update_or_create_document(Server, "fail", []).
+
+
+%extended_document_value_field() ->
+
 
 
 reopen_test() ->

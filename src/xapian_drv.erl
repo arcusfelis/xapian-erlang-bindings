@@ -15,6 +15,8 @@
 -export([add_document/2,
          delete_document/2,
          replace_document/3,
+         update_or_create_document/3,
+         update_document/3,
          transaction/3,
          transaction/2,
          set_metadata/3]).
@@ -249,6 +251,21 @@ add_document(Server, Document) ->
 
 replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
     call(Server, {replace_document, DocIdOrUniqueTerm, NewDocument}).
+
+
+%% Extend (edit) the document with data.
+-spec update_document(x_server(), x_unique_document_id(), 
+    [x_document_index_part()]) -> x_document_id().
+
+update_document(Server, DocIdOrUniqueTerm, NewDocument) ->
+    call(Server, {update_document, DocIdOrUniqueTerm, NewDocument, false}).
+
+
+-spec update_or_create_document(x_server(), x_unique_document_id(), 
+    [x_document_index_part()]) -> x_document_id().
+
+update_or_create_document(Server, DocIdOrUniqueTerm, NewDocument) ->
+    call(Server, {update_document, DocIdOrUniqueTerm, NewDocument, true}).
 
 
 -spec delete_document(x_server(), x_unique_document_id()) -> ok.
@@ -589,6 +606,12 @@ handle_call({replace_document, Id, Document}, _From, State) ->
     Reply = port_replace_document(Port, Id, EncodedDocument),
     {reply, Reply, State};
 
+handle_call({update_document, Id, Document, Create}, _From, State) ->
+    #state{ port = Port } = State,
+    EncodedDocument = document_encode(Document, State),
+    Reply = port_update_document(Port, Id, EncodedDocument, Create),
+    {reply, Reply, State};
+
 handle_call({delete_document, Id}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_delete_document(Port, Id),
@@ -878,7 +901,9 @@ command_id(mset_info)                   -> 19;
 command_id(database_info)               -> 20;
 command_id(delete_document)             -> 21;
 command_id(replace_document)            -> 22;
-command_id(set_metadata)                -> 23.
+command_id(set_metadata)                -> 23;
+command_id(update_document)             -> 24;
+command_id(update_or_create_document)   -> 25.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -984,6 +1009,16 @@ set_default_prefixes(Port, DefaultPrefixes) ->
 
 port_add_document(Port, EncodedDocument) ->
     decode_docid_result(control(Port, add_document, EncodedDocument)).
+
+
+port_update_document(Port, Id, EncodedDocument, Create) ->
+    Action = 
+    if  Create -> update_or_create_document;
+        true -> update_document
+        end,
+    decode_docid_result(
+        control(Port, Action, 
+            append_unique_document_id(Id, EncodedDocument))).
 
 
 port_replace_document(Port, Id, EncodedDocument) ->
