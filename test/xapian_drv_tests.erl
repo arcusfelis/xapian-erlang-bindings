@@ -122,6 +122,10 @@ term_advanced_actions_test_() ->
         ?DRV:release_resource(Server, DocRes),
         qlc:e(qlc:q([X || X = #term{value = Value} <- Table]))
         end,
+
+    FF = fun() -> FindTermFn("term") end,
+    UU = fun(Field) -> U([Field]), FF() end,
+
     Term             = #x_term{value = "term"},
     TermAdd          = Term#x_term{action = add}, 
     TermAddNotIgnore = Term#x_term{action = add, ignore = false}, 
@@ -134,66 +138,45 @@ term_advanced_actions_test_() ->
     TermRemove       = TermRemoveIgnore#x_term{ignore = false},
     TermRemove2      = TermRemove#x_term{frequency = 123},
 
-    Terms1 = FindTermFn("term"),
-
-    U([TermAddNotIgnore]),
-
-    Terms2 = FindTermFn("term"),
+    Terms1 = FF(),
+    Terms2 = UU(TermAddNotIgnore),
 
     %% Error will be thrown. Value was not changed.
     ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
-        U([TermAddNotIgnore])),
+        UU(TermAddNotIgnore)),
 
-    Terms3 = FindTermFn("term"),
+    Terms3 = FF(),
 
     %% Error will be ignored. Value was not changed.
-    U([TermAdd]),
-
-    Terms4 = FindTermFn("term"),
-
+    Terms4 = UU(TermAdd),
 
     %% Start changing of WDF
-    U([TermUpdate]),
-
-    Terms5 = FindTermFn("term"),
-    
-    U([TermSet]),
-    Terms6 = FindTermFn("term"),
-
-    U([TermDec]),
-    Terms7 = FindTermFn("term"),
-
-    U([TermSetAbs]),
-    Terms8 = FindTermFn("term"),
-
+    Terms5 = UU(TermUpdate),
+    Terms6 = UU(TermSet),
+    Terms7 = UU(TermDec),
+    Terms8 = UU(TermSetAbs),
 
     %% Cannot remove term, because WDF is not matched.
     ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
-        U([TermRemove2])),
-    Terms9 = FindTermFn("term"),
-
+        UU(TermRemove2)),
+    Terms9 = FF(),
 
     %% Delete the term
-    U([TermRemove]),
-    Terms10 = FindTermFn("term"),
-
+    Terms10 = UU(TermRemove),
 
     %% Cannot delete the term twoce
     ?assertError(#x_error{type = <<"InvalidArgumentError">>}, 
-        U([TermRemove])),
-    Terms11 = FindTermFn("term"),
+        UU(TermRemove)),
+    Terms11 = FF(),
 
 
     %% Cannot update a non-existing term 
     ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
-        U([TermUpdateNotIgnore])),
-    Terms12 = FindTermFn("term"),
-
+        UU(TermUpdateNotIgnore)),
+    Terms12 = FF(),
 
     %% It will be ignored.
-    U([TermUpdate]),
-    Terms13 = FindTermFn("term"),
-
+    Terms13 = UU(TermUpdate),
 
     NormTerm1 = #term{value = <<"term">>, wdf = 1},
     NormTerm2 = #term{value = <<"term">>, wdf = 2},
