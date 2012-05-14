@@ -1325,8 +1325,12 @@ XapianErlangDriver::handleTerm(uint8_t command,
     {
         case REMOVE_TERM:
             if ((!wdf_inc) || (wdf_inc == getTermFrequency(doc, tname)))
+            {
                 tryRemoveTerm(doc, tname, ignore);
-            return;
+                return;
+            }
+            else
+                is_error = true;
 
         case ADD_TERM:
             if (isTermExist(doc, tname))

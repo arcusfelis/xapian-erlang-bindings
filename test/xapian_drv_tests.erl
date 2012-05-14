@@ -122,39 +122,83 @@ term_advanced_actions_test_() ->
         ?DRV:release_resource(Server, DocRes),
         qlc:e(qlc:q([X || X = #term{value = Value} <- Table]))
         end,
-    TermAddIgnore    = #x_term{action = add, value = "term", ignore = false}, 
-    TermAddNotIgnore = #x_term{action = add, value = "term"}, 
-    TermUpdate       = #x_term{action = update, value = "term"}, 
-    TermSet          = #x_term{action = set, value = "term"}, 
+    Term             = #x_term{value = "term"},
+    TermAdd          = Term#x_term{action = add}, 
+    TermAddNotIgnore = Term#x_term{action = add, ignore = false}, 
+    TermUpdate       = Term#x_term{action = update}, 
+    TermUpdateNotIgnore = TermUpdate#x_term{ignore = false}, 
+    TermSet          = Term#x_term{action = set}, 
+    TermDec          = TermSet#x_term{frequency = -1}, 
+    TermSetAbs       = TermSet#x_term{frequency = {abs, 10}}, 
+    TermRemoveIgnore = Term#x_term{action = remove, frequency = 0},
+    TermRemove       = TermRemoveIgnore#x_term{ignore = false},
+    TermRemove2      = TermRemove#x_term{frequency = 123},
 
     Terms1 = FindTermFn("term"),
 
-    U([TermAddIgnore]),
+    U([TermAddNotIgnore]),
 
     Terms2 = FindTermFn("term"),
 
     %% Error will be thrown. Value was not changed.
     ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
-        U([TermAddIgnore])),
+        U([TermAddNotIgnore])),
 
     Terms3 = FindTermFn("term"),
 
     %% Error will be ignored. Value was not changed.
-    U([TermAddNotIgnore]),
+    U([TermAdd]),
 
     Terms4 = FindTermFn("term"),
 
+
+    %% Start changing of WDF
     U([TermUpdate]),
 
     Terms5 = FindTermFn("term"),
     
     U([TermSet]),
-
     Terms6 = FindTermFn("term"),
+
+    U([TermDec]),
+    Terms7 = FindTermFn("term"),
+
+    U([TermSetAbs]),
+    Terms8 = FindTermFn("term"),
+
+
+    %% Cannot remove term, because WDF is not matched.
+    ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
+        U([TermRemove2])),
+    Terms9 = FindTermFn("term"),
+
+
+    %% Delete the term
+    U([TermRemove]),
+    Terms10 = FindTermFn("term"),
+
+
+    %% Cannot delete the term twoce
+    ?assertError(#x_error{type = <<"InvalidArgumentError">>}, 
+        U([TermRemove])),
+    Terms11 = FindTermFn("term"),
+
+
+    %% Cannot update a non-existing term 
+    ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
+        U([TermUpdateNotIgnore])),
+    Terms12 = FindTermFn("term"),
+
+
+    %% It will be ignored.
+    U([TermUpdate]),
+    Terms13 = FindTermFn("term"),
+
 
     NormTerm1 = #term{value = <<"term">>, wdf = 1},
     NormTerm2 = #term{value = <<"term">>, wdf = 2},
     NormTerm3 = #term{value = <<"term">>, wdf = 3},
+    NormTerm4 = #term{value = <<"term">>, wdf = 10},
 
     [ ?_assertEqual(Terms1, [])
     , ?_assertEqual(Terms2, [NormTerm1])
@@ -162,6 +206,13 @@ term_advanced_actions_test_() ->
     , ?_assertEqual(Terms4, [NormTerm1])
     , ?_assertEqual(Terms5, [NormTerm2])
     , ?_assertEqual(Terms6, [NormTerm3])
+    , ?_assertEqual(Terms7, [NormTerm2])
+    , ?_assertEqual(Terms8, [NormTerm4])
+    , ?_assertEqual(Terms9, [NormTerm4])
+    , ?_assertEqual(Terms10, [])
+    , ?_assertEqual(Terms11, [])
+    , ?_assertEqual(Terms12, [])
+    , ?_assertEqual(Terms13, [])
     ].
     
 

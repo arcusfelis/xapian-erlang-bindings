@@ -51,7 +51,8 @@
     %% If position is undefined, then:
     %%   If action = remove and WDF = 0, then the term will be deleted.
     %%   If action = remove and WDF != 0, then the term with exactly same 
-    %%        WDF will be deleted.
+    %%        WDF will be deleted otherwise error will be occured (it can
+    %%        be diabled with ignore = true).
 
     %% If position is an integer, then:
     %%   If action = add, then posting will be added, WDF will be increased 

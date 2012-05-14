@@ -153,7 +153,7 @@ append_term(Action, Value, WDF, Ignore, Bin@) ->
 
 append_posting(Action, Value, Pos, WDF, Ignore, Bin) 
     when is_integer(WDF), WDF < 0 ->
-    append_decrease_wdf(Value, WDF, Ignore,
+    append_decrease_wdf(Value, -WDF, Ignore,
         append_posting(Action, Value, Pos, 0, Ignore, Bin));
 
 append_posting(Action, Value, Pos, {abs, WDF}, Ignore, Bin) ->
