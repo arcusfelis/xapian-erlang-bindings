@@ -7,6 +7,10 @@
     record_info %% see function xapian_record:record
 }).
 
+-record(internal_qlc_term_parameters, {
+    record_info %% see function xapian_term_record:record
+}).
+
 -record(resource, {
     type :: atom(), 
     number :: non_neg_integer()

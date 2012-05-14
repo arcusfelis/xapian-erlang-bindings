@@ -1,4 +1,4 @@
-%% This module is a `gen_server' that handles a single port connection.
+% This module is a `gen_server' that handles a single port connection.
 -module(xapian_drv).
 -behaviour(gen_server).
 
@@ -23,7 +23,10 @@
 
 %% Queries
 -export([query_page/5]). 
--export([enquire/2]).
+
+%% Resources
+-export([enquire/2,
+         document/2]).
 
 %% Resources
 -export([release_resource/2]).
@@ -44,7 +47,7 @@
 %% ------------------------------------------------------------------
 
 %% Intermodule export (non for a client!)
--export([internal_qlc_init/3,
+-export([internal_qlc_init/4,
          internal_qlc_get_next_portion/4,
          internal_qlc_lookup/3,
 
@@ -209,6 +212,12 @@ query_page(Server, Offset, PageSize, Query, RecordMetaDefinition) ->
 -spec enquire(x_server(), x_query()) -> x_resource().
 enquire(Server, Query) ->
     call(Server, {enquire, Query}).
+
+
+%% @doc Return a document.
+-spec document(x_server(), x_unique_document_id()) -> x_resource().
+document(Server, DocId) ->
+    call(Server, {document, DocId}).
 
 
 match_set(Server, EnquireResource) ->
@@ -405,7 +414,7 @@ wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers) ->
 cannot_start_transaction(Ref, Servers, TransServers) ->
     Zipped = lists:zip(Servers, TransServers),
     Splitter = fun
-        ({Server, TransServer}) -> is_pid(TransServer)
+        ({_Server, TransServer}) -> is_pid(TransServer)
         end,
     {Valid, Invalid} = lists:splitwith(Splitter, Zipped),
 
@@ -443,7 +452,7 @@ collect_status_info(Ref, Servers, StatusList) ->
             NewStatusList = [{Pid, Status} | StatusList],
             collect_status_info(Ref, NewServers, NewStatusList);
             
-        {'DOWN', Ref, process, Pid, Reason} ->
+        {'DOWN', Ref, process, Pid, _Reason} ->
             case lists:member(Pid, Servers) of
             true ->
                 NewServers = Servers -- [Pid],
@@ -464,11 +473,11 @@ cancel_transaction(Server, Ref) ->
 -type qlc_params() :: #internal_qlc_mset_parameters{}.
 
 %% Create a qlc resource, collect basic information about a set.
--spec internal_qlc_init(x_server(), reference(), qlc_params()) ->
+-spec internal_qlc_init(x_server(), atom(), reference(), qlc_params()) ->
     #internal_qlc_info{}.
 
-internal_qlc_init(Server, ResourceRef, Params) ->
-    call(Server, {qlc_init, ResourceRef, Params}).
+internal_qlc_init(Server, Type, ResourceRef, Params) ->
+    call(Server, {qlc_init, Type, ResourceRef, Params}).
 
 
 %% Read next `Count' elements starting from `From' from QlcResNum.
@@ -480,12 +489,11 @@ internal_qlc_get_next_portion(Server, QlcResNum, From, Count) ->
     call(Server, {qlc_next_portion, QlcResNum, From, Count}).
 
 
--spec internal_qlc_lookup(x_server(), 
-    non_neg_integer(), [x_document_id()]) ->
-    binary().
+-spec internal_qlc_lookup(x_server(), fun(),
+    non_neg_integer()) -> binary().
 
-internal_qlc_lookup(Server, ResNum, DocIds) ->
-    call(Server, {qlc_lookup, ResNum, DocIds}).
+internal_qlc_lookup(Server, EncoderFun, ResNum) ->
+    call(Server, {qlc_lookup, EncoderFun, ResNum}).
 
 
 %% ParamCreatorFun will be called as ParamCreatorFun(Register).
@@ -637,7 +645,7 @@ handle_call({query_page, Offset, PageSize, Query, Meta}, _From, State) ->
     Reply = port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot),
     {reply, Reply, State};
 
-handle_call({enquire, Query}, {FromPid, FromRef}, State) ->
+handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
     #state{ 
         port = Port, 
         name_to_slot = Name2Slot, 
@@ -656,7 +664,26 @@ handle_call({enquire, Query}, {FromPid, FromRef}, State) ->
             {reply, {ok, Ref}, NewState}
     end;
 
-handle_call({match_set, EnquireRef, From, MaxItems}, {FromPid, FromRef}, State) ->
+handle_call({document, DocId}, {FromPid, _FromRef}, State) ->
+    #state{ 
+        port = Port, 
+        register = Register } = State,
+
+    %% Special handling of errors
+    case port_document(Port, DocId) of
+        {error, _Reason} = Error ->
+            {reply, Error, State};
+        {ok, ResourceNum} ->
+            Elem = #resource{type=document, number=ResourceNum},
+            %% Reply is a reference
+            {ok, NewRegister, Ref} = 
+            xapian_register:put(Register, FromPid, Elem),
+            NewState = State#state{register = NewRegister},
+            {reply, {ok, Ref}, NewState}
+    end;
+
+handle_call({match_set, EnquireRef, From, MaxItems}, 
+    {FromPid, _FromRef}, State) ->
     #state{port = Port, register = Register } = State,
     do_reply(State, do([error_m ||
         #resource{type=enquire, number=EnquireNum} 
@@ -692,15 +719,15 @@ handle_call({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
     Reply = port_qlc_next_portion(Port, QlcResNum, From, Count),
     {reply, Reply, State};
     
-handle_call({qlc_lookup, QlcResNum, DocIds}, _From, State) ->
+handle_call({qlc_lookup, EncFun, QlcResNum}, _From, State) ->
     #state{port = Port } = State,
-    Reply = port_qlc_lookup(Port, QlcResNum, DocIds),
+    Reply = port_qlc_lookup(Port, EncFun, QlcResNum),
     {reply, Reply, State};
 
 
 %% Res into QlcRes
-handle_call({qlc_init, ResRef, Params}, {FromPid, _FromRef}, State) ->
-    #state{port = Port, register = Register } = State,
+handle_call({qlc_init, QlcType, ResRef, Params}, {FromPid, _FromRef}, State) ->
+    #state{register = Register } = State,
     do_reply(State, do([error_m ||
         %% Get an iterable resource by the reference
         #resource{type=ResType, number=ResNum} 
@@ -708,7 +735,7 @@ handle_call({qlc_init, ResRef, Params}, {FromPid, _FromRef}, State) ->
 
         %% Create QLC table (iterator-like object in Erlang)
         #internal_qlc_info{resource_number = QlcResNum} = Reply
-            <- port_qlc_init(State, ResType, ResNum, Params),
+            <- port_qlc_init(State, QlcType, ResType, ResNum, Params),
 
         begin
             QlcElem = #resource{type=qlc, number=QlcResNum},
@@ -766,14 +793,14 @@ handle_call({mset_info, MSetRef, Params}, _From, State) ->
 
 
 handle_call({database_info, Params}, _From, State) ->
-    #state{port = Port, register = Register } = State,
+    #state{port = Port} = State,
     Reply = port_database_info(Port, Params),
     {reply, Reply, State};
 
 
 handle_call({transaction, Ref}, From, State) ->
     #state{ port = Port } = State,
-    {FromPid, FromRef} = From,
+    {FromPid, _FromRef} = From,
     case port_start_transaction(Port) of
         started ->
             %% Clone this server
@@ -832,16 +859,16 @@ handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
             NewState = State#state{register = NewRegister},
             {noreply, NewState};
 
-        {error, _Reason} = Error ->
+        {error, _Reason} = _Error ->
            {noreply, State}
     end.
 
 
 
-terminate(_Reason, State = #state{master = undefined}) ->
+terminate(_Reason, #state{master = undefined}) ->
     ok;
 
-terminate(_Reason, State = #state{master = Master, port = Port}) ->
+terminate(_Reason, #state{master = Master, port = Port}) ->
     %% Change the owner of the port
     erlang:port_connect(Port, Master),
     ok.
@@ -903,7 +930,8 @@ command_id(delete_document)             -> 21;
 command_id(replace_document)            -> 22;
 command_id(set_metadata)                -> 23;
 command_id(update_document)             -> 24;
-command_id(update_or_create_document)   -> 25.
+command_id(update_or_create_document)   -> 25;
+command_id(document)                    -> 26.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -914,6 +942,7 @@ open_mode_id(write_open)                -> 4.
 
 
 %% RESOURCE_TYPE_ID_MARK
+%% enum ResourceValidObjectType 
 resource_type_id(enquire)         -> 0;
 resource_type_id(mset)            -> 1;
 resource_type_id(qlc)             -> 2;
@@ -922,25 +951,31 @@ resource_type_id(key_maker)       -> 4;
 resource_type_id(x_query)         -> 5;
 resource_type_id(match_decider)   -> 6;
 resource_type_id(stem)            -> 7;
-resource_type_id(date_value_range_processor) -> 8;
-resource_type_id(match_spy)       -> 9;
-resource_type_id(last)            -> 9.
+resource_type_id(expand_decoder)  -> 8;
+resource_type_id(date_value_range_processor) -> 9;
+resource_type_id(match_spy)       -> 10;
+resource_type_id(document)        -> 11;
+resource_type_id(last)            -> 11.
 
+qlc_type_id(mset)                 -> 0;
+qlc_type_id(terms)                -> 1.
 
-resource_type_name(0) -> enquire;
-resource_type_name(1) -> mset;
-resource_type_name(2) -> qlc;
-resource_type_name(3) -> weight;
-resource_type_name(4) -> key_maker;
-resource_type_name(5) -> x_query;
-resource_type_name(6) -> match_decider;
-resource_type_name(7) -> stem;
-resource_type_name(8) -> date_value_range_processor;
-resource_type_name(9) -> match_spy.
+resource_type_name(0)  -> enquire;
+resource_type_name(1)  -> mset;
+resource_type_name(2)  -> qlc;
+resource_type_name(3)  -> weight;
+resource_type_name(4)  -> key_maker;
+resource_type_name(5)  -> x_query;
+resource_type_name(6)  -> match_decider;
+resource_type_name(7)  -> stem;
+resource_type_name(8)  -> expand_decoder;
+resource_type_name(9)  -> date_value_range_processor;
+resource_type_name(10) -> match_spy;
+resource_type_name(11) -> document.
 
 
 test_id(result_encoder) -> 1;
-test_id(exception) -> 2.
+test_id(exception)      -> 2.
 
 
 open_mode(Params) ->
@@ -988,7 +1023,7 @@ open_database(Port, Path, Params) ->
     control(Port, open, Data).
 
 
-set_default_stemmer(Port, false) ->
+set_default_stemmer(_Port, false) ->
     {ok, <<>>};
 
 set_default_stemmer(Port, DefaultStemmer) ->
@@ -996,7 +1031,7 @@ set_default_stemmer(Port, DefaultStemmer) ->
     control(Port, set_default_stemmer, Data).
 
 
-set_default_prefixes(Port, []) ->
+set_default_prefixes(_Port, []) ->
     {ok, <<>>};
 
 set_default_prefixes(Port, DefaultPrefixes) ->
@@ -1102,6 +1137,12 @@ port_enquire(Port, Enquire, Name2Slot, Register) ->
     decode_resource_result(control(Port, enquire, Bin@)).
 
 
+port_document(Port, DocId) ->
+    Bin@ = <<>>,
+    Bin@ = append_unique_document_id(DocId, Bin@),
+    decode_resource_result(control(Port, document, Bin@)).
+
+
 port_match_set(Port, MSetResourceNum, From, MaxItems) ->
     From1 = 
         if 
@@ -1139,11 +1180,11 @@ port_qlc_next_portion(Port, QlcResNum, From, Count) ->
     control(Port, qlc_next_portion, Bin@).
 
 
-port_qlc_lookup(Port, QlcResNum, DocIds) ->
+%% document
+port_qlc_lookup(Port, Encoder, QlcResNum) ->
     Bin@ = <<>>,
     Bin@ = append_uint(QlcResNum, Bin@),
-    Bin@ = lists:foldl(fun xapian_common:append_document_id/2, Bin@, DocIds),
-    Bin@ = append_document_id(0, Bin@),
+    Bin@ = Encoder(Bin@), 
     control(Port, qlc_lookup, Bin@).
 
 
@@ -1160,9 +1201,10 @@ port_get_resource_info(Port) ->
     decode_resource_info(control(Port, get_resource_info, <<>>)).
 
 
-port_qlc_init(State, ResourceType, ResourceNum, Params) ->
+port_qlc_init(State, QlcType, ResourceType, ResourceNum, Params) ->
     #state{ port = Port } = State,
     Bin@ = <<>>,
+    Bin@ = append_uint8(qlc_type_id(QlcType), Bin@),
     Bin@ = append_uint8(resource_type_id(ResourceType), Bin@),
     Bin@ = append_uint(ResourceNum, Bin@),
     Bin@ = append_qlc_parameters(State, ResourceType, Params, Bin@),
@@ -1235,7 +1277,11 @@ decode_qlc_info_result(Other) ->
 append_qlc_parameters(State, mset, Params, Bin) ->
     #state{ name_to_slot = Name2Slot } = State,
     #internal_qlc_mset_parameters{ record_info = Meta } = Params,
-    xapian_record:encode(Meta, Name2Slot, Bin).
+    xapian_record:encode(Meta, Name2Slot, Bin);
+
+append_qlc_parameters(State, document, Params, Bin) ->
+    #internal_qlc_term_parameters{ record_info = Meta } = Params,
+    xapian_term_record:encode(Meta, Bin).
 
 
 decode_resource_info({ok, Bin}) ->

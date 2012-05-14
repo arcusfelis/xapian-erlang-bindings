@@ -10,6 +10,16 @@
 
 class XapianErlangDriver;
 
+class QlcType
+{
+public:
+    enum QlcValidObjectType
+    {
+        MSET            = 0,
+        TERMS           = 1
+    };
+};
+
 class QlcTable
 {
     protected:
@@ -22,13 +32,13 @@ class QlcTable
     ~QlcTable();
     
     virtual uint32_t
-    numOfObjects() const = 0;
+    numOfObjects() = 0;
 
     virtual void
-    getPage(uint32_t from, uint32_t count) const = 0;
+    getPage(uint32_t from, uint32_t count) = 0;
 
     virtual void
-    lookup(ParamDecoder& driver_params) const = 0;
+    lookup(ParamDecoder& driver_params) = 0;
 };
 
 
@@ -41,11 +51,31 @@ class MSetQlcTable : public QlcTable
     MSetQlcTable(XapianErlangDriver& driver, 
         Xapian::MSet& mset, const ParamDecoderController& controller);
 
-    uint32_t numOfObjects() const;
+    uint32_t numOfObjects();
 
-    void getPage(uint32_t from, uint32_t count) const;
+    void getPage(uint32_t from, uint32_t count);
 
-    void lookup(ParamDecoder& driver_params) const;
+    void lookup(ParamDecoder& driver_params);
+};
+
+
+class TermQlcTable : public QlcTable
+{
+    Xapian::Document m_doc;
+    Xapian::TermIterator m_iter;
+    uint32_t m_current_pos;
+    
+    const ParamDecoderController m_controller;
+
+    public:
+    TermQlcTable(XapianErlangDriver& driver, 
+        Xapian::Document& doc, const ParamDecoderController& controller);
+
+    uint32_t numOfObjects();
+
+    void getPage(uint32_t from, uint32_t count);
+
+    void lookup(ParamDecoder& driver_params);
 };
 
 

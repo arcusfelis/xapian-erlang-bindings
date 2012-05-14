@@ -59,14 +59,31 @@
     %%   If action = remove, then `Xapian::Document::remove_posting' 
     %%      will be used. 
 
-    %% If action = remove and an error occures, then exception will be thrown.
-    %% If action = purge, then errors will be ignored.
-
-
     %% If action = add, then the term must not exist.
     %% If action = set, then don't care about old version of the term.
     %% If action = update, then the term must exist.
-    action = set :: add | set | update | remove | purge
+    action = set :: add | set | update | remove,
+
+    %% Ignore errors 
+    %% If `action = add AND ignore', 
+    %%      then if a term exists, then it will be skipped.
+    %% If `action = add AND NOT ignore', 
+    %%      then if a term exists, then an an exception will be thrown.
+    %% If `action = update AND ignore', 
+    %%      then if a term exists, then it will be skipped.
+    %% If `action = update AND NOT ignore', 
+    %%      then if a term not exists, then an an exception will be thrown.
+    %% If `action = set', 
+    %%      then if a term exists, then it will be rewritten.
+    %% If `action = set', 
+    %%      then if a term does not exist, then it will be created.
+    %% If `action = remove', 
+    %%      then if a term exists, then it will be deleted.
+    %% If `action = remove AND ignore', 
+    %%      then if a term does not exist, then it will be skipped.
+    %% If `action = remove AND NOT ignore', 
+    %%      then if a term does not exist, then an an exception will be thrown.
+    ignore = true :: boolean()
 }).
 
 
@@ -76,7 +93,10 @@
     %% If action = remove and value = "", then remove slot with any value.
     %% If action = remove and value != "", then remove slot with passed value.
     %% If action = add, then value will be seted only if the slot is free.
-    action = set :: add | set | update | remove | purge
+    action = set :: add | set | update | remove,
+
+    %% Ignore errors 
+    ignore = true :: boolean()
 }).
 
 

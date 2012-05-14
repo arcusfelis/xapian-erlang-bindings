@@ -35,9 +35,10 @@ class XapianErlangDriver
     ResultEncoder m_result;
     Xapian::QueryParser m_default_parser;
     Xapian::QueryParser m_empty_parser;
+    ObjectRegister<Xapian::Document>            m_document_store;
     ObjectRegister<Xapian::Enquire>             m_enquire_store;
     ObjectRegister<Xapian::MSet>                m_mset_store;
-    ObjectRegister<const QlcTable>              m_qlc_store;
+    ObjectRegister<QlcTable>                    m_qlc_store;
     ObjectRegister<const Xapian::Weight>        m_weight_store;
     ObjectRegister<Xapian::KeyMaker>            m_key_maker_store;
     ObjectRegister<const Xapian::Query>         m_query_store;
@@ -62,6 +63,7 @@ class XapianErlangDriver
 
     public:
     friend class MSetQlcTable;
+    friend class TermQlcTable;
 
     // Commands
     // used in the control function
@@ -91,7 +93,8 @@ class XapianErlangDriver
         REPLACE_DOCUMENT            = 22,
         SET_METADATA                = 23,
         UPDATE_DOCUMENT             = 24,
-        UPDATE_OR_CREATE_DOCUMENT   = 25
+        UPDATE_OR_CREATE_DOCUMENT   = 25,
+        DOCUMENT                    = 26
     };
 
 
@@ -130,24 +133,19 @@ class XapianErlangDriver
         ADD_POSTING                 = 25,
         UPDATE_POSTING              = 35,
         REMOVE_POSTING              = 45,
-        PURGE_POSTING               = 55,
 
         SET_TERM                    = 16,
         ADD_TERM                    = 26,
         UPDATE_TERM                 = 36,
         REMOVE_TERM                 = 46,
-        PURGE_TERM                  = 56,
 
         ADD_VALUE                   = 17,
         SET_VALUE                   = 27,
         UPDATE_VALUE                = 37,
         REMOVE_VALUE                = 47,
-        PURGE_VALUE                 = 57,
 
         DEC_WDF                     = 101,
-        DEC_WDF_SAVE                = 102,
         SET_WDF                     = 111,
-        SET_WDF_SAVE                = 112,
         REMOVE_VALUES               = 103, // clear all values
         REMOVE_TERMS                = 104, // clear all terms and postings
         REMOVE_POSITIONS            = 105,
@@ -250,6 +248,14 @@ class XapianErlangDriver
         DBI_METADATA                        = 16
     };
 
+    enum termInfoFields {
+        TERM_VALUE                          = 1,
+        TERM_WDF                            = 2,
+        TERM_FREQ                           = 3,
+        TERM_POSITIONS                      = 4,
+        TERM_POS_COUNT                      = 5
+    };
+
     static const unsigned
     PARSER_FEATURES[];
 
@@ -343,6 +349,14 @@ class XapianErlangDriver
      */
     size_t enquire(ParamDecoder& params);
 
+    Xapian::Document
+    getDocument(ParamDecoder& params);
+
+    /**
+     * Return a resource 
+     */
+    size_t document(ParamDecoder& params);
+
     /**
      * Erase stored object
      */
@@ -368,6 +382,12 @@ class XapianErlangDriver
 
     ParamDecoderController
     retrieveDocumentSchema(ParamDecoder&) const;
+
+
+    void retrieveTerm(ParamDecoder params, Xapian::TermIterator& iter);
+
+    ParamDecoderController
+    retrieveTermSchema(ParamDecoder& params) const; 
 
 
     /**
@@ -506,6 +526,22 @@ class XapianErlangDriver
         Xapian::Document& doc, 
         const std::string& tname, 
         Xapian::termpos term_pos);
+
+    
+    static void
+    handlePosting(uint8_t command,
+        ParamDecoder& params, 
+        Xapian::Document& doc);
+
+    static void
+    handleValue(uint8_t command,
+        ParamDecoder& params, 
+        Xapian::Document& doc);
+
+    static void
+    handleTerm(uint8_t command,
+        ParamDecoder& params, 
+        Xapian::Document& doc);
 };
 
 #endif

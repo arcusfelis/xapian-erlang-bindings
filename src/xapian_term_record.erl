@@ -1,20 +1,17 @@
 %% It contains helpers for extracting.
--module(xapian_record).
--export([record/2, encode/2, encode/3, decode/2, decode_list/2]).
+-module(xapian_term_record).
+-export([record/2, encode/1, encode/2, decode/2, decode_list/2]).
 -export([key_position/1]).
 
 -compile({parse_transform, seqbind}).
 -record(rec, {name, fields}).
 -import(xapian_common, [ 
-    append_uint/2,
     append_uint8/2,
-    append_int8/2,
-    read_doccount/1,
-    read_document_id/1,
-    read_weight/1,
-    read_rank/1,
+    append_iolist/2,
+    read_document_count/1,
+    read_term_count/1,
     read_string/1,
-    read_percent/1,
+    read_position_list/1,
     index_of/2]).
 
 %% ------------------------------------------------------------------
@@ -23,30 +20,29 @@
 
 %% @doc You can use special names for fields:
 %% 
-%% * docid
-%% * data
-%% * weight
-%% * rank
-%% * percent
+%% * wdf
+%% * freq
+%% * value
+%% * positions
 record(TupleName, TupleFields) ->
     #rec{name=TupleName, fields=TupleFields}.
 
 
 key_position(#rec{fields=TupleFields}) ->
-    case index_of(docid, TupleFields) of
+    case index_of(value, TupleFields) of
     I -> I + 1;
     not_found -> undefined
     end.
 
 
 %% Creates tuples {Name, Field1, ....}
-encode(Meta, Name2Slot) ->
+encode(Meta) ->
     #rec{name=TupleName, fields=TupleFields} = Meta,
-    enc(TupleFields, Name2Slot, <<>>).
+    enc(TupleFields, <<>>).
 
-encode(Meta, Name2Slot, Bin) ->
+encode(Meta, Bin) ->
     #rec{name=TupleName, fields=TupleFields} = Meta,
-    enc(TupleFields, Name2Slot, Bin).
+    enc(TupleFields, Bin).
 
 
 -spec decode(term(), binary()) -> {term(), binary()}.
@@ -57,7 +53,7 @@ decode(Meta, Bin) ->
 
 
 decode_list(Meta, Bin@) ->
-    {Count, Bin@} = read_doccount(Bin@),
+    {Count, Bin@} = read_document_count(Bin@),
     decode_cycle(Count, Meta, Bin@, []).
 
 
@@ -76,33 +72,21 @@ decode_cycle(Count, Meta, Bin@, Acc)
 %% Encode data helpers (Bin will be passed into a port)
 %% ------------------------------------------------------------------
 
-enc([H  | T], N2S, Bin) 
-    when H =:= data; H =:= docid; H =:= weight; H =:= rank; H =:= percent ->
-    enc(T, N2S, append_type(H, Bin));
-
-enc([Name | T], N2S, Bin) ->
-    Slot = orddict:fetch(Name, N2S),
-    enc(T, N2S, append_value(Slot, append_type(value, Bin)));
-
-enc([], _N2S, Bin) -> 
-    append_type(stop, Bin).
+enc(Parts, Bin) ->
+    append_type(stop, 
+        lists:foldl(fun append_type/2, Bin, Parts)).
 
 
 append_type(Type, Bin) ->
     append_uint8(part_id(Type), Bin).
 
-append_value(Slot, Bin) ->
-    append_uint(Slot, Bin).
-
    
 part_id(stop)       -> 0;
 part_id(value)      -> 1;
-part_id(data)       -> 2;
-part_id(docid)      -> 3;
-part_id(weight)     -> 4;
-part_id(rank)       -> 5;
-part_id(percent)    -> 6.
-
+part_id(wdf)        -> 2;
+part_id(freq)       -> 3;
+part_id(positions)  -> 4;
+part_id(position_count) -> 5.
 
 
 
@@ -113,11 +97,11 @@ part_id(percent)    -> 6.
 dec([H|T], Bin, Acc) ->
     {Val, NewBin} =
         case H of
-            docid   -> read_document_id(Bin);
-            weight  -> read_weight(Bin);  % double
-            rank    -> read_rank(Bin);    % unsigned
-            percent -> read_percent(Bin); % int -> uint8_t
-            _ -> read_string(Bin)
+            freq      -> read_document_count(Bin);    
+            wdf       -> read_term_count(Bin); 
+            value     -> read_string(Bin);
+            positions -> read_position_list(Bin);
+            position_count -> read_term_count(Bin)
         end,
     dec(T, NewBin, [Val|Acc]);
 

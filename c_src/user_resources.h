@@ -32,7 +32,8 @@ public:
         EXPAND_DECIDER  = 8,
         DATE_VALUE_RANGE_PROCESSOR = 9,
         MATCH_SPY       = 10,
-        LAST_TYPE       = 10
+        DOCUMENT        = 11,
+        LAST_TYPE       = 11
     };
 
     /**
@@ -45,6 +46,7 @@ public:
             throw ElementNotFoundDriverError(type);
     }
 };
+
 
 /**
  * It is a number for each class, which can be handled as a resource.

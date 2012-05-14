@@ -1,5 +1,6 @@
 -module(xapian_common).
 -compile(export_all).
+-compile({parse_transform, seqbind}).
 
 
 %% Order of functions:
@@ -74,6 +75,10 @@ read_term_count(Bin) ->
     read_uint(Bin).
 
 
+read_term_position(Bin) ->
+    read_uint(Bin).
+
+
 append_slot(Slot, N2S, Bin) ->
     append_uint(slot_id(Slot, N2S), Bin).
 
@@ -126,3 +131,37 @@ slot_id(Name, N2S) when is_atom(Name) ->
 
 slot_id(Slot, _N2S) when is_integer(Slot) -> 
     Slot.
+
+
+index_of(Item, List) -> index_of(Item, List, 1).
+
+index_of(_, [], _)  -> not_found;
+index_of(Item, [Item|_], Index) -> Index;
+index_of(Item, [_|Tl], Index) -> index_of(Item, Tl, Index+1).
+
+
+
+read_position_list(Bin@) ->
+    {Count, Bin@} = read_uint(Bin@),
+    read_position_list(Count, [], Bin@).
+
+
+read_position_list(Count, Acc, Bin@) when Count > 0 ->
+    {Pos, Bin@} = read_term_position(Bin@),
+    read_position_list(Count - 1, [Pos|Acc], Bin@);
+
+read_position_list(0, Acc, Bin@) ->
+    {lists:reverse(Acc), Bin@}.
+    
+
+append_docids(DocIds, Bin@) ->
+    Bin@ = lists:foldl(fun append_document_id/2, Bin@, DocIds),
+    Bin@ = append_document_id(0, Bin@),
+    Bin@.
+
+
+append_terms(Terms, Bin@) ->
+    lists:foldl(fun append_iolist/2, Bin@, Terms),
+    Bin@ = append_iolist("", Bin@),
+    Bin@.
+

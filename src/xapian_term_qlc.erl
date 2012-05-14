@@ -1,4 +1,4 @@
--module(xapian_mset_qlc).
+-module(xapian_term_qlc).
 -export([table/3]).
 
 -include_lib("stdlib/include/qlc.hrl").
@@ -6,14 +6,14 @@
 
 
 
-table(Server, MSet, Meta) ->
+table(Server, DocRes, Meta) ->
     QlcParams = 
-    #internal_qlc_mset_parameters{ record_info = Meta },
+    #internal_qlc_term_parameters{ record_info = Meta },
     #internal_qlc_info{
         num_of_objects = Size,
         resource_number = ResNum
-    } = xapian_drv:internal_qlc_init(Server, mset, MSet, QlcParams),
-    KeyPos = xapian_record:key_position(Meta),
+    } = xapian_drv:internal_qlc_init(Server, terms, DocRes, QlcParams),
+    KeyPos = xapian_term_record:key_position(Meta),
     From = 0,
     Len = 20,
     TraverseFun = traverse_fun(Server, ResNum, Meta, From, Len, Size),
@@ -32,26 +32,25 @@ table(Server, MSet, Meta) ->
 
 
 lookup_fun(Server, ResNum, Meta, KeyPos) ->
-    fun(KeyPosI, DocIds) when KeyPosI =:= KeyPos ->
-        case lists:all(fun is_valid_document_id/1, DocIds) of
+    fun(KeyPosI, Terms) when KeyPosI =:= KeyPos ->
+        case lists:all(fun is_valid_term_name/1, Terms) of
         true ->
-            Bin = xapian_drv:internal_qlc_lookup(
-                Server, encoder(DocIds), ResNum),
-            {Records, <<>>} = xapian_record:decode_list(Meta, Bin),
+            Bin = xapian_drv:internal_qlc_lookup(Server, encoder(Terms), ResNum),
+            {Records, <<>>} = xapian_term_record:decode_list(Meta, Bin),
             Records;
         false ->
-            erlang:error(bad_docid)
+            erlang:error(bad_term_name)
         end
         end.
 
 
-encoder(DocIds) ->
+encoder(Terms) ->
     fun(Bin) -> 
-        xapian_common:append_docids(DocIds, Bin)
+        xapian_common:append_terms(Terms, Bin)
         end.
 
 
-is_valid_document_id(DocId) -> is_integer(DocId) andalso DocId > 0.
+is_valid_term_name(_Term) -> true.
 
 
 %% Maximum `Len' records can be retrieve for a call.
@@ -61,7 +60,7 @@ traverse_fun(Server, ResNum, Meta, From, Len, TotalLen) ->
         Bin = xapian_drv:internal_qlc_get_next_portion(Server, ResNum, From, Len),
         NextFrom = From+Len,
         MoreFun = traverse_fun(Server, ResNum, Meta, NextFrom, Len, TotalLen),
-        {Records, <<>>} = xapian_record:decode_list(Meta, Bin),
+        {Records, <<>>} = xapian_term_record:decode_list(Meta, Bin),
         if
             NextFrom < TotalLen ->
                 lists:reverse(lists:reverse(Records), MoreFun);

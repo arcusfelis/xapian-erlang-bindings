@@ -120,11 +120,10 @@ append_docid_order_id(DocidOrderId, _DefOrderId, Bin@) ->
 append_weighting_scheme(undefined, _Register, Bin) ->
     Bin;
 
-append_weighting_scheme(ResourceId, Register, Bin) 
+append_weighting_scheme(ResourceId, Register, Bin@) 
     when is_reference(ResourceId) ->
     #resource{type = weight, number = WeightNum} = 
         xapian_register:fetch(Register, ResourceId),
-    Bin@ = <<>>,
     Bin@ = append_command(weighting_scheme, Bin@),
     Bin@ = append_uint(WeightNum, Bin@),
     Bin@.
@@ -133,11 +132,10 @@ append_weighting_scheme(ResourceId, Register, Bin)
 append_match_spy(undefined, _Register, Bin) ->
     Bin;
 
-append_match_spy(ResourceId, Register, Bin) 
+append_match_spy(ResourceId, Register, Bin@) 
     when is_reference(ResourceId) ->
     #resource{type = match_spy, number = MatchSpyNum} = 
         xapian_register:fetch(Register, ResourceId),
-    Bin@ = <<>>,
     Bin@ = append_command(match_spy, Bin@),
     Bin@ = append_uint(MatchSpyNum, Bin@),
     Bin@;

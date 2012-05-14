@@ -67,7 +67,7 @@ update_document_test() ->
     %% Cannot add this term again, because the action is `add'.
     ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
         ?DRV:update_document(Server, DocId, 
-            [#x_term{action = add, value = "more"}])),
+            [#x_term{action = add, value = "more", ignore = false}])),
 
     %% Cannot update the document that is not found.
     ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
@@ -77,8 +77,93 @@ update_document_test() ->
     ?DRV:update_or_create_document(Server, "fail", []).
 
 
-%extended_document_value_field() ->
+frequency_test() ->
+    Path = testdb_path(frequency),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    Doc = 
+    [
+      #x_term{value = "term", frequency = {cur, 1}}
+    , #x_term{value = "term", frequency = {abs, 5}}
+    , #x_term{value = "term", frequency = {cur, -1}}
+    ],
+    DocId = ?DRV:add_document(Server, Doc).
 
+
+term_actions_test() ->
+    Path = testdb_path(actions),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    Doc = 
+    [
+      #x_term{action = add,     value = "term"}
+    , #x_term{action = update,  value = "term"}
+    , #x_term{action = set,     value = "term"}
+    ],
+    DocId = ?DRV:add_document(Server, Doc).
+
+
+-record(term, {value, wdf}).
+
+term_advanced_actions_test_() ->
+    Path = testdb_path(adv_actions),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    DocId = ?DRV:add_document(Server, []),
+    U = fun(Doc) ->
+        ?DRV:update_document(Server, DocId, Doc)
+        end,
+    
+    Meta = xapian_term_record:record(term, record_info(fields, term)),
+    FindTermFn = 
+    fun(Value) ->
+        DocRes = xapian_drv:document(Server, DocId),
+        Table = xapian_term_qlc:table(Server, DocRes, Meta),
+        ?DRV:release_resource(Server, DocRes),
+        qlc:e(qlc:q([X || X = #term{value = Value} <- Table]))
+        end,
+    TermAddIgnore    = #x_term{action = add, value = "term", ignore = false}, 
+    TermAddNotIgnore = #x_term{action = add, value = "term"}, 
+    TermUpdate       = #x_term{action = update, value = "term"}, 
+    TermSet          = #x_term{action = set, value = "term"}, 
+
+    Terms1 = FindTermFn("term"),
+
+    U([TermAddIgnore]),
+
+    Terms2 = FindTermFn("term"),
+
+    %% Error will be thrown. Value was not changed.
+    ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
+        U([TermAddIgnore])),
+
+    Terms3 = FindTermFn("term"),
+
+    %% Error will be ignored. Value was not changed.
+    U([TermAddNotIgnore]),
+
+    Terms4 = FindTermFn("term"),
+
+    U([TermUpdate]),
+
+    Terms5 = FindTermFn("term"),
+    
+    U([TermSet]),
+
+    Terms6 = FindTermFn("term"),
+
+    NormTerm1 = #term{value = <<"term">>, wdf = 1},
+    NormTerm2 = #term{value = <<"term">>, wdf = 2},
+    NormTerm3 = #term{value = <<"term">>, wdf = 3},
+
+    [ ?_assertEqual(Terms1, [])
+    , ?_assertEqual(Terms2, [NormTerm1])
+    , ?_assertEqual(Terms3, [NormTerm1])
+    , ?_assertEqual(Terms4, [NormTerm1])
+    , ?_assertEqual(Terms5, [NormTerm2])
+    , ?_assertEqual(Terms6, [NormTerm3])
+    ].
+    
 
 
 reopen_test() ->
@@ -523,7 +608,7 @@ qlc_mset_case(Server) ->
         %% internal_qlc_init returns a record, which contains information 
         %% about QlcTable.
         Info = #internal_qlc_info{} = 
-        ?DRV:internal_qlc_init(Server, MSetResourceId, QlcParams),
+        ?DRV:internal_qlc_init(Server, mset, MSetResourceId, QlcParams),
         io:format(user, "~n ~p~n", [Info]),
 
         %% Create QlcTable from MSet. 
