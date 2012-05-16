@@ -68,7 +68,8 @@ MSetQlcTable::getPage(const uint32_t skip, const uint32_t count)
 void
 MSetQlcTable::lookup(ParamDecoder& driver_params)
 {
-    std::vector< Xapian::MSetIterator > matched;
+    // Flags, that signal about end of list.
+    const uint8_t more = 1, stop = 0;
 
     while (const Xapian::docid docid = driver_params)
     for (Xapian::MSetIterator iter = m_mset.begin(); iter != m_mset.end(); iter++)
@@ -76,26 +77,15 @@ MSetQlcTable::lookup(ParamDecoder& driver_params)
         Xapian::docid current_docid = *iter;
         if (current_docid == docid)
         {
-            matched.push_back(iter);
+            m_driver.m_result << more;
+
+            ParamDecoder params = m_controller;
+            Xapian::Document doc = iter.get_document();
+            m_driver.retrieveDocument(params, doc, &iter);
             break;
         }
     }
-
-    const uint32_t size = matched.size();
-
-    // Put count of elements
-    m_driver.m_result << size;
-
-    for (std::vector< Xapian::MSetIterator >::iterator 
-        match_iter = matched.begin(); 
-        match_iter != matched.end(); 
-        match_iter++)
-    {
-        Xapian::MSetIterator& iter = *match_iter;
-        ParamDecoder params = m_controller;
-        Xapian::Document doc = iter.get_document();
-        m_driver.retrieveDocument(params, doc, &iter);
-    }
+    m_driver.m_result << stop;
 }
 
 
@@ -109,17 +99,29 @@ MSetQlcTable::lookup(ParamDecoder& driver_params)
 
 TermQlcTable::TermQlcTable(XapianErlangDriver& driver, 
         Xapian::Document& doc, const ParamDecoderController& controller) 
-    : QlcTable(driver), m_doc(doc), m_controller(controller)
+    : QlcTable(driver), m_controller(controller)
 {
-    m_iter = m_doc.termlist_begin();
+    // Call doc.termlist_begin() twice.
+    m_begin = doc.termlist_begin();
+    m_iter = doc.termlist_begin();
+    m_end = doc.termlist_end();
+
+    // Do it after doc.term_list_begin()
+    m_size = static_cast<uint32_t>(doc.termlist_count());
+    if (!m_size)
+        throw EmptySetDriverError();
+
+    assert(m_begin != m_end);
+
     m_current_pos = 0;
+    m_first_tname = *m_begin;   
 }
 
 
 uint32_t 
 TermQlcTable::numOfObjects()
 {
-    return static_cast<uint32_t>(m_doc.termlist_count());
+    return m_size;
 }
 
 
@@ -130,8 +132,9 @@ TermQlcTable::numOfObjects()
 void
 TermQlcTable::getPage(const uint32_t skip, const uint32_t count)
 {
-    uint32_t size = m_doc.termlist_count();
+    uint32_t size = m_size;
     assert(skip <= size);
+    
 
     /* Tail size */
     size -= skip;
@@ -147,14 +150,20 @@ TermQlcTable::getPage(const uint32_t skip, const uint32_t count)
     // Skip first elements
     if (skip != m_current_pos)
     {
-        m_iter = m_doc.termlist_begin();
-        for (uint32_t i = left; i; i--)
+        // Go to the beginning
+        // It is the same as a call of m_iter = doc.termlist_begin();
+        assert(m_iter != m_end);
+        m_iter.skip_to(m_first_tname);
+        assert(*m_iter == m_first_tname);
+        for (uint32_t i = skip; i; i--)
             m_iter++;
     }
+//  std::cout << " [" m_size << " " << size << " " << skip  << " " << left << "] ";
 
     // While left > 0 and term is not last.
-    for (uint32_t i = left; i && (m_iter != m_doc.termlist_end()); m_iter++, i--)
+    for (uint32_t i = left; i; m_iter++, i--)
     {
+        assert(m_iter != m_end);
         ParamDecoder params = m_controller;
         m_driver.retrieveTerm(params, m_iter);
     }
@@ -169,7 +178,7 @@ TermQlcTable::lookup(ParamDecoder& driver_params)
     ParamDecoder schema_params = m_controller;
     XapianErlangDriver::qlcTermIteratorLookup(
         driver_params, schema_params, m_driver.m_result,
-        m_doc.termlist_begin(), m_doc.termlist_end());
+        m_begin, m_end);
 }
 
 

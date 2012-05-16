@@ -106,6 +106,7 @@ term_actions_test() ->
 -record(term, {value, wdf}).
 -record(term_ext, {value, positions, position_count, freq, wdf}).
 -record(term_pos, {value, positions, position_count}).
+-record(short_term, {wdf}).
 
 
 term_qlc_test_() ->
@@ -125,8 +126,37 @@ term_qlc_test_() ->
     Records = qlc:e(qlc:q([X || X <- Table])),
     Values = [Value || #term{value = Value} <- Records],
     Not1Wdf = [X || X = #term{wdf = Wdf} <- Records, Wdf =/= 1],
+
+    %% Lookup order test
+    %% It is an important test.
+    OrderTestQuery = qlc:q([Value || #term{value = Value} <- Table, 
+        Value =:= "2" orelse Value =:= "1" orelse Value =:= "3"]),
+    OrderTestValues = qlc:e(OrderTestQuery),
+
     [ ?_assertEqual(Values, lists:sort(TermNames))
     , ?_assertEqual(Not1Wdf, [])
+    , ?_assertEqual(OrderTestValues, [<<"1">>, <<"2">>, <<"3">>])
+    ].
+
+
+short_term_qlc_test_() ->
+    Path = testdb_path(short_term_qlc),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    
+    %% Create a document with terms
+    TermNames = 
+    [erlang:list_to_binary(erlang:integer_to_list(X)) 
+        || X <- lists:seq(1, 100)],
+
+    Fields = [#x_term{value = Term} || Term <- TermNames], 
+    DocId = ?DRV:add_document(Server, Fields),
+    Meta = xapian_term_record:record(short_term, 
+        record_info(fields, short_term)),
+    Table = xapian_term_qlc:table(Server, DocId, Meta),
+    Q = qlc:q([Wdf || #short_term{wdf = Wdf} <- Table]),
+    WdfSum = qlc:fold(fun erlang:'+'/2, 0, Q),
+    [ ?_assertEqual(WdfSum, 100)
     ].
 
 
@@ -208,7 +238,7 @@ term_advanced_actions_test_() ->
     FindTermFn = 
     fun(Value) ->
         DocRes = xapian_drv:document(Server, DocId),
-        Table = xapian_term_qlc:table(Server, DocRes, Meta),
+        Table = xapian_term_qlc:table(Server, DocRes, Meta, [ignore_empty]),
         ?DRV:release_resource(Server, DocRes),
         qlc:e(qlc:q([X || X = #term{value = Value} <- Table]))
         end,
@@ -502,6 +532,7 @@ exception_test() ->
 %% slot1 is a value.
 %% docid and data are special fields.
 -record(rec_test, {docid, slot1, data}).
+-record(short_rec_test, {data}).
 
 
 read_document_test() ->
@@ -521,6 +552,18 @@ read_document_test() ->
     ?assertEqual(Rec#rec_test.docid, 1),
     ?assertEqual(Rec#rec_test.slot1, <<"Slot #0">>),
     ?assertEqual(Rec#rec_test.data, <<"My test data as iolist">>),
+    ?DRV:close(Server).
+
+
+short_record_test() ->
+    Path = testdb_path(short_rec_test),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    Document = [#x_data{value = "ok"}],
+    DocId = ?DRV:add_document(Server, Document),
+    Meta = xapian_record:record(short_rec_test, record_info(fields, short_rec_test)),
+    Rec = ?DRV:read_document(Server, DocId, Meta),
+    ?assertEqual(Rec#short_rec_test.data, <<"ok">>),
     ?DRV:close(Server).
 
 

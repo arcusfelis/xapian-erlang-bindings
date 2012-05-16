@@ -38,7 +38,7 @@ lookup_fun(Server, ResNum, Meta, KeyPos) ->
         true ->
             Bin = xapian_drv:internal_qlc_lookup(
                 Server, encoder(DocIds), ResNum),
-            {Records, <<>>} = xapian_record:decode_list(Meta, Bin),
+            {Records, <<>>} = xapian_record:decode_list2(Meta, Bin),
             Records;
         false ->
             erlang:error(bad_docid)

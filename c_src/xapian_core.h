@@ -383,13 +383,13 @@ class XapianErlangDriver
     retrieveDocumentSchema(ParamDecoder&) const;
 
 
-    void retrieveTerm(ParamDecoder params, Xapian::TermIterator& iter);
+    void retrieveTerm(ParamDecoder params, const Xapian::TermIterator& iter);
     
     static void 
     retrieveTerm(
         ParamDecoder params,  
         ResultEncoder& result,
-        Xapian::TermIterator& iter);
+        const Xapian::TermIterator& iter);
 
 
     ParamDecoderController

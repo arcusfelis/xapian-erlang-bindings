@@ -65,6 +65,14 @@ BadArgumentDriverError::BadArgumentDriverError() :
 
 
 // -------------------------------------------------------------------
+// BadArgDriverError
+// -------------------------------------------------------------------
+EmptySetDriverError::EmptySetDriverError() : 
+    DriverRuntimeError(TYPE, 
+        "Operation is not define for empty sets.") {}
+
+
+// -------------------------------------------------------------------
 // OverflowDriverError
 // -------------------------------------------------------------------
 OverflowDriverError::OverflowDriverError() : 
@@ -113,6 +121,7 @@ ElementNotFoundDriverError::buildString(uint32_t num)
 REG_TYPE(MemoryAllocationDriverError)
 REG_TYPE(BadCommandDriverError)
 REG_TYPE(BadArgumentDriverError)
+REG_TYPE(EmptySetDriverError)
 REG_TYPE(OverflowDriverError)
 REG_TYPE(NotWritableDatabaseError)
 REG_TYPE(DbAlreadyOpenedDriverError)

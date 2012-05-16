@@ -35,7 +35,8 @@
 -export([match_set/2,
          match_set/3,
          match_set/4,
-         match_set/5
+         match_set/5,
+         match_set/6
         ]).
 
 %% Information
@@ -1281,38 +1282,42 @@ port_database_info(Port, Params) ->
 %% Helpers
 %% -----------------------------------------------------------------
 
-decode_record_result({ok, Bin}, Meta) ->
-    case xapian_record:decode(Meta, Bin) of
-        {Rec, Rem} -> {ok, Rec}
+decode_result_with_hof({ok, Bin}, Meta, Fn) ->
+    case Fn(Meta, Bin) of
+        {Recs, <<>>} -> {ok, Recs}
     end;
 
-decode_record_result(Other, _Meta) -> 
+decode_result_with_hof(Other, _Meta, _Fn) -> 
     Other.
 
 
-decode_records_result({ok, Bin}, Meta) ->
-    case xapian_record:decode_list(Meta, Bin) of
-        {Recs, Rem} -> {ok, Recs}
+decode_result_with_hof({ok, Bin}, Fn) ->
+    case Fn(Bin) of
+        {Res, <<>>} -> {ok, Res}
     end;
 
-decode_records_result(Other, _Meta) -> 
+decode_result_with_hof(Other, _Fn) -> 
     Other.
 
 
-decode_docid_result({ok, Bin}) -> 
-    {Last, <<>>} = read_document_id(Bin),
-    {ok, Last};
+decode_record_result(Data, Meta) ->
+    decode_result_with_hof(Data, Meta, fun xapian_record:decode/2).
 
-decode_docid_result(Other) -> 
-    Other.
+decode_records_result(Data, Meta) ->
+    decode_result_with_hof(Data, Meta, fun xapian_record:decode_list/2).
 
+decode_mset_info_result(Data, Params) ->
+    decode_result_with_hof(Data, Params, fun xapian_mset_info:decode/2).
 
-decode_resource_result({ok, Bin}) -> 
-    {Id, <<>>} = read_uint(Bin),
-    {ok, Id};
+decode_database_info_result(Data, Params) ->
+    decode_result_with_hof(Data, Params, fun xapian_db_info:decode/2).
 
-decode_resource_result(Other) -> 
-    Other.
+decode_docid_result(Data) -> 
+    decode_result_with_hof(Data, fun xapian_common:read_document_id/1).
+
+decode_resource_result(Data) -> 
+    decode_result_with_hof(Data, fun xapian_common:read_uint/1).
+
 
 
 decode_qlc_info_result({ok, Bin@}) -> 
@@ -1367,24 +1372,6 @@ orddict_find(Id, Dict) ->
         {ok, Value} ->
             {ok, Value}
     end.
-
-
-decode_mset_info_result({ok, Bin}, Params) ->
-    case xapian_mset_info:decode(Params, Bin) of
-        {Res, <<>> = _Rem} -> {ok, Res}
-    end;
-
-decode_mset_info_result(Other, _Params) -> 
-    Other.
-
-
-decode_database_info_result({ok, Bin}, Params) ->
-    case xapian_db_info:decode(Params, Bin) of
-        {Res, <<>> = _Rem} -> {ok, Res}
-    end;
-
-decode_database_info_result(Other, _Params) -> 
-    Other.
 
 
 

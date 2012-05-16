@@ -61,9 +61,9 @@ class MSetQlcTable : public QlcTable
 
 class TermQlcTable : public QlcTable
 {
-    Xapian::Document m_doc;
-    Xapian::TermIterator m_iter;
-    uint32_t m_current_pos;
+    Xapian::TermIterator m_iter, m_begin, m_end;
+    uint32_t m_current_pos, m_size;
+    std::string m_first_tname;
     
     const ParamDecoderController m_controller;
 

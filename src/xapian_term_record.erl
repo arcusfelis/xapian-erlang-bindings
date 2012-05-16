@@ -1,6 +1,6 @@
 %% It contains helpers for extracting.
 -module(xapian_term_record).
--export([record/2, encode/1, encode/2, decode/2, decode_list/2]).
+-export([record/2, encode/1, encode/2, decode/2, decode_list/2, decode_list2/2]).
 -export([key_position/1]).
 
 -compile({parse_transform, seqbind}).
@@ -12,6 +12,7 @@
     read_term_count/1,
     read_string/1,
     read_position_list/1,
+    read_uint8/1,
     index_of/2]).
 
 %% ------------------------------------------------------------------
@@ -30,18 +31,18 @@ record(TupleName, TupleFields) ->
 
 key_position(#rec{fields=TupleFields}) ->
     case index_of(value, TupleFields) of
-    I -> I + 1;
-    not_found -> undefined
+    not_found -> undefined;
+    I -> I + 1
     end.
 
 
 %% Creates tuples {Name, Field1, ....}
 encode(Meta) ->
-    #rec{name=TupleName, fields=TupleFields} = Meta,
+    #rec{fields=TupleFields} = Meta,
     enc(TupleFields, <<>>).
 
 encode(Meta, Bin) ->
-    #rec{name=TupleName, fields=TupleFields} = Meta,
+    #rec{fields=TupleFields} = Meta,
     enc(TupleFields, Bin).
 
 
@@ -57,12 +58,28 @@ decode_list(Meta, Bin@) ->
     decode_cycle(Count, Meta, Bin@, []).
 
 
+
+%% This encoding schema is used when a total size is unknown.
+decode_list2(Meta, Bin) ->
+    decode_list2(Meta, Bin, []).
+
+
+decode_list2(Meta, Bin@, Acc) ->
+    {Flag, Bin@} = read_uint8(Bin@),
+    case Flag of
+        1 -> 
+            {Rec, Bin@} = decode(Meta, Bin@),
+            decode_list2(Meta, Bin@, [Rec|Acc]);
+        0 -> 
+            {lists:reverse(Acc), Bin@}
+    end.
+
+
 decode_cycle(0, _Meta, Bin, Acc) ->
     {lists:reverse(Acc), Bin};
 
 decode_cycle(Count, Meta, Bin@, Acc) 
     when Count > 0 ->
-    #rec{name=TupleName, fields=TupleFields} = Meta,
     {Rec, Bin@} = decode(Meta, Bin@),
     decode_cycle(Count-1, Meta, Bin@, [Rec|Acc]).
 

@@ -55,6 +55,15 @@ class BadArgumentDriverError: public DriverRuntimeError
 };
 
 
+class EmptySetDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    EmptySetDriverError();
+};
+
+
 class OverflowDriverError: public DriverRuntimeError
 {
     static const char TYPE[];

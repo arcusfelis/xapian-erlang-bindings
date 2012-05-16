@@ -1825,7 +1825,7 @@ XapianErlangDriver::retrieveDocument(
 void 
 XapianErlangDriver::retrieveTerm(
     ParamDecoder params,  /* yes, it is a copy */
-    Xapian::TermIterator& iter)
+    const Xapian::TermIterator& iter)
 {
     retrieveTerm(params, m_result, iter);
 }
@@ -1835,7 +1835,7 @@ void
 XapianErlangDriver::retrieveTerm(
     ParamDecoder params,  /* yes, it is a copy */
     ResultEncoder& result,
-    Xapian::TermIterator& iter)
+    const Xapian::TermIterator& iter)
 {
     while (const uint8_t command = params)
     /* Do, while command != stop != 0 */
@@ -2320,9 +2320,9 @@ XapianErlangDriver::qlcTermIteratorLookup(
     Xapian::TermIterator iter,
     Xapian::TermIterator end)
 {
-    std::vector< Xapian::TermIterator > matched;
+    // Flags, that signal about end of list.
+    const uint8_t more = 1, stop = 0;
 
-    // Collect matched iterators
     for (;;)
     {
         const std::string& term = driver_params;
@@ -2331,25 +2331,15 @@ XapianErlangDriver::qlcTermIteratorLookup(
             iter.skip_to(term);
             bool found = (iter != end) && (*iter == term);
             if (found)
-                matched.push_back(iter);
+            {
+                // Put a flag
+                result << more;
+
+                // Clone params
+                ParamDecoder params = schema_params;
+                retrieveTerm(params, result, iter);
+            }
         }
     };
-
-    const uint32_t size = matched.size();
-
-    // Put count of elements
-    result << size;
-
-    // Write records
-    for (std::vector< Xapian::TermIterator >::iterator 
-        match_iter = matched.begin(); 
-        match_iter != matched.end(); 
-        match_iter++)
-    {
-        // Clone params
-        ParamDecoder params = schema_params;
-        // Get a matched param iterator
-        iter = *match_iter;
-        retrieveTerm(params, result, iter);
-    }
+    result << stop;
 }
