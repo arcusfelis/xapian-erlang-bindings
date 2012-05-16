@@ -164,8 +164,9 @@ term_pos_qlc_test_() ->
 
     Fields = 
     [ #x_term{value = "term1", position = [1,2,3]}
-    , #x_term{value = "term2"}
-    , #x_term{value = "term3"}
+    , #x_term{value = "term2", position = [3,2,1]}
+    , #x_term{value = "term3", position = [1]}
+    , #x_term{value = "term3", position = [2,3]}
     ], 
     DocId = ?DRV:add_document(Server, Fields),
     Meta = xapian_term_record:record(term_pos, record_info(fields, term_pos)),
@@ -173,13 +174,23 @@ term_pos_qlc_test_() ->
 
     Term1Records = 
     qlc:e(qlc:q([X || X = #term_pos{value = <<"term1">>} <- Table])),
+    Term2Records = 
+    qlc:e(qlc:q([X || X = #term_pos{value = <<"term2">>} <- Table])),
+    Term3Records = 
+    qlc:e(qlc:q([X || X = #term_pos{value = <<"term3">>} <- Table])),
     AllRecords = 
     qlc:e(qlc:q([X || X <- Table])),
 
     Term1 = #term_pos{
         value = <<"term1">>, position_count = 3, positions = [1,2,3]},
+    Term2 = #term_pos{
+        value = <<"term2">>, position_count = 3, positions = [1,2,3]},
+    Term3 = #term_pos{
+        value = <<"term3">>, position_count = 3, positions = [1,2,3]},
 
     [ ?_assertEqual([Term1], Term1Records)
+    , ?_assertEqual([Term2], Term2Records)
+    , ?_assertEqual([Term3], Term3Records)
     , ?_assertEqual(erlang:length(AllRecords), 3)
     ].
 
