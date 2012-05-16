@@ -311,9 +311,7 @@
     weight_cutoff = 0,
     collapse_key :: undefined | xapian:x_slot_value(),
     %% Max number of items with the same key to leave after collapsing
-    collapse_max = 1 :: non_neg_integer(),
-    %% Contains  none, one or list of `Xapian::MatchSpy'.
-    match_spy :: undefined | xapian:x_resource() | [xapian:x_resource()]
+    collapse_max = 1 :: non_neg_integer()
 }).
 
 
@@ -323,4 +321,14 @@
     l3 = 1 :: float(), 
     b  = 0.5 :: float(), 
     min_normlen = 0.5 :: float()
+}).
+
+
+-record(x_match_set, {
+        enquire = ?REQUIRED :: xapian:x_resource(), 
+        from = 0 :: non_neg_integer(), 
+        %% `undefined' means all documents.
+        max_items = undefined :: non_neg_integer() | undefined, 
+        check_at_least = 0 :: non_neg_integer(), 
+        spies = [] :: [xapian:x_resource()]
 }).

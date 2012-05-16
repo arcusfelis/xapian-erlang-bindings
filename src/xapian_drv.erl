@@ -34,7 +34,8 @@
 %% Match set (M-set)
 -export([match_set/2,
          match_set/3,
-         match_set/4
+         match_set/4,
+         match_set/5
         ]).
 
 %% Information
@@ -220,14 +221,48 @@ document(Server, DocId) ->
     call(Server, {document, DocId}).
 
 
+match_set(Server, #x_match_set{} = Rec) ->
+    call(Server, Rec);
+
 match_set(Server, EnquireResource) ->
-    call(Server, {match_set, EnquireResource, undefined, undefined}).
+    Rec = #x_match_set{enquire = EnquireResource},
+    match_set(Server, Rec).
+
 
 match_set(Server, EnquireResource, From) ->
-    call(Server, {match_set, EnquireResource, From, undefined}).
+    Rec = #x_match_set{enquire = EnquireResource, from = From},
+    match_set(Server, Rec).
+
 
 match_set(Server, EnquireResource, From, MaxItems) ->
-    call(Server, {match_set, EnquireResource, From, MaxItems}).
+    Rec = #x_match_set{
+        enquire = EnquireResource, 
+        from = From, 
+        max_items = MaxItems
+    },
+    match_set(Server, Rec).
+
+
+match_set(Server, EnquireResource, From, MaxItems, CheckAtLeast) ->
+    Rec = #x_match_set{
+        enquire = EnquireResource, 
+        from = From, 
+        max_items = MaxItems, 
+        check_at_least = CheckAtLeast
+    },
+    match_set(Server, Rec).
+
+
+match_set(Server, EnquireResource, From, MaxItems, CheckAtLeast, Spies) 
+    when is_list(Spies) ->
+    Rec = #x_match_set{
+        enquire = EnquireResource, 
+        from = From, 
+        max_items = MaxItems, 
+        check_at_least = CheckAtLeast, 
+        spies = Spies
+    },
+    match_set(Server, Rec).
 
 
 mset_info(Server, MSetResource, Params) ->
@@ -682,15 +717,25 @@ handle_call({document, DocId}, {FromPid, _FromRef}, State) ->
             {reply, {ok, Ref}, NewState}
     end;
 
-handle_call({match_set, EnquireRef, From, MaxItems}, 
-    {FromPid, _FromRef}, State) ->
+
+handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
+    #x_match_set{
+        enquire = EnquireRef, 
+        from = From, 
+        max_items = MaxItems, 
+        check_at_least = CheckAtLeast, 
+        spies = SpyRefs
+    } = Mess, 
     #state{port = Port, register = Register } = State,
+    SpyNums = 
+    [ref_to_num(Register, SpyRef, match_spy) || SpyRef <- SpyRefs],
     do_reply(State, do([error_m ||
-        #resource{type=enquire, number=EnquireNum} 
-            <- xapian_register:get(Register, EnquireRef),
+        EnquireNum 
+            <- ref_to_num(Register, EnquireRef, enquire),
 
         MSetNum <-
-            port_match_set(Port, EnquireNum, From, MaxItems),
+            port_match_set(Port, EnquireNum, From, 
+                MaxItems, CheckAtLeast, SpyNums),
 
         begin
             MSetElem = #resource{type=mset, number=MSetNum},
@@ -788,8 +833,8 @@ handle_call({mset_info, MSetRef, Params}, _From, State) ->
     #state{port = Port, register = Register } = State,
     Reply = 
     do([error_m ||
-        #resource{type=mset, number=MSetNum} 
-            <- xapian_register:get(Register, MSetRef),
+        MSetNum 
+            <- ref_to_num(Register, MSetRef, mset),
 
         port_mset_info(Port, MSetNum, Params)
     ]),
@@ -1147,26 +1192,30 @@ port_document(Port, DocId) ->
     decode_resource_result(control(Port, document, Bin@)).
 
 
-port_match_set(Port, MSetResourceNum, From, MaxItems) ->
-    From1 = 
-        if 
-            is_integer(From), From > 0 ->
-                From;
-            true ->
-                0
-        end,
+port_match_set(Port, MSetResourceNum, From, MaxItems, CheckAtLeast, SpyNums) ->
     Bin@ = <<>>,
     Bin@ = append_uint(MSetResourceNum, Bin@),
-    Bin@ = append_uint(From1, Bin@),
-    Bin@ = 
-        if 
-            is_integer(MaxItems), From >= 0 ->
-                append_uint(MaxItems, append_uint8(0, Bin@));
-            true ->
-                %% Value is undefined.
-                append_uint8(1, Bin@)
-        end,
+    Bin@ = append_uint(fix_uint(From), Bin@),
+    Bin@ = append_max_items(MaxItems, Bin@),
+    Bin@ = append_uint(fix_uint(CheckAtLeast), Bin@),
+    Bin@ = append_match_spies(SpyNums, Bin@),
     decode_resource_result(control(Port, match_set, Bin@)).
+
+
+fix_uint(X) when is_integer(X), X >= 0 -> X;
+fix_uint(undefined) -> 0.
+
+
+append_match_spies(Spies, Bin) ->
+    append_uint(0, lists:foldl(fun xapian_common:append_uint/2, Bin, Spies)).
+
+
+append_max_items(MaxItems, Bin@) 
+    when is_integer(MaxItems), MaxItems >= 0 ->
+    append_uint(MaxItems, append_uint8(0, Bin@));
+
+append_max_items(undefined, Bin@) ->
+    append_uint8(1, Bin@).
 
 
 port_release_resource(Port, ResourceType, ResourceNum) ->
@@ -1337,6 +1386,21 @@ decode_database_info_result({ok, Bin}, Params) ->
 decode_database_info_result(Other, _Params) -> 
     Other.
 
+
+
+%% -----------------------------------------------------------------
+%% Internal helpers.
+%% -----------------------------------------------------------------
+         
+ref_to_num(Register, ResRef, Type) ->
+    case xapian_register:get(Register, ResRef) of
+        {ok, #resource{type=Type, number=ResNum}} ->
+            {ok, ResNum};
+        {error, _} = Error ->
+            Error;
+        {ok, _Res} ->
+            {error, bad_resource_type}
+    end.
 
 
 %% -----------------------------------------------------------------

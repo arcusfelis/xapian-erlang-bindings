@@ -506,15 +506,29 @@ XapianErlangDriver::matchSet(ParamDecoder& params)
     uint32_t   enquire_num = params;
     Xapian::Enquire& enquire = *m_enquire_store.get(enquire_num);
 
-    Xapian::doccount    first, maxitems;
+    Xapian::doccount    first, maxitems, checkatleast;
     first = params;
     uint8_t is_undefined = params;
     maxitems = is_undefined 
         ? mp_db->get_doccount() 
         : params;
+    checkatleast = params;
+
+
+    while (const uint32_t num = params)
+    {
+        Xapian::MatchSpy* 
+        p_spy = m_match_spy_store.get(num);
+        enquire.add_matchspy(p_spy);
+        break;
+    }
+
     Xapian::MSet mset = enquire.get_mset(
         first, 
-        maxitems);
+        maxitems,
+        checkatleast);
+
+    enquire.clear_matchspies();
 
     uint32_t mset_num = m_mset_store.put(new Xapian::MSet(mset));
     m_result << mset_num;
@@ -856,15 +870,6 @@ XapianErlangDriver::fillEnquire(Xapian::Enquire& enquire, ParamDecoder& params)
         const Xapian::Weight& 
         weight = *m_weight_store.get(num);
         enquire.set_weighting_scheme(weight);
-        break;
-        }
-
-    case EC_MATCH_SPY:
-        {
-        uint32_t num = params;
-        Xapian::MatchSpy* 
-        p_spy = m_match_spy_store.get(num);
-        enquire.add_matchspy(p_spy);
         break;
         }
 
