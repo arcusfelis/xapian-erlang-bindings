@@ -11,7 +11,8 @@ table(Server, MSet, Meta) ->
     #internal_qlc_mset_parameters{ record_info = Meta },
     #internal_qlc_info{
         num_of_objects = Size,
-        resource_number = ResNum
+        resource_number = ResNum,
+        resource_ref = QlcRes
     } = xapian_drv:internal_qlc_init(Server, mset, MSet, QlcParams),
     KeyPos = xapian_record:key_position(Meta),
     From = 0,

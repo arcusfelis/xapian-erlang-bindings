@@ -101,6 +101,10 @@ enc([#x_stemmer{}=Stemmer|T], Bin) ->
 enc([#x_data{value = Value}|T], Bin) ->
     enc(T, append_data(Value, Bin));
 
+enc([#x_term{position = [HT|TT] = Positions} = Rec|T], Bin) ->
+    enc([Rec#x_term{position = HT}, 
+         Rec#x_term{position = TT} | T], Bin);
+
 enc([#x_term{} = H|T], Bin) ->
     #x_term{
         action = Action, 
@@ -109,12 +113,6 @@ enc([#x_term{} = H|T], Bin) ->
         frequency = WDF, 
         ignore = Ignore} = H,
     enc(T, append_posting(Action, Value, Pos, WDF, Ignore, Bin));
-
-enc([#x_term{position = [_|_] = Positions} = Rec|T], Bin) ->
-    FF = fun(Pos, BinI) -> 
-        enc(Rec#x_term{position = Pos}, BinI)
-        end,
-    enc(T, lists:foldl(FF, Bin, Positions));
 
 enc([#x_value{} = H|T], Bin) ->
     #x_value{
@@ -162,6 +160,9 @@ append_posting(Action, Value, Pos, {abs, WDF}, Ignore, Bin) ->
 
 append_posting(Action, Value, Pos, {cur, WDF}, Ignore, Bin) ->
     append_posting(Action, Value, Pos, WDF, Ignore, Bin);
+
+append_posting(Action, Value, [], WDF, Ignore, Bin) ->
+    append_term(Action, Value, WDF, Ignore, Bin);
 
 append_posting(Action, Value, undefined, WDF, Ignore, Bin) ->
     append_term(Action, Value, WDF, Ignore, Bin);

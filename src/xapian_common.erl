@@ -161,7 +161,7 @@ append_docids(DocIds, Bin@) ->
 
 
 append_terms(Terms, Bin@) ->
-    lists:foldl(fun append_iolist/2, Bin@, Terms),
+    Bin@ = lists:foldl(fun append_iolist/2, Bin@, Terms),
     Bin@ = append_iolist("", Bin@),
     Bin@.
 

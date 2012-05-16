@@ -104,6 +104,85 @@ term_actions_test() ->
 
 
 -record(term, {value, wdf}).
+-record(term_ext, {value, positions, position_count, freq, wdf}).
+-record(term_pos, {value, positions, position_count}).
+
+
+term_qlc_test_() ->
+    Path = testdb_path(term_qlc),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    
+    %% Create a document with terms
+    TermNames = 
+    [erlang:list_to_binary(erlang:integer_to_list(X)) 
+        || X <- lists:seq(1, 100)],
+
+    Fields = [#x_term{value = Term} || Term <- TermNames], 
+    DocId = ?DRV:add_document(Server, Fields),
+    Meta = xapian_term_record:record(term, record_info(fields, term)),
+    Table = xapian_term_qlc:table(Server, DocId, Meta),
+    Records = qlc:e(qlc:q([X || X <- Table])),
+    Values = [Value || #term{value = Value} <- Records],
+    Not1Wdf = [X || X = #term{wdf = Wdf} <- Records, Wdf =/= 1],
+    [ ?_assertEqual(Values, lists:sort(TermNames))
+    , ?_assertEqual(Not1Wdf, [])
+    ].
+
+
+term_ext_qlc_test_() ->
+    Path = testdb_path(term_ext_qlc),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    
+    %% Create a document with terms
+    TermNames = 
+    [erlang:list_to_binary(erlang:integer_to_list(X)) 
+        || X <- lists:seq(1, 100)],
+
+    Fields = [#x_term{value = Term} || Term <- TermNames], 
+    DocId = ?DRV:add_document(Server, Fields),
+    Meta = xapian_term_record:record(term_ext, record_info(fields, term_ext)),
+    Table = xapian_term_qlc:table(Server, DocId, Meta),
+    Records = qlc:e(qlc:q([X || X <- Table])),
+
+    Not0Pos = 
+    [X || X = #term_ext{position_count = Count} <- Records, Count =/= 0],
+
+    NotEmptyPos = 
+    [X || X = #term_ext{positions = Poss} <- Records, Poss =/= []],
+
+    [ ?_assertEqual(Not0Pos, [])
+    , ?_assertEqual(NotEmptyPos, [])
+    ].
+
+
+term_pos_qlc_test_() ->
+    Path = testdb_path(term_pos_qlc),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+
+    Fields = 
+    [ #x_term{value = "term1", position = [1,2,3]}
+    , #x_term{value = "term2"}
+    , #x_term{value = "term3"}
+    ], 
+    DocId = ?DRV:add_document(Server, Fields),
+    Meta = xapian_term_record:record(term_pos, record_info(fields, term_pos)),
+    Table = xapian_term_qlc:table(Server, DocId, Meta),
+
+    Term1Records = 
+    qlc:e(qlc:q([X || X = #term_pos{value = <<"term1">>} <- Table])),
+    AllRecords = 
+    qlc:e(qlc:q([X || X <- Table])),
+
+    Term1 = #term_pos{
+        value = <<"term1">>, position_count = 3, positions = [1,2,3]},
+
+    [ ?_assertEqual([Term1], Term1Records)
+    , ?_assertEqual(erlang:length(AllRecords), 3)
+    ].
+
 
 term_advanced_actions_test_() ->
     Path = testdb_path(adv_actions),

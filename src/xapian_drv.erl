@@ -725,7 +725,9 @@ handle_call({qlc_lookup, EncFun, QlcResNum}, _From, State) ->
     {reply, Reply, State};
 
 
-%% Res into QlcRes
+%% Res into QlcRes.
+%% ResRef is an iterable object.
+%% QlcRef, QlcResNum is for access for a QLC table.
 handle_call({qlc_init, QlcType, ResRef, Params}, {FromPid, _FromRef}, State) ->
     #state{register = Register } = State,
     do_reply(State, do([error_m ||
@@ -739,11 +741,13 @@ handle_call({qlc_init, QlcType, ResRef, Params}, {FromPid, _FromRef}, State) ->
 
         begin
             QlcElem = #resource{type=qlc, number=QlcResNum},
-            %% Reply is a reference
-            {ok, NewRegister, _Ref} = 
+            {ok, NewRegister, QlcRef} = 
             xapian_register:put(Register, FromPid, QlcElem),
             NewState = State#state{register = NewRegister},
-            {reply, {ok, Reply}, NewState}
+
+            %% Add a reference
+            Reply2 = Reply#internal_qlc_info{resource_ref = QlcRef},
+            {reply, {ok, Reply2}, NewState}
         end]));
 
 

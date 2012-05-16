@@ -6,13 +6,15 @@
 
 
 
-table(Server, DocRes, Meta) ->
+table(Server, DocRes, Meta) when is_reference(DocRes) ->
     QlcParams = 
     #internal_qlc_term_parameters{ record_info = Meta },
     #internal_qlc_info{
         num_of_objects = Size,
-        resource_number = ResNum
+        resource_number = ResNum,
+        resource_ref = QlcRes
     } = xapian_drv:internal_qlc_init(Server, terms, DocRes, QlcParams),
+
     KeyPos = xapian_term_record:key_position(Meta),
     From = 0,
     Len = 20,
@@ -26,10 +28,18 @@ table(Server, DocRes, Meta) ->
        end,
     LookupFun = lookup_fun(Server, ResNum, Meta, KeyPos),
     qlc:table(TraverseFun, 
-        [{info_fun, InfoFun} 
-        ,{lookup_fun, LookupFun}
-        ,{key_equality,'=:='}]).
+            [{info_fun, InfoFun} 
+            ,{lookup_fun, LookupFun}
+            ,{key_equality,'=:='}]);
 
+table(Server, DocId, Meta) ->
+    DocRes = xapian_drv:document(Server, DocId),
+    try
+    table(Server, DocRes, Meta)
+    after
+        xapian_drv:release_resource(Server, DocRes)
+    end.
+    
 
 lookup_fun(Server, ResNum, Meta, KeyPos) ->
     fun(KeyPosI, Terms) when KeyPosI =:= KeyPos ->
