@@ -384,6 +384,13 @@ class XapianErlangDriver
 
 
     void retrieveTerm(ParamDecoder params, Xapian::TermIterator& iter);
+    
+    static void 
+    retrieveTerm(
+        ParamDecoder params,  
+        ResultEncoder& result,
+        Xapian::TermIterator& iter);
+
 
     ParamDecoderController
     retrieveTermSchema(ParamDecoder& params) const; 
@@ -541,6 +548,15 @@ class XapianErlangDriver
     handleTerm(uint8_t command,
         ParamDecoder& params, 
         Xapian::Document& doc);
+
+
+    static void
+    qlcTermIteratorLookup(
+        ParamDecoder& driver_params, 
+        const ParamDecoder& schema_params, 
+        ResultEncoder& result,
+        Xapian::TermIterator iter,
+        Xapian::TermIterator end);
 };
 
 #endif

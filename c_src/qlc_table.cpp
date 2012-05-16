@@ -166,35 +166,10 @@ TermQlcTable::getPage(const uint32_t skip, const uint32_t count)
 void
 TermQlcTable::lookup(ParamDecoder& driver_params)
 {
-    std::vector< Xapian::TermIterator > matched;
-
-    Xapian::TermIterator iter = m_doc.termlist_begin();
-    Xapian::TermIterator end  = m_doc.termlist_end();
-    for (; ;)
-    {
-        const std::string& term = driver_params;
-        if (term.empty()) break; else
-        {
-            iter.skip_to(term);
-            bool found = (iter != end) && (*iter == term);
-            if (found)
-                matched.push_back(iter);
-        }
-    };
-
-    const uint32_t size = matched.size();
-
-    // Put count of elements
-    m_driver.m_result << size;
-
-    for (std::vector< Xapian::TermIterator >::iterator 
-        match_iter = matched.begin(); 
-        match_iter != matched.end(); 
-        match_iter++)
-    {
-        Xapian::TermIterator& iter = *match_iter;
-        ParamDecoder params = m_controller;
-        m_driver.retrieveTerm(params, iter);
-    }
+    ParamDecoder schema_params = m_controller;
+    XapianErlangDriver::qlcTermIteratorLookup(
+        driver_params, schema_params, m_driver.m_result,
+        m_doc.termlist_begin(), m_doc.termlist_end());
 }
+
 

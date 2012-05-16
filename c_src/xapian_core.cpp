@@ -1822,10 +1822,19 @@ XapianErlangDriver::retrieveDocument(
 
 
 
+void 
+XapianErlangDriver::retrieveTerm(
+    ParamDecoder params,  /* yes, it is a copy */
+    Xapian::TermIterator& iter)
+{
+    retrieveTerm(params, m_result, iter);
+}
+
 
 void 
 XapianErlangDriver::retrieveTerm(
     ParamDecoder params,  /* yes, it is a copy */
+    ResultEncoder& result,
     Xapian::TermIterator& iter)
 {
     while (const uint8_t command = params)
@@ -1836,39 +1845,39 @@ XapianErlangDriver::retrieveTerm(
             case TERM_VALUE:
             {
                 const std::string& value = *iter;
-                m_result << value;
+                result << value;
                 break;
             }
 
             case TERM_WDF:
             {
-                m_result << static_cast<uint32_t>(iter.get_wdf());
+                result << static_cast<uint32_t>(iter.get_wdf());
                 break;
             }
 
             case TERM_FREQ:
             {
-                m_result << static_cast<uint32_t>(iter.get_termfreq());
+                result << static_cast<uint32_t>(iter.get_termfreq());
                 break;
             }
 
             case TERM_POS_COUNT:
             {
-                m_result << static_cast<uint32_t>(iter.positionlist_count());
+                result << static_cast<uint32_t>(iter.positionlist_count());
                 break;
             }
 
             case TERM_POSITIONS:
             {
                 Xapian::termcount count = iter.positionlist_count();
-                m_result << static_cast<uint32_t>(count);
+                result << static_cast<uint32_t>(count);
                 if (count > 0)
                     for (Xapian::PositionIterator 
                             piter = iter.positionlist_begin(),
                             pend = iter.positionlist_end();
                         piter != pend;
                         piter++)
-                        m_result << static_cast<uint32_t>(*piter);
+                        result << static_cast<uint32_t>(*piter);
                 break;
             }
 
@@ -2289,4 +2298,58 @@ XapianErlangDriver::setMetadata(ParamDecoder& params)
     const std::string& key = params;
     const std::string& value = params;
     mp_wdb->set_metadata(key, value);
+}
+
+
+/**
+ * Allow to find and write terms by name.
+ *
+ * Helper for TermQlcTable class.
+ *
+ * @param driver_params Contains which keys (term names) to find. Ends with "".
+ * @param schema_params Contains which fields to write. 
+ * @param result        A buffer for writing.
+ * @param iter          First term for searching in.
+ * @param end           Last term for searching in.
+ */
+void
+XapianErlangDriver::qlcTermIteratorLookup(
+    ParamDecoder& driver_params, 
+    const ParamDecoder& schema_params, 
+    ResultEncoder& result,
+    Xapian::TermIterator iter,
+    Xapian::TermIterator end)
+{
+    std::vector< Xapian::TermIterator > matched;
+
+    // Collect matched iterators
+    for (;;)
+    {
+        const std::string& term = driver_params;
+        if (term.empty()) break; else
+        {
+            iter.skip_to(term);
+            bool found = (iter != end) && (*iter == term);
+            if (found)
+                matched.push_back(iter);
+        }
+    };
+
+    const uint32_t size = matched.size();
+
+    // Put count of elements
+    result << size;
+
+    // Write records
+    for (std::vector< Xapian::TermIterator >::iterator 
+        match_iter = matched.begin(); 
+        match_iter != matched.end(); 
+        match_iter++)
+    {
+        // Clone params
+        ParamDecoder params = schema_params;
+        // Get a matched param iterator
+        iter = *match_iter;
+        retrieveTerm(params, result, iter);
+    }
 }
