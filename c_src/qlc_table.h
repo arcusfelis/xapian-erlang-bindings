@@ -16,7 +16,9 @@ public:
     enum QlcValidObjectType
     {
         MSET            = 0,
-        TERMS           = 1
+        TERMS           = 1,
+        SPY_TERMS       = 2,
+        TOP_SPY_TERMS   = 3
     };
 };
 

@@ -107,6 +107,7 @@ term_actions_test() ->
 -record(term_ext, {value, positions, position_count, freq, wdf}).
 -record(term_pos, {value, positions, position_count}).
 -record(short_term, {wdf}).
+-record(spy_term, {value}).
 
 
 term_qlc_test_() ->
@@ -225,6 +226,36 @@ term_pos_qlc_test_() ->
     , ?_assertEqual([Term3], Term3Records)
     , ?_assertEqual(erlang:length(AllRecords), 3)
     ].
+
+
+value_count_match_spy_test_() ->
+    Path = testdb_path(value_count_mspy),
+    Params = [write, create, overwrite, 
+        #x_value_name{slot = 1, name = color}],
+    {ok, Server} = ?DRV:open(Path, Params),
+    Colors = ["Red", "Blue", "white", "black"],
+    [add_color_document(Server, Color) || Color <- Colors],
+
+    SpySlot1 = xapian_match_spy:value_count(Server, color),
+    Query = "",
+    EnquireResourceId = ?DRV:enquire(Server, Query),
+    MSetParams = #x_match_set{enquire = EnquireResourceId, spies = [SpySlot1]},
+    MSetResourceId = ?DRV:match_set(Server, MSetParams),
+    Meta = xapian_term_record:record(spy_term, record_info(fields, spy_term)),
+    Table = xapian_term_qlc:value_count_match_spy_table(Server, SpySlot1, Meta),
+    Values = qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table])),
+    %% "Red" was converted to <<"Red">> because of lookup function call.
+    %% Erlang did not match it, but Xapian did.
+    RedValues = qlc:e(qlc:q([Value 
+        || #spy_term{value = Value} <- Table, Value =:= "Red"])),
+    [?_assertEqual(Values, [<<"Blue">>, <<"Red">>, <<"black">>, <<"white">>])
+    ,?_assertEqual(RedValues, [<<"Red">>])].
+    
+    
+
+add_color_document(Server, Color) ->
+    Document = [ #x_value{slot = color, value = Color} ],
+    DocId = ?DRV:add_document(Server, Document).
 
 
 term_advanced_actions_test_() ->

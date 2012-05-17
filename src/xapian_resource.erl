@@ -23,7 +23,7 @@ bm25_weight(Server,
 
 bm25_weight(Server, K1, K2, K3, B, MinNormLen) ->
     GenFn = 
-        fun(_Register) ->
+        fun() ->
             Bin@ = <<>>,
             Bin@ = append_double(K1, Bin@),
             Bin@ = append_double(K2, Bin@),
@@ -40,7 +40,7 @@ trad_weight(Server) ->
 
 trad_weight(Server, K) ->
     GenFn = 
-        fun(_Register) ->
+        fun() ->
             {ok, append_double(K, <<>>)}
         end,
     xapian_drv:internal_create_resource(Server, trad_weight, GenFn).

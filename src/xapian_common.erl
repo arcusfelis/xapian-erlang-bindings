@@ -21,7 +21,7 @@ append_iolist(Str, Bin) ->
 
 
 %% Encode to unsigned int32_t (for example, it is Xapian::valueno)
-append_uint(Value, Bin) ->
+append_uint(Value, Bin) when is_integer(Value), is_binary(Bin) ->
     <<Bin/binary, Value:32/native-unsigned-integer>>.
 
 
@@ -81,6 +81,10 @@ read_term_position(Bin) ->
 
 append_slot(Slot, N2S, Bin) ->
     append_uint(slot_id(Slot, N2S), Bin).
+
+
+append_slot(Slot, Bin) ->
+    append_uint(Slot, Bin).
 
 
 append_double(Value, Bin) ->

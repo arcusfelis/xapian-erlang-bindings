@@ -9,7 +9,8 @@
 }).
 
 -record(internal_qlc_term_parameters, {
-    record_info %% see function xapian_term_record:record
+    record_info, %% see function xapian_term_record:record
+    user_parameters
 }).
 
 -record(resource, {

@@ -1,29 +1,50 @@
 -module(xapian_term_qlc).
 -export([table/3, table/4]).
+-export([value_count_match_spy_table/3, value_count_match_spy_table/4]).
+-export([top_value_count_match_spy_table/4, top_value_count_match_spy_table/5]).
 
 -include_lib("stdlib/include/qlc.hrl").
 -include_lib("xapian/include/xapian.hrl").
 -include("xapian.hrl").
 
 
-table(Server, DocRes, Meta)->
-    table(Server, DocRes, Meta, []).
+table(Server, DocRes, Meta) ->
+    table(Server, terms, DocRes, Meta, []).
+
+table(Server, DocRes, Meta, UserParams) ->
+    table(Server, terms, DocRes, Meta, UserParams).
+
+
+value_count_match_spy_table(Server, SpyRes, Meta) ->
+    table(Server, spy_terms, SpyRes, Meta, []).
+
+value_count_match_spy_table(Server, SpyRes, Meta, UserParams) ->
+    table(Server, spy_terms, SpyRes, Meta, UserParams).
+
+
+top_value_count_match_spy_table(Server, SpyRes, Limit, Meta) ->
+    table(Server, top_spy_terms, SpyRes, Meta, [{max_values, Limit}]).
+
+top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams) ->
+    table(Server, top_spy_terms, SpyRes, Meta, [{max_values, Limit} | UserParams]).
 
 
 %% User parameters are:
 %% * ignore_empty - catch an error, if term set is empty.
 %% * {page_size, non_neg_integer()}
 %% * {from, non_neg_integer()}
-table(Server, DocRes, Meta, UserParams) when is_reference(DocRes) ->
+table(Server, QlcType, DocRes, Meta, UserParams) 
+    when is_reference(DocRes) ->
     QlcParams = 
-    #internal_qlc_term_parameters{ record_info = Meta },
+    #internal_qlc_term_parameters{ record_info = Meta, 
+        user_parameters = UserParams },
 
     IgnoreEmpty = lists:member(ignore_empty, UserParams),
     
-    
     InitializationResult = 
     try
-        xapian_drv:internal_qlc_init(Server, terms, DocRes, QlcParams)
+        fix_unknown_num_of_object(
+            xapian_drv:internal_qlc_init(Server, QlcType, DocRes, QlcParams))
     catch error:#x_error{type = <<"EmptySetDriverError">>} when IgnoreEmpty ->
         empty_table()
     end,
@@ -53,10 +74,10 @@ table(Server, DocRes, Meta, UserParams) when is_reference(DocRes) ->
             AlreadyCreatedTable
     end;
 
-table(Server, DocId, Meta, UserParams) ->
+table(Server, QlcType, DocId, Meta, UserParams) ->
     DocRes = xapian_drv:document(Server, DocId),
     try
-    table(Server, DocRes, Meta, UserParams)
+    table(Server, QlcType, DocRes, Meta, UserParams)
     after
         xapian_drv:release_resource(Server, DocRes)
     end.
@@ -107,15 +128,6 @@ lookup_fun(Server, ResNum, Meta, KeyPos) ->
         end.
 
 
-encoder(Terms) ->
-    fun(Bin) -> 
-        xapian_common:append_terms(Terms, Bin)
-        end.
-
-
-is_valid_term_name(_Term) -> true.
-
-
 %% Maximum `Len' records can be retrieve for a call.
 %% `From' records will be skipped from the beginning of the collection.
 traverse_fun(Server, ResNum, Meta, From, Len, TotalLen) ->
@@ -125,9 +137,30 @@ traverse_fun(Server, ResNum, Meta, From, Len, TotalLen) ->
         MoreFun = traverse_fun(Server, ResNum, Meta, NextFrom, Len, TotalLen),
         {Records, <<>>} = xapian_term_record:decode_list3(Meta, Bin),
         if
+            %% Last group of records of the iterator with unknown size
+            TotalLen =:= undefined andalso length(Records) < Len ->
+                Records;
+            TotalLen =:= undefined ->
+                lists:reverse(lists:reverse(Records), MoreFun);
             NextFrom < TotalLen ->
                 lists:reverse(lists:reverse(Records), MoreFun);
             true ->
                 Records
         end
     end.
+
+
+fix_unknown_num_of_object(Info=#internal_qlc_info{num_of_objects = 0}) ->
+    Info#internal_qlc_info{num_of_objects = undefined};
+
+fix_unknown_num_of_object(Info) ->
+    Info.
+
+
+encoder(Terms) ->
+    fun(Bin) -> 
+        xapian_common:append_terms(Terms, Bin)
+        end.
+
+
+is_valid_term_name(_Term) -> true.

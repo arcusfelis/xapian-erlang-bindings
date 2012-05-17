@@ -575,6 +575,43 @@ XapianErlangDriver::qlcInit(ParamDecoder& params)
             return m_result;
         }
 
+        case QlcType::SPY_TERMS:
+        {
+            assert(resource_type == ResourceType::MATCH_SPY);
+
+            Xapian::ValueCountMatchSpy& spy 
+                = dynamic_cast<Xapian::ValueCountMatchSpy&>(
+                    *m_match_spy_store.get(resource_num));
+            const ParamDecoderController& schema  
+                = retrieveTermSchema(params);
+            TermQlcTable* qlcTable = new TermQlcTable(*this, spy, schema);
+            const uint32_t qlc_num = m_qlc_store.put(qlcTable);
+            const uint32_t list_size = qlcTable->numOfObjects();
+        
+            m_result << qlc_num << list_size;
+            return m_result;
+        }
+
+        case QlcType::TOP_SPY_TERMS:
+        {
+            assert(resource_type == ResourceType::MATCH_SPY);
+
+            Xapian::ValueCountMatchSpy& spy 
+                = dynamic_cast<Xapian::ValueCountMatchSpy&>(
+                    *m_match_spy_store.get(resource_num));
+            
+            uint32_t max_values = params;
+            const ParamDecoderController& schema  
+                = retrieveTermSchema(params);
+
+            TermQlcTable* qlcTable = new TermQlcTable(*this, spy, max_values, schema);
+            const uint32_t qlc_num = m_qlc_store.put(qlcTable);
+            const uint32_t list_size = 0;
+        
+            m_result << qlc_num << list_size;
+            return m_result;
+        }
+
         default:
             throw BadCommandDriverError(resource_type);
     }

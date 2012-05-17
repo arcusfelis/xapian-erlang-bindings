@@ -44,6 +44,10 @@
          database_info/2]).
 
 
+%% More information
+-export([name_to_slot/2]).
+
+
 %% ------------------------------------------------------------------
 %% Other flags
 %% ------------------------------------------------------------------
@@ -501,6 +505,22 @@ collect_status_info(Ref, Servers, StatusList) ->
 cancel_transaction(Server, Ref) ->
     Server ! {cancel_transaction, Ref}.
 
+%% ------------------------------------------------------------------
+%% Info  
+%% ------------------------------------------------------------------
+
+name_to_slot(_ServerOrState, Slot) when is_integer(Slot) ->
+    Slot;
+
+name_to_slot(#state{name_to_slot = N2S}, Slot) when is_atom(Slot) ->
+    orddict:fetch(Slot, N2S);
+
+name_to_slot(Server, Slot) when is_atom(Slot) ->
+    Fun = fun(#state{name_to_slot = N2S}) -> 
+        orddict_find(N2S, Slot) 
+        end,
+    call(Server, {with_state, Fun}).
+
 
 %% ------------------------------------------------------------------
 %% API for other modules
@@ -622,6 +642,9 @@ init([Path, Params]) ->
 init([{from_state, State}]) ->
     {ok, State}.
     
+ 
+handle_call({with_state, Fun}, _From, State) ->
+    {reply, Fun(State), State};
 
 handle_call(last_document_id, _From, State) ->
     #state{ port = Port } = State,
@@ -728,9 +751,10 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
         spies = SpyRefs
     } = Mess, 
     #state{port = Port, register = Register } = State,
-    SpyNums = 
-    [ref_to_num(Register, SpyRef, match_spy) || SpyRef <- SpyRefs],
     do_reply(State, do([error_m ||
+        SpyNums  
+            <- check_all([ref_to_num(Register, SpyRef, match_spy) 
+                    || SpyRef <- SpyRefs]),
         EnquireNum 
             <- ref_to_num(Register, EnquireRef, enquire),
 
@@ -811,7 +835,11 @@ handle_call({create_resource, ResourceTypeName, ParamCreatorFun},
         ParamBin 
             <-  if 
                     is_function(ParamCreatorFun) ->
-                        ParamCreatorFun(Register);
+                        {arity, Arity} = erlang:fun_info(ParamCreatorFun, arity),
+                        case Arity of
+                            0 -> ParamCreatorFun();
+                            1 -> ParamCreatorFun(State)
+                        end;
                     true ->
                         {ok, <<>>}
                 end,
@@ -1008,7 +1036,9 @@ resource_type_id(document)        -> 11;
 resource_type_id(last)            -> 11.
 
 qlc_type_id(mset)                 -> 0;
-qlc_type_id(terms)                -> 1.
+qlc_type_id(terms)                -> 1;
+qlc_type_id(spy_terms)            -> 2;
+qlc_type_id(top_spy_terms)        -> 3.
 
 resource_type_name(0)  -> enquire;
 resource_type_name(1)  -> mset;
@@ -1207,7 +1237,7 @@ fix_uint(X) when is_integer(X), X >= 0 -> X;
 fix_uint(undefined) -> 0.
 
 
-append_match_spies(Spies, Bin) ->
+append_match_spies(Spies, Bin) when is_binary(Bin) ->
     append_uint(0, lists:foldl(fun xapian_common:append_uint/2, Bin, Spies)).
 
 
@@ -1261,7 +1291,7 @@ port_qlc_init(State, QlcType, ResourceType, ResourceNum, Params) ->
     Bin@ = append_uint8(qlc_type_id(QlcType), Bin@),
     Bin@ = append_uint8(resource_type_id(ResourceType), Bin@),
     Bin@ = append_uint(ResourceNum, Bin@),
-    Bin@ = append_qlc_parameters(State, ResourceType, Params, Bin@),
+    Bin@ = append_qlc_parameters(State, QlcType, ResourceType, Params, Bin@),
     decode_qlc_info_result(control(Port, qlc_init, Bin@)).
 
 
@@ -1332,14 +1362,25 @@ decode_qlc_info_result(Other) ->
     Other.
 
 
-append_qlc_parameters(State, mset, Params, Bin) ->
+append_qlc_parameters(State, _, mset, Params, Bin) ->
     #state{ name_to_slot = Name2Slot } = State,
     #internal_qlc_mset_parameters{ record_info = Meta } = Params,
     xapian_record:encode(Meta, Name2Slot, Bin);
 
-append_qlc_parameters(State, document, Params, Bin) ->
+append_qlc_parameters(State, _, document, Params, Bin) ->
     #internal_qlc_term_parameters{ record_info = Meta } = Params,
-    xapian_term_record:encode(Meta, Bin).
+    xapian_term_record:encode(Meta, Bin);
+
+append_qlc_parameters(State, spy_terms, match_spy, Params, Bin) ->
+    #internal_qlc_term_parameters{ record_info = Meta } = Params,
+    xapian_term_record:encode(Meta, Bin);
+
+append_qlc_parameters(State, top_spy_terms, match_spy, Params, Bin@) ->
+    #internal_qlc_term_parameters{ record_info = Meta, 
+        user_parameters = UserParams } = Params,
+    Limit = proplists:get_value(max_values, UserParams),
+    Bin@ = append_uint(Limit, Bin@),
+    xapian_term_record:encode(Meta, Bin@).
 
 
 decode_resource_info({ok, Bin}) ->
@@ -1389,6 +1430,20 @@ ref_to_num(Register, ResRef, Type) ->
             {error, bad_resource_type}
     end.
 
+
+%% Helper for monades and list comprehensions
+check_all(List) ->
+    check_all(List, []).
+
+check_all([{ok, X}|T], Acc) ->
+    check_all(T, [X|Acc]);
+
+check_all([{error, _} = H|T], _Acc) ->
+    H;
+
+check_all([], Acc) ->
+    {ok, lists:reverse(Acc)}.
+    
 
 %% -----------------------------------------------------------------
 %% Helpers for monitoring.

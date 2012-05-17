@@ -32,6 +32,14 @@ createTradWeight(ResourceManager& /*manager*/, ParamDecoder& params)
 }
 
 
+ResourceObjectP
+createValueCountMatchSpy(ResourceManager& /*manager*/, ParamDecoder& params)
+{
+    uint32_t slot = params; 
+    return new Xapian::ValueCountMatchSpy(slot);
+}
+
+
 void
 registerUserCallbacks(ResourceGenerator& generator)
 {
@@ -43,4 +51,7 @@ registerUserCallbacks(ResourceGenerator& generator)
 
     generator.add(new UserResource(ResourceType::WEIGHT, 
         std::string("trad_weight"), &createTradWeight));
+
+    generator.add(new UserResource(ResourceType::MATCH_SPY, 
+        std::string("value_count_match_spy"), &createValueCountMatchSpy));
 }
