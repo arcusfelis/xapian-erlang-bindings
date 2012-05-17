@@ -127,8 +127,10 @@ term_qlc_test_() ->
     Values = [Value || #term{value = Value} <- Records],
     Not1Wdf = [X || X = #term{wdf = Wdf} <- Records, Wdf =/= 1],
 
-    %% Lookup order test
+    %% Lookup order test.
     %% It is an important test.
+    %% Actually, it tests the fact, that skip_to("") move an TermIterator in
+    %% the beginning of the document.
     OrderTestQuery = qlc:q([Value || #term{value = Value} <- Table, 
         Value =:= "2" orelse Value =:= "1" orelse Value =:= "3"]),
     OrderTestValues = qlc:e(OrderTestQuery),

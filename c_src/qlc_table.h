@@ -22,10 +22,15 @@ public:
 
 class QlcTable
 {
+
     protected:
     XapianErlangDriver& m_driver;
 
     public:
+    // Flags, that signal about end of list.
+    static const uint8_t MORE = 1, STOP = 0;
+    static const uint8_t UNKNOWN_SIZE = 0, KNOWN_SIZE = 1;
+
     QlcTable(XapianErlangDriver& driver);
 
     virtual
@@ -71,11 +76,27 @@ class TermQlcTable : public QlcTable
     TermQlcTable(XapianErlangDriver& driver, 
         Xapian::Document& doc, const ParamDecoderController& controller);
 
+    TermQlcTable(XapianErlangDriver& driver, 
+        Xapian::ValueCountMatchSpy& spy, 
+        uint32_t maxvalues,
+        const ParamDecoderController& controller);
+
+    TermQlcTable(XapianErlangDriver& driver, 
+        Xapian::ValueCountMatchSpy& spy, 
+        const ParamDecoderController& controller);
+
     uint32_t numOfObjects();
 
     void getPage(uint32_t from, uint32_t count);
 
     void lookup(ParamDecoder& driver_params);
+
+    // Helpers
+    private:
+    void goToAndCheckBorder(const uint32_t skip);
+    void goTo(const uint32_t skip);
+    void getPageKnownSize(const uint32_t skip, const uint32_t count);
+    void getPageUnknownSize(const uint32_t skip, const uint32_t count);
 };
 
 

@@ -123,7 +123,7 @@ traverse_fun(Server, ResNum, Meta, From, Len, TotalLen) ->
         Bin = xapian_drv:internal_qlc_get_next_portion(Server, ResNum, From, Len),
         NextFrom = From+Len,
         MoreFun = traverse_fun(Server, ResNum, Meta, NextFrom, Len, TotalLen),
-        {Records, <<>>} = xapian_term_record:decode_list(Meta, Bin),
+        {Records, <<>>} = xapian_term_record:decode_list3(Meta, Bin),
         if
             NextFrom < TotalLen ->
                 lists:reverse(lists:reverse(Records), MoreFun);

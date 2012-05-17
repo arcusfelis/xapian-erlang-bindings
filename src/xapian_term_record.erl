@@ -1,6 +1,12 @@
 %% It contains helpers for extracting.
 -module(xapian_term_record).
--export([record/2, encode/1, encode/2, decode/2, decode_list/2, decode_list2/2]).
+-export([record/2, 
+        encode/1, 
+        encode/2, 
+        decode/2, 
+        decode_list/2, 
+        decode_list2/2,
+        decode_list3/2]).
 -export([key_position/1]).
 
 -compile({parse_transform, seqbind}).
@@ -53,10 +59,10 @@ decode(Meta, Bin) ->
     dec(TupleFields, Bin, [TupleName]).
 
 
+%% The count is known.
 decode_list(Meta, Bin@) ->
     {Count, Bin@} = read_document_count(Bin@),
     decode_cycle(Count, Meta, Bin@, []).
-
 
 
 %% This encoding schema is used when a total size is unknown.
@@ -64,8 +70,23 @@ decode_list2(Meta, Bin) ->
     decode_list2(Meta, Bin, []).
 
 
+%% The count can be known or not.
+decode_list3(Meta, Bin@) ->
+    %% see QlcTable::UNKNOWN_SIZE (0), KNOWN_SIZE (1)
+    {Flag, Bin@} = read_uint8(Bin@),
+    %% Select an encoding  schema
+    case Flag of
+        0 -> 
+            decode_list2(Meta, Bin@);
+        1 -> 
+            decode_list(Meta, Bin@)
+    end.
+
+
 decode_list2(Meta, Bin@, Acc) ->
     {Flag, Bin@} = read_uint8(Bin@),
+    %% see QlcTable::MORE and QlcTable::STOP 
+    %%  and XapianErlangDriver::qlcTermIteratorLookup
     case Flag of
         1 -> 
             {Rec, Bin@} = decode(Meta, Bin@),
