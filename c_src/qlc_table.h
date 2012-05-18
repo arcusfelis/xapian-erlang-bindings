@@ -7,6 +7,7 @@
 #include <xapian.h>
 #include <string>
 #include <cstring>
+#include "termiter_gen.h"
 
 class XapianErlangDriver;
 
@@ -68,25 +69,31 @@ class MSetQlcTable : public QlcTable
 
 class TermQlcTable : public QlcTable
 {
-    Xapian::TermIterator m_iter, m_begin, m_end;
+    // Don't change m_end value
+    Xapian::TermIterator m_iter, m_end;
+    TermIteratorGenerator* mp_gen;
     uint32_t m_current_pos, m_size;
-    std::string m_first_tname;
     
     const ParamDecoderController m_controller;
-
+                     
     public:
-    TermQlcTable(XapianErlangDriver& driver, 
-        Xapian::Document& doc, const ParamDecoderController& controller);
 
+    /**
+     * gen variable will be deallocated by system (not a programmer!).
+     */
     TermQlcTable(XapianErlangDriver& driver, 
-        Xapian::ValueCountMatchSpy& spy, 
-        uint32_t maxvalues,
+        TermIteratorGenerator* gen, 
         const ParamDecoderController& controller);
 
-    TermQlcTable(XapianErlangDriver& driver, 
-        Xapian::ValueCountMatchSpy& spy, 
-        const ParamDecoderController& controller);
+    
+    ~TermQlcTable() 
+    {
+        delete mp_gen;
+    }
 
+    /**
+     * Return zero if unknown.
+     */
     uint32_t numOfObjects();
 
     void getPage(uint32_t from, uint32_t count);

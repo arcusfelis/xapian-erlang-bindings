@@ -1,20 +1,19 @@
 -module(xapian_term_qlc).
--export([table/3, table/4]).
--export([value_count_match_spy_table/3, value_count_match_spy_table/4]).
--export([top_value_count_match_spy_table/4, top_value_count_match_spy_table/5]).
+-export([
+    value_count_match_spy_table/3, 
+    value_count_match_spy_table/4,
+    top_value_count_match_spy_table/4, 
+    top_value_count_match_spy_table/5,
+    document_term_table/3,
+    document_term_table/4 ]).
 
 -include_lib("stdlib/include/qlc.hrl").
 -include_lib("xapian/include/xapian.hrl").
 -include("xapian.hrl").
 
-
-table(Server, DocRes, Meta) ->
-    table(Server, terms, DocRes, Meta, []).
-
-table(Server, DocRes, Meta, UserParams) ->
-    table(Server, terms, DocRes, Meta, UserParams).
-
-
+%% Fields of te record are:
+%%  * value
+%%  * freq
 value_count_match_spy_table(Server, SpyRes, Meta) ->
     table(Server, spy_terms, SpyRes, Meta, []).
 
@@ -29,12 +28,31 @@ top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams) ->
     table(Server, top_spy_terms, SpyRes, Meta, [{max_values, Limit} | UserParams]).
 
 
+document_term_table(Server, DocRes, Meta) ->
+    document_term_table(Server, DocRes, Meta, []).
+
+
+document_term_table(Server, DocRes, Meta, UserParams) 
+    when is_reference(DocRes) ->
+    table(Server, terms, DocRes, Meta, UserParams);
+    
+document_term_table(Server, DocId, Meta, UserParams) ->
+    DocRes = xapian_drv:document(Server, DocId),
+    try
+    table(Server, terms, DocRes, Meta, UserParams)
+    after
+        xapian_drv:release_resource(Server, DocRes)
+    end.
+
+
 %% User parameters are:
 %% * ignore_empty - catch an error, if term set is empty.
 %% * {page_size, non_neg_integer()}
 %% * {from, non_neg_integer()}
-table(Server, QlcType, DocRes, Meta, UserParams) 
-    when is_reference(DocRes) ->
+%%
+%% IterRes stands for an iterable resource (Document or MatchSpy).
+table(Server, QlcType, IterRes, Meta, UserParams) 
+    when is_reference(IterRes) ->
     QlcParams = 
     #internal_qlc_term_parameters{ record_info = Meta, 
         user_parameters = UserParams },
@@ -44,7 +62,7 @@ table(Server, QlcType, DocRes, Meta, UserParams)
     InitializationResult = 
     try
         fix_unknown_num_of_object(
-            xapian_drv:internal_qlc_init(Server, QlcType, DocRes, QlcParams))
+            xapian_drv:internal_qlc_init(Server, QlcType, IterRes, QlcParams))
     catch error:#x_error{type = <<"EmptySetDriverError">>} when IgnoreEmpty ->
         empty_table()
     end,
@@ -72,14 +90,6 @@ table(Server, QlcType, DocRes, Meta, UserParams)
         %% It is an empty table
         AlreadyCreatedTable ->
             AlreadyCreatedTable
-    end;
-
-table(Server, QlcType, DocId, Meta, UserParams) ->
-    DocRes = xapian_drv:document(Server, DocId),
-    try
-    table(Server, QlcType, DocRes, Meta, UserParams)
-    after
-        xapian_drv:release_resource(Server, DocRes)
     end.
 
 
@@ -157,10 +167,9 @@ fix_unknown_num_of_object(Info) ->
     Info.
 
 
-encoder(Terms) ->
+encoder(Terms = [_|_]) ->
     fun(Bin) -> 
         xapian_common:append_terms(Terms, Bin)
         end.
-
 
 is_valid_term_name(_Term) -> true.

@@ -2,6 +2,7 @@
 #include "xapian_core.h"
 #include <assert.h>
 #include <vector>
+#include <set>
 
 // ------------------------------------------------------------------
 // QlcTable
@@ -68,11 +69,13 @@ MSetQlcTable::getPage(const uint32_t skip, const uint32_t count)
 void
 MSetQlcTable::lookup(ParamDecoder& driver_params)
 {
+    std::set<Xapian::docid> docids;
     while (const Xapian::docid docid = driver_params)
+        docids.insert(docid);
     for (Xapian::MSetIterator iter = m_mset.begin(); iter != m_mset.end(); iter++)
     {
         Xapian::docid current_docid = *iter;
-        if (current_docid == docid)
+        if (docids.find(current_docid) != docids.end())
         {
             m_driver.m_result << MORE;
 
@@ -95,65 +98,19 @@ MSetQlcTable::lookup(ParamDecoder& driver_params)
 
 
 TermQlcTable::TermQlcTable(XapianErlangDriver& driver, 
-        Xapian::Document& doc, const ParamDecoderController& controller) 
-    : QlcTable(driver), m_controller(controller)
-{
-    // Call doc.termlist_begin() twice.
-    m_begin = doc.termlist_begin();
-    m_iter = doc.termlist_begin();
-    m_end = doc.termlist_end();
-
-    // Do it after doc.term_list_begin()
-    m_size = static_cast<uint32_t>(doc.termlist_count());
-    if (!m_size)
-        throw EmptySetDriverError();
-
-    assert(m_begin != m_end);
-
-    m_current_pos = 0;
-    m_first_tname = *m_begin;   
-}
-
-
-TermQlcTable::TermQlcTable(XapianErlangDriver& driver, 
-        Xapian::ValueCountMatchSpy& spy, 
+        TermIteratorGenerator* gen, 
         const ParamDecoderController& controller) 
-    : QlcTable(driver), m_controller(controller)
+    : QlcTable(driver), mp_gen(gen), m_controller(controller)
 {
-    // Call doc.termlist_begin() twice.
-    m_begin = spy.values_begin();
-    m_iter = spy.values_begin();
-    m_end = spy.values_end();
+    m_iter = mp_gen->begin();
+    m_end = mp_gen->end();
 
-    if (m_begin == m_end)
+    assert(!mp_gen->empty() || (m_iter == m_end));
+    if (mp_gen->empty())
         throw EmptySetDriverError();
 
-    // 0 size means undefined.
-    m_size = 0;
+    m_size = static_cast<uint32_t>(mp_gen->size());
     m_current_pos = 0;
-    m_first_tname = *m_begin;   
-}
-
-
-/// ValueCountMatchSpy::top_values_begin(size) iterator.
-TermQlcTable::TermQlcTable(XapianErlangDriver& driver, 
-        Xapian::ValueCountMatchSpy& spy, 
-        uint32_t maxvalues,
-        const ParamDecoderController& controller) 
-    : QlcTable(driver), m_controller(controller)
-{
-    // Call doc.termlist_begin() twice.
-    m_begin = spy.top_values_begin(maxvalues);
-    m_iter = spy.top_values_begin(maxvalues);
-    m_end = spy.top_values_end(maxvalues);
-
-    if (m_begin == m_end)
-        throw EmptySetDriverError();
-
-    // 0 size means undefined.
-    m_size = 0;
-    m_current_pos = 0;
-    m_first_tname = *m_begin;   
 }
 
 
@@ -181,9 +138,10 @@ void
 TermQlcTable::lookup(ParamDecoder& driver_params)
 {
     ParamDecoder schema_params = m_controller;
+
     XapianErlangDriver::qlcTermIteratorLookup(
         driver_params, schema_params, m_driver.m_result,
-        m_begin, m_end);
+        mp_gen->begin(), m_end);
 }
 
 
@@ -207,8 +165,9 @@ TermQlcTable::getPageUnknownSize(const uint32_t skip, const uint32_t count)
         goToAndCheckBorder(skip);
     }
 
+    uint32_t passed = 0;
     // While left > 0 and term is not last.
-    for (uint32_t i = left; i && (m_iter != m_end); m_iter++, i--)
+    for (uint32_t i = left; i && (m_iter != m_end); m_iter++, i--, passed++)
     {
         assert(m_iter != m_end);
         m_driver.m_result << MORE;
@@ -217,12 +176,12 @@ TermQlcTable::getPageUnknownSize(const uint32_t skip, const uint32_t count)
     }
     m_driver.m_result << STOP;
 
+    // Save cur pos of an iterator
+    m_current_pos = skip + passed;
+
     // Total size is known.
     if (m_iter == m_end)
         m_size = m_current_pos;
-
-    // Save cur pos of an iterator
-    m_current_pos = skip + left;
 }
 
 
@@ -265,41 +224,43 @@ TermQlcTable::getPageKnownSize(const uint32_t skip, const uint32_t count)
 
 
 void
-TermQlcTable::goTo(const uint32_t skip)
+TermQlcTable::goTo(const uint32_t wanted_pos)
 {
     uint32_t skip_from_cur;
-    if (skip < m_current_pos)
+    if (wanted_pos < m_current_pos)
     {
         // Go backward
 
-        // Go to the beginning
-        // It is the same as a call of m_iter = doc.termlist_begin();
+        m_iter = mp_gen->begin();
         assert(m_iter != m_end);
-        m_iter.skip_to(m_first_tname);
-        assert(*m_iter == m_first_tname);
-        skip_from_cur = skip;
+        skip_from_cur = wanted_pos;
     } else 
         // Go forward
-        skip_from_cur = skip - m_current_pos;
+        skip_from_cur = wanted_pos - m_current_pos;
 
     for (uint32_t i = skip_from_cur; i; i--)
         m_iter++;
+
+    m_current_pos = wanted_pos;
 }
 
 
+/// Checks out of border
 void
-TermQlcTable::goToAndCheckBorder(const uint32_t skip)
+TermQlcTable::goToAndCheckBorder(const uint32_t wanted_pos)
 {
-    if (skip < m_current_pos)
+    if (wanted_pos < m_current_pos)
     {
         // Go backward is save
-        goTo(skip);
+        goTo(wanted_pos);
     } else {
         // Go forward requires to check a border
-        uint32_t skip_from_cur = skip - m_current_pos;
+        uint32_t skip_from_cur = wanted_pos - m_current_pos;
 
         for (uint32_t i = skip_from_cur; i && (m_iter != m_end); i--)
-            m_iter++;
+        {
+            m_iter++; 
+            m_current_pos++;
+        }
     }
 }
-

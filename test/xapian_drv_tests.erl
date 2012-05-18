@@ -107,7 +107,7 @@ term_actions_test() ->
 -record(term_ext, {value, positions, position_count, freq, wdf}).
 -record(term_pos, {value, positions, position_count}).
 -record(short_term, {wdf}).
--record(spy_term, {value}).
+-record(spy_term, {value, freq}).
 
 
 term_qlc_test_() ->
@@ -123,7 +123,7 @@ term_qlc_test_() ->
     Fields = [#x_term{value = Term} || Term <- TermNames], 
     DocId = ?DRV:add_document(Server, Fields),
     Meta = xapian_term_record:record(term, record_info(fields, term)),
-    Table = xapian_term_qlc:table(Server, DocId, Meta),
+    Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
     Records = qlc:e(qlc:q([X || X <- Table])),
     Values = [Value || #term{value = Value} <- Records],
     Not1Wdf = [X || X = #term{wdf = Wdf} <- Records, Wdf =/= 1],
@@ -156,7 +156,7 @@ short_term_qlc_test_() ->
     DocId = ?DRV:add_document(Server, Fields),
     Meta = xapian_term_record:record(short_term, 
         record_info(fields, short_term)),
-    Table = xapian_term_qlc:table(Server, DocId, Meta),
+    Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
     Q = qlc:q([Wdf || #short_term{wdf = Wdf} <- Table]),
     WdfSum = qlc:fold(fun erlang:'+'/2, 0, Q),
     [ ?_assertEqual(WdfSum, 100)
@@ -176,7 +176,7 @@ term_ext_qlc_test_() ->
     Fields = [#x_term{value = Term} || Term <- TermNames], 
     DocId = ?DRV:add_document(Server, Fields),
     Meta = xapian_term_record:record(term_ext, record_info(fields, term_ext)),
-    Table = xapian_term_qlc:table(Server, DocId, Meta),
+    Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
     Records = qlc:e(qlc:q([X || X <- Table])),
 
     Not0Pos = 
@@ -203,7 +203,7 @@ term_pos_qlc_test_() ->
     ], 
     DocId = ?DRV:add_document(Server, Fields),
     Meta = xapian_term_record:record(term_pos, record_info(fields, term_pos)),
-    Table = xapian_term_qlc:table(Server, DocId, Meta),
+    Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
 
     Term1Records = 
     qlc:e(qlc:q([X || X = #term_pos{value = <<"term1">>} <- Table])),
@@ -233,23 +233,55 @@ value_count_match_spy_test_() ->
     Params = [write, create, overwrite, 
         #x_value_name{slot = 1, name = color}],
     {ok, Server} = ?DRV:open(Path, Params),
-    Colors = ["Red", "Blue", "white", "black"],
+    %% There are 2 "green" documents.
+    Colors = ["Red", "Blue", "green", "white", "black", "green"],
     [add_color_document(Server, Color) || Color <- Colors],
 
     SpySlot1 = xapian_match_spy:value_count(Server, color),
     Query = "",
     EnquireResourceId = ?DRV:enquire(Server, Query),
-    MSetParams = #x_match_set{enquire = EnquireResourceId, spies = [SpySlot1]},
+    MSetParams = #x_match_set{
+        enquire = EnquireResourceId, 
+        spies = [SpySlot1]},
     MSetResourceId = ?DRV:match_set(Server, MSetParams),
     Meta = xapian_term_record:record(spy_term, record_info(fields, spy_term)),
-    Table = xapian_term_qlc:value_count_match_spy_table(Server, SpySlot1, Meta),
+
+    %% These elements sorted by value.
+    Table = xapian_term_qlc:value_count_match_spy_table(
+        Server, SpySlot1, Meta),
+
+    %% These elements sorted by freq.
+    TopTable = xapian_term_qlc:top_value_count_match_spy_table(
+        Server, SpySlot1, 100, Meta),
+
     Values = qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table])),
+
     %% "Red" was converted to <<"Red">> because of lookup function call.
     %% Erlang did not match it, but Xapian did.
     RedValues = qlc:e(qlc:q([Value 
         || #spy_term{value = Value} <- Table, Value =:= "Red"])),
-    [?_assertEqual(Values, [<<"Blue">>, <<"Red">>, <<"black">>, <<"white">>])
-    ,?_assertEqual(RedValues, [<<"Red">>])].
+
+    OrderValues = qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table, 
+        Value =:= "white" orelse Value =:= "black"])),
+
+    TopAlphOrderValues = 
+    qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
+        Value =:= "white" orelse Value =:= "black"])),
+
+    TopFreqOrderValues = 
+    qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
+        Value =:= "white" orelse Value =:= "green"])),
+
+    [ ?_assertEqual(Values, 
+        [<<"Blue">>, <<"Red">>, <<"black">>, <<"green">>, <<"white">>])
+    , ?_assertEqual(RedValues, [<<"Red">>])
+    , {"Check order", 
+        [ ?_assertEqual(OrderValues,        [<<"black">>, <<"white">>])
+        , ?_assertEqual(TopAlphOrderValues, [<<"black">>, <<"white">>])
+        , ?_assertEqual(TopFreqOrderValues, [<<"green">>, <<"white">>])
+        ]}
+    , ?_assertEqual(RedValues, [<<"Red">>])
+    ].
     
     
 
@@ -271,7 +303,8 @@ term_advanced_actions_test_() ->
     FindTermFn = 
     fun(Value) ->
         DocRes = xapian_drv:document(Server, DocId),
-        Table = xapian_term_qlc:table(Server, DocRes, Meta, [ignore_empty]),
+        Table = xapian_term_qlc:document_term_table(
+            Server, DocRes, Meta, [ignore_empty]),
         ?DRV:release_resource(Server, DocRes),
         qlc:e(qlc:q([X || X = #term{value = Value} <- Table]))
         end,

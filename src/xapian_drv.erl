@@ -1264,7 +1264,6 @@ port_qlc_next_portion(Port, QlcResNum, From, Count) ->
     control(Port, qlc_next_portion, Bin@).
 
 
-%% document
 port_qlc_lookup(Port, Encoder, QlcResNum) ->
     Bin@ = <<>>,
     Bin@ = append_uint(QlcResNum, Bin@),

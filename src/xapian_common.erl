@@ -20,6 +20,13 @@ append_iolist(Str, Bin) ->
     <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
 
 
+append_not_empty_iolist(Str, Bin) ->
+    StrBin = erlang:iolist_to_binary(Str),
+    [erlang:error(iolist_is_empty) || Str =:= <<>>],
+    StrLen = erlang:byte_size(StrBin),
+    <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
+
+
 %% Encode to unsigned int32_t (for example, it is Xapian::valueno)
 append_uint(Value, Bin) when is_integer(Value), is_binary(Bin) ->
     <<Bin/binary, Value:32/native-unsigned-integer>>.
@@ -165,7 +172,7 @@ append_docids(DocIds, Bin@) ->
 
 
 append_terms(Terms, Bin@) ->
-    Bin@ = lists:foldl(fun append_iolist/2, Bin@, Terms),
+    Bin@ = lists:foldl(fun append_not_empty_iolist/2, Bin@, Terms),
     Bin@ = append_iolist("", Bin@),
     Bin@.
 

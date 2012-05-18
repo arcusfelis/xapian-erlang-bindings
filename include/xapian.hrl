@@ -325,10 +325,10 @@
 
 
 -record(x_match_set, {
-        enquire = ?REQUIRED :: xapian:x_resource(), 
-        from = 0 :: non_neg_integer(), 
-        %% `undefined' means all documents.
-        max_items = undefined :: non_neg_integer() | undefined, 
-        check_at_least = 0 :: non_neg_integer(), 
-        spies = [] :: [xapian:x_resource()]
+    enquire = ?REQUIRED :: xapian:x_resource(), 
+    from = 0 :: non_neg_integer(), 
+    %% `undefined' means all documents.
+    max_items = undefined :: non_neg_integer() | undefined, 
+    check_at_least = 0 :: non_neg_integer(), 
+    spies = [] :: [xapian:x_resource()]
 }).

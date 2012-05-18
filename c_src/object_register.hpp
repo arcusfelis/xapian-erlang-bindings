@@ -79,3 +79,22 @@ ObjectRegister<Child>::~ObjectRegister()
         delete i->second;
     }
 }
+
+template <class Child> 
+void*
+ObjectRegister<Child>::replaceWithoutCleaning(uint32_t num, void* new_obj)
+{
+    typename Hash::iterator i; 
+    i = m_elements.find(num);
+
+    if (i == m_elements.end())
+        throw ElementNotFoundDriverError(num);
+
+    void* old_obj = (void*) i->second;
+
+    // A type iterator can be used to modify the value of an element.
+    // http://msdn.microsoft.com/en-us/library/exbyc388%28v=vs.80%29.aspx
+    i->second = static_cast<Child*>(new_obj);
+
+    return old_obj;
+}

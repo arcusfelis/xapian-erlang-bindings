@@ -1,4 +1,5 @@
 #include "user_resources.h"
+#include "termiter_gen.h"
 #include "xapian.h"
 
 /**
@@ -36,7 +37,10 @@ ResourceObjectP
 createValueCountMatchSpy(ResourceManager& /*manager*/, ParamDecoder& params)
 {
     uint32_t slot = params; 
-    return new Xapian::ValueCountMatchSpy(slot);
+    SpyController* controller = 
+    new ValueCountSpyController(
+        new Xapian::ValueCountMatchSpy(slot));
+    return controller;
 }
 
 

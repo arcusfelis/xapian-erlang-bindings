@@ -117,6 +117,13 @@ ElementNotFoundDriverError::buildString(uint32_t num)
 }
 
 
+// -------------------------------------------------------------------
+// MatchSpyFinalizedDriverError
+// -------------------------------------------------------------------
+MatchSpyFinalizedDriverError::MatchSpyFinalizedDriverError() : 
+    DriverRuntimeError(TYPE, 
+        "Xapian::MatchSet can be used just once.") {}
+
 
 REG_TYPE(MemoryAllocationDriverError)
 REG_TYPE(BadCommandDriverError)
@@ -127,4 +134,5 @@ REG_TYPE(NotWritableDatabaseError)
 REG_TYPE(DbAlreadyOpenedDriverError)
 REG_TYPE(DbIsNotReadyDriverError)
 REG_TYPE(ElementNotFoundDriverError)
+REG_TYPE(MatchSpyFinalizedDriverError)
 

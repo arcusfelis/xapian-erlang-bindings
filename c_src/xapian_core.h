@@ -47,7 +47,7 @@ class XapianErlangDriver
     ObjectRegister<const Xapian::ExpandDecider> m_expand_decider_store;
     ObjectRegister<const Xapian::DateValueRangeProcessor> 
         m_date_value_range_processor_store;
-    ObjectRegister<Xapian::MatchSpy>            m_match_spy_store;
+    ObjectRegister<ValueCountSpyController>     m_match_spy_store;
 
     /**
      * It is global.
@@ -464,6 +464,11 @@ class XapianErlangDriver
     private:
     // Private static helpers
 
+    
+    TermIteratorGenerator*
+    termGenerator(ParamDecoder& params, 
+        int8_t qlc_type, int8_t resource_type, uint32_t resource_num);
+
     static Xapian::termcount
     getTermFrequency(Xapian::Document&  doc, const std::string& tname);
 
@@ -556,7 +561,7 @@ class XapianErlangDriver
         const ParamDecoder& schema_params, 
         ResultEncoder& result,
         Xapian::TermIterator iter,
-        Xapian::TermIterator end);
+        const Xapian::TermIterator end);
 };
 
 #endif

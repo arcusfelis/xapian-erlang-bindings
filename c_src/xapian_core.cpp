@@ -33,7 +33,7 @@ template class ObjectRegister<const Xapian::MatchDecider>;
 template class ObjectRegister<const Xapian::Stem>;
 template class ObjectRegister<const Xapian::ExpandDecider>;
 template class ObjectRegister<const Xapian::DateValueRangeProcessor>;
-template class ObjectRegister<Xapian::MatchSpy>;
+template class ObjectRegister<ValueCountSpyController>;
 
 // used in user_resources
 template class ObjectRegister<UserResource>;
@@ -517,9 +517,17 @@ XapianErlangDriver::matchSet(ParamDecoder& params)
 
     while (const uint32_t num = params)
     {
-        Xapian::MatchSpy* 
-        p_spy = m_match_spy_store.get(num);
-        enquire.add_matchspy(p_spy);
+        ValueCountSpyController&
+        spy = *m_match_spy_store.get(num);
+
+        if (!spy.is_finalized())
+        {
+            // It can be added just once
+            enquire.add_matchspy(spy.getSpy());
+            spy.finalize();
+        } else {
+            throw MatchSpyFinalizedDriverError();
+        }
         break;
     }
 
@@ -561,52 +569,17 @@ XapianErlangDriver::qlcInit(ParamDecoder& params)
         }
 
         case QlcType::TERMS:
-        {
-            assert(resource_type == ResourceType::DOCUMENT);
-
-            Xapian::Document& doc = *m_document_store.get(resource_num);
-            const ParamDecoderController& schema  
-                = retrieveTermSchema(params);
-            TermQlcTable* qlcTable = new TermQlcTable(*this, doc, schema);
-            const uint32_t qlc_num = m_qlc_store.put(qlcTable);
-            const uint32_t list_size = qlcTable->numOfObjects();
-        
-            m_result << qlc_num << list_size;
-            return m_result;
-        }
-
         case QlcType::SPY_TERMS:
-        {
-            assert(resource_type == ResourceType::MATCH_SPY);
-
-            Xapian::ValueCountMatchSpy& spy 
-                = dynamic_cast<Xapian::ValueCountMatchSpy&>(
-                    *m_match_spy_store.get(resource_num));
-            const ParamDecoderController& schema  
-                = retrieveTermSchema(params);
-            TermQlcTable* qlcTable = new TermQlcTable(*this, spy, schema);
-            const uint32_t qlc_num = m_qlc_store.put(qlcTable);
-            const uint32_t list_size = qlcTable->numOfObjects();
-        
-            m_result << qlc_num << list_size;
-            return m_result;
-        }
-
         case QlcType::TOP_SPY_TERMS:
         {
-            assert(resource_type == ResourceType::MATCH_SPY);
-
-            Xapian::ValueCountMatchSpy& spy 
-                = dynamic_cast<Xapian::ValueCountMatchSpy&>(
-                    *m_match_spy_store.get(resource_num));
-            
-            uint32_t max_values = params;
+            TermIteratorGenerator* p_gen = 
+            termGenerator(params, qlc_type, resource_type, resource_num);
             const ParamDecoderController& schema  
                 = retrieveTermSchema(params);
-
-            TermQlcTable* qlcTable = new TermQlcTable(*this, spy, max_values, schema);
+            TermQlcTable* qlcTable = new TermQlcTable(*this, p_gen, schema);
+            // qlcTable is now a master of p_gen object. 
             const uint32_t qlc_num = m_qlc_store.put(qlcTable);
-            const uint32_t list_size = 0;
+            const uint32_t list_size = qlcTable->numOfObjects();
         
             m_result << qlc_num << list_size;
             return m_result;
@@ -617,6 +590,50 @@ XapianErlangDriver::qlcInit(ParamDecoder& params)
     }
 }
 
+
+/**
+ * Caller must delete returned value.
+ */
+TermIteratorGenerator*
+XapianErlangDriver::termGenerator(ParamDecoder& params, 
+    const /*QlcType*/ int8_t qlc_type, 
+    const /*ResourceType*/ int8_t resource_type, 
+    const uint32_t resource_num)
+{
+    switch (qlc_type)
+    {
+        case QlcType::TERMS:
+        {
+            assert(resource_type == ResourceType::DOCUMENT);
+            Xapian::Document& doc = *m_document_store.get(resource_num);
+            return new DocumentTermIteratorGenerator(doc);
+        }
+
+        case QlcType::SPY_TERMS:
+        case QlcType::TOP_SPY_TERMS:
+        {
+            // Init commons
+            assert(resource_type == ResourceType::MATCH_SPY);
+
+            ValueCountSpyController&
+            spy = *m_match_spy_store.get(resource_num);
+
+            if (qlc_type == QlcType::SPY_TERMS)
+            {
+                return spy.getValueIteratorGenerator();
+            }
+            else
+            {
+                const uint32_t max_values = params;
+                assert(max_values);
+                return spy.getTopValueIteratorGenerator(max_values);
+            }
+        }
+
+        default:
+            throw BadCommandDriverError(resource_type);
+    }
+}
 
 size_t 
 XapianErlangDriver::qlcNext(ParamDecoder& params)
@@ -2342,6 +2359,7 @@ XapianErlangDriver::setMetadata(ParamDecoder& params)
  * Allow to find and write terms by name.
  *
  * Helper for TermQlcTable class.
+ * Use set order of elements.
  *
  * @param driver_params Contains which keys (term names) to find. Ends with "".
  * @param schema_params Contains which fields to write. 
@@ -2355,27 +2373,37 @@ XapianErlangDriver::qlcTermIteratorLookup(
     const ParamDecoder& schema_params, 
     ResultEncoder& result,
     Xapian::TermIterator iter,
-    Xapian::TermIterator end)
+    const Xapian::TermIterator end)
 {
     // Flags, that signal about end of list.
     const uint8_t more = 1, stop = 0;
+    std::set<std::string> terms;
 
-    for (;;)
+    while(true)
     {
         const std::string& term = driver_params;
-        if (term.empty()) break; else
-        {
-            iter.skip_to(term);
-            bool found = (iter != end) && (*iter == term);
-            if (found)
-            {
-                // Put a flag
-                result << more;
+        // first term is not empty
+        assert(!terms.empty() || !term.empty());
+        if (term.empty()) break;
+        terms.insert(term);
+        assert(!terms.empty());
+    }
 
-                // Clone params
-                ParamDecoder params = schema_params;
-                retrieveTerm(params, result, iter);
-            }
+    assert(!terms.empty());
+    // TODO: it can be an exception
+    if (terms.empty())
+        return;
+
+    for (; iter != end; iter++)
+    {
+        if (terms.find(*iter) != terms.end())
+        {
+            // Put a flag
+            result << more;
+
+            // Clone params
+            ParamDecoder params = schema_params;
+            retrieveTerm(params, result, iter);
         }
     };
     result << stop;

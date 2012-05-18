@@ -16,6 +16,8 @@ class ObjectBaseRegister
     typedef uint32_t Counter;
 
     public:
+    virtual ~ObjectBaseRegister() {};
+
     virtual void
     remove(Counter) = 0;
 
@@ -24,6 +26,9 @@ class ObjectBaseRegister
 
     virtual Counter 
     putVoidPointer(void* obj) = 0;
+
+    virtual void* 
+    replaceWithoutCleaning(uint32_t num, void* new_obj) = 0;
 };
 
 
@@ -52,11 +57,14 @@ class ObjectRegister : public ObjectBaseRegister
     void*
     getVoidPointer(Counter num);
 
-    virtual Counter 
+    Counter 
     putVoidPointer(void* obj);
 
     void
     remove(Counter num);
+
+    void* 
+    replaceWithoutCleaning(uint32_t num, void* new_obj);
 
     Hash&
     getElements()

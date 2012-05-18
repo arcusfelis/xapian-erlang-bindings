@@ -107,4 +107,12 @@ class ElementNotFoundDriverError: public DriverRuntimeError
     buildString(uint32_t num);
 };
 
+class MatchSpyFinalizedDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    MatchSpyFinalizedDriverError();
+};
+
 #endif
