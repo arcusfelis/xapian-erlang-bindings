@@ -10,36 +10,53 @@
 -include_lib("stdlib/include/qlc.hrl").
 -include_lib("xapian/include/xapian.hrl").
 -include("xapian.hrl").
+-compile({parse_transform, seqbind}).
 
-%% Fields of te record are:
+
+%% Fields of the record are limited:
 %%  * value
 %%  * freq
 value_count_match_spy_table(Server, SpyRes, Meta) ->
-    table(Server, spy_terms, SpyRes, Meta, []).
+    value_count_match_spy_table(Server, SpyRes, Meta, []).
+
 
 value_count_match_spy_table(Server, SpyRes, Meta, UserParams) ->
-    table(Server, spy_terms, SpyRes, Meta, UserParams).
+    EncoderFun = fun(match_spy, DrvState, Bin@) ->
+        Bin@ = append_spy_type(values, Bin@),
+        xapian_term_record:encode(Meta, Bin@)
+        end,
+    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta, UserParams).
 
 
 top_value_count_match_spy_table(Server, SpyRes, Limit, Meta) ->
-    table(Server, top_spy_terms, SpyRes, Meta, [{max_values, Limit}]).
+    top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, []).
+
 
 top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams) ->
-    table(Server, top_spy_terms, SpyRes, Meta, [{max_values, Limit} | UserParams]).
+    EncoderFun = fun(match_spy, DrvState, Bin@) ->
+        Bin@ = append_spy_type(top_values, Bin@),
+        Bin@ = xapian_common:append_uint(Limit, Bin@),
+        xapian_term_record:encode(Meta, Bin@)
+        end,
+    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta, UserParams).
 
 
 document_term_table(Server, DocRes, Meta) ->
     document_term_table(Server, DocRes, Meta, []).
 
 
+%% Second argument can be a resource of a document or a document.
 document_term_table(Server, DocRes, Meta, UserParams) 
     when is_reference(DocRes) ->
-    table(Server, terms, DocRes, Meta, UserParams);
-    
+    EncoderFun = fun(document, Bin) ->
+        xapian_term_record:encode(Meta, Bin)
+        end,
+    table_int(Server, terms, EncoderFun, DocRes, Meta, UserParams);
+
 document_term_table(Server, DocId, Meta, UserParams) ->
     DocRes = xapian_drv:document(Server, DocId),
     try
-    table(Server, terms, DocRes, Meta, UserParams)
+        document_term_table(Server, DocRes, Meta, UserParams)
     after
         xapian_drv:release_resource(Server, DocRes)
     end.
@@ -51,18 +68,14 @@ document_term_table(Server, DocId, Meta, UserParams) ->
 %% * {from, non_neg_integer()}
 %%
 %% IterRes stands for an iterable resource (Document or MatchSpy).
-table(Server, QlcType, IterRes, Meta, UserParams) 
+table_int(Server, QlcType, EncFun, IterRes, Meta, UserParams) 
     when is_reference(IterRes) ->
-    QlcParams = 
-    #internal_qlc_term_parameters{ record_info = Meta, 
-        user_parameters = UserParams },
-
     IgnoreEmpty = lists:member(ignore_empty, UserParams),
     
     InitializationResult = 
     try
         fix_unknown_num_of_object(
-            xapian_drv:internal_qlc_init(Server, QlcType, IterRes, QlcParams))
+            xapian_drv:internal_qlc_init(Server, QlcType, IterRes, EncFun))
     catch error:#x_error{type = <<"EmptySetDriverError">>} when IgnoreEmpty ->
         empty_table()
     end,
@@ -167,9 +180,16 @@ fix_unknown_num_of_object(Info) ->
     Info.
 
 
+%% Lookup encoder appends terms for searching.
 encoder(Terms = [_|_]) ->
     fun(Bin) -> 
         xapian_common:append_terms(Terms, Bin)
         end.
 
 is_valid_term_name(_Term) -> true.
+
+spy_type_id(values)     -> 0;
+spy_type_id(top_values) -> 1.
+
+append_spy_type(Type, Bin) ->
+    xapian_common:append_uint8(spy_type_id(Type), Bin).

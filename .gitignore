@@ -8,6 +8,7 @@ deps/*
 *.dll
 .eunit
 doc/README.md
+doc/doxygen/*
 *.gcov
 *.gcda
 *.gcno

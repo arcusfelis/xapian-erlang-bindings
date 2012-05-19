@@ -18,6 +18,8 @@
 #include "qlc_table.h"
 #include "object_register.h"
 #include "user_resources.h"
+#include "spy_ctrl.h"
+#include "termiter_doc_gen.h"
 
 #include <assert.h>
 #include <cstdlib>
@@ -33,7 +35,7 @@ template class ObjectRegister<const Xapian::MatchDecider>;
 template class ObjectRegister<const Xapian::Stem>;
 template class ObjectRegister<const Xapian::ExpandDecider>;
 template class ObjectRegister<const Xapian::DateValueRangeProcessor>;
-template class ObjectRegister<ValueCountSpyController>;
+template class ObjectRegister<SpyController>;
 
 // used in user_resources
 template class ObjectRegister<UserResource>;
@@ -517,7 +519,7 @@ XapianErlangDriver::matchSet(ParamDecoder& params)
 
     while (const uint32_t num = params)
     {
-        ValueCountSpyController&
+        SpyController&
         spy = *m_match_spy_store.get(num);
 
         if (!spy.is_finalized())
@@ -570,7 +572,6 @@ XapianErlangDriver::qlcInit(ParamDecoder& params)
 
         case QlcType::TERMS:
         case QlcType::SPY_TERMS:
-        case QlcType::TOP_SPY_TERMS:
         {
             TermIteratorGenerator* p_gen = 
             termGenerator(params, qlc_type, resource_type, resource_num);
@@ -610,24 +611,13 @@ XapianErlangDriver::termGenerator(ParamDecoder& params,
         }
 
         case QlcType::SPY_TERMS:
-        case QlcType::TOP_SPY_TERMS:
         {
             // Init commons
             assert(resource_type == ResourceType::MATCH_SPY);
 
-            ValueCountSpyController&
+            SpyController&
             spy = *m_match_spy_store.get(resource_num);
-
-            if (qlc_type == QlcType::SPY_TERMS)
-            {
-                return spy.getValueIteratorGenerator();
-            }
-            else
-            {
-                const uint32_t max_values = params;
-                assert(max_values);
-                return spy.getTopValueIteratorGenerator(max_values);
-            }
+            return spy.getIteratorGenerator(params);
         }
 
         default:
@@ -2393,6 +2383,23 @@ XapianErlangDriver::qlcTermIteratorLookup(
     // TODO: it can be an exception
     if (terms.empty())
         return;
+
+    // Special case when we want to lookup only 1 element
+    if (terms.size() == 1)
+    {
+        std::string term = *(terms.begin());
+        iter.skip_to(term);
+        if ((iter != end) && (*iter == term))
+        {
+            // Put a flag
+            result << more;
+
+            ParamDecoder params = schema_params;
+            retrieveTerm(params, result, iter);
+        }
+        result << stop;
+        return;    
+    }
 
     for (; iter != end; iter++)
     {

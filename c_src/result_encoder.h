@@ -1,9 +1,7 @@
 #ifndef RESULT_ENCODER_H
 #define RESULT_ENCODER_H
 
-#include <xapian.h>
 #include <string>
-#include <cstring>
 #include <stdint.h>
 
 typedef struct DataSegment DataSegment;

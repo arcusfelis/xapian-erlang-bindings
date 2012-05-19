@@ -14,6 +14,11 @@ typedef uint32_t    ResourceObjectNum;
 class ResourceManager;
 class ResourceGenerator;
 
+namespace Xapian
+{
+class Database;
+}
+
 
 // Use the class to form a namespace for the enum
 class ResourceType

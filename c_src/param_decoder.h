@@ -1,10 +1,13 @@
 #ifndef PARAM_DECODER_H
 #define PARAM_DECODER_H
 
-#include <xapian.h>
 #include <stdint.h>
-#include <cstring>
 #include <string>
+
+namespace Xapian
+{
+class Stem;
+}
 
 // -------------------------------------------------------------------
 // Decoder of the parameters from erlang's calls

@@ -7,13 +7,15 @@
 
 
 table(Server, MSet, Meta) ->
-    QlcParams = 
-    #internal_qlc_mset_parameters{ record_info = Meta },
+    EncoderFun = fun(mset, DrvState, Bin) ->
+        Name2Slot = xapian_drv:name_to_slot(DrvState),
+        xapian_record:encode(Meta, Name2Slot, Bin)
+        end,
     #internal_qlc_info{
         num_of_objects = Size,
         resource_number = ResNum,
         resource_ref = QlcRes
-    } = xapian_drv:internal_qlc_init(Server, mset, MSet, QlcParams),
+    } = xapian_drv:internal_qlc_init(Server, mset, MSet, EncoderFun),
     KeyPos = xapian_record:key_position(Meta),
     From = 0,
     Len = 20,

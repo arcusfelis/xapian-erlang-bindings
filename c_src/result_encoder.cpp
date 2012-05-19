@@ -13,6 +13,7 @@
 #include "xapian_exception.h"
 #include <assert.h>
 #include <cstdlib>
+#include <cstring>
 
 
 // -------------------------------------------------------------------

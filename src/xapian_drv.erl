@@ -45,7 +45,8 @@
 
 
 %% More information
--export([name_to_slot/2]).
+-export([name_to_slot/1, 
+         name_to_slot/2]).
 
 
 %% ------------------------------------------------------------------
@@ -522,18 +523,26 @@ name_to_slot(Server, Slot) when is_atom(Slot) ->
     call(Server, {with_state, Fun}).
 
 
+name_to_slot(#state{name_to_slot = N2S}) ->
+    N2S;
+
+name_to_slot(Server) ->
+    Fun = fun(#state{name_to_slot = N2S}) -> 
+        {ok, N2S}
+        end,
+    call(Server, {with_state, Fun}).
+
+
 %% ------------------------------------------------------------------
 %% API for other modules
 %% ------------------------------------------------------------------
 
--type qlc_params() :: #internal_qlc_mset_parameters{}.
-
 %% Create a qlc resource, collect basic information about a set.
--spec internal_qlc_init(x_server(), atom(), reference(), qlc_params()) ->
+-spec internal_qlc_init(x_server(), atom(), reference(), fun()) ->
     #internal_qlc_info{}.
 
-internal_qlc_init(Server, Type, ResourceRef, Params) ->
-    call(Server, {qlc_init, Type, ResourceRef, Params}).
+internal_qlc_init(Server, Type, ResourceRef, EncoderFun) ->
+    call(Server, {qlc_init, Type, ResourceRef, EncoderFun}).
 
 
 %% Read next `Count' elements starting from `From' from QlcResNum.
@@ -783,22 +792,12 @@ handle_call({release_resource, Ref}, _From, State) ->
         {error, _Reason} = Error ->
             {reply, Error, State}
     end;
-    
-handle_call({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
-    #state{port = Port } = State,
-    Reply = port_qlc_next_portion(Port, QlcResNum, From, Count),
-    {reply, Reply, State};
-    
-handle_call({qlc_lookup, EncFun, QlcResNum}, _From, State) ->
-    #state{port = Port } = State,
-    Reply = port_qlc_lookup(Port, EncFun, QlcResNum),
-    {reply, Reply, State};
 
 
-%% Res into QlcRes.
+%% Convert Res into QlcRes.
 %% ResRef is an iterable object.
 %% QlcRef, QlcResNum is for access for a QLC table.
-handle_call({qlc_init, QlcType, ResRef, Params}, {FromPid, _FromRef}, State) ->
+handle_call({qlc_init, QlcType, ResRef, EncFun}, {FromPid, _FromRef}, State) ->
     #state{register = Register } = State,
     do_reply(State, do([error_m ||
         %% Get an iterable resource by the reference
@@ -807,7 +806,7 @@ handle_call({qlc_init, QlcType, ResRef, Params}, {FromPid, _FromRef}, State) ->
 
         %% Create QLC table (iterator-like object in Erlang)
         #internal_qlc_info{resource_number = QlcResNum} = Reply
-            <- port_qlc_init(State, QlcType, ResType, ResNum, Params),
+            <- port_qlc_init(State, QlcType, ResType, ResNum, EncFun),
 
         begin
             QlcElem = #resource{type=qlc, number=QlcResNum},
@@ -819,6 +818,18 @@ handle_call({qlc_init, QlcType, ResRef, Params}, {FromPid, _FromRef}, State) ->
             Reply2 = Reply#internal_qlc_info{resource_ref = QlcRef},
             {reply, {ok, Reply2}, NewState}
         end]));
+    
+
+handle_call({qlc_lookup, EncoderFun, QlcResNum}, _From, State) ->
+    Reply = port_qlc_lookup(State, QlcResNum, EncoderFun),
+    {reply, Reply, State};
+    
+
+handle_call({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
+    #state{port = Port } = State,
+    Reply = port_qlc_next_portion(Port, QlcResNum, From, Count),
+    {reply, Reply, State};
+
 
 
 %% Create new resource object of type `ResouceType'
@@ -1037,8 +1048,7 @@ resource_type_id(last)            -> 11.
 
 qlc_type_id(mset)                 -> 0;
 qlc_type_id(terms)                -> 1;
-qlc_type_id(spy_terms)            -> 2;
-qlc_type_id(top_spy_terms)        -> 3.
+qlc_type_id(spy_terms)            -> 2.
 
 resource_type_name(0)  -> enquire;
 resource_type_name(1)  -> mset;
@@ -1264,13 +1274,6 @@ port_qlc_next_portion(Port, QlcResNum, From, Count) ->
     control(Port, qlc_next_portion, Bin@).
 
 
-port_qlc_lookup(Port, Encoder, QlcResNum) ->
-    Bin@ = <<>>,
-    Bin@ = append_uint(QlcResNum, Bin@),
-    Bin@ = Encoder(Bin@), 
-    control(Port, qlc_lookup, Bin@).
-
-
 port_create_resource(Port, ResouceType, UserResourceNumber, ParamBin) ->
     Bin@ = <<>>,
     Bin@ = append_uint8(resource_type_id(ResouceType), Bin@),
@@ -1284,14 +1287,39 @@ port_get_resource_info(Port) ->
     decode_resource_info(control(Port, get_resource_info, <<>>)).
 
 
-port_qlc_init(State, QlcType, ResourceType, ResourceNum, Params) ->
+port_qlc_init(State, QlcType, ResourceType, ResourceNum, EncoderFun) ->
     #state{ port = Port } = State,
     Bin@ = <<>>,
     Bin@ = append_uint8(qlc_type_id(QlcType), Bin@),
     Bin@ = append_uint8(resource_type_id(ResourceType), Bin@),
     Bin@ = append_uint(ResourceNum, Bin@),
-    Bin@ = append_qlc_parameters(State, QlcType, ResourceType, Params, Bin@),
+    Bin@ = append_with_encoder2(State, EncoderFun, ResourceType, Bin@), 
     decode_qlc_info_result(control(Port, qlc_init, Bin@)).
+
+
+port_qlc_lookup(State, QlcResNum, EncoderFun) ->
+    #state{ port = Port } = State,
+    Bin@ = <<>>,
+    Bin@ = append_uint(QlcResNum, Bin@),
+    Bin@ = append_with_encoder(State, EncoderFun, Bin@), 
+    control(Port, qlc_lookup, Bin@).
+
+
+append_with_encoder(State, EncoderFun, Bin) 
+    when is_function(EncoderFun) ->
+    {arity, Arity} = erlang:fun_info(EncoderFun, arity),
+    case Arity of
+        1 -> EncoderFun(Bin);
+        2 -> EncoderFun(State, Bin)
+    end.
+
+append_with_encoder2(State, EncoderFun, Param, Bin) 
+    when is_function(EncoderFun) ->
+    {arity, Arity} = erlang:fun_info(EncoderFun, arity),
+    case Arity of
+        2 -> EncoderFun(Param, Bin);
+        3 -> EncoderFun(Param, State, Bin)
+    end.
 
 
 port_mset_info(Port, MSetNum, Params) ->
@@ -1360,26 +1388,6 @@ decode_qlc_info_result({ok, Bin@}) ->
 decode_qlc_info_result(Other) -> 
     Other.
 
-
-append_qlc_parameters(State, _, mset, Params, Bin) ->
-    #state{ name_to_slot = Name2Slot } = State,
-    #internal_qlc_mset_parameters{ record_info = Meta } = Params,
-    xapian_record:encode(Meta, Name2Slot, Bin);
-
-append_qlc_parameters(State, _, document, Params, Bin) ->
-    #internal_qlc_term_parameters{ record_info = Meta } = Params,
-    xapian_term_record:encode(Meta, Bin);
-
-append_qlc_parameters(State, spy_terms, match_spy, Params, Bin) ->
-    #internal_qlc_term_parameters{ record_info = Meta } = Params,
-    xapian_term_record:encode(Meta, Bin);
-
-append_qlc_parameters(State, top_spy_terms, match_spy, Params, Bin@) ->
-    #internal_qlc_term_parameters{ record_info = Meta, 
-        user_parameters = UserParams } = Params,
-    Limit = proplists:get_value(max_values, UserParams),
-    Bin@ = append_uint(Limit, Bin@),
-    xapian_term_record:encode(Meta, Bin@).
 
 
 decode_resource_info({ok, Bin}) ->

@@ -2,10 +2,10 @@
 #include <stdint.h>
 #include <cstring>
 #include <string>
+#include <stdexcept>
 
 #include "param_decoder.h"
 #include "xapian_exception.h"
-#include <stdexcept>
 
 /* Helper used by ParamDecoder. */
 #define READ_TYPE(T) (*(reinterpret_cast<T*>( move(sizeof(T)) )))

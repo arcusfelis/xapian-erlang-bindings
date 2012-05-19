@@ -2,9 +2,7 @@
 #define XAPIAN_EXCEPTION_H
 
 #include <stdexcept>
-#include <xapian.h>
 #include <stdint.h>
-#include <cstring>
 #include <string>
 
 // -------------------------------------------------------------------

@@ -1,5 +1,5 @@
 #include "user_resources.h"
-#include "termiter_gen.h"
+#include "spy_value_ctrl.h"
 #include "xapian.h"
 
 /**

@@ -834,16 +834,6 @@ qlc_mset_case(Server) ->
         %% The definition of Meta is incapsulated inside `xapian_record' module.
         Meta = xapian_record:record(book_ext, record_info(fields, book_ext)),
 
-        %% We use internal erlang records for passing information 
-        %% beetween `xapian_drv' and `xapian_mset_qlc' modules.
-        QlcParams = #internal_qlc_mset_parameters{ record_info = Meta },
-
-        %% internal_qlc_init returns a record, which contains information 
-        %% about QlcTable.
-        Info = #internal_qlc_info{} = 
-        ?DRV:internal_qlc_init(Server, mset, MSetResourceId, QlcParams),
-        io:format(user, "~n ~p~n", [Info]),
-
         %% Create QlcTable from MSet. 
         %% After creation of QlcTable, MSet can be removed.
         Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),

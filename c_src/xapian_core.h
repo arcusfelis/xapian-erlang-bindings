@@ -5,9 +5,9 @@
 #include "qlc_table.h"
 #include "object_register.h"
 #include "user_resources.h"
+#include "spy_ctrl.h"
 #include <xapian.h>
 #include <string>
-#include <cstring>
 #include <stdint.h>
 
 #include "erl_driver.h"
@@ -47,7 +47,7 @@ class XapianErlangDriver
     ObjectRegister<const Xapian::ExpandDecider> m_expand_decider_store;
     ObjectRegister<const Xapian::DateValueRangeProcessor> 
         m_date_value_range_processor_store;
-    ObjectRegister<ValueCountSpyController>     m_match_spy_store;
+    ObjectRegister<SpyController>               m_match_spy_store;
 
     /**
      * It is global.
@@ -121,15 +121,15 @@ class XapianErlangDriver
         WRITE_OPEN                  = 4
     };
 
-    // Types of fields
-    // Used in the applyDocument function.
+    /// Types of fields.
+    /// Used in the @ref applyDocument function.
     enum fieldTypeIn {
-        STEMMER                     = 1,  // set a stemmer
-        DATA                        = 2,  // set data
-        DELTA                       = 3,  // add delta
-        TEXT                        = 4,  // set text
-
-        SET_POSTING                 = 15, // add posting term
+        STEMMER                     = 1,  /// Set a stemmer.
+        DATA                        = 2,  /// Set data.
+        DELTA                       = 3,  /// Add delta.
+        TEXT                        = 4,  /// Set text.
+                                           
+        SET_POSTING                 = 15, /// Add posting term.
         ADD_POSTING                 = 25,
         UPDATE_POSTING              = 35,
         REMOVE_POSTING              = 45,
@@ -146,15 +146,15 @@ class XapianErlangDriver
 
         DEC_WDF                     = 101,
         SET_WDF                     = 111,
-        REMOVE_VALUES               = 103, // clear all values
-        REMOVE_TERMS                = 104, // clear all terms and postings
+        REMOVE_VALUES               = 103, /// Clear all values.
+        REMOVE_TERMS                = 104, /// Clear all terms and postings.
         REMOVE_POSITIONS            = 105,
         REMOVE_TERM_POSITIONS       = 106,
         REMOVE_TERM_POSITIONS_SAVE  = 116
     };
 
-    // Types of the fields.
-    // Used in the retrieveDocument function.
+    /// Types of the fields.
+    /// Used in the retrieveDocument function.
     enum fieldTypeOut {
         GET_VALUE                   = 1,
         GET_DATA                    = 2,
@@ -164,8 +164,8 @@ class XapianErlangDriver
         GET_PERCENT                 = 6
     };
 
-    // Numbers of tests.
-    // Used in the test function.
+    /// Numbers of tests.
+    /// Used in the test function.
     enum testNumber {
         TEST_RESULT_ENCODER         = 1,
         TEST_EXCEPTION              = 2
@@ -193,7 +193,7 @@ class XapianErlangDriver
         QP_TYPE_EMPTY               = 1
     };
 
-    /* see xapian_enquire:encode */
+    /// see `xapian_enquire:encode'
     enum enquireCommand {
         EC_STOP             = 0,
         EC_QUERY            = 1,
@@ -289,7 +289,7 @@ class XapianErlangDriver
     finish();
 
     /**
-     * Here we do some initialization, start is called from open_port. 
+     * Here we do some initialization, start is called from `open_port'. 
      * The drv_data will be passed to control and stop.
      * This is called multiple times.
      */
@@ -313,7 +313,7 @@ class XapianErlangDriver
     ResultEncoder* getResultEncoder();
 
     /**
-     * A constructor
+     * A constructor.
      */
     XapianErlangDriver(ResourceGenerator&);
 
@@ -339,12 +339,12 @@ class XapianErlangDriver
     void setMetadata(ParamDecoder& params);
 
     /**
-     * query_page
+     * `query_page'
      */
     size_t query(ParamDecoder& params);
 
     /**
-     * Return a resource 
+     * Return a resource.
      */
     size_t enquire(ParamDecoder& params);
 
@@ -357,12 +357,13 @@ class XapianErlangDriver
     size_t document(ParamDecoder& params);
 
     /**
-     * Erase stored object
+     * Erase the stored object.
      */
     size_t releaseResource(ParamDecoder& params);
 
     /**
-     * Converts an enquire into a match set
+     * Converts an enquire into a match set.
+     * Return a resource.
      */
     size_t matchSet(ParamDecoder& params);
 
@@ -397,8 +398,8 @@ class XapianErlangDriver
 
 
     /**
-     * Read commands, encoded by xapian_document:encode.
-     * Used in update, replace, add document functions
+     * Read commands, encoded by `xapian_document:encode'.
+     * Used in update, replace, add document functions.
      */
     void applyDocument(ParamDecoder& params, Xapian::Document& doc);
 
@@ -462,8 +463,8 @@ class XapianErlangDriver
 
 
     private:
-    // Private static helpers
-
+    /*! \name Private static helpers. */
+    /*! \{ */
     
     TermIteratorGenerator*
     termGenerator(ParamDecoder& params, 
@@ -562,6 +563,7 @@ class XapianErlangDriver
         ResultEncoder& result,
         Xapian::TermIterator iter,
         const Xapian::TermIterator end);
+    /*! \} */
 };
 
 #endif
