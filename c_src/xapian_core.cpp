@@ -441,6 +441,216 @@ XapianErlangDriver::getDocument(ParamDecoder& params)
 {
     switch(uint8_t idType = params)
     {
+        case UNIQUE_DOCID:
+        {
+            Xapian::docid docid = params;
+            return mp_db->get_document(docid);
+        }
+
+        case UNIQUE_TERM:
+        {
+            const std::string& unique_term = params;
+            if (mp_wdb->term_exists(unique_term))
+            {
+                // Start searching
+                Xapian::Enquire     enquire(*mp_wdb);
+                enquire.set_query(Xapian::Query(unique_term));
+
+                // Get a set of documents with term
+                Xapian::MSet mset = enquire.get_mset(
+                    0, 1);
+                Xapian::MSetIterator 
+                    iter = mset.begin(),
+                    end  = mset.end();
+                if (iter == end) 
+                    throw BadArgumentDriverError(); // doc us not found
+
+                return iter.get_document();
+            }
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(idType);
+    }
+    throw BadArgumentDriverError();
+}
+
+
+// Create a doc as a resource
+size_t
+XapianErlangDriver::document(ParamDecoder& params)
+{
+    const Xapian::Document& doc = getDocument(params);
+    uint32_t num = m_document_store.put(new Xapian::Document(doc));
+    m_result << num;
+
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::releaseResource(ParamDecoder& params)
+{
+    uint8_t   type = params;
+    uint32_t   num = params;
+    ObjectBaseRegister&
+    reg = getRegisterByType(type);
+    reg.remove(num);
+
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::matchSet(ParamDecoder& params)
+{
+    uint32_t   enquire_num = params;
+    Xapian::Enquire& enquire = *m_enquire_store.get(enquire_num);
+
+    Xapian::doccount    first, maxitems, checkatleast;
+    first = params;
+    uint8_t is_undefined = params;
+    maxitems = is_undefined 
+        ? mp_db->get_doccount() 
+        : params;
+    checkatleast = params;
+
+
+    while (const uint32_t num = params)
+    {
+        SpyController&
+        spy = *m_match_spy_store.get(num);
+
+        if (!spy.is_finalized())
+        {
+            // It can be added just once
+            enquire.add_matchspy(spy.getSpy());
+            spy.finalize();
+        } else {
+            throw MatchSpyFinalizedDriverError();
+        }
+        break;
+    }
+
+    Xapian::MSet mset = enquire.get_mset(
+        first, 
+        maxitems,
+        checkatleast);
+
+    enquire.clear_matchspies();
+
+    uint32_t mset_num = m_mset_store.put(new Xapian::MSet(mset));
+    m_result << mset_num;
+
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::qlcInit(ParamDecoder& params)
+{
+    uint8_t   qlc_type      = params;
+    uint8_t   resource_type = params;
+    uint32_t  resource_num  = params;
+    switch (qlc_type)
+    {
+        case QlcType::MSET:
+        {
+            assert(resource_type == ResourceType::MSET);
+             
+            Xapian::MSet& mset = *m_mset_store.get(resource_num);
+            const ParamDecoderController& schema  
+                = retrieveDocumentSchema(params);
+            MSetQlcTable* qlcTable = new MSetQlcTable(*this, mset, schema);
+            const uint32_t qlc_num = m_qlc_store.put(qlcTable);
+            const uint32_t mset_size = qlcTable->numOfObjects();
+        
+            m_result << qlc_num << mset_size;
+            return m_result;
+        }
+
+        case QlcType::TERMS:
+        case QlcType::SPY_TERMS:
+        {
+            TermIteratorGenerator* p_gen = 
+            termGenerator(params, qlc_type, resource_type, resource_num);
+            const ParamDecoderController& schema  
+                = retrieveTermSchema(params);
+            TermQlcTable* qlcTable = new TermQlcTable(*this, p_gen, schema);
+            // qlcTable is now a master of p_gen object. 
+            const uint32_t qlc_num = m_qlc_store.put(qlcTable);
+            const uint32_t list_size = qlcTable->numOfObjects();
+        
+            m_result << qlc_num << list_size;
+            return m_result;
+        }
+
+        default:
+            throw BadCommandDriverError(resource_type);
+    }
+}
+
+
+/**
+ * Caller must delete returned value.
+ */
+TermIteratorGenerator*
+XapianErlangDriver::termGenerator(ParamDecoder& params, 
+    const /*QlcType*/ int8_t qlc_type, 
+    const /*ResourceType*/ int8_t resource_type, 
+    const uint32_t resource_num)
+{
+    switch (qlc_type)
+    {
+        case QlcType::TERMS:
+        {
+            assert(resource_type == ResourceType::DOCUMENT);
+            Xapian::Document& doc = *m_document_store.get(resource_num);
+            return new DocumentTermIteratorGenerator(doc);
+        }
+
+        case QlcType::SPY_TERMS:
+        {
+            // Init commons
+            assert(resource_type == ResourceType::MATCH_SPY);
+
+            SpyController&
+            spy = *m_match_spy_store.get(resource_num);
+            return spy.getIteratorGenerator(params);
+        }
+
+        default:
+            throw BadCommandDriverError(resource_type);
+    }
+}
+
+size_t 
+XapianErlangDriver::qlcNext(ParamDecoder& params)
+{
+    uint32_t   resource_num = params;
+    uint32_t   from         = params;
+    uint32_t   count        = params;
+ 
+    QlcTable& qlcTable = *m_qlc_store.get(resource_num);
+    qlcTable.getPage(from, count);
+    return m_result;
+}
+
+
+size_t 
+XapianErlangDriver::qlcLookup(ParamDecoder& params)
+{
+    uint32_t   resource_num = params;
+ 
+    QlcTable& qlcTable = *m_qlc_store.get(resource_num);
+    qlcTable.lookup(params);
+    return m_result;
+}
+
+
+void 
+XapianErlangDriver::assertWriteable() const
 {
     if (mp_wdb == NULL)
         throw NotWritableDatabaseError();
