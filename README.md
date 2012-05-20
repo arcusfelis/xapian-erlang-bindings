@@ -1,9 +1,15 @@
-Xapian bindings for Erlang
-==========================
+Xapian binding for Erlang
+=========================
 
 __License__: MIT, GPL2 or higher (Xapian is still under GPL only.)
 
 __Author__: Uvarov Michael ([`freeakk@gmail.com`](mailto:freeakk@gmail.com))
+
+
+[Xapian](http://xapian.org/) is an Open Source Search Engine Library, 
+written in C++.
+Xapian is a highly adaptable toolkit which allows developers to easily add 
+advanced indexing and search facilities to their own applications.
 
 
 Installation

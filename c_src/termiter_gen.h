@@ -4,7 +4,7 @@
 #include <xapian.h>
 
 /**
- * Contains few functions for iterator creation and retrieving information.
+ * @brief Contains functions for iterator creation and retrieving information.
  *
  * It provides an interface for term iteration. 
  * Each object contains state with a term set.

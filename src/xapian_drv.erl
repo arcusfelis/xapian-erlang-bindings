@@ -49,6 +49,7 @@
          name_to_slot/2]).
 
 
+
 %% ------------------------------------------------------------------
 %% Other flags
 %% ------------------------------------------------------------------
@@ -72,8 +73,7 @@
     append_unique_document_id/2,
     read_uint/1,
     read_uint8/1,
-    read_string/1,
-    read_document_id/1]).
+    read_string/1]).
 
 %% Used in handlers
 -define(SERVER, ?MODULE).
