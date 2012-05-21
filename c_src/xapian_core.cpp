@@ -14,7 +14,6 @@
 #include "param_decoder_controller.h"
 #include "result_encoder.h"
 #include "xapian_exception.h"
-/* Include it after "param_decoder_controller.h" */
 #include "qlc_table.h"
 #include "object_register.h"
 #include "user_resources.h"
@@ -24,21 +23,14 @@
 #include <assert.h>
 #include <cstdlib>
 
-template class ObjectRegister<Xapian::Document>;
-template class ObjectRegister<Xapian::Enquire>;
-template class ObjectRegister<Xapian::MSet>;
-template class ObjectRegister<QlcTable>;
-template class ObjectRegister<const Xapian::Weight>;
-template class ObjectRegister<Xapian::KeyMaker>;
-template class ObjectRegister<const Xapian::Query>;
-template class ObjectRegister<const Xapian::MatchDecider>;
-template class ObjectRegister<const Xapian::Stem>;
-template class ObjectRegister<const Xapian::ExpandDecider>;
-template class ObjectRegister<const Xapian::DateValueRangeProcessor>;
-template class ObjectRegister<SpyController>;
+// -------------------------------------------------------------------
+// Main Driver Class
+// -------------------------------------------------------------------
 
-// used in user_resources
-template class ObjectRegister<UserResource>;
+#include "xapian_core.h"
+
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
 
 
 // -------------------------------------------------------------------
@@ -48,16 +40,9 @@ template class ObjectRegister<UserResource>;
 ResourceGenerator* gp_generator = NULL;
 
 
-// -------------------------------------------------------------------
-// Main Driver Class
-// -------------------------------------------------------------------
-
-#include "xapian_core.h"
-
-
-const uint8_t XapianErlangDriver::PARSER_FEATURE_COUNT = 13;
+const uint8_t Driver::PARSER_FEATURE_COUNT = 13;
 const unsigned 
-XapianErlangDriver::PARSER_FEATURES[PARSER_FEATURE_COUNT] = {
+Driver::PARSER_FEATURES[PARSER_FEATURE_COUNT] = {
         0,
     /*  1 */ Xapian::QueryParser::FLAG_BOOLEAN,
     /*  2 */ Xapian::QueryParser::FLAG_PHRASE,
@@ -74,18 +59,18 @@ XapianErlangDriver::PARSER_FEATURES[PARSER_FEATURE_COUNT] = {
 };
 
 
-const uint8_t XapianErlangDriver::STEM_STRATEGY_COUNT = 3;
+const uint8_t Driver::STEM_STRATEGY_COUNT = 3;
 const Xapian::QueryParser::stem_strategy
-XapianErlangDriver::STEM_STRATEGIES[STEM_STRATEGY_COUNT] = {
+Driver::STEM_STRATEGIES[STEM_STRATEGY_COUNT] = {
     /*  0 */ Xapian::QueryParser::STEM_NONE, // default
     /*  1 */ Xapian::QueryParser::STEM_SOME,
     /*  2 */ Xapian::QueryParser::STEM_ALL
 };
 
 
-const uint8_t XapianErlangDriver::DOCID_ORDER_TYPE_COUNT = 3;
+const uint8_t Driver::DOCID_ORDER_TYPE_COUNT = 3;
 const Xapian::Enquire::docid_order
-XapianErlangDriver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
+Driver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
     /*  0 */ Xapian::Enquire::ASCENDING, // default
     /*  1 */ Xapian::Enquire::DESCENDING,
     /*  2 */ Xapian::Enquire::DONT_CARE
@@ -96,7 +81,7 @@ XapianErlangDriver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
  * Create global variables
  */
 int 
-XapianErlangDriver::init()
+Driver::init()
 {
     if (gp_generator == NULL)
     {
@@ -111,7 +96,7 @@ XapianErlangDriver::init()
  * Delete global variables
  */
 void 
-XapianErlangDriver::finish()
+Driver::finish()
 {
     if (gp_generator != NULL)
         delete gp_generator;
@@ -121,7 +106,7 @@ XapianErlangDriver::finish()
 
 
 ErlDrvData 
-XapianErlangDriver::start(
+Driver::start(
     ErlDrvPort port, 
     char* /* buf */)
 {
@@ -129,17 +114,17 @@ XapianErlangDriver::start(
        a binary will be returned. */       
     set_port_control_flags(port, PORT_CONTROL_FLAG_BINARY); 
     assert(gp_generator != NULL);
-    XapianErlangDriver* drv_data = new XapianErlangDriver(*gp_generator);
+    Driver* drv_data = new Driver(*gp_generator);
     return reinterpret_cast<ErlDrvData>( drv_data );
 }
 
 
 void 
-XapianErlangDriver::stop(
+Driver::stop(
     ErlDrvData drv_data) 
 {
-    XapianErlangDriver* 
-    drv = reinterpret_cast<XapianErlangDriver*>( drv_data );
+    Driver* 
+    drv = reinterpret_cast<Driver*>( drv_data );
 
     if (drv != NULL)
         delete drv;
@@ -147,13 +132,13 @@ XapianErlangDriver::stop(
 
 
 ResultEncoder* 
-XapianErlangDriver::getResultEncoder()
+Driver::getResultEncoder()
 {
     return &m_result;
 }
 
 
-XapianErlangDriver::XapianErlangDriver(ResourceGenerator& generator)
+Driver::Driver(ResourceGenerator& generator)
 : m_generator(generator), m_stores(generator)
 {
     mp_db = NULL;
@@ -178,7 +163,7 @@ XapianErlangDriver::XapianErlangDriver(ResourceGenerator& generator)
 }
 
 
-XapianErlangDriver::~XapianErlangDriver()
+Driver::~Driver()
 {
     if (mp_db != NULL) 
         delete mp_db;
@@ -189,7 +174,7 @@ XapianErlangDriver::~XapianErlangDriver()
 
 
 void 
-XapianErlangDriver::setDefaultStemmer(const Xapian::Stem* stemmer)
+Driver::setDefaultStemmer(const Xapian::Stem* stemmer)
 {
     if (mp_default_stemmer != NULL)
         delete mp_default_stemmer;
@@ -200,7 +185,7 @@ XapianErlangDriver::setDefaultStemmer(const Xapian::Stem* stemmer)
 
 
 size_t 
-XapianErlangDriver::setDefaultStemmer(ParamDecoder& params)
+Driver::setDefaultStemmer(ParamDecoder& params)
 {
     const Xapian::Stem&  stemmer = params;
     setDefaultStemmer(new Xapian::Stem(stemmer));
@@ -209,7 +194,7 @@ XapianErlangDriver::setDefaultStemmer(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::setDefaultPrefixes(ParamDecoder& params)
+Driver::setDefaultPrefixes(ParamDecoder& params)
 {
     const uint32_t count   = params;
     for (uint32_t i = 0; i < count; i++)
@@ -221,14 +206,14 @@ XapianErlangDriver::setDefaultPrefixes(ParamDecoder& params)
 
 
 ObjectBaseRegister&
-XapianErlangDriver::getRegisterByType(uint8_t type)
+Driver::getRegisterByType(uint8_t type)
 {
     return m_stores.get(type);
 }
 
 
 size_t 
-XapianErlangDriver::getLastDocId()
+Driver::getLastDocId()
 {
     //Xapian::docid get_lastdocid() const
     const Xapian::docid 
@@ -239,7 +224,7 @@ XapianErlangDriver::getLastDocId()
 
 
 size_t 
-XapianErlangDriver::addDocument(ParamDecoder& params)
+Driver::addDocument(ParamDecoder& params)
 {
     assertWriteable();
 
@@ -253,7 +238,7 @@ XapianErlangDriver::addDocument(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::replaceDocument(ParamDecoder& params)
+Driver::replaceDocument(ParamDecoder& params)
 {
     assertWriteable();
 
@@ -287,7 +272,7 @@ XapianErlangDriver::replaceDocument(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::updateDocument(ParamDecoder& params, bool create)
+Driver::updateDocument(ParamDecoder& params, bool create)
 {
     assertWriteable();
     const ParamDecoderController& schema  
@@ -365,7 +350,7 @@ XapianErlangDriver::updateDocument(ParamDecoder& params, bool create)
 
 
 void 
-XapianErlangDriver::deleteDocument(ParamDecoder& params)
+Driver::deleteDocument(ParamDecoder& params)
 {
     assertWriteable();
 
@@ -392,7 +377,7 @@ XapianErlangDriver::deleteDocument(ParamDecoder& params)
 }
 
 size_t 
-XapianErlangDriver::query(ParamDecoder& params)
+Driver::query(ParamDecoder& params)
 {
     /* offset, pagesize, query, template */
     const uint32_t offset   = params;
@@ -421,7 +406,7 @@ XapianErlangDriver::query(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::enquire(ParamDecoder& params)
+Driver::enquire(ParamDecoder& params)
 {
     // Use an Enquire object on the database to run the query.
     Xapian::Enquire* p_enquire = new Xapian::Enquire(*mp_db);
@@ -437,7 +422,7 @@ XapianErlangDriver::enquire(ParamDecoder& params)
 // Get a copy of a document.
 // Caller must deallocate the returned object.
 Xapian::Document
-XapianErlangDriver::getDocument(ParamDecoder& params)
+Driver::getDocument(ParamDecoder& params)
 {
     switch(uint8_t idType = params)
     {
@@ -479,7 +464,7 @@ XapianErlangDriver::getDocument(ParamDecoder& params)
 
 // Create a doc as a resource
 size_t
-XapianErlangDriver::document(ParamDecoder& params)
+Driver::document(ParamDecoder& params)
 {
     const Xapian::Document& doc = getDocument(params);
     uint32_t num = m_document_store.put(new Xapian::Document(doc));
@@ -490,7 +475,7 @@ XapianErlangDriver::document(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::releaseResource(ParamDecoder& params)
+Driver::releaseResource(ParamDecoder& params)
 {
     uint8_t   type = params;
     uint32_t   num = params;
@@ -503,7 +488,7 @@ XapianErlangDriver::releaseResource(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::matchSet(ParamDecoder& params)
+Driver::matchSet(ParamDecoder& params)
 {
     uint32_t   enquire_num = params;
     Xapian::Enquire& enquire = *m_enquire_store.get(enquire_num);
@@ -548,7 +533,7 @@ XapianErlangDriver::matchSet(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::qlcInit(ParamDecoder& params)
+Driver::qlcInit(ParamDecoder& params)
 {
     uint8_t   qlc_type      = params;
     uint8_t   resource_type = params;
@@ -596,7 +581,7 @@ XapianErlangDriver::qlcInit(ParamDecoder& params)
  * Caller must delete returned value.
  */
 TermIteratorGenerator*
-XapianErlangDriver::termGenerator(ParamDecoder& params, 
+Driver::termGenerator(ParamDecoder& params, 
     const /*QlcType*/ int8_t qlc_type, 
     const /*ResourceType*/ int8_t resource_type, 
     const uint32_t resource_num)
@@ -626,7 +611,7 @@ XapianErlangDriver::termGenerator(ParamDecoder& params,
 }
 
 size_t 
-XapianErlangDriver::qlcNext(ParamDecoder& params)
+Driver::qlcNext(ParamDecoder& params)
 {
     uint32_t   resource_num = params;
     uint32_t   from         = params;
@@ -639,7 +624,7 @@ XapianErlangDriver::qlcNext(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::qlcLookup(ParamDecoder& params)
+Driver::qlcLookup(ParamDecoder& params)
 {
     uint32_t   resource_num = params;
  
@@ -650,7 +635,7 @@ XapianErlangDriver::qlcLookup(ParamDecoder& params)
 
 
 void 
-XapianErlangDriver::assertWriteable() const
+Driver::assertWriteable() const
 {
     if (mp_wdb == NULL)
         throw NotWritableDatabaseError();
@@ -658,7 +643,7 @@ XapianErlangDriver::assertWriteable() const
 
 
 size_t 
-XapianErlangDriver::startTransaction()
+Driver::startTransaction()
 {
     assertWriteable();
 
@@ -668,7 +653,7 @@ XapianErlangDriver::startTransaction()
 
 
 size_t 
-XapianErlangDriver::cancelTransaction()
+Driver::cancelTransaction()
 {
     assertWriteable();
 
@@ -678,7 +663,7 @@ XapianErlangDriver::cancelTransaction()
 
 
 size_t 
-XapianErlangDriver::commitTransaction()
+Driver::commitTransaction()
 {
     assertWriteable();
 
@@ -688,7 +673,7 @@ XapianErlangDriver::commitTransaction()
 
 
 size_t 
-XapianErlangDriver::getDocumentById(ParamDecoder& params)
+Driver::getDocumentById(ParamDecoder& params)
 {
     const Xapian::docid docid = params;
     Xapian::Document doc = mp_db->get_document(docid);
@@ -698,7 +683,7 @@ XapianErlangDriver::getDocumentById(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::test(ParamDecoder& params)
+Driver::test(ParamDecoder& params)
 {
     const int8_t num = params;
     switch (num)
@@ -719,7 +704,7 @@ XapianErlangDriver::test(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::testResultEncoder(Xapian::docid from, Xapian::docid to)
+Driver::testResultEncoder(Xapian::docid from, Xapian::docid to)
 {
     for (; from <= to; from++)
         m_result << static_cast<uint32_t>(from);
@@ -728,7 +713,7 @@ XapianErlangDriver::testResultEncoder(Xapian::docid from, Xapian::docid to)
 
 
 size_t 
-XapianErlangDriver::testException()
+Driver::testException()
 {
     throw MemoryAllocationDriverError(1000);
     return 0;
@@ -736,7 +721,7 @@ XapianErlangDriver::testException()
 
 
 unsigned
-XapianErlangDriver::idToParserFeature(uint8_t type)
+Driver::idToParserFeature(uint8_t type)
 {
   if (type > PARSER_FEATURE_COUNT)
     throw BadCommandDriverError(type);
@@ -745,7 +730,7 @@ XapianErlangDriver::idToParserFeature(uint8_t type)
 
 
 unsigned 
-XapianErlangDriver::decodeParserFeatureFlags(ParamDecoder& params)
+Driver::decodeParserFeatureFlags(ParamDecoder& params)
 {
     unsigned flags = 0;
     while (const uint8_t type = params)
@@ -757,7 +742,7 @@ XapianErlangDriver::decodeParserFeatureFlags(ParamDecoder& params)
 
 
 Xapian::QueryParser::stem_strategy
-XapianErlangDriver::readStemmingStrategy(ParamDecoder& params)
+Driver::readStemmingStrategy(ParamDecoder& params)
 {
   const uint8_t type = params;
   if (type > STEM_STRATEGY_COUNT)
@@ -767,7 +752,7 @@ XapianErlangDriver::readStemmingStrategy(ParamDecoder& params)
 
 
 void 
-XapianErlangDriver::addPrefix(Xapian::QueryParser& qp, ParamDecoder& params)
+Driver::addPrefix(Xapian::QueryParser& qp, ParamDecoder& params)
 {
     const std::string&      field          = params;
     const std::string&      prefix         = params;
@@ -782,7 +767,7 @@ XapianErlangDriver::addPrefix(Xapian::QueryParser& qp, ParamDecoder& params)
 
 
 Xapian::Query 
-XapianErlangDriver::buildQuery(ParamDecoder& params)
+Driver::buildQuery(ParamDecoder& params)
 {
     const uint8_t type = params;
     switch (type)
@@ -867,7 +852,7 @@ XapianErlangDriver::buildQuery(ParamDecoder& params)
 
 
 void 
-XapianErlangDriver::fillEnquire(Xapian::Enquire& enquire, ParamDecoder& params)
+Driver::fillEnquire(Xapian::Enquire& enquire, ParamDecoder& params)
 {
     Xapian::termcount   qlen = 0;
 
@@ -942,7 +927,7 @@ XapianErlangDriver::fillEnquire(Xapian::Enquire& enquire, ParamDecoder& params)
 
 
 void
-XapianErlangDriver::fillEnquireOrder(Xapian::Enquire& enquire, 
+Driver::fillEnquireOrder(Xapian::Enquire& enquire, 
     const uint8_t type, const uint32_t value, const bool reverse)
 {
     switch(type)
@@ -977,7 +962,7 @@ XapianErlangDriver::fillEnquireOrder(Xapian::Enquire& enquire,
 
 
 Xapian::QueryParser 
-XapianErlangDriver::selectParser(ParamDecoder& params)
+Driver::selectParser(ParamDecoder& params)
 {
     uint8_t type = params;
     switch (type)
@@ -995,7 +980,7 @@ XapianErlangDriver::selectParser(ParamDecoder& params)
 
 
 Xapian::QueryParser 
-XapianErlangDriver::readParser(ParamDecoder& params)
+Driver::readParser(ParamDecoder& params)
 {
   uint8_t command = params;
   // No parameters?
@@ -1057,7 +1042,7 @@ XapianErlangDriver::readParser(ParamDecoder& params)
 
 
 ErlDrvSSizeT 
-XapianErlangDriver::control(
+Driver::control(
     ErlDrvData drv_data, 
     const unsigned int  command, 
     char*         buf, 
@@ -1069,7 +1054,7 @@ XapianErlangDriver::control(
     const size_t rlen = static_cast<int>(e_rlen);
 
     ParamDecoder params(buf, len); 
-    XapianErlangDriver& drv = * reinterpret_cast<XapianErlangDriver*>( drv_data );
+    Driver& drv = * reinterpret_cast<Driver*>( drv_data );
     ResultEncoder& result = * drv.getResultEncoder();
     result.setBuffer(rbuf, rlen);
     result << static_cast<uint8_t>( SUCCESS );
@@ -1190,7 +1175,7 @@ XapianErlangDriver::control(
 
 
 size_t 
-XapianErlangDriver::open(const std::string& dbpath, int8_t mode)
+Driver::open(const std::string& dbpath, int8_t mode)
 {
     // Is already opened?
     if (mp_db != NULL)
@@ -1237,7 +1222,7 @@ XapianErlangDriver::open(const std::string& dbpath, int8_t mode)
 
 
 void 
-XapianErlangDriver::applyDocument(
+Driver::applyDocument(
     ParamDecoder& params, 
     Xapian::Document& doc)
 {
@@ -1355,7 +1340,7 @@ XapianErlangDriver::applyDocument(
 
 
 void
-XapianErlangDriver::handleTerm(uint8_t command,
+Driver::handleTerm(uint8_t command,
     ParamDecoder& params, 
     Xapian::Document& doc)
 {
@@ -1402,7 +1387,7 @@ XapianErlangDriver::handleTerm(uint8_t command,
 
 
 void
-XapianErlangDriver::handleValue(uint8_t command,
+Driver::handleValue(uint8_t command,
     ParamDecoder& params, 
     Xapian::Document& doc)
 {
@@ -1448,7 +1433,7 @@ XapianErlangDriver::handleValue(uint8_t command,
 
 
 void
-XapianErlangDriver::handlePosting(uint8_t command,
+Driver::handlePosting(uint8_t command,
     ParamDecoder& params, 
     Xapian::Document& doc)
 {
@@ -1495,7 +1480,7 @@ XapianErlangDriver::handlePosting(uint8_t command,
 // Helper for getting frequency (wdf) of the passed term.
 // If term is not found, then return 0.
 Xapian::termcount
-XapianErlangDriver::getTermFrequency(
+Driver::getTermFrequency(
     Xapian::Document& doc, const std::string& tname)
 {
     Xapian::TermIterator 
@@ -1514,7 +1499,7 @@ XapianErlangDriver::getTermFrequency(
 
 // If term is not found, then BadArgumentDriverError will be thrown.
 Xapian::termcount
-XapianErlangDriver::getExistedTermFrequency(
+Driver::getExistedTermFrequency(
     Xapian::Document& doc, const std::string& tname)
 {
     Xapian::TermIterator 
@@ -1534,7 +1519,7 @@ XapianErlangDriver::getExistedTermFrequency(
 
 
 void
-XapianErlangDriver::tryRemoveValue(
+Driver::tryRemoveValue(
     Xapian::Document& doc, Xapian::valueno slot_no, bool ignoreErrors)
 {
     if (ignoreErrors)
@@ -1547,7 +1532,7 @@ XapianErlangDriver::tryRemoveValue(
 
 
 void
-XapianErlangDriver::tryRemoveTerm(
+Driver::tryRemoveTerm(
     Xapian::Document& doc, const std::string& tname, bool ignoreErrors)
 {
     if (ignoreErrors)
@@ -1560,7 +1545,7 @@ XapianErlangDriver::tryRemoveTerm(
 
 
 void
-XapianErlangDriver::tryRemovePosting(
+Driver::tryRemovePosting(
     Xapian::Document& doc, 
     const std::string& tname, 
     Xapian::termpos tpos, 
@@ -1592,10 +1577,10 @@ class HellTermPosition
         const std::string& tname)
     : m_doc(doc), m_tname(tname)
     {
-        if (!XapianErlangDriver::isTermExist(doc, tname))
+        if (!Driver::isTermExist(doc, tname))
             throw BadArgumentDriverError();
 
-        m_is_exist = XapianErlangDriver::isPostingExist(doc, tname, HELL_POS);
+        m_is_exist = Driver::isPostingExist(doc, tname, HELL_POS);
     }
 
     void
@@ -1615,7 +1600,7 @@ class HellTermPosition
     set_wdf(const Xapian::termcount wdf)
     {
         const Xapian::termcount old_wdf = 
-            XapianErlangDriver::getTermFrequency(m_doc, m_tname);
+            Driver::getTermFrequency(m_doc, m_tname);
         if (old_wdf < wdf) // inc
             inc_wdf(wdf - old_wdf);
         else 
@@ -1632,7 +1617,7 @@ class HellTermPosition
 
 
 void
-XapianErlangDriver::tryDecreaseWDF(
+Driver::tryDecreaseWDF(
     Xapian::Document& doc, 
     const std::string& tname, 
     Xapian::termcount wdf, 
@@ -1659,7 +1644,7 @@ XapianErlangDriver::tryDecreaseWDF(
 
 
 void
-XapianErlangDriver::trySetWDF(
+Driver::trySetWDF(
     Xapian::Document& doc, 
     const std::string& tname, 
     Xapian::termcount wdf, 
@@ -1686,7 +1671,7 @@ XapianErlangDriver::trySetWDF(
 
 
 void
-XapianErlangDriver::tryClearTermPositions(
+Driver::tryClearTermPositions(
     Xapian::Document& doc, 
     const std::string& tname, 
     bool ignoreErrors)
@@ -1702,7 +1687,7 @@ XapianErlangDriver::tryClearTermPositions(
 
 
 void
-XapianErlangDriver::clearTermPositions(
+Driver::clearTermPositions(
     Xapian::Document& doc, 
     const std::string& tname)
 {
@@ -1714,7 +1699,7 @@ XapianErlangDriver::clearTermPositions(
 
 
 void
-XapianErlangDriver::clearTermPositions(
+Driver::clearTermPositions(
     Xapian::Document& doc)
 {
     // TODO: dirty :(
@@ -1735,7 +1720,7 @@ XapianErlangDriver::clearTermPositions(
 
 
 bool
-XapianErlangDriver::isValueExist(Xapian::Document& doc, Xapian::valueno slot_no)
+Driver::isValueExist(Xapian::Document& doc, Xapian::valueno slot_no)
 {
     Xapian::ValueIterator    
         iter = doc.values_begin(),
@@ -1750,7 +1735,7 @@ XapianErlangDriver::isValueExist(Xapian::Document& doc, Xapian::valueno slot_no)
 
 
 bool
-XapianErlangDriver::isTermExist(Xapian::Document& doc, const std::string& tname)
+Driver::isTermExist(Xapian::Document& doc, const std::string& tname)
 {
     Xapian::TermIterator    
         iter = doc.termlist_begin(),
@@ -1765,7 +1750,7 @@ XapianErlangDriver::isTermExist(Xapian::Document& doc, const std::string& tname)
 
 
 bool
-XapianErlangDriver::isPostingExist(
+Driver::isPostingExist(
     Xapian::Document& doc, 
     const std::string& tname, 
     Xapian::termpos term_pos)
@@ -1796,7 +1781,7 @@ XapianErlangDriver::isPostingExist(
 }
 
 void 
-XapianErlangDriver::retrieveDocument(
+Driver::retrieveDocument(
     ParamDecoder params,  /* yes, it is a copy */
     Xapian::Document& doc,
     Xapian::MSetIterator* mset_iter)
@@ -1867,7 +1852,7 @@ XapianErlangDriver::retrieveDocument(
 
 
 void 
-XapianErlangDriver::retrieveTerm(
+Driver::retrieveTerm(
     ParamDecoder params,  /* yes, it is a copy */
     const Xapian::TermIterator& iter)
 {
@@ -1876,7 +1861,7 @@ XapianErlangDriver::retrieveTerm(
 
 
 void 
-XapianErlangDriver::retrieveTerm(
+Driver::retrieveTerm(
     ParamDecoder params,  /* yes, it is a copy */
     ResultEncoder& result,
     const Xapian::TermIterator& iter)
@@ -1932,7 +1917,7 @@ XapianErlangDriver::retrieveTerm(
 }
 
 ParamDecoderController
-XapianErlangDriver::retrieveTermSchema(
+Driver::retrieveTermSchema(
     ParamDecoder& params) const
 {
     const char* from = params.currentPosition();
@@ -1952,7 +1937,7 @@ XapianErlangDriver::retrieveTermSchema(
 
 
 ParamDecoderController
-XapianErlangDriver::retrieveDocumentSchema(
+Driver::retrieveDocumentSchema(
     ParamDecoder& params) const
 {
     const char* from = params.currentPosition();
@@ -1991,7 +1976,7 @@ XapianErlangDriver::retrieveDocumentSchema(
 
 
 ParamDecoderController
-XapianErlangDriver::applyDocumentSchema(
+Driver::applyDocumentSchema(
     ParamDecoder& params) const
 {
     const char* from = params.currentPosition();
@@ -2125,7 +2110,7 @@ XapianErlangDriver::applyDocumentSchema(
  * This function will be called inside xapian_drv:init
  */
 size_t
-XapianErlangDriver::getResourceInfo()
+Driver::getResourceInfo()
 {
     ObjectRegister<UserResource>& 
     reg = m_generator.getRegister();
@@ -2149,7 +2134,7 @@ XapianErlangDriver::getResourceInfo()
 
 
 size_t 
-XapianErlangDriver::createResource(ParamDecoder& params)
+Driver::createResource(ParamDecoder& params)
 {
     uint32_t resource_num = m_stores.createAndRegister(params);
     m_result << resource_num;
@@ -2158,7 +2143,7 @@ XapianErlangDriver::createResource(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::msetInfo(ParamDecoder& params)
+Driver::msetInfo(ParamDecoder& params)
 {
     uint32_t   mset_num = params;
     Xapian::MSet& mset = *m_mset_store.get(mset_num);
@@ -2227,7 +2212,7 @@ XapianErlangDriver::msetInfo(ParamDecoder& params)
 
 
 size_t 
-XapianErlangDriver::databaseInfo(ParamDecoder& params)
+Driver::databaseInfo(ParamDecoder& params)
 {
     while (uint8_t command = params)
     switch(command)
@@ -2335,7 +2320,7 @@ XapianErlangDriver::databaseInfo(ParamDecoder& params)
 
 
 void 
-XapianErlangDriver::setMetadata(ParamDecoder& params)
+Driver::setMetadata(ParamDecoder& params)
 {
     assertWriteable();
 
@@ -2358,7 +2343,7 @@ XapianErlangDriver::setMetadata(ParamDecoder& params)
  * @param end           Last term for searching in.
  */
 void
-XapianErlangDriver::qlcTermIteratorLookup(
+Driver::qlcTermIteratorLookup(
     ParamDecoder& driver_params, 
     const ParamDecoder& schema_params, 
     ResultEncoder& result,
@@ -2415,3 +2400,5 @@ XapianErlangDriver::qlcTermIteratorLookup(
     };
     result << stop;
 }
+
+XAPIAN_ERLANG_NS_END

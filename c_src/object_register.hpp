@@ -5,6 +5,10 @@
 #include "xapian_exception.h"
 
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
+
 template <class Child>
 ObjectRegister<Child>::ObjectRegister()
 {
@@ -98,3 +102,5 @@ ObjectRegister<Child>::replaceWithoutCleaning(uint32_t num, void* new_obj)
 
     return old_obj;
 }
+
+XAPIAN_ERLANG_NS_END

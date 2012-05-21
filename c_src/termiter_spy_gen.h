@@ -4,6 +4,9 @@
 #include "termiter_gen.h"
 #include "spy_ctrl.h"
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 class SpyValueIteratorGenerator : public TermIteratorGenerator
 {
     protected:
@@ -50,5 +53,7 @@ class TopSpyValueIteratorGenerator : public SpyValueIteratorGenerator
         return mp_spy->top_values_end(m_maxvalues);
     }
 };
+
+XAPIAN_ERLANG_NS_END
 
 #endif

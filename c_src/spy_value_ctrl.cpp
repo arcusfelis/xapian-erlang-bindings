@@ -6,6 +6,9 @@
 #include "param_decoder.h"
 #include <xapian.h>
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 // -------------------------------------------------------------------
 // ValueCountSpyController
 // -------------------------------------------------------------------
@@ -36,3 +39,4 @@ ValueCountSpyController::getIteratorGenerator(ParamDecoder& params)
     }
 }
 
+XAPIAN_ERLANG_NS_END

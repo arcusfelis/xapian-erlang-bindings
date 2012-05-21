@@ -18,6 +18,9 @@ typedef int  ErlDrvSSizeT;
 #endif
 
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 // internal
 class HellTermPosition;
 
@@ -26,7 +29,7 @@ class HellTermPosition;
 // Main Driver Class
 // -------------------------------------------------------------------
 
-class XapianErlangDriver 
+class Driver 
 {
     Xapian::Database* mp_db;
     Xapian::WritableDatabase* mp_wdb;
@@ -315,9 +318,9 @@ class XapianErlangDriver
     /**
      * A constructor.
      */
-    XapianErlangDriver(ResourceGenerator&);
+    Driver(ResourceGenerator&);
 
-    ~XapianErlangDriver();
+    ~Driver();
 
     void setDefaultStemmer(const Xapian::Stem* stemmer);
 
@@ -566,4 +569,5 @@ class XapianErlangDriver
     /*! \} */
 };
 
+XAPIAN_ERLANG_NS_END
 #endif

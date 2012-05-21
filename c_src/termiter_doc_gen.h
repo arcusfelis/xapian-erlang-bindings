@@ -3,6 +3,9 @@
 
 #include <xapian.h>
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 class DocumentTermIteratorGenerator : public TermIteratorGenerator
 {
     Xapian::Document m_doc;
@@ -28,4 +31,5 @@ class DocumentTermIteratorGenerator : public TermIteratorGenerator
     }
 };
 
+XAPIAN_ERLANG_NS_END
 #endif

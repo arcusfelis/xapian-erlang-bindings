@@ -1,0 +1,28 @@
+#include "qlc_table.h"
+#include "spy_ctrl.h"
+#include "termiter_gen.h"
+#include "termiter_doc_gen.h"
+#include "user_resources.h"
+#include "object_register.h"
+#include <xapian.h>
+
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
+template class ObjectRegister<Xapian::Document>;
+template class ObjectRegister<Xapian::Enquire>;
+template class ObjectRegister<Xapian::MSet>;
+template class ObjectRegister<QlcTable>;
+template class ObjectRegister<const Xapian::Weight>;
+template class ObjectRegister<Xapian::KeyMaker>;
+template class ObjectRegister<const Xapian::Query>;
+template class ObjectRegister<const Xapian::MatchDecider>;
+template class ObjectRegister<const Xapian::Stem>;
+template class ObjectRegister<const Xapian::ExpandDecider>;
+template class ObjectRegister<const Xapian::DateValueRangeProcessor>;
+template class ObjectRegister<SpyController>;
+
+// used in user_resources
+template class ObjectRegister<UserResource>;
+
+XAPIAN_ERLANG_NS_END

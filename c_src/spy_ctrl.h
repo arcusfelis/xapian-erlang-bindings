@@ -3,13 +3,16 @@
 
 #include <stdint.h>
 
-class SpyControllerInternal;
-class TermIteratorGenerator;
-
 namespace Xapian
 {
 class MatchSpy;
 }
+
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
+class SpyControllerInternal;
+class TermIteratorGenerator;
 
 class ParamDecoder;
 
@@ -66,5 +69,7 @@ class SpyController
 
     bool is_finalized();
 };
+
+XAPIAN_ERLANG_NS_END
 
 #endif

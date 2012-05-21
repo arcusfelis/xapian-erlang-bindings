@@ -3,6 +3,9 @@
 #include "termiter_spy_gen.h"
 #include "xapian_exception.h"
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 // hidden
 class SpyControllerInternal
 {
@@ -102,3 +105,4 @@ bool SpyController::is_finalized()
     return mp_internal->is_finalized();
 }
 
+XAPIAN_ERLANG_NS_END

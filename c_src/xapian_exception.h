@@ -9,6 +9,9 @@
 // Exceptions
 // -------------------------------------------------------------------
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 class DriverRuntimeError: public std::runtime_error
 {
     const char* m_type;
@@ -113,4 +116,5 @@ class MatchSpyFinalizedDriverError: public DriverRuntimeError
     MatchSpyFinalizedDriverError();
 };
 
+XAPIAN_ERLANG_NS_END
 #endif

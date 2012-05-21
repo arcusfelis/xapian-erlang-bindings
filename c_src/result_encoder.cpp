@@ -16,6 +16,9 @@
 #include <cstring>
 
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 // -------------------------------------------------------------------
 // Defines
 // -------------------------------------------------------------------
@@ -35,22 +38,19 @@
 
 
 
-// -------------------------------------------------------------------
-// Structure with variable length
-// -------------------------------------------------------------------
-
+/**
+ * @brief A structure with a variable length.
+ */
 struct DataSegment
 {
+    /// a pointer on a next segment or NULL, if it is a last segment.
     DataSegment* next;
-    size_t size;
-    char data[1]; /* struct-hack, flexible-array member */
+    /// the real size of @ref data
+    size_t size;  
+    /// struct-hack, flexible-array member
+    char data[1]; 
 };
 
-
-
-// -------------------------------------------------------------------
-// Result encoder: appends variables to the buffer
-// -------------------------------------------------------------------
 
 void
 ResultEncoder::setBuffer(char** rbuf, const size_t rlen) 
@@ -262,3 +262,5 @@ ResultEncoder::operator size_t() {
     
     return m_result_len;
 }
+
+XAPIAN_ERLANG_NS_END

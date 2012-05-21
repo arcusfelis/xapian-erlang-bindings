@@ -4,6 +4,9 @@
 #include <cstring>
 #include "param_decoder.h"
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 /**
  * This object is for storing a paramDecoder buffer as a resource
  */    
@@ -26,5 +29,7 @@ class ParamDecoderController
 
     operator ParamDecoder() const;
 };
+
+XAPIAN_ERLANG_NS_END
 
 #endif

@@ -10,6 +10,8 @@
 // Exceptions
 // ===================================================================
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
 
 // -------------------------------------------------------------------
 // DriverRuntimeError
@@ -136,3 +138,4 @@ REG_TYPE(DbIsNotReadyDriverError)
 REG_TYPE(ElementNotFoundDriverError)
 REG_TYPE(MatchSpyFinalizedDriverError)
 
+XAPIAN_ERLANG_NS_END

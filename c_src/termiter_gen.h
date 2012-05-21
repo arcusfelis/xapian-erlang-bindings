@@ -3,13 +3,16 @@
 
 #include <xapian.h>
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 /**
  * @brief Contains functions for iterator creation and retrieving information.
  *
  * It provides an interface for term iteration. 
  * Each object contains state with a term set.
  *
- * Used from @ref XapianErlangDriver::termGenerator for QLC iterators.
+ * Used from @ref Driver::termGenerator for QLC iterators.
  */
 class TermIteratorGenerator
 {
@@ -32,4 +35,5 @@ class TermIteratorGenerator
     }
 };
 
+XAPIAN_ERLANG_NS_END
 #endif

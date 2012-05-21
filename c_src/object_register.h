@@ -10,6 +10,9 @@
 /* dirty code end */
 
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 class ObjectBaseRegister
 {
     protected:
@@ -75,6 +78,8 @@ class ObjectRegister : public ObjectBaseRegister
     ~ObjectRegister();
 };
 
+
+XAPIAN_ERLANG_NS_END
 #include "object_register.hpp"
 
 #endif

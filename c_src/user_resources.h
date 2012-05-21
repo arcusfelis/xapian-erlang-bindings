@@ -7,17 +7,20 @@
 
 #include "xapian_exception.h"
 
+namespace Xapian
+{
+class Database;
+}
+
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 typedef void*       ResourceObjectP;
 typedef uint8_t     ResourceObjectType;
 typedef uint32_t    ResourceObjectNum;
 
 class ResourceManager;
 class ResourceGenerator;
-
-namespace Xapian
-{
-class Database;
-}
 
 
 // Use the class to form a namespace for the enum
@@ -282,5 +285,5 @@ class ResourceManager
 void
 registerUserCallbacks(ResourceGenerator& generator);
 
-
+XAPIAN_ERLANG_NS_END
 #endif

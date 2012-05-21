@@ -4,6 +4,9 @@
 #include <string>
 #include <stdint.h>
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 typedef struct DataSegment DataSegment;
 struct DataSegment;
 
@@ -43,6 +46,8 @@ class ResultEncoder
     void
     setBuffer(char** rbuf, const size_t rlen);
 
+    /*! \name Appends variables to the buffer. */
+    /*! \{ */
     ResultEncoder& 
     operator<<(const std::string str);
 
@@ -57,6 +62,7 @@ class ResultEncoder
 
     ResultEncoder& 
     operator<<(double value);
+    /*! \} */
 
     DataSegment* 
     alloc(size_t size);
@@ -68,4 +74,5 @@ class ResultEncoder
     void clear();
 };
 
+XAPIAN_ERLANG_NS_END
 #endif

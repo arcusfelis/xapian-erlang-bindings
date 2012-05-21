@@ -4,12 +4,13 @@
 #include <stdint.h>
 #include "spy_ctrl.h"
 
-
 namespace Xapian
 {
 class ValueCountMatchSpy;
 }
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
 
 class ValueCountSpyController : public SpyController
 {
@@ -27,4 +28,5 @@ class ValueCountSpyController : public SpyController
     getIteratorGenerator(ParamDecoder& params);
 };
 
+XAPIAN_ERLANG_NS_END
 #endif

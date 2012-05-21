@@ -9,7 +9,10 @@
 #include <cstring>
 #include "termiter_gen.h"
 
-class XapianErlangDriver;
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
+class Driver;
 
 class QlcType
 {
@@ -26,14 +29,14 @@ class QlcTable
 {
 
     protected:
-    XapianErlangDriver& m_driver;
+    Driver& m_driver;
 
     public:
     // Flags, that signal about end of list.
     static const uint8_t MORE = 1, STOP = 0;
     static const uint8_t UNKNOWN_SIZE = 0, KNOWN_SIZE = 1;
 
-    QlcTable(XapianErlangDriver& driver);
+    QlcTable(Driver& driver);
 
     virtual
     ~QlcTable();
@@ -55,7 +58,7 @@ class MSetQlcTable : public QlcTable
     const ParamDecoderController m_controller;
 
     public:
-    MSetQlcTable(XapianErlangDriver& driver, 
+    MSetQlcTable(Driver& driver, 
         Xapian::MSet& mset, const ParamDecoderController& controller);
 
     uint32_t numOfObjects();
@@ -80,7 +83,7 @@ class TermQlcTable : public QlcTable
     /**
      * gen variable will be deallocated by system (not a programmer!).
      */
-    TermQlcTable(XapianErlangDriver& driver, 
+    TermQlcTable(Driver& driver, 
         TermIteratorGenerator* gen, 
         const ParamDecoderController& controller);
 
@@ -107,5 +110,5 @@ class TermQlcTable : public QlcTable
     void getPageUnknownSize(const uint32_t skip, const uint32_t count);
 };
 
-
+XAPIAN_ERLANG_NS_END
 #endif

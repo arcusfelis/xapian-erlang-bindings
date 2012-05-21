@@ -4,11 +4,14 @@
 #include <vector>
 #include <set>
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 // ------------------------------------------------------------------
 // QlcTable
 // ------------------------------------------------------------------
 
-QlcTable::QlcTable(XapianErlangDriver& driver) 
+QlcTable::QlcTable(Driver& driver) 
     : m_driver(driver) {}
 
 
@@ -20,7 +23,7 @@ QlcTable::~QlcTable()
 // MSetQlcTable
 // ------------------------------------------------------------------
 
-MSetQlcTable::MSetQlcTable(XapianErlangDriver& driver, 
+MSetQlcTable::MSetQlcTable(Driver& driver, 
     Xapian::MSet& mset, const ParamDecoderController& controller) 
     : QlcTable(driver), m_mset(mset), m_controller(controller)
 {}
@@ -97,7 +100,7 @@ MSetQlcTable::lookup(ParamDecoder& driver_params)
 // ------------------------------------------------------------------
 
 
-TermQlcTable::TermQlcTable(XapianErlangDriver& driver, 
+TermQlcTable::TermQlcTable(Driver& driver, 
         TermIteratorGenerator* gen, 
         const ParamDecoderController& controller) 
     : QlcTable(driver), mp_gen(gen), m_controller(controller)
@@ -139,7 +142,7 @@ TermQlcTable::lookup(ParamDecoder& driver_params)
 {
     ParamDecoder schema_params = m_controller;
 
-    XapianErlangDriver::qlcTermIteratorLookup(
+    Driver::qlcTermIteratorLookup(
         driver_params, schema_params, m_driver.m_result,
         mp_gen->begin(), m_end);
 }
@@ -264,3 +267,5 @@ TermQlcTable::goToAndCheckBorder(const uint32_t wanted_pos)
         }
     }
 }
+
+XAPIAN_ERLANG_NS_END

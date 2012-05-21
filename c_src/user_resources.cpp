@@ -6,6 +6,9 @@
  * This file describes how to create resources
  */
 
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 ResourceObjectP
 createBoolWeight(ResourceManager& /*manager*/, ParamDecoder& /*params*/)
 {
@@ -59,3 +62,5 @@ registerUserCallbacks(ResourceGenerator& generator)
     generator.add(new UserResource(ResourceType::MATCH_SPY, 
         std::string("value_count_match_spy"), &createValueCountMatchSpy));
 }
+
+XAPIAN_ERLANG_NS_END

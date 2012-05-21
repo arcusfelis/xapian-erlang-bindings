@@ -2,6 +2,10 @@
 #include "erl_driver.h"
 #include "xapian_exception.h"
 
+
+#include "xapian_config.h"
+XAPIAN_ERLANG_NS_BEGIN
+
 void 
 ParamDecoderController::init(const char *buf, const size_t len)
 {
@@ -36,3 +40,5 @@ ParamDecoderController::~ParamDecoderController()
 ParamDecoderController::operator ParamDecoder() const {
     return ParamDecoder(m_buf, m_len);
 }
+
+XAPIAN_ERLANG_NS_END
