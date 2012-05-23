@@ -6,6 +6,7 @@
 -import(xapian_common, [ 
     append_uint/2,
     append_uint8/2,
+    append_double/2,
     append_slot/3,
     append_iolist/2]).
 
@@ -30,17 +31,16 @@ query_id(query_group)       -> 1;
 query_id(query_value)       -> 2;
 query_id(query_value_range) -> 3;
 query_id(query_term)        -> 4;
-query_id(query_string)      -> 5.
+query_id(query_string)      -> 5;
+query_id(query_scale_weight) -> 6.
 
 
 encode(#x_query{op=Op, value=Value, parameter=Param}, N2S, Bin@) ->
     Bin@ = append_type(query_group, Bin@),
     Bin@ = append_operator(Op, Bin@),
     Bin@ = append_uint(Param, Bin@),
-    %% Defines when to stop.
-    SubQueryCount = erlang:length(Value),
-    Bin@ = append_uint(SubQueryCount, Bin@),
-    lists:foldl(fun(Rec, Acc) -> encode(Rec, N2S, Acc) end, Bin@, Value);
+    Bin@ = append_query(Value, N2S, Bin@),
+    Bin@;
 
 encode(#x_query_value{op=Op, slot=Slot, value=Value}, N2S, Bin@) ->
     Bin@ = append_type(query_value, Bin@),
@@ -73,6 +73,13 @@ encode(#x_query_string{parser=Parser, string=String,
     Bin@ = append_parser_feature_ids(Features, Bin@),
     Bin@;
 
+encode(#x_query_scale_weight{value=SubQuery, op=Op, factor=Fac}, N2S, Bin@) ->
+    Bin@ = append_type(query_scale_weight, Bin@),
+    Bin@ = append_operator(Op, Bin@),
+    Bin@ = append_double(Fac, Bin@),
+    Bin@ = encode(SubQuery, N2S, Bin@),
+    Bin@;
+
 encode(Term, N2S, Bin) ->
     encode(#x_query_term{name=Term}, N2S, Bin).
 
@@ -83,6 +90,16 @@ append_operator(Op, Bin) ->
 
 append_type(Type, Bin) ->
     append_uint8(query_id(Type), Bin).
+
+
+append_query(Query, N2S, Bin@) ->
+    %% Defines when to stop.
+    SubQueryCount = erlang:length(Query),
+    Bin@ = append_uint(SubQueryCount, Bin@),
+    lists:foldl(fun(Rec, Acc) -> encode(Rec, N2S, Acc) end, Bin@, Query).
+
+append_parser_type_id(Id, Bin) ->
+    append_uint8(parser_type_id(Id), Bin).
 
 
 
@@ -228,7 +245,7 @@ append_parser_type(default, Bin) ->
 
 append_parser_type(Type, Bin@) ->
     Bin@ = append_parser_command(parser_type, Bin@),
-    Bin@ = append_parser_type(Type, Bin@),
+    Bin@ = append_parser_type_id(Type, Bin@),
     Bin@.
 
 

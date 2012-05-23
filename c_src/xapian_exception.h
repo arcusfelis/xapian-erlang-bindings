@@ -81,14 +81,6 @@ class NotWritableDatabaseError: public DriverRuntimeError
     NotWritableDatabaseError();
 };
 
-class DbAlreadyOpenedDriverError: public DriverRuntimeError
-{
-    static const char TYPE[];
-
-    public:
-    DbAlreadyOpenedDriverError();
-};
-
 class DbIsNotReadyDriverError: public DriverRuntimeError
 {
     static const char TYPE[];

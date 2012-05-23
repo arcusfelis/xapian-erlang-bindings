@@ -17,23 +17,23 @@ class TermIteratorGenerator;
 class ParamDecoder;
 
 /**
- * Controller of `Xapian::MatchSet'.
+ * @brief Controller of `Xapian::MatchSet`.
  *
  * This class do a lot of stuff.
- * User can extend it for working other variants of `MatchSpy'.
+ * User can extend it for working other variants of `MatchSpy`.
  *
  * @ref getIteratorGenerator allows to create an object of type 
  * @ref TermIteratorGenerator,
  * which can be used inside @ref TermQlcTable.
  *
- * If the `MatchSet' cannot be used as TermGenerator, do not overwrite 
- * these methods. If the Erlang user will try to use this MatchSpy as
+ * If the `MatchSet` cannot be used as TermGenerator, do not overwrite 
+ * these methods. If the Erlang user will try to use this `MatchSpy` as
  * a term iterator, an exception will be thrown.
  *
- * `MatchSpy' can filled only once, after that it will be @ref finalize.
+ * `MatchSpy` can filled only once, after that it will be @ref finalize.
  *
  * Objects of this type are reference-counted.
- * `MatchSpy' will be deleted in the destructor.
+ * `MatchSpy` will be deleted in the destructor.
  */
 class SpyController 
 {
@@ -57,13 +57,13 @@ class SpyController
      * Create an object.
      * This method can be redifined by an user.
      * It is reference-counted.
-     * Throw badarg error, if you can not use this `MatchSet'.
+     * Throw badarg error, if you can not use this `MatchSet`.
      */
     virtual TermIteratorGenerator*
     getIteratorGenerator(ParamDecoder& param);
 
     /**
-     * Call it after using with `add_matchspy'.
+     * Call it after using with `add_matchspy`.
      */
     void finalize();
 

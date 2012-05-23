@@ -2,6 +2,31 @@
 -define(REQUIRED, erlang:throw(required_field)).
 
 % ----------------------------------------------------------
+%% These records are used with `open'
+% ----------------------------------------------------------
+
+-record(x_database, {
+    name :: atom(),
+    path = ?REQUIRED :: xapian:x_string()
+}).
+
+-record(x_prog_database, {
+    name :: atom(),
+    program = ?REQUIRED :: xapian:x_string(),
+    arguments = ?REQUIRED :: xapian:x_string(),
+    timeout = 10000 :: xapian:x_timeout()
+}).
+
+-record(x_tcp_database, {
+    name :: atom(),
+    host = ?REQUIRED :: xapian:x_string(),
+    port = ?REQUIRED :: xapian:x_string(),
+    timeout = 10000 :: xapian:x_timeout(),
+    connect_timeout = 10000 :: xapian:x_timeout()
+}).
+
+
+% ----------------------------------------------------------
 %% These records are used by indexer
 % ----------------------------------------------------------
 
@@ -237,7 +262,7 @@
     value :: [xapian:x_query() | xapian:x_string()],
     %% For `NEAR' and `PHRASE', a window size can be specified in parameter.
     %% For `ELITE_SET', the elite set size can be specified in parameter. 
-    parameter=0
+    parameter=0 :: non_neg_integer()
 }).
 
 -record(x_query_value, {
@@ -287,6 +312,15 @@
 }).
 
 
+%% @see http://trac.xapian.org/wiki/FAQ/ExtraWeight
+-record(x_query_scale_weight, {
+    op = 'SCALE WEIGHT',
+    %% Sub-query
+    value = ?REQUIRED :: xapian:x_query(), 
+    factor = ?REQUIRED :: float()
+}). 
+
+
 -record(x_sort_order, {
     type = relevance :: xapian:x_order_type(),
     value :: xapian:x_slot_value() | xapian:x_resource(), %% KeyMaker resource
@@ -332,3 +366,6 @@
     check_at_least = 0 :: non_neg_integer(), 
     spies = [] :: [xapian:x_resource()]
 }).
+
+
+

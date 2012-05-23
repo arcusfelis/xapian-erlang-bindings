@@ -6,7 +6,6 @@
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
 
-// hidden
 class SpyControllerInternal
 {
     public:

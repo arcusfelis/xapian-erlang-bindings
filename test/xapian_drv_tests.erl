@@ -942,5 +942,34 @@ metadata_test_() ->
     ?DRV:close(Server),
     [?_assertEqual(Info, [{{metadata, "key"}, <<"value">>}])].
 
+
+%% http://trac.xapian.org/wiki/FAQ/ExtraWeight
+extra_weight_test_() ->
+    Path = testdb_path(extra_weight),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?DRV:open(Path, Params),
+    Terms = ["Sxapian", "weight"],
+    Document = [#x_term{value = X} || X <- Terms],
+    DocId = ?DRV:add_document(Server, Document),
+    Query = extra_weight_query(2.5, "Sxapian", "weight"),
+    Ids = all_record_ids(Server, Query),
+    [?_assertEqual(Ids, [DocId])].
+
+
+%% `Title' and `Body' are queries.
+extra_weight_query(Factor, Title, Body) ->
+    Scale = #x_query_scale_weight{factor = 2.5, value = Title},
+    #x_query{value = [Scale, Body]}.
+
+
+-record(document, {docid}).
+
+all_record_ids(Server, Query) ->
+    EnquireResourceId = ?DRV:enquire(Server, Query),
+    MSetResourceId = ?DRV:match_set(Server, EnquireResourceId),
+    Meta = xapian_record:record(document, record_info(fields, document)),
+    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+    qlc:e(qlc:q([Id || #document{docid=Id} <- Table])).
+
 -endif.
 

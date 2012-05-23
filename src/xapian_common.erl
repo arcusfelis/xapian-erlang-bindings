@@ -32,6 +32,11 @@ append_uint(Value, Bin) when is_integer(Value), is_binary(Bin) ->
     <<Bin/binary, Value:32/native-unsigned-integer>>.
 
 
+%% Encode to unsigned int16_t (for example, it is a tcp port)
+append_uint16(Value, Bin) when is_integer(Value), is_binary(Bin) ->
+    <<Bin/binary, Value:16/native-unsigned-integer>>.
+
+
 read_uint(Bin) ->
     <<Value:32/native-unsigned-integer, Bin2/binary>> = Bin,  
     {Value, Bin2}.

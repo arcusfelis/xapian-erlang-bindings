@@ -89,14 +89,6 @@ NotWritableDatabaseError::NotWritableDatabaseError() :
 
 
 // -------------------------------------------------------------------
-// DbAlreadyOpenedDriverError
-// -------------------------------------------------------------------
-DbAlreadyOpenedDriverError::DbAlreadyOpenedDriverError() : 
-    DriverRuntimeError(TYPE, 
-        "This port cannot open second DB. Use another port.") {}
-
-
-// -------------------------------------------------------------------
 // DbIsNotReadyDriverError
 // -------------------------------------------------------------------
 DbIsNotReadyDriverError::DbIsNotReadyDriverError() : 
@@ -133,7 +125,6 @@ REG_TYPE(BadArgumentDriverError)
 REG_TYPE(EmptySetDriverError)
 REG_TYPE(OverflowDriverError)
 REG_TYPE(NotWritableDatabaseError)
-REG_TYPE(DbAlreadyOpenedDriverError)
 REG_TYPE(DbIsNotReadyDriverError)
 REG_TYPE(ElementNotFoundDriverError)
 REG_TYPE(MatchSpyFinalizedDriverError)

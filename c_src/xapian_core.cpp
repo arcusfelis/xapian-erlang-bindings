@@ -141,10 +141,6 @@ Driver::getResultEncoder()
 Driver::Driver(ResourceGenerator& generator)
 : m_generator(generator), m_stores(generator)
 {
-    mp_db = NULL;
-    mp_wdb = NULL;
-    mp_default_stemmer = NULL;
-
     // RESOURCE_TYPE_ID_MARK
     m_stores.add(ResourceType::DOCUMENT,       &m_document_store);
     m_stores.add(ResourceType::ENQUIRE,        &m_enquire_store);
@@ -160,27 +156,23 @@ Driver::Driver(ResourceGenerator& generator)
         &m_date_value_range_processor_store);
     m_stores.add(ResourceType::MATCH_SPY,      &m_match_spy_store);
     m_stores.add(ResourceType::DOCUMENT,       &m_document_store);
+
+
+    m_default_parser.set_database(m_db);
+    m_empty_parser.set_database(m_db);
+    m_stores.set_database(m_db);
 }
 
 
 Driver::~Driver()
-{
-    if (mp_db != NULL) 
-        delete mp_db;
-
-    if (mp_default_stemmer != NULL)
-        delete mp_default_stemmer;
-}
+{}
 
 
 void 
-Driver::setDefaultStemmer(const Xapian::Stem* stemmer)
+Driver::setDefaultStemmer(const Xapian::Stem& stemmer)
 {
-    if (mp_default_stemmer != NULL)
-        delete mp_default_stemmer;
-
-    mp_default_stemmer = stemmer;
-    m_default_parser.set_stemmer(*mp_default_stemmer);
+    m_default_stemmer = stemmer;
+    m_default_parser.set_stemmer(m_default_stemmer);
 }
 
 
@@ -188,7 +180,7 @@ size_t
 Driver::setDefaultStemmer(ParamDecoder& params)
 {
     const Xapian::Stem&  stemmer = params;
-    setDefaultStemmer(new Xapian::Stem(stemmer));
+    setDefaultStemmer(Xapian::Stem(stemmer));
     return m_result;
 }
 
@@ -217,7 +209,7 @@ Driver::getLastDocId()
 {
     //Xapian::docid get_lastdocid() const
     const Xapian::docid 
-    docid = mp_db->get_lastdocid();
+    docid = m_db.get_lastdocid();
     m_result << static_cast<uint32_t>(docid);
     return m_result;
 }
@@ -231,7 +223,7 @@ Driver::addDocument(ParamDecoder& params)
     Xapian::Document doc;
     applyDocument(params, doc);
     const Xapian::docid
-    docid = mp_wdb->add_document(doc);
+    docid = m_wdb.add_document(doc);
     m_result << static_cast<uint32_t>(docid);
     return m_result;
 }
@@ -251,14 +243,14 @@ Driver::replaceDocument(ParamDecoder& params)
         case UNIQUE_DOCID:
         {
             docid = params;
-            mp_wdb->replace_document(docid, doc);
+            m_wdb.replace_document(docid, doc);
             break;
         }
 
         case UNIQUE_TERM:
         {
             const std::string& unique_term = params;
-            docid = mp_wdb->replace_document(unique_term, doc);
+            docid = m_wdb.replace_document(unique_term, doc);
             break;
         }
 
@@ -291,29 +283,29 @@ Driver::updateDocument(ParamDecoder& params, bool create)
             // If create = true, then ignore errors.
             if (create)
                 try {
-                    doc = mp_wdb->get_document(docid);
+                    doc = m_wdb.get_document(docid);
                 } catch (Xapian::DocNotFoundError e) {}
             else 
-                doc = mp_wdb->get_document(docid);
+                doc = m_wdb.get_document(docid);
 
             ParamDecoder params = schema;
             applyDocument(params, doc);
-            mp_wdb->replace_document(docid, doc);
+            m_wdb.replace_document(docid, doc);
             break;
         }
 
         case UNIQUE_TERM:
         {
             const std::string& unique_term = params;
-            if (mp_wdb->term_exists(unique_term))
+            if (m_wdb.term_exists(unique_term))
             {
                 // Start searching
-                Xapian::Enquire     enquire(*mp_wdb);
+                Xapian::Enquire     enquire(m_wdb);
                 enquire.set_query(Xapian::Query(unique_term));
 
                 // Get a set of documents with term
                 Xapian::MSet mset = enquire.get_mset(
-                    0, mp_wdb->get_doccount());
+                    0, m_wdb.get_doccount());
                 
                 for (Xapian::MSetIterator m = mset.begin(); 
                         m != mset.end(); ++m) {
@@ -321,7 +313,7 @@ Driver::updateDocument(ParamDecoder& params, bool create)
                     Xapian::Document doc = m.get_document();
                     ParamDecoder params = schema;
                     applyDocument(params, doc);
-                    mp_wdb->replace_document(docid, doc);
+                    m_wdb.replace_document(docid, doc);
                 }
                 // new document was not added added
                 docid = 0;
@@ -331,7 +323,7 @@ Driver::updateDocument(ParamDecoder& params, bool create)
                 
                 ParamDecoder params = schema;
                 applyDocument(params, doc);
-                docid = mp_wdb->add_document(doc);
+                docid = m_wdb.add_document(doc);
             }
             else 
             {
@@ -360,14 +352,14 @@ Driver::deleteDocument(ParamDecoder& params)
         {
             const Xapian::docid
             docid = params;
-            mp_wdb->delete_document(docid);
+            m_wdb.delete_document(docid);
             break;
         }
 
         case UNIQUE_TERM:
         {
             const std::string& unique_term = params;
-            mp_wdb->delete_document(unique_term);
+            m_wdb.delete_document(unique_term);
             break;
         }
 
@@ -384,7 +376,7 @@ Driver::query(ParamDecoder& params)
     const uint32_t pagesize = params;
 
     // Use an Enquire object on the database to run the query.
-    Xapian::Enquire enquire(*mp_db);
+    Xapian::Enquire enquire(m_db);
     Xapian::Query   query = buildQuery(params);
     enquire.set_query(query);
      
@@ -409,9 +401,10 @@ size_t
 Driver::enquire(ParamDecoder& params)
 {
     // Use an Enquire object on the database to run the query.
-    Xapian::Enquire* p_enquire = new Xapian::Enquire(*mp_db);
+    Xapian::Enquire* p_enquire = new Xapian::Enquire(m_db);
     fillEnquire(*p_enquire, params);
 
+    // m_enquire_store will call the delete operator.
     uint32_t num = m_enquire_store.put(p_enquire);
     m_result << num;
 
@@ -429,16 +422,16 @@ Driver::getDocument(ParamDecoder& params)
         case UNIQUE_DOCID:
         {
             Xapian::docid docid = params;
-            return mp_db->get_document(docid);
+            return m_db.get_document(docid);
         }
 
         case UNIQUE_TERM:
         {
             const std::string& unique_term = params;
-            if (mp_wdb->term_exists(unique_term))
+            if (m_wdb.term_exists(unique_term))
             {
                 // Start searching
-                Xapian::Enquire     enquire(*mp_wdb);
+                Xapian::Enquire     enquire(m_wdb);
                 enquire.set_query(Xapian::Query(unique_term));
 
                 // Get a set of documents with term
@@ -467,6 +460,7 @@ size_t
 Driver::document(ParamDecoder& params)
 {
     const Xapian::Document& doc = getDocument(params);
+    // m_document_store will call delete
     uint32_t num = m_document_store.put(new Xapian::Document(doc));
     m_result << num;
 
@@ -497,7 +491,7 @@ Driver::matchSet(ParamDecoder& params)
     first = params;
     uint8_t is_undefined = params;
     maxitems = is_undefined 
-        ? mp_db->get_doccount() 
+        ? m_db.get_doccount() 
         : params;
     checkatleast = params;
 
@@ -525,6 +519,7 @@ Driver::matchSet(ParamDecoder& params)
 
     enquire.clear_matchspies();
 
+    // m_mset_store will call delete
     uint32_t mset_num = m_mset_store.put(new Xapian::MSet(mset));
     m_result << mset_num;
 
@@ -548,6 +543,7 @@ Driver::qlcInit(ParamDecoder& params)
             const ParamDecoderController& schema  
                 = retrieveDocumentSchema(params);
             MSetQlcTable* qlcTable = new MSetQlcTable(*this, mset, schema);
+            // m_qlc_store will call delete
             const uint32_t qlc_num = m_qlc_store.put(qlcTable);
             const uint32_t mset_size = qlcTable->numOfObjects();
         
@@ -564,6 +560,7 @@ Driver::qlcInit(ParamDecoder& params)
                 = retrieveTermSchema(params);
             TermQlcTable* qlcTable = new TermQlcTable(*this, p_gen, schema);
             // qlcTable is now a master of p_gen object. 
+            // m_qlc_store will call delete
             const uint32_t qlc_num = m_qlc_store.put(qlcTable);
             const uint32_t list_size = qlcTable->numOfObjects();
         
@@ -636,10 +633,7 @@ Driver::qlcLookup(ParamDecoder& params)
 
 void 
 Driver::assertWriteable() const
-{
-    if (mp_wdb == NULL)
-        throw NotWritableDatabaseError();
-}
+{}
 
 
 size_t 
@@ -647,7 +641,7 @@ Driver::startTransaction()
 {
     assertWriteable();
 
-    mp_wdb->begin_transaction();
+    m_wdb.begin_transaction();
     return m_result;
 }
 
@@ -657,7 +651,7 @@ Driver::cancelTransaction()
 {
     assertWriteable();
 
-    mp_wdb->cancel_transaction();
+    m_wdb.cancel_transaction();
     return m_result;
 }
 
@@ -667,7 +661,7 @@ Driver::commitTransaction()
 {
     assertWriteable();
 
-    mp_wdb->commit_transaction();
+    m_wdb.commit_transaction();
     return m_result;
 }
 
@@ -676,7 +670,7 @@ size_t
 Driver::getDocumentById(ParamDecoder& params)
 {
     const Xapian::docid docid = params;
-    Xapian::Document doc = mp_db->get_document(docid);
+    Xapian::Document doc = m_db.get_document(docid);
     retrieveDocument(params, doc, NULL);
     return m_result;
 }
@@ -842,6 +836,19 @@ Driver::buildQuery(ParamDecoder& params)
                 query_string, 
                 flags, 
                 default_prefix);
+            return q;
+        }
+
+        case QUERY_SCALE_WEIGHT: // case with a double parameter
+        {
+            const uint8_t op        = params;
+            const double  factor    = params;
+            Xapian::Query sub_query = buildQuery(params);
+
+            Xapian::Query q(
+                static_cast<Xapian::Query::op>(op), 
+                sub_query, 
+                factor);
             return q;
         }
 
@@ -1064,9 +1071,28 @@ Driver::control(
         switch(command) {
         case OPEN: 
             {
+            const uint8_t        mode   = params;
             const std::string&   dbpath = params;
-            const int8_t         mode = params;
-            return drv.open(dbpath, mode);
+            return drv.open(mode, dbpath);
+            }
+
+        case OPEN_PROG: 
+            {
+            const uint8_t        mode     = params;
+            const std::string&   prog     = params;
+            const std::string&   args     = params;
+            const uint32_t       timeout  = params;
+            return drv.open(mode, prog, args, timeout);
+            }
+
+        case OPEN_TCP: 
+            {
+            const uint8_t        mode     = params;
+            const std::string&   host     = params;
+            const uint16_t       port     = params;
+            const uint32_t       timeout  = params;
+            const uint32_t       ctimeout = params;
+            return drv.open(mode, host, port, timeout, ctimeout);
             }
 
         case LAST_DOC_ID:
@@ -1076,6 +1102,7 @@ Driver::control(
             return drv.addDocument(params);
 
         case UPDATE_DOCUMENT:
+
         case UPDATE_OR_CREATE_DOCUMENT:
             return drv.updateDocument(params, 
                 command == UPDATE_OR_CREATE_DOCUMENT);
@@ -1175,51 +1202,114 @@ Driver::control(
 
 
 size_t 
-Driver::open(const std::string& dbpath, int8_t mode)
+Driver::open(uint8_t mode, const std::string& dbpath)
 {
-    // Is already opened?
-    if (mp_db != NULL)
-        throw DbAlreadyOpenedDriverError();
-
-    switch(mode) {
+    switch(mode) 
+    {
         // Open readOnly db
         case READ_OPEN:
-            mp_db = new Xapian::Database(dbpath);
+            m_db.add_database(Xapian::Database(dbpath));
             break;
 
-        // open for read/write; create if no db exists
         case WRITE_CREATE_OR_OPEN:
-            mp_db = mp_wdb = new Xapian::WritableDatabase(dbpath, 
-                Xapian::DB_CREATE_OR_OPEN);
-            break;
-
-        // create new database; fail if db exists
         case WRITE_CREATE:
-            mp_db = mp_wdb = new Xapian::WritableDatabase(dbpath, 
-                Xapian::DB_CREATE);
-            break;
-
-        // overwrite existing db; create if none exists
         case WRITE_CREATE_OR_OVERWRITE:
-            mp_db = mp_wdb = new Xapian::WritableDatabase(dbpath, 
-                Xapian::DB_CREATE_OR_OVERWRITE);
-            break;
-
-        // open for read/write; fail if no db exists
         case WRITE_OPEN:
-            mp_db = mp_wdb = new Xapian::WritableDatabase(dbpath, 
-                Xapian::DB_OPEN);
+            m_wdb = Xapian::WritableDatabase(dbpath, openWriteMode(mode));
+            m_db = m_wdb;
             break;
 
         default:
             throw BadCommandDriverError(mode);
     }
-    m_default_parser.set_database(*mp_db);
-    m_empty_parser.set_database(*mp_db);
-    m_stores.set_database(*mp_db);
+    
     return m_result;
 }
 
+int 
+Driver::openWriteMode(uint8_t mode)
+{
+    switch(mode)
+    {
+        // create new database; fail if db exists
+        case WRITE_CREATE_OR_OPEN:
+            return Xapian::DB_CREATE_OR_OPEN;
+
+        // overwrite existing db; create if none exists
+        case WRITE_CREATE:
+            return Xapian::DB_CREATE;
+
+        // open for read/write; fail if no db exists
+        case WRITE_CREATE_OR_OVERWRITE:
+            return Xapian::DB_CREATE_OR_OVERWRITE;
+
+        // open for read/write; fail if no db exists
+        case WRITE_OPEN:
+            return Xapian::DB_OPEN;
+
+        default:
+            throw BadCommandDriverError(mode);
+    }
+}
+
+
+/**
+ * Open an remote TCP database.
+ *
+ * http://xapian.org/docs/apidoc/html/namespaceXapian_1_1Remote.html
+ */
+size_t 
+Driver::open(uint8_t mode, const std::string& host, uint16_t port, 
+             uint32_t timeout, uint32_t connect_timeout)
+{
+    switch(mode) 
+    {
+        // Open readOnly db
+        case READ_OPEN:
+            m_db.add_database(
+                Xapian::Remote::open(host, port, timeout, connect_timeout));
+            break;
+
+        // open for read/write; fail if no db exists
+        case WRITE_OPEN:
+            m_wdb = Xapian::Remote::open_writable(host, port, 
+                    timeout, connect_timeout);
+            m_db = m_wdb;
+            break;
+
+        default:
+            throw BadCommandDriverError(mode);
+    }
+    return m_result;
+}
+
+
+/**
+ * Open an remote program database.
+ *
+ * http://xapian.org/docs/apidoc/html/namespaceXapian_1_1Remote.html
+ */
+size_t 
+Driver::open(uint8_t mode, const std::string& prog, const std::string& args, 
+             uint32_t timeout)
+{
+    switch(mode) {
+        // Open readOnly db
+        case READ_OPEN:
+            m_db.add_database(Xapian::Remote::open(prog, args, timeout));
+            break;
+
+        // open for read/write; fail if no db exists
+        case WRITE_OPEN:
+            m_wdb = Xapian::Remote::open_writable(prog, args, timeout);
+            m_db = m_wdb;
+            break;
+
+        default:
+            throw BadCommandDriverError(mode);
+    }
+    return m_result;
+}
 
 void 
 Driver::applyDocument(
@@ -1228,8 +1318,7 @@ Driver::applyDocument(
 {
     Xapian::TermGenerator   termGenerator;
     termGenerator.set_document(doc);
-    if (mp_default_stemmer != NULL)
-        termGenerator.set_stemmer(*mp_default_stemmer);
+    termGenerator.set_stemmer(m_default_stemmer);
 
     while (const uint8_t command = params)
     /* Do, while command != stop != 0 */
@@ -2218,94 +2307,94 @@ Driver::databaseInfo(ParamDecoder& params)
     switch(command)
     {
         case DBI_HAS_POSITIONS:
-            m_result << static_cast<uint8_t>(mp_db->has_positions());
+            m_result << static_cast<uint8_t>(m_db.has_positions());
             break;
 
         case DBI_DOCCOUNT:
-            m_result << static_cast<uint32_t>(mp_db->get_doccount());
+            m_result << static_cast<uint32_t>(m_db.get_doccount());
             break;
 
         case DBI_LASTDOCID:
-            m_result << static_cast<uint32_t>(mp_db->get_lastdocid());
+            m_result << static_cast<uint32_t>(m_db.get_lastdocid());
             break;
 
         case DBI_AVLENGTH:
-            m_result << static_cast<double>(mp_db->get_avlength());
+            m_result << static_cast<double>(m_db.get_avlength());
             break;
 
 
         case DBI_TERM_EXISTS:
         {
             const std::string& tname = params;
-            m_result << static_cast<uint8_t>(mp_db->term_exists(tname));
+            m_result << static_cast<uint8_t>(m_db.term_exists(tname));
             break;
         }
 
         case DBI_TERM_FREQ:
         {
             const std::string& tname = params;
-            m_result << static_cast<uint32_t>(mp_db->get_termfreq(tname));
+            m_result << static_cast<uint32_t>(m_db.get_termfreq(tname));
             break;
         }
 
         case DBI_COLLECTION_FREQ:
         {
             const std::string& tname = params;
-            m_result << static_cast<uint32_t>(mp_db->get_collection_freq(tname));
+            m_result << static_cast<uint32_t>(m_db.get_collection_freq(tname));
             break;
         }
 
         case DBI_VALUE_FREQ:
         {
             const Xapian::valueno slot = params;
-            m_result << static_cast<uint32_t>(mp_db->get_value_freq(slot));
+            m_result << static_cast<uint32_t>(m_db.get_value_freq(slot));
             break;
         }
 
         case DBI_VALUE_LOWER_BOUND:
         {
             const Xapian::valueno slot = params;
-            m_result << mp_db->get_value_lower_bound(slot);
+            m_result << m_db.get_value_lower_bound(slot);
             break;
         }
 
         case DBI_VALUE_UPPER_BOUND:
         {
             const Xapian::valueno slot = params;
-            m_result << mp_db->get_value_upper_bound(slot);
+            m_result << m_db.get_value_upper_bound(slot);
             break;
         }
 
         case DBI_DOCLENGTH_LOWER_BOUND:
-            m_result << mp_db->get_doclength_lower_bound();
+            m_result << m_db.get_doclength_lower_bound();
             break;
 
         case DBI_DOCLENGTH_UPPER_BOUND:
-            m_result << mp_db->get_doclength_upper_bound();
+            m_result << m_db.get_doclength_upper_bound();
             break;
 
         case DBI_WDF_UPPER_BOUND:
         {
             const std::string& tname = params;
-            m_result << static_cast<uint32_t>(mp_db->get_wdf_upper_bound(tname));
+            m_result << static_cast<uint32_t>(m_db.get_wdf_upper_bound(tname));
             break;
         }
 
         case DBI_DOCLENGTH:
         {
             const Xapian::docid docid = params;
-            m_result << static_cast<uint32_t>(mp_db->get_doclength(docid));
+            m_result << static_cast<uint32_t>(m_db.get_doclength(docid));
             break;
         }
 
         case DBI_UUID:
-            m_result << mp_db->get_uuid();
+            m_result << m_db.get_uuid();
             break;
 
         case DBI_METADATA:
         {
             const std::string& key = params;
-            m_result << mp_db->get_metadata(key);
+            m_result << m_db.get_metadata(key);
             break;
         }
 
@@ -2326,7 +2415,7 @@ Driver::setMetadata(ParamDecoder& params)
 
     const std::string& key = params;
     const std::string& value = params;
-    mp_wdb->set_metadata(key, value);
+    m_wdb.set_metadata(key, value);
 }
 
 

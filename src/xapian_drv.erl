@@ -61,13 +61,20 @@
 
          internal_create_resource/2,
          internal_create_resource/3,
-         internal_run_test/3]).
+         internal_run_test/3
+         ]).
+
+
+%% with_state internals
+-export([internal_name_to_slot/2,
+         internal_name_to_slot_dict/1]).
 
 
 -import(xapian_common, [ 
     append_int8/2,
-    append_uint/2,
     append_uint8/2,
+    append_uint16/2,
+    append_uint/2,
     append_iolist/2,
     append_document_id/2,
     append_unique_document_id/2,
@@ -97,6 +104,8 @@
     %% new resource on C++ side of the application.
     name_to_resource :: ordict:orddict(),
 
+    %% Each sub-database can have a name for identification.
+    subdb_name_to_id :: ordict:orddict(),
 
     %% Pid of the real server (used by a transaction).
     %% If the process will be terminated, then new owner of the port will 
@@ -401,13 +410,15 @@ transaction_ready(Ref, Servers, TransServers, F, Timeout) ->
         end,
     TransPidRef = erlang:spawn_monitor(TransBody),
     GroupMonPid = monitor_group(Home, Servers, Ref),
-    Result = wait_transaction_result(TransPidRef, Ref, Servers, TransServers),
+    Result = wait_transaction_result(TransPidRef, Ref, Servers, 
+                                     TransServers, Timeout),
     stop_monitor(GroupMonPid),
     Result.
 
 
 %% @doc Collects `#x_transaction_result{}' record.
-wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers) ->
+wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers, 
+                        Timeout) ->
     receive
         %% Error in the transaction body.
         {'DOWN', TransRef, process, TransPid, Reason} ->
@@ -447,6 +458,8 @@ wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers) ->
                 result = ResultI,
                 statuses = Statuses
             }
+    after Timeout ->
+        erlang:error(timeout)
     end.
 
 
@@ -517,21 +530,25 @@ name_to_slot(#state{name_to_slot = N2S}, Slot) when is_atom(Slot) ->
     orddict:fetch(Slot, N2S);
 
 name_to_slot(Server, Slot) when is_atom(Slot) ->
-    Fun = fun(#state{name_to_slot = N2S}) -> 
-        orddict_find(N2S, Slot) 
-        end,
-    call(Server, {with_state, Fun}).
+    call(Server, {with_state, fun ?DRV:internal_name_to_slot/2, Slot}).
 
 
 name_to_slot(#state{name_to_slot = N2S}) ->
     N2S;
 
 name_to_slot(Server) ->
-    Fun = fun(#state{name_to_slot = N2S}) -> 
-        {ok, N2S}
-        end,
-    call(Server, {with_state, Fun}).
+    call(Server, {with_state, fun ?DRV:internal_name_to_slot_dict/1}).
 
+
+%% ------------------------------------------------------------------
+%% Info Internal
+%% ------------------------------------------------------------------
+
+internal_name_to_slot_dict(#state{name_to_slot = N2S}) -> 
+    {ok, N2S}.
+
+internal_name_to_slot(#state{name_to_slot = N2S}, Slot) -> 
+    orddict_find(N2S, Slot).
 
 %% ------------------------------------------------------------------
 %% API for other modules
@@ -620,8 +637,8 @@ init([Path, Params]) ->
     Port = erlang:open_port({spawn, ?DRIVER_NAME}, []),
 
     do([error_m ||
-        <<>> <- 
-            open_database(Port, Path, Params),
+        SubDbNames <- 
+            open_databases(Port, Path, Params),
         <<>> <- 
             set_default_stemmer(Port, DefaultStemmer),
         <<>> <- 
@@ -639,21 +656,27 @@ init([Path, Params]) ->
             || #resource_info{type=InfoType, number=InfoNum, name=InfoName} 
                 <- ResourceInfo],
         Name2ResourceDict = orddict:from_list(Name2Resource),
+        Name2Subdb = subdb_numbers(SubDbNames),
+        Name2SubdbDict = orddict:from_list(Name2Subdb),
         {ok, #state{
             port = Port,
             name_to_prefix = Name2PrefixDict,
             name_to_slot = Name2SlotDict,
-            name_to_resource = Name2ResourceDict
+            name_to_resource = Name2ResourceDict,
+            subdb_name_to_id = Name2SubdbDict
         }}
         end]);
 
 %% Add a copy of the server for the transaction
 init([{from_state, State}]) ->
     {ok, State}.
-    
+
  
 handle_call({with_state, Fun}, _From, State) ->
     {reply, Fun(State), State};
+
+handle_call({with_state, Fun, Params}, _From, State) ->
+    {reply, Fun(State, Params), State};
 
 handle_call(last_document_id, _From, State) ->
     #state{ port = Port } = State,
@@ -1020,7 +1043,9 @@ command_id(replace_document)            -> 22;
 command_id(set_metadata)                -> 23;
 command_id(update_document)             -> 24;
 command_id(update_or_create_document)   -> 25;
-command_id(document)                    -> 26.
+command_id(document)                    -> 26;
+command_id(open_prog)                   -> 27;
+command_id(open_tcp)                    -> 28.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -1103,14 +1128,81 @@ control(Port, Operation, Data) ->
     end.
 
 
-open_database(Port, Path, Params) ->
-    PathBin = erlang:iolist_to_binary(Path),
-    PathLen = erlang:byte_size(PathBin),
-    Mode = open_mode_id(open_mode(Params)),
-    Data = <<PathLen:32/native-signed-integer, 
-             PathBin/binary, 
-             Mode:8/native-signed-integer>>,
-    control(Port, open, Data).
+open_database(Port, Mode, Path) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint8(open_mode_id(Mode), Bin@),
+    Bin@ = append_iolist(Path, Bin@),
+    control(Port, open, Bin@).
+
+
+open_prog_database(Port, Mode, Prog, Args, Timeout) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint8(open_mode_id(Mode), Bin@),
+    Bin@ = append_iolist(Prog, Bin@),
+    Bin@ = append_iolist(Args, Bin@),
+    Bin@ = append_uint(Timeout, Bin@),
+    control(Port, open_prog, Bin@).
+
+
+open_tcp_database(Port, Mode, TcpHost, TcpPort, Timeout, ConnectTimeout) ->
+    Bin@ = <<>>,
+    Bin@ = append_uint8(open_mode_id(Mode), Bin@),
+    Bin@ = append_iolist(TcpHost, Bin@),
+    Bin@ = append_uint16(TcpPort, Bin@),
+    Bin@ = append_uint(Timeout, Bin@),
+    Bin@ = append_uint(ConnectTimeout, Bin@),
+    control(Port, open_tcp, Bin@).
+
+
+open_databases(_Port, [], _Params) ->
+    {error, empty_path_list};
+
+open_databases(Port, PathList, Params) ->
+    Mode = open_mode(Params),
+    open_databases(Port, PathList, Mode, []).
+
+
+%% Open few DBs together
+open_databases(_Port, [H,_|_], Mode, []) 
+    when is_tuple(H), Mode =/= read_open ->
+    %% Only one database may be specified when --writable is used.
+    {error, multiple_writable_dbs};
+
+open_databases(Port, [#x_database{name=Name, path=Path}|T], Mode, Names) ->
+    Res = open_database(Port, Mode, Path),
+    open_next_database(Port, Res, T, Mode, [Name|Names]);
+
+open_databases(Port, [#x_prog_database{}=H|T], Mode, Names) ->
+    #x_prog_database{name=Name, program=Prog, 
+                     arguments=Args, timeout=Timeout} = H,
+    Res = open_prog_database(Port, Mode, Prog, Args, Timeout),
+    open_next_database(Port, Res, T, Mode, [Name|Names]);
+
+open_databases(Port, [#x_tcp_database{}=H|T], Mode, Names) ->
+    #x_tcp_database{name=Name, host=TcpHost, port=TcpPort, 
+                    timeout=Timeout, connect_timeout=ConnectTimeout} = H,
+    Res = open_tcp_database(Port, Mode, TcpHost, TcpPort, 
+                            Timeout, ConnectTimeout),
+    open_next_database(Port, Res, T, Mode, [Name|Names]);
+
+open_databases(_Port, [], _Mode, Names) ->
+    {ok, lists:reverse(Names)};
+
+%% Path is a iolist
+open_databases(Port, Path, Mode, []) ->
+    case open_database(Port, Mode, Path) of
+        {ok, <<>>} ->
+            {ok, []};
+        {error, _Mess} = Error ->
+            Error
+    end.        
+
+
+open_next_database(Port, {ok, <<>>}, PathList, Mode, Names) ->
+    open_databases(Port, PathList, Mode, Names);
+
+open_next_database(_Port, {error, _Mess} = Error, _PathList, _Mode, _Names) ->
+    Error.
 
 
 set_default_stemmer(_Port, false) ->
@@ -1445,11 +1537,22 @@ check_all(List) ->
 check_all([{ok, X}|T], Acc) ->
     check_all(T, [X|Acc]);
 
-check_all([{error, _} = H|T], _Acc) ->
+check_all([{error, _} = H|_T], _Acc) ->
     H;
 
 check_all([], Acc) ->
     {ok, lists:reverse(Acc)}.
+
+
+subdb_numbers(Names) ->
+    subdb_numbers(Names, 0, []).
+
+
+subdb_numbers([H|T], Num, Acc) ->
+    subdb_numbers(T, Num+1, [{H, Num}|Acc]);
+
+subdb_numbers([], _Num, Acc) ->
+    lists:reverse(Acc).
     
 
 %% -----------------------------------------------------------------

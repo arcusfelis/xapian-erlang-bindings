@@ -40,13 +40,14 @@ class ParamDecoder
 
     /*! \name Retrieves a variable from the buffer and moves the pointer on the next variable. */
     /*! \{ */
-    operator const std::string();
-    operator int8_t();
-    operator uint8_t();
     operator bool();
+    operator int8_t();
     operator int32_t(); 
+    operator uint8_t();
+    operator uint16_t();
     operator uint32_t();
     operator double(); 
+    operator const std::string();
     operator const Xapian::Stem();
     /*! \} */
 

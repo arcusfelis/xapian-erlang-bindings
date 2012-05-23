@@ -31,9 +31,9 @@ class HellTermPosition;
 
 class Driver 
 {
-    Xapian::Database* mp_db;
-    Xapian::WritableDatabase* mp_wdb;
-    const Xapian::Stem* mp_default_stemmer;
+    Xapian::Database m_db;
+    Xapian::WritableDatabase m_wdb;
+    Xapian::Stem m_default_stemmer;
 
     ResultEncoder m_result;
     Xapian::QueryParser m_default_parser;
@@ -97,7 +97,9 @@ class Driver
         SET_METADATA                = 23,
         UPDATE_DOCUMENT             = 24,
         UPDATE_OR_CREATE_DOCUMENT   = 25,
-        DOCUMENT                    = 26
+        DOCUMENT                    = 26,
+        OPEN_PROG                   = 27,
+        OPEN_TCP                    = 28
     };
 
 
@@ -179,7 +181,8 @@ class Driver
         QUERY_VALUE                 = 2,
         QUERY_VALUE_RANGE           = 3,
         QUERY_TERM                  = 4,
-        QUERY_PARSER                = 5
+        QUERY_PARSER                = 5,
+        QUERY_SCALE_WEIGHT          = 6  /// query, double
     };
 
     enum queryParserCommand {
@@ -322,7 +325,7 @@ class Driver
 
     ~Driver();
 
-    void setDefaultStemmer(const Xapian::Stem* stemmer);
+    void setDefaultStemmer(const Xapian::Stem& stemmer);
 
     size_t setDefaultStemmer(ParamDecoder& params);
 
@@ -331,7 +334,13 @@ class Driver
     ObjectBaseRegister&
     getRegisterByType(uint8_t type);
 
-    size_t open(const std::string& dbpath, int8_t mode);
+    size_t open(uint8_t mode, const std::string& dbpath);
+    size_t open(uint8_t mode, const std::string& host, uint16_t port, 
+                uint32_t timeout, uint32_t connect_timeout);
+    size_t open(uint8_t mode, const std::string& prog, const std::string& args, 
+                uint32_t timeout);
+
+    int openWriteMode(uint8_t mode);
 
     size_t getLastDocId();
 

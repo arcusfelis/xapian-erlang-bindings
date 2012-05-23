@@ -34,7 +34,7 @@ ParamDecoder::move(const size_t size)
 }
 
 /**
- * Decodes <<StringLen:32/native-signed-integer, StringBin/binary>>.
+ * Decodes `<<StringLen:32/native-signed-integer, StringBin/binary>>`.
  */
 ParamDecoder::operator const std::string() {
     const int32_t str_len = READ_TYPE(int32_t);
@@ -45,14 +45,14 @@ ParamDecoder::operator const std::string() {
 }
 
 /**
- * Decodes <<Int8t:8/native-signed-integer>>.
+ * Decodes `<<Int8t:8/native-signed-integer>>`.
  */
 ParamDecoder::operator int8_t() {
     return READ_TYPE(int8_t);
 }
 
 /**
- * Decodes <<Int8t:8/native-unsigned-integer>>.
+ * Decodes `<<Int8t:8/native-unsigned-integer>>`.
  */
 ParamDecoder::operator uint8_t() {
     return READ_TYPE(uint8_t);
@@ -63,18 +63,25 @@ ParamDecoder::operator bool() {
 }
 
 /**
- * Decodes <<Num:32/native-signed-integer>>.
+ * Decodes `<<Num:32/native-signed-integer>>`.
  */
 ParamDecoder::operator int32_t() {
     return READ_TYPE(int32_t);
 }
 
 /**
- * Decodes <<Num:32/native-unsigned-integer>>.
- * Results are Xapian::valueno or Xapian::termcount.
+ * Decodes `<<Num:32/native-unsigned-integer>>`.
+ * Results are `Xapian::valueno` or `Xapian::termcount`.
  */
 ParamDecoder::operator uint32_t() {
     return READ_TYPE(uint32_t);
+}
+
+/**
+ * Decodes `<<Num:16/native-unsigned-integer>>`.
+ */
+ParamDecoder::operator uint16_t() {
+    return READ_TYPE(uint16_t);
 }
 
 ParamDecoder::operator double() {
