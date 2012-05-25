@@ -11,7 +11,9 @@
     x_document_id/0,
     x_unique_document_id/0,
     x_order_type/0,
-    x_timeout/0]).
+    x_timeout/0,
+    x_inet_port/0,
+    x_inet_address/0]).
 
 -export_type([
     x_server/0,
@@ -72,3 +74,6 @@ start() ->
 
 %% An document id or an unique term
 -type x_unique_document_id() :: x_document_id() | x_string().
+
+-type x_inet_port() :: 0 .. 65535.
+-type x_inet_address() :: x_string().

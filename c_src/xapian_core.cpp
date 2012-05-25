@@ -139,7 +139,7 @@ Driver::getResultEncoder()
 
 
 Driver::Driver(ResourceGenerator& generator)
-: m_generator(generator), m_stores(generator)
+: m_generator(generator), m_stores(generator), m_number_of_databases(0)
 {
     // RESOURCE_TYPE_ID_MARK
     m_stores.add(ResourceType::DOCUMENT,       &m_document_store);
@@ -387,13 +387,72 @@ Driver::query(ParamDecoder& params)
 
     Xapian::doccount count = mset.size();
     m_result << static_cast<uint32_t>(count);
-
-    for (Xapian::MSetIterator m = mset.begin(); m != mset.end(); ++m) {
-      //Xapian::docid did = *m;
-        Xapian::Document doc = m.get_document();
-        retrieveDocument(params, doc, &m);
-    }
+    retrieveDocuments(params, mset.begin(), mset.end());
     return m_result;
+}
+
+void
+Driver::retrieveDocuments(ParamDecoder params, 
+    Xapian::MSetIterator iter, Xapian::MSetIterator end)
+{
+    ParamDecoder params_copy = params;
+    switch (uint8_t decoder_type = params_copy)
+    {
+        case DEC_DOCUMENT:
+            for (; iter != end; ++iter)
+            {
+                Xapian::Document doc = iter.get_document();
+                retrieveDocument(params, doc);
+            }
+            break;
+
+        case DEC_ITERATOR:
+            for (; iter != end; ++iter)
+                retrieveDocument(params, iter);
+            break;
+
+        case DEC_BOTH:
+            for (; iter != end; ++iter)
+            {
+                Xapian::Document doc = iter.get_document();
+                retrieveDocument(params, doc, iter);
+            }
+            break;
+
+        default:
+            throw BadCommandDriverError(decoder_type);
+    }
+}
+
+
+void
+Driver::selectEncoderAndRetrieveDocument(
+    ParamDecoder& params, Xapian::MSetIterator& iter)
+{
+    ParamDecoder params_copy = params;
+    switch (uint8_t decoder_type = params_copy)
+    {
+        case DEC_DOCUMENT:
+        {
+            Xapian::Document doc = iter.get_document();
+            retrieveDocument(params, doc);
+            break;
+        }
+
+        case DEC_ITERATOR:
+            retrieveDocument(params, iter);
+            break;
+
+        case DEC_BOTH:
+        {
+            Xapian::Document doc = iter.get_document();
+            retrieveDocument(params, doc, iter);
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(decoder_type);
+    }
 }
 
 
@@ -671,7 +730,7 @@ Driver::getDocumentById(ParamDecoder& params)
 {
     const Xapian::docid docid = params;
     Xapian::Document doc = m_db.get_document(docid);
-    retrieveDocument(params, doc, NULL);
+    retrieveDocument(params, doc);
     return m_result;
 }
 
@@ -1209,6 +1268,7 @@ Driver::open(uint8_t mode, const std::string& dbpath)
         // Open readOnly db
         case READ_OPEN:
             m_db.add_database(Xapian::Database(dbpath));
+            m_number_of_databases++;
             break;
 
         case WRITE_CREATE_OR_OPEN:
@@ -1217,6 +1277,7 @@ Driver::open(uint8_t mode, const std::string& dbpath)
         case WRITE_OPEN:
             m_wdb = Xapian::WritableDatabase(dbpath, openWriteMode(mode));
             m_db = m_wdb;
+            m_number_of_databases = 1;
             break;
 
         default:
@@ -1268,6 +1329,7 @@ Driver::open(uint8_t mode, const std::string& host, uint16_t port,
         case READ_OPEN:
             m_db.add_database(
                 Xapian::Remote::open(host, port, timeout, connect_timeout));
+            m_number_of_databases++;
             break;
 
         // open for read/write; fail if no db exists
@@ -1275,6 +1337,7 @@ Driver::open(uint8_t mode, const std::string& host, uint16_t port,
             m_wdb = Xapian::Remote::open_writable(host, port, 
                     timeout, connect_timeout);
             m_db = m_wdb;
+            m_number_of_databases = 1;
             break;
 
         default:
@@ -1297,12 +1360,14 @@ Driver::open(uint8_t mode, const std::string& prog, const std::string& args,
         // Open readOnly db
         case READ_OPEN:
             m_db.add_database(Xapian::Remote::open(prog, args, timeout));
+            m_number_of_databases++;
             break;
 
         // open for read/write; fail if no db exists
         case WRITE_OPEN:
             m_wdb = Xapian::Remote::open_writable(prog, args, timeout);
             m_db = m_wdb;
+            m_number_of_databases = 1;
             break;
 
         default:
@@ -1872,9 +1937,12 @@ Driver::isPostingExist(
 void 
 Driver::retrieveDocument(
     ParamDecoder params,  /* yes, it is a copy */
-    Xapian::Document& doc,
-    Xapian::MSetIterator* mset_iter)
+    Xapian::Document& doc)
 {
+    const uint8_t decoder_type = params;
+    if (decoder_type != DEC_DOCUMENT)
+        throw BadArgumentDriverError();
+
     while (const uint8_t command = params)
     /* Do, while command != stop != 0 */
     {
@@ -1883,7 +1951,120 @@ Driver::retrieveDocument(
             case GET_VALUE:
             {
                 const uint32_t     slot  = params;
-                const std::string& value = doc.get_value(static_cast<Xapian::valueno>(slot));
+                const std::string& value = 
+                    doc.get_value(static_cast<Xapian::valueno>(slot));
+                m_result << value;
+                break;
+            }
+
+            case GET_DATA:
+            {
+                const std::string& data = doc.get_data();
+                m_result << data;
+                break;
+            }
+
+            case GET_DOCID:
+            {
+                const Xapian::docid docid = doc.get_docid();
+                m_result << static_cast<uint32_t>(docid);
+                break;
+            }
+
+            default:
+                throw BadCommandDriverError(command);
+        }
+    }
+}
+
+void 
+Driver::retrieveDocument(
+    ParamDecoder params,  /* yes, it is a copy */
+    Xapian::MSetIterator& mset_iter)
+{
+    const uint8_t decoder_type = params;
+    if (decoder_type != DEC_ITERATOR)
+        throw BadArgumentDriverError();
+
+    while (const uint8_t command = params)
+    /* Do, while command != stop != 0 */
+    {
+        switch (command)
+        {
+            case GET_WEIGHT:
+            {
+                const Xapian::weight    w = mset_iter.get_weight();
+                m_result << static_cast<double>(w);
+                break;
+            }
+
+            case GET_RANK:
+            {
+                const Xapian::doccount    r = mset_iter.get_rank();
+                m_result << static_cast<uint32_t>(r);
+                break;
+            }
+
+            case GET_PERCENT:
+            {
+                const Xapian::percent    p = mset_iter.get_percent();
+                m_result << static_cast<uint8_t>(p);
+                break;
+            }
+
+            // http://trac.xapian.org/wiki/FAQ/MultiDatabaseDocumentID
+            case GET_DOCID:
+            {
+                m_result << static_cast<uint32_t>(docid_sub(*mset_iter));
+                break;
+            }
+
+            case GET_MULTI_DOCID:
+            {
+                const Xapian::docid docid_combined = *mset_iter;
+                m_result << static_cast<uint32_t>(docid_combined);
+                break;
+            }
+
+
+            case GET_DB_NUMBER:
+            {
+                const Xapian::docid docid_combined = *mset_iter;
+                const Xapian::docid subdatabase_number = 
+                    docid_combined % m_number_of_databases; 
+                    // First sub-database is 0.
+                m_result << static_cast<uint32_t>(subdatabase_number);
+                break;
+            }
+
+            default:
+                throw BadCommandDriverError(command);
+        }
+    }
+}
+
+
+void 
+Driver::retrieveDocument(
+    ParamDecoder params,  /* yes, it is a copy */
+    Xapian::Document& doc,
+    Xapian::MSetIterator& mset_iter)
+{
+    const uint8_t decoder_type = params;
+    if (decoder_type != DEC_BOTH)
+        throw BadArgumentDriverError();
+
+    //Xapian::docid did = *m;
+    while (const uint8_t command = params)
+    /* Do, while command != stop != 0 */
+    {
+        switch (command)
+        {
+            case GET_VALUE:
+            {
+                const uint32_t     slot  = params;
+                const std::string& value = 
+                    doc.get_value(static_cast<Xapian::valueno>(slot));
                 m_result << value;
                 break;
             }
@@ -1904,31 +2085,40 @@ Driver::retrieveDocument(
 
             case GET_WEIGHT:
             {
-                if (mset_iter == NULL)
-                    throw BadCommandDriverError(command);
-
-                const Xapian::weight    w = mset_iter->get_weight();
+                const Xapian::weight    w = mset_iter.get_weight();
                 m_result << static_cast<double>(w);
                 break;
             }
 
             case GET_RANK:
             {
-                if (mset_iter == NULL)
-                    throw BadCommandDriverError(command);
-
-                const Xapian::doccount    r = mset_iter->get_rank();
+                const Xapian::doccount    r = mset_iter.get_rank();
                 m_result << static_cast<uint32_t>(r);
                 break;
             }
 
             case GET_PERCENT:
             {
-                if (mset_iter == NULL)
-                    throw BadCommandDriverError(command);
-
-                const Xapian::percent    p = mset_iter->get_percent();
+                const Xapian::percent    p = mset_iter.get_percent();
                 m_result << static_cast<uint8_t>(p);
+                break;
+            }
+
+            // http://trac.xapian.org/wiki/FAQ/MultiDatabaseDocumentID
+            case GET_MULTI_DOCID:
+            {
+                const Xapian::docid docid_combined = *mset_iter;
+                m_result << static_cast<uint32_t>(docid_combined);
+                break;
+            }
+
+            case GET_DB_NUMBER:
+            {
+                const Xapian::docid docid_combined = *mset_iter;
+                const Xapian::docid subdatabase_number = 
+                    docid_combined % m_number_of_databases; 
+                    // First sub-database is 0.
+                m_result << static_cast<uint32_t>(subdatabase_number);
                 break;
             }
 
@@ -1937,7 +2127,6 @@ Driver::retrieveDocument(
         }
     }
 }
-
 
 
 void 
@@ -2030,6 +2219,8 @@ Driver::retrieveDocumentSchema(
     ParamDecoder& params) const
 {
     const char* from = params.currentPosition();
+    uint8_t decoder_type = params;
+    (void) decoder_type;
 
     while (const uint8_t command = params)
     /* Do, while command != stop != 0 */
@@ -2049,6 +2240,8 @@ Driver::retrieveDocumentSchema(
             case GET_WEIGHT:
             case GET_RANK:
             case GET_PERCENT:
+            case GET_MULTI_DOCID:
+            case GET_DB_NUMBER:
                 break;
 
             default:

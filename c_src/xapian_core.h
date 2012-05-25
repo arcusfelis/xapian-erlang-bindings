@@ -63,6 +63,7 @@ class Driver
      * It is a manager of ObjectRegisters.
      */
     ResourceManager     m_stores;
+    unsigned            m_number_of_databases;
 
     public:
     friend class MSetQlcTable;
@@ -166,7 +167,9 @@ class Driver
         GET_DOCID                   = 3,
         GET_WEIGHT                  = 4,
         GET_RANK                    = 5,
-        GET_PERCENT                 = 6
+        GET_PERCENT                 = 6,
+        GET_MULTI_DOCID             = 7,
+        GET_DB_NUMBER               = 8
     };
 
     /// Numbers of tests.
@@ -259,6 +262,12 @@ class Driver
         TERM_FREQ                           = 3,
         TERM_POSITIONS                      = 4,
         TERM_POS_COUNT                      = 5
+    };
+
+    enum decoderTypeFunIds {
+        DEC_DOCUMENT                        = 0,
+        DEC_ITERATOR                        = 1,
+        DEC_BOTH                            = 2
     };
 
     static const unsigned
@@ -390,7 +399,12 @@ class Driver
      *
      * `params' is a clone.
      */
-    void retrieveDocument(ParamDecoder, Xapian::Document&, Xapian::MSetIterator*);
+    void retrieveDocument(ParamDecoder, Xapian::Document&, Xapian::MSetIterator&);
+    void retrieveDocument(ParamDecoder, Xapian::Document&);
+    void retrieveDocument(ParamDecoder, Xapian::MSetIterator&);
+    void retrieveDocuments(ParamDecoder, 
+        Xapian::MSetIterator, Xapian::MSetIterator);
+    void selectEncoderAndRetrieveDocument(ParamDecoder&, Xapian::MSetIterator&);
 
     ParamDecoderController
     retrieveDocumentSchema(ParamDecoder&) const;
@@ -475,6 +489,11 @@ class Driver
 
 
     private:
+    Xapian::docid docid_sub(const Xapian::docid docid_combined)
+    {
+        return (docid_combined - 1) / m_number_of_databases + 1;
+    }
+
     /*! \name Private static helpers. */
     /*! \{ */
     

@@ -19,8 +19,8 @@
 
 -record(x_tcp_database, {
     name :: atom(),
-    host = ?REQUIRED :: xapian:x_string(),
-    port = ?REQUIRED :: xapian:x_string(),
+    host = ?REQUIRED :: xapian:x_inet_address(),
+    port = ?REQUIRED :: xapian:x_inet_port(),
     timeout = 10000 :: xapian:x_timeout(),
     connect_timeout = 10000 :: xapian:x_timeout()
 }).

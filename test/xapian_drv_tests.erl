@@ -963,6 +963,7 @@ extra_weight_query(Factor, Title, Body) ->
 
 
 -record(document, {docid}).
+-record(mdocument, {docid, db_name, multi_docid, db_number}).
 
 all_record_ids(Server, Query) ->
     EnquireResourceId = ?DRV:enquire(Server, Query),
@@ -970,6 +971,71 @@ all_record_ids(Server, Query) ->
     Meta = xapian_record:record(document, record_info(fields, document)),
     Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
     qlc:e(qlc:q([Id || #document{docid=Id} <- Table])).
+
+all_multidb_records(Server, Query) ->
+    EnquireResourceId = ?DRV:enquire(Server, Query),
+    MSetResourceId = ?DRV:match_set(Server, EnquireResourceId),
+    Meta = xapian_record:record(mdocument, record_info(fields, mdocument)),
+    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+    qlc:e(qlc:q([X || X <- Table])).
+
+
+record_by_id(Server, Query, Id) ->
+    EnquireResourceId = ?DRV:enquire(Server, Query),
+    MSetResourceId = ?DRV:match_set(Server, EnquireResourceId),
+    Meta = xapian_record:record(mdocument, record_info(fields, mdocument)),
+    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+    qlc:e(qlc:q([X || X=#mdocument{docid=DocId} <- Table, Id =:= DocId])).
+
+
+multidb_record_by_id(Server, Query, Id) ->
+    EnquireResourceId = ?DRV:enquire(Server, Query),
+    MSetResourceId = ?DRV:match_set(Server, EnquireResourceId),
+    Meta = xapian_record:record(mdocument, record_info(fields, mdocument)),
+    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+    qlc:e(qlc:q([X || X=#mdocument{multi_docid=DocId} <- Table, Id =:= DocId])).
+
+
+multi_db_test_() ->
+    Path1 = #x_database{name=multi1, path=testdb_path(multi1)},
+    Path2 = #x_database{name=multi2, path=testdb_path(multi2)},
+    Params = [write, create, overwrite],
+    Document = [#x_term{value = "test"}],
+    {ok, Server1} = ?DRV:open(Path1, Params),
+    {ok, Server2} = ?DRV:open(Path2, Params),
+    DocId1 = ?DRV:add_document(Server1, Document),
+    DocId2 = ?DRV:add_document(Server2, Document),
+    ?DRV:close(Server1),
+    ?DRV:close(Server2),
+
+    %% Merged server
+    {ok, Server} = ?DRV:open([Path1, Path2], []),
+    Query    = "test",
+    Ids      = all_record_ids(Server, Query),
+    Records  = all_multidb_records(Server, Query),
+    DbNames  = elements(#mdocument.db_name, Records),
+    MultiIds = elements(#mdocument.multi_docid, Records),
+    DbNums   = elements(#mdocument.db_number, Records),
+    LookupRecords1 = record_by_id(Server, Query, 1),
+    LookupRecords2 = record_by_id(Server, Query, 5),
+    LookupRecords3 = multidb_record_by_id(Server, Query, 1),
+    LookupRecords4 = multidb_record_by_id(Server, Query, 2),
+    LookupRecords5 = multidb_record_by_id(Server, Query, 5),
+
+    [?_assertEqual(Ids, [1,1])
+    ,?_assertEqual(DbNames, [multi2, multi1])
+    ,?_assertEqual(MultiIds, [1,2])
+    ,?_assertEqual(DbNums, [1,0])
+    ,?_assertEqual(LookupRecords2, [])
+    ,?_assertEqual(LookupRecords5, [])
+    ,?_assertEqual(length(LookupRecords1), 2)
+    ,?_assertEqual(length(LookupRecords3), 1)
+    ,?_assertEqual(length(LookupRecords4), 1)
+    ].
+
+elements(Pos, Records) ->
+    [erlang:element(Pos, Rec) || Rec <- Records].
+
 
 -endif.
 

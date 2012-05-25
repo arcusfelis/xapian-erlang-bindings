@@ -58,14 +58,12 @@ MSetQlcTable::getPage(const uint32_t skip, const uint32_t count)
     m_driver.m_result << left;
 
     Xapian::MSetIterator iter = m_mset[skip];
-    Xapian::MSetIterator last = (count < size) ? m_mset[skip+left+1] : m_mset.end();
+    Xapian::MSetIterator last = (count < size) 
+                              ? m_mset[skip+left+1] 
+                              : m_mset.end();
 
-    for (; iter != last; iter++)
-    {
-        ParamDecoder params = m_controller;
-        Xapian::Document doc = iter.get_document();
-        m_driver.retrieveDocument(params, doc, &iter);
-    }
+    ParamDecoder params = m_controller;
+    m_driver.retrieveDocuments(params, iter, last);
 }
 
 
@@ -73,21 +71,58 @@ void
 MSetQlcTable::lookup(ParamDecoder& driver_params)
 {
     std::set<Xapian::docid> docids;
+    uint8_t key = driver_params;
+
     while (const Xapian::docid docid = driver_params)
         docids.insert(docid);
-    for (Xapian::MSetIterator iter = m_mset.begin(); iter != m_mset.end(); iter++)
+
+    bool unique = true;
+    switch(key)
     {
-        Xapian::docid current_docid = *iter;
+        case Driver::GET_DOCID:
+            if (m_driver.m_number_of_databases != 1)
+                unique = false;
+            break;
+
+        case Driver::GET_MULTI_DOCID:
+            break;
+
+        default:
+            throw BadCommandDriverError(key);
+    }
+
+    Xapian::MSetIterator miter = m_mset.begin(), mend = m_mset.end();
+    if (unique)
+    for (; miter != mend; miter++)
+    {
+        Xapian::docid current_docid = *miter;
+            
+        std::set<Xapian::docid>::iterator doc_iter = docids.find(current_docid);
+        if (doc_iter != docids.end())
+        {
+            docids.erase(doc_iter);
+            m_driver.m_result << MORE;
+
+            ParamDecoder params = m_controller;
+            m_driver.selectEncoderAndRetrieveDocument(params, miter);
+            if (docids.empty())
+                break;
+        }
+    }
+    else
+    for (; miter != mend; miter++)
+    {
+        Xapian::docid current_docid = m_driver.docid_sub(*miter);
+            
         if (docids.find(current_docid) != docids.end())
         {
             m_driver.m_result << MORE;
 
             ParamDecoder params = m_controller;
-            Xapian::Document doc = iter.get_document();
-            m_driver.retrieveDocument(params, doc, &iter);
-            break;
+            m_driver.selectEncoderAndRetrieveDocument(params, miter);
         }
     }
+
     m_driver.m_result << STOP;
 }
 

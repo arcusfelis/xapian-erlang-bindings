@@ -55,6 +55,8 @@ class ParamDecoder
      * Return a pointer on the current pointer position.
      */
     char* currentPosition();
+
+    void back();
 };
 
 XAPIAN_ERLANG_NS_END

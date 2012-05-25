@@ -75,6 +75,10 @@ read_document_id(Bin) ->
     read_uint(Bin).
 
 
+read_db_id(Bin) ->
+    read_uint(Bin).
+
+
 read_document_count(Bin) ->
     read_uint(Bin).
 

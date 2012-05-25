@@ -46,7 +46,8 @@
 
 %% More information
 -export([name_to_slot/1, 
-         name_to_slot/2]).
+         name_to_slot/2,
+         subdb_names/1]).
 
 
 
@@ -67,7 +68,8 @@
 
 %% with_state internals
 -export([internal_name_to_slot/2,
-         internal_name_to_slot_dict/1]).
+         internal_name_to_slot_dict/1,
+         internal_subdb_names/1]).
 
 
 -import(xapian_common, [ 
@@ -106,6 +108,7 @@
 
     %% Each sub-database can have a name for identification.
     subdb_name_to_id :: ordict:orddict(),
+    subdb_names :: tuple(),
 
     %% Pid of the real server (used by a transaction).
     %% If the process will be terminated, then new owner of the port will 
@@ -540,6 +543,13 @@ name_to_slot(Server) ->
     call(Server, {with_state, fun ?DRV:internal_name_to_slot_dict/1}).
 
 
+subdb_names(#state{subdb_names = I2N}) ->
+    I2N;
+
+subdb_names(Server) ->
+    call(Server, {with_state, fun ?DRV:internal_subdb_names/1}).
+
+
 %% ------------------------------------------------------------------
 %% Info Internal
 %% ------------------------------------------------------------------
@@ -549,6 +559,9 @@ internal_name_to_slot_dict(#state{name_to_slot = N2S}) ->
 
 internal_name_to_slot(#state{name_to_slot = N2S}, Slot) -> 
     orddict_find(N2S, Slot).
+
+internal_subdb_names(#state{subdb_names = I2N}) -> 
+    {ok, I2N}.
 
 %% ------------------------------------------------------------------
 %% API for other modules
@@ -663,7 +676,8 @@ init([Path, Params]) ->
             name_to_prefix = Name2PrefixDict,
             name_to_slot = Name2SlotDict,
             name_to_resource = Name2ResourceDict,
-            subdb_name_to_id = Name2SubdbDict
+            subdb_name_to_id = Name2SubdbDict,
+            subdb_names = list_to_tuple(SubDbNames)
         }}
         end]);
 
@@ -727,13 +741,16 @@ handle_call({test, TestName, Params}, _From, State) ->
     {reply, Reply, State};
 
 handle_call({read_document_by_id, Id, Meta}, _From, State) ->
-    #state{ port = Port, name_to_slot = Name2Slot } = State,
-    Reply = port_read_document_by_id(Port, Id, Meta, Name2Slot),
+    #state{ port = Port, name_to_slot = Name2Slot,
+          subdb_names = Id2Name } = State,
+    Reply = port_read_document_by_id(Port, Id, Meta, Name2Slot, Id2Name),
     {reply, Reply, State};
 
 handle_call({query_page, Offset, PageSize, Query, Meta}, _From, State) ->
-    #state{ port = Port, name_to_slot = Name2Slot } = State,
-    Reply = port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot),
+    #state{ port = Port, name_to_slot = Name2Slot,
+          subdb_names = Id2Name } = State,
+    Reply = port_query_page(Port, Offset, PageSize, Query, 
+                            Meta, Name2Slot, Id2Name),
     {reply, Reply, State};
 
 handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
@@ -1188,11 +1205,14 @@ open_databases(Port, [#x_tcp_database{}=H|T], Mode, Names) ->
 open_databases(_Port, [], _Mode, Names) ->
     {ok, lists:reverse(Names)};
 
+open_databases(Port, Path, Mode, []) when is_tuple(Path) ->
+    open_databases(Port, [Path], Mode, []);
+
 %% Path is a iolist
 open_databases(Port, Path, Mode, []) ->
     case open_database(Port, Mode, Path) of
         {ok, <<>>} ->
-            {ok, []};
+            {ok, [undefined]};
         {error, _Mess} = Error ->
             Error
     end.        
@@ -1297,20 +1317,20 @@ port_cancel_transaction(Port) ->
 
 
 %% @doc Read and decode one document from the port.
-port_read_document_by_id(Port, Id, Meta, Name2Slot) ->
+port_read_document_by_id(Port, Id, Meta, Name2Slot, Id2Name) ->
     Bin@ = <<>>,
     Bin@ = append_document_id(Id, Bin@),
     Bin@ = xapian_record:encode(Meta, Name2Slot, Bin@),
-    decode_record_result(control(Port, read_document_by_id, Bin@), Meta).
+    decode_record_result(control(Port, read_document_by_id, Bin@), Meta, Id2Name).
 
 
-port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot) ->
+port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot, Id2Name) ->
     Bin@ = <<>>,
     Bin@ = append_uint(Offset, Bin@),
     Bin@ = append_uint(PageSize, Bin@),
     Bin@ = xapian_query:encode(Query, Name2Slot, Bin@),
     Bin@ = xapian_record:encode(Meta, Name2Slot, Bin@),
-    decode_records_result(control(Port, query_page, Bin@), Meta).
+    decode_records_result(control(Port, query_page, Bin@), Meta, Id2Name).
 
 
 port_enquire(Port, Enquire, Name2Slot, Register) ->
@@ -1440,6 +1460,15 @@ decode_result_with_hof(Other, _Meta, _Fn) ->
     Other.
 
 
+decode_result_with_hof({ok, Bin}, Meta, I2N, Fn) ->
+    case Fn(Meta, I2N, Bin) of
+        {Recs, <<>>} -> {ok, Recs}
+    end;
+
+decode_result_with_hof(Other, _Meta, _I2N, _Fn) -> 
+    Other.
+
+
 decode_result_with_hof({ok, Bin}, Fn) ->
     case Fn(Bin) of
         {Res, <<>>} -> {ok, Res}
@@ -1449,11 +1478,11 @@ decode_result_with_hof(Other, _Fn) ->
     Other.
 
 
-decode_record_result(Data, Meta) ->
-    decode_result_with_hof(Data, Meta, fun xapian_record:decode/2).
+decode_record_result(Data, Meta, I2N) ->
+    decode_result_with_hof(Data, Meta, I2N, fun xapian_record:decode/3).
 
-decode_records_result(Data, Meta) ->
-    decode_result_with_hof(Data, Meta, fun xapian_record:decode_list/2).
+decode_records_result(Data, Meta, I2N) ->
+    decode_result_with_hof(Data, Meta, I2N, fun xapian_record:decode_list/3).
 
 decode_mset_info_result(Data, Params) ->
     decode_result_with_hof(Data, Params, fun xapian_mset_info:decode/2).
@@ -1547,6 +1576,9 @@ check_all([], Acc) ->
 subdb_numbers(Names) ->
     subdb_numbers(Names, 0, []).
 
+
+subdb_numbers([undefined|T], Num, Acc) ->
+    subdb_numbers(T, Num+1, Acc);
 
 subdb_numbers([H|T], Num, Acc) ->
     subdb_numbers(T, Num+1, [{H, Num}|Acc]);
