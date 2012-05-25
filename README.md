@@ -41,20 +41,6 @@ Next command runs tests:
 ```
 
 
-Cheatsheet
-==========
-
-delve (cli) - Inspect the contents of a Xapian database
-
-
-Sets
-==== 
-
-A relevance set (R-Set) - a set of documents.
-A match set (MSet) - a set of documents.
-Expand test (ESet) - a set of terms.
-
-
 A pool of readers
 =================
 
@@ -100,3 +86,49 @@ catch xapian_pool:checkout([simple], fun([S]) -> 5 = 2 + 2 end).
 {'EXIT',{{badmatch,4},[{erl_eval,expr,3,[]}]}}
 ```
 
+
+Multi-database support
+======================
+
+
+You can use this code for opening two databases from "DB1" and "DB2" directories.
+
+```
+{ok, Server} = xapian_driver:open(
+    [#x_database{path="DB1"}, #x_database{path="DB2"}], []).
+```
+
+Only read-only databases can be used.
+
+There are two fields meaning a document's id: `docid` and `multi\_docid`.
+They are equal if only one database is used.
+
+Otherwise, first field contains a document id (can be repeated) and 
+`multi\_docid` is a unique idintifier, which is calculated from 
+`docid` and `db\_number`.
+
+`db\_number` is a number of the document's database encounted from 0.
+
+You can use pseudonyms instead of `db\_number` using `db\_name` field.
+Inforamation from `name` field of `#x\_database{}` record will be used for 
+this.
+
+```
+ #x_database{name=db1, path="DB1"}
+```
+
+Full multi-database example:
+
+```
+-record(document, {docid, db_name, multi_docid, db_number}).
+
+example() ->
+    DB1 = #x_database{name=db1, path="DB1"}, 
+    DB2 = #x_database{name=db1, path="DB2"},
+    {ok, Server} = xapian_driver:open([DB1, DB2], []),
+    EnquireResourceId = xapian_driver:enquire(Server, "query string"),
+    MSetResourceId = xapian_driver:match_set(Server, EnquireResourceId),
+    Meta = xapian_record:record(document, record_info(fields, document)),
+    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+    qlc:e(qlc:q([X || #document{multi_docid=DocId} <- Table])).
+```

@@ -962,6 +962,11 @@ extra_weight_query(Factor, Title, Body) ->
     #x_query{value = [Scale, Body]}.
 
 
+
+%% -------------------------------------------------------------------
+%%  Multi-DB support
+%% -------------------------------------------------------------------
+
 -record(document, {docid}).
 -record(mdocument, {docid, db_name, multi_docid, db_number}).
 
@@ -971,6 +976,7 @@ all_record_ids(Server, Query) ->
     Meta = xapian_record:record(document, record_info(fields, document)),
     Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
     qlc:e(qlc:q([Id || #document{docid=Id} <- Table])).
+
 
 all_multidb_records(Server, Query) ->
     EnquireResourceId = ?DRV:enquire(Server, Query),
