@@ -17,7 +17,7 @@ Installation
 
 I use rebar for building.
 
-```
+```bash
 git clone git://github.com/freeakk/xapian.git
 cd xapian
 ./rebar get-deps
@@ -36,7 +36,7 @@ Tests
 
 Next command runs tests:
 
-```
+```bash
 ./rebar eunit skip_deps=true
 ```
 
@@ -44,7 +44,7 @@ Next command runs tests:
 A pool of readers
 =================
 
-```
+```erlang
 Path = filename:join([code:priv_dir(xapian), test_db, simple]).
 {ok, Pid} = xapian_pool:open([{name, simple}], Path, []).
 result = xapian_pool:checkout([simple], fun([Server]) -> io:write(Server), result end).
@@ -54,14 +54,14 @@ Readers use the Poolboy application.
 There is only one writer for each database, so there is no a writer pool.
 You can use a named process and a supervisor instead:
 
-```
+```erlang
 {ok, Pid} = xapian_drv:open(Path, [{name, simple_writer}, write]).
 xapian_drv:add_document(simple_writer, [#x_text{value = "Paragraph 1"}]).
 ```
 
 If you try run this code from console, then next command will be useful:
 
-```
+```erlang
 rr(code:lib_dir(xapian, include) ++ "/xapian.hrl").
 ```
 
@@ -74,14 +74,14 @@ process.
 
 As with `xapian\_drv:transaction`, you can checkout few pools.
 
-```
+```erlang
 xapian_pool:checkout([pool1, poo2], fun([Server1, Server2]) -> actions_here end).
 ```
  
 If an error will occured, an exception will be thrown and workers 
 will be returned into the pool.
 
-```
+```erlang
 catch xapian_pool:checkout([simple], fun([S]) -> 5 = 2 + 2 end).
 {'EXIT',{{badmatch,4},[{erl_eval,expr,3,[]}]}}
 ```
@@ -93,7 +93,7 @@ Multi-database support
 
 You can use this code for opening two databases from "DB1" and "DB2" directories.
 
-```
+```erlang
 {ok, Server} = xapian_driver:open(
     [#x_database{path="DB1"}, #x_database{path="DB2"}], []).
 ```
@@ -113,13 +113,13 @@ You can use pseudonyms instead of `db\_number` using `db\_name` field.
 Inforamation from `name` field of `#x\_database{}` record will be used for 
 this.
 
-```
+```erlang
  #x_database{name=db1, path="DB1"}
 ```
 
 Full multi-database example:
 
-```
+```erlang
 -record(document, {docid, db_name, multi_docid, db_number}).
 
 example() ->
