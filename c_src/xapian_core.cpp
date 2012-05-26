@@ -1951,9 +1951,21 @@ Driver::retrieveDocument(
             case GET_VALUE:
             {
                 const uint32_t     slot  = params;
+                const uint8_t      type  = STRING_TYPE;
                 const std::string& value = 
                     doc.get_value(static_cast<Xapian::valueno>(slot));
-                m_result << value;
+                m_result << type << value;
+                break;
+            }
+
+            case GET_FLOAT_VALUE:
+            {
+                const uint32_t     slot  = params;
+                const uint8_t      type  = DOUBLE_TYPE;
+                const double       value = 
+                    Xapian::sortable_unserialise(
+                        doc.get_value(static_cast<Xapian::valueno>(slot)));
+                m_result << type << value;
                 break;
             }
 
@@ -2058,9 +2070,21 @@ Driver::retrieveDocument(
             case GET_VALUE:
             {
                 const uint32_t     slot  = params;
+                const uint8_t      type  = STRING_TYPE;
                 const std::string& value = 
                     doc.get_value(static_cast<Xapian::valueno>(slot));
-                m_result << value;
+                m_result << type << value;
+                break;
+            }
+
+            case GET_FLOAT_VALUE:
+            {
+                const uint32_t     slot  = params;
+                const uint8_t      type  = DOUBLE_TYPE;
+                const double       value = 
+                    Xapian::sortable_unserialise(
+                        doc.get_value(static_cast<Xapian::valueno>(slot)));
+                m_result << type << value;
                 break;
             }
 
@@ -2217,6 +2241,7 @@ Driver::retrieveDocumentSchema(
     {
         switch (command)
         {
+            case GET_FLOAT_VALUE:
             case GET_VALUE:
             {
                 //static_cast<uint32_t>( params ); // slot

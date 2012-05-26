@@ -47,6 +47,7 @@
 %% More information
 -export([name_to_slot/1, 
          name_to_slot/2,
+         value_to_type/1,
          subdb_names/1,
          multi_docid/3]).
 
@@ -70,6 +71,7 @@
 %% with_state internals
 -export([internal_name_to_slot/2,
          internal_name_to_slot_dict/1,
+         internal_value_to_type_array/1,
          internal_subdb_names/1,
          internal_multi_docid/2]).
 
@@ -102,6 +104,7 @@
 
     %% Information was retrieved from #x_value_name{}
     name_to_slot :: ordict:orddict(),
+    value_to_type :: array() | undefined,
 
     %% Used for creating resources.
     %% It contains mapping from an atom to information, about how to create 
@@ -545,6 +548,13 @@ name_to_slot(Server) ->
     call(Server, {with_state, fun ?DRV:internal_name_to_slot_dict/1}).
 
 
+value_to_type(#state{value_to_type = V2T}) ->
+    V2T;
+
+value_to_type(Server) ->
+    call(Server, {with_state, fun ?DRV:internal_value_to_type_array/1}).
+
+
 subdb_names(#state{subdb_names = I2N}) ->
     I2N;
 
@@ -572,6 +582,9 @@ multi_docid(Server, DocId, SubDb) when not is_tuple(Server) ->
 
 internal_name_to_slot_dict(#state{name_to_slot = N2S}) -> 
     {ok, N2S}.
+
+internal_value_to_type_array(#state{value_to_type = V2T}) -> 
+    {ok, V2T}.
 
 internal_name_to_slot(#state{name_to_slot = N2S}, Slot) -> 
     orddict_find(Slot, N2S).
@@ -665,6 +678,16 @@ init([Path, Params]) ->
     [{Name, Slot} 
         || #x_value_name{name = Name, slot = Slot} <- Params],
 
+    Value2Type =
+    [{Slot, Type} 
+        || #x_value_name{type = Type, slot = Slot} <- Params, Type =/= string],
+
+    Value2TypeArray = 
+        if 
+            Value2Type =:= []   -> undefined; 
+            true                -> array:from_orddict(Value2Type) 
+        end,
+
     Name2PrefixDict = orddict:from_list(Name2Prefix),
     Name2SlotDict   = orddict:from_list(Name2Slot),
 
@@ -700,6 +723,7 @@ init([Path, Params]) ->
             port = Port,
             name_to_prefix = Name2PrefixDict,
             name_to_slot = Name2SlotDict,
+            value_to_type = Value2TypeArray,
             name_to_resource = Name2ResourceDict,
             subdb_name_to_id = Name2SubdbDict,
             subdb_names = list_to_tuple(SubDbNames)
@@ -767,15 +791,16 @@ handle_call({test, TestName, Params}, _From, State) ->
 
 handle_call({read_document_by_id, Id, Meta}, _From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
-          subdb_names = Id2Name } = State,
-    Reply = port_read_document_by_id(Port, Id, Meta, Name2Slot, Id2Name),
+          subdb_names = Id2Name, value_to_type = Value2Type } = State,
+    Reply = port_read_document_by_id(Port, Id, 
+                                     Meta, Name2Slot, Id2Name, Value2Type),
     {reply, Reply, State};
 
 handle_call({query_page, Offset, PageSize, Query, Meta}, _From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
-          subdb_names = Id2Name } = State,
+          subdb_names = Id2Name, value_to_type = Value2Type } = State,
     Reply = port_query_page(Port, Offset, PageSize, Query, 
-                            Meta, Name2Slot, Id2Name),
+                            Meta, Name2Slot, Id2Name, Value2Type),
     {reply, Reply, State};
 
 handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
@@ -1039,9 +1064,10 @@ code_change(_OldVsn, State, _Extra) ->
 
 document_encode(Document, #state{
         name_to_prefix = Name2Prefix,
-        name_to_slot = Name2Slot
+        name_to_slot = Name2Slot,
+        value_to_type = Value2TypeArray
     }) ->
-    xapian_document:encode(Document, Name2Prefix, Name2Slot).
+    xapian_document:encode(Document, Name2Prefix, Name2Slot, Value2TypeArray).
 
 load_driver() ->
     PrivDir = code:priv_dir(xapian),
@@ -1342,19 +1368,21 @@ port_cancel_transaction(Port) ->
 
 
 %% @doc Read and decode one document from the port.
-port_read_document_by_id(Port, Id, Meta, Name2Slot, Id2Name) ->
+port_read_document_by_id(Port, Id, Meta, Name2Slot, Id2Name, 
+                         Value2Type) ->
     Bin@ = <<>>,
     Bin@ = append_document_id(Id, Bin@),
-    Bin@ = xapian_record:encode(Meta, Name2Slot, Bin@),
+    Bin@ = xapian_record:encode(Meta, Name2Slot, Value2Type, Bin@),
     decode_record_result(control(Port, read_document_by_id, Bin@), Meta, Id2Name).
 
 
-port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot, Id2Name) ->
+port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot, Id2Name, 
+                Value2Type) ->
     Bin@ = <<>>,
     Bin@ = append_uint(Offset, Bin@),
     Bin@ = append_uint(PageSize, Bin@),
     Bin@ = xapian_query:encode(Query, Name2Slot, Bin@),
-    Bin@ = xapian_record:encode(Meta, Name2Slot, Bin@),
+    Bin@ = xapian_record:encode(Meta, Name2Slot, Value2Type, Bin@),
     decode_records_result(control(Port, query_page, Bin@), Meta, Id2Name).
 
 

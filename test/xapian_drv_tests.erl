@@ -738,7 +738,9 @@ value_range_query_page_case(Server) ->
     Case = fun() ->
         Offset = 0,
         PageSize = 10,
-        Query = #x_query_value_range{slot=author, from="Joe Armstrong", to="Joe Armstrong"},
+        Query = #x_query_value_range{slot=author, 
+                                     from="Joe Armstrong", 
+                                     to="Joe Armstrong"},
         Meta = xapian_record:record(book, record_info(fields, book)),
         RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
         io:format(user, "~n~p~n", [RecList])
@@ -1003,6 +1005,7 @@ multidb_record_by_id(Server, Query, Id) ->
     qlc:e(qlc:q([X || X=#mdocument{multi_docid=DocId} <- Table, Id =:= DocId])).
 
 
+%% Simple usage of a merged DB.
 multi_db_test_() ->
     Path1 = #x_database{name=multi1, path=testdb_path(multi1)},
     Path2 = #x_database{name=multi2, path=testdb_path(multi2)},
@@ -1033,27 +1036,25 @@ multi_db_test_() ->
     ,?_assertEqual(DbNames, [multi1, multi2])
     ,?_assertEqual(MultiIds, [1,2])
     ,?_assertEqual(DbNums, [1,2])
-    ,?_assertEqual(LookupRecords2, [])
-    ,?_assertEqual(LookupRecords5, [])
+    ,{"Document is not found by id.",
+        [?_assertEqual(LookupRecords5, [])
+        ,?_assertEqual(LookupRecords2, [])]}
     ,?_assertEqual(length(LookupRecords1), 2)
     ,?_assertEqual(length(LookupRecords3), 1)
     ,?_assertEqual(length(LookupRecords4), 1)
     ].
 
+
 elements(Pos, Records) ->
     [erlang:element(Pos, Rec) || Rec <- Records].
 
 
-
-run_proper_test_() ->
-         EunitLeader = erlang:group_leader(),
-         erlang:group_leader(whereis(user), self()),
-         Res = proper:module(?MODULE),
-         erlang:group_leader(EunitLeader, self()),
-         ?_assertEqual([], Res). 
-
-
-prop_multi_docid_db() ->
+%% This test tests the lookup function of a mset qlc table.
+%% Besides, it tests `xapian_drv:multi_docid/3' function and 
+%% other functions for conversation between: 
+%% * `docid', `db_number' and `multi_docid';
+%% * `db_name' and `db_number'.
+prop_multi_db() ->
     Path1 = #x_database{name=multi1, path=testdb_path(multi_docid1)},
     Path2 = #x_database{name=multi2, path=testdb_path(multi_docid2)},
     Path3 = #x_database{name=multi3, path=testdb_path(multi_docid3)},
@@ -1072,7 +1073,7 @@ prop_multi_docid_db() ->
 
     %% Merged server
     {ok, Server} = ?DRV:open(Paths, []),
-    Query    = "test",
+    Query = "test",
     multidb_record_by_id(Server, Query, 1),
     multidb_record_by_id(Server, Query, 2),
     multidb_record_by_id(Server, Query, 5),
@@ -1102,6 +1103,18 @@ multi_sub_db_name_to_id(Id) when is_integer(Id) ->
 multi_sub_db_name_to_id(Name) when is_atom(Name) -> 
     "multi" ++ IdList = atom_to_list(Name),
     list_to_integer(IdList).
+
+
+%% -------------------------------------------------------------------
+%% Property Testing
+%% -------------------------------------------------------------------
+
+run_property_testing_test_() ->
+    EunitLeader = erlang:group_leader(),
+    erlang:group_leader(whereis(user), self()),
+    Res = proper:module(?MODULE),
+    erlang:group_leader(EunitLeader, self()),
+    ?_assertEqual([], Res). 
 
 -endif.
 

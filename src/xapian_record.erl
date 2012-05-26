@@ -1,8 +1,8 @@
 %% It contains helpers for extracting information from a document.
 -module(xapian_record).
 -export([record/2, 
-         encode/2, 
          encode/3, 
+         encode/4, 
          decode/3, 
          decode_list/3, 
          decode_list2/3]).
@@ -23,6 +23,7 @@
     read_string/1,
     read_percent/1,
     read_uint8/1,
+    read_double/1,
     index_of/2]).
 
 %% ------------------------------------------------------------------
@@ -56,12 +57,12 @@ append_key_field(Key, Bin) ->
 
 
 %% Creates tuples {Name, Field1, ....}
-encode(Meta, Name2Slot) ->
-    encode(Meta, Name2Slot, <<>>).
+encode(Meta, Name2Slot, Value2TypeArray) when not is_binary(Value2TypeArray) ->
+    encode(Meta, Name2Slot, Value2TypeArray, <<>>).
 
-encode(Meta, Name2Slot, Bin) ->
+encode(Meta, Name2Slot, Value2TypeArray, Bin) ->
     #rec{name=_TupleName, fields=TupleFields} = Meta,
-    enc(TupleFields, Name2Slot, 
+    enc(TupleFields, Name2Slot, Value2TypeArray, 
         append_uint8(encoder_type_id(TupleFields), Bin)).
 
 
@@ -157,16 +158,24 @@ type([], IsDoc, IsIter) ->
     {IsDoc, IsIter}.
 
 
-enc([H  | T], N2S, Bin) 
+enc([H  | T], N2S, V2T, Bin) 
     when H =:= data; H =:= docid; H =:= weight; H =:= rank; H =:= percent;
          H =:= multi_docid; H =:= db_number; H =:= db_name ->
-    enc(T, N2S, append_type(H, Bin));
+    enc(T, N2S, V2T, append_type(H, Bin));
 
-enc([Name | T], N2S, Bin) ->
+enc([Name | T], N2S, V2T, Bin) ->
     Slot = orddict:fetch(Name, N2S),
-    enc(T, N2S, append_value(Slot, append_type(value, Bin)));
+    Type = case V2T of
+            undefined -> value;
+            _ -> 
+                case array:get(Slot, V2T) of
+                    undefined -> value;
+                    float -> float_value
+                end
+            end,
+    enc(T, N2S, V2T, append_value(Slot, append_type(Type, Bin)));
 
-enc([], _N2S, Bin) -> 
+enc([], _N2S, _V2T, Bin) -> 
     append_type(stop, Bin).
 
 
@@ -179,15 +188,15 @@ append_value(Slot, Bin) ->
    
 part_id(stop)        -> 0;
 part_id(value)       -> 1;
-part_id(data)        -> 2;
-part_id(docid)       -> 3;
-part_id(weight)      -> 4;
-part_id(rank)        -> 5;
-part_id(percent)     -> 6;
-part_id(multi_docid) -> 7;
-part_id(db_number)   -> 8;
+part_id(float_value) -> 2;
+part_id(data)        -> 3;
+part_id(docid)       -> 4;
+part_id(weight)      -> 5;
+part_id(rank)        -> 6;
+part_id(percent)     -> 7;
+part_id(multi_docid) -> 8;
+part_id(db_number)   -> 9;
 part_id(db_name)     -> part_id(db_number).
-
 
 
 
@@ -198,14 +207,15 @@ part_id(db_name)     -> part_id(db_number).
 dec([H|T], I2N, Bin, Acc) ->
     {Val, NewBin} =
         case H of
+            data        -> read_string(Bin);
             docid       -> read_document_id(Bin);
             weight      -> read_weight(Bin);  % double
             rank        -> read_rank(Bin);    % unsigned
             percent     -> read_percent(Bin); % int -> uint8_t
             multi_docid -> read_document_id(Bin);
-            db_name     -> read_db_name(Bin, I2N);
             db_number   -> read_db_id(Bin);
-            _ -> read_string(Bin)
+            db_name     -> read_db_name(Bin, I2N);
+            _ValueField -> read_other(Bin)
         end,
     dec(T, I2N, NewBin, [Val|Acc]);
 
@@ -226,3 +236,14 @@ get_tuple_value(Key, Tuple, Def) when Key > 0 ->
         undefined -> Def;
         Val -> Val
     end.
+
+read_other(Bin1) ->
+    {Type, Bin2} = read_uint8(Bin1), 
+    case value_type(Type) of
+        string -> read_string(Bin2);
+        double -> read_double(Bin2)
+    end.
+
+
+value_type(0) -> string;
+value_type(1) -> double.

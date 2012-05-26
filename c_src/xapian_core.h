@@ -163,13 +163,19 @@ class Driver
     /// Used in the retrieveDocument function.
     enum fieldTypeOut {
         GET_VALUE                   = 1,
-        GET_DATA                    = 2,
-        GET_DOCID                   = 3,
-        GET_WEIGHT                  = 4,
-        GET_RANK                    = 5,
-        GET_PERCENT                 = 6,
-        GET_MULTI_DOCID             = 7,
-        GET_DB_NUMBER               = 8
+        GET_FLOAT_VALUE             = 2,
+        GET_DATA                    = 3,
+        GET_DOCID                   = 4,
+        GET_WEIGHT                  = 5,
+        GET_RANK                    = 6,
+        GET_PERCENT                 = 7,
+        GET_MULTI_DOCID             = 8,
+        GET_DB_NUMBER               = 9
+    };
+
+    enum encodedValueType {
+        STRING_TYPE = 0,
+        DOUBLE_TYPE = 1
     };
 
     /// Numbers of tests.

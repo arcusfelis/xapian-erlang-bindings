@@ -227,7 +227,8 @@
     %% full field name
     name :: atom(),
 
-    slot :: non_neg_integer()
+    slot :: non_neg_integer(),
+    type = string :: float | string
 }).
 
 

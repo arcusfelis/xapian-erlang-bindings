@@ -2,7 +2,7 @@
 -module(xapian_document).
 
 %% Internal functions
--export([encode/3]).
+-export([encode/4]).
 
 
 -include_lib("xapian/include/xapian.hrl").
@@ -64,20 +64,21 @@ term_type(remove)  -> remove_term.
 
 %% @doc Encode parts of the document to a binary.
 -spec encode([xapian:x_document_index_part()], 
-        orddict:orddict(), orddict:orddict()) -> binary().
+             orddict:orddict(), orddict:orddict(), array()) -> binary().
 
-encode(List, Name2Prefix, Name2Slot) ->
-    Pre = preprocess_hof(Name2Prefix, Name2Slot),
+encode(List, Name2Prefix, Name2Slot, Value2TypeArray) ->
+    Pre = preprocess_hof(Name2Prefix, Name2Slot, Value2TypeArray),
     List2 = [Pre(X) || X <- List], % lists:map(Pre, List)
     enc(List2, <<>>).
 
 
 %% @doc Replace all pseudonames on real values.
-preprocess_hof(Name2Prefix, Name2Slot) ->
+preprocess_hof(Name2Prefix, Name2Slot, Value2TypeArray) ->
     fun(Rec=#x_value{slot = Name}) when is_atom(Name) ->
             %% Set real slot id (integer) for values.
             %% Throw an error if there is no this name.
-            Rec#x_value{slot = orddict:fetch(Name, Name2Slot)};
+            NewRec = Rec#x_value{slot = orddict:fetch(Name, Name2Slot)},
+            fix_float(NewRec, Value2TypeArray);
 
        (Rec=#x_text{prefix = Name}) ->
             %% Set short version for prefixes.
@@ -92,6 +93,18 @@ preprocess_hof(Name2Prefix, Name2Slot) ->
         end.
 
 
+fix_float(Rec, undefined) -> 
+    Rec;
+
+fix_float(Rec=#x_value{slot = Slot, value = Value}, Value2TypeArray) 
+    when is_number(Value) -> 
+    float = array:get(Slot, Value2TypeArray), 
+    Rec;
+
+fix_float(Rec, _Value2TypeArray) ->
+    Rec.
+
+
 %% @doc Build a binary from a list of parts.
 enc([], Bin) -> append_stop(Bin);
 
@@ -101,7 +114,7 @@ enc([#x_stemmer{}=Stemmer|T], Bin) ->
 enc([#x_data{value = Value}|T], Bin) ->
     enc(T, append_data(Value, Bin));
 
-enc([#x_term{position = [HT|TT] = Positions} = Rec|T], Bin) ->
+enc([#x_term{position = [HT|TT] = _Positions} = Rec|T], Bin) ->
     enc([Rec#x_term{position = HT}, 
          Rec#x_term{position = TT} | T], Bin);
 
@@ -233,6 +246,6 @@ encode_test() ->
            , #x_text{value = "Paragraph 1"} 
            , #x_delta{}
            , #x_text{value = <<"Paragraph 2">>} 
-           ], [], []).
+           ], [], [], undefined).
 
 -endif.

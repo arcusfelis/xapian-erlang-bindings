@@ -107,11 +107,11 @@ Otherwise, first field contains a document id (can be repeated) and
 `multi\_docid` is a unique idintifier, which is calculated from 
 `docid` and `db\_number`.
 
-`db\_number` is a number of the document's database encounted from 0.
+`db\_number` is a number of the document's database encounted from 1.
 
-You can use pseudonyms instead of `db\_number` using `db\_name` field.
-Inforamation from `name` field of `#x\_database{}` record will be used for 
-this.
+`db\_name` field contains pseudonyms of the databases.
+Information from `name` field of `#x\_database{}` record will be used for 
+this. This field is `undefined` by default.
 
 ```erlang
  #x_database{name=db1, path="DB1"}

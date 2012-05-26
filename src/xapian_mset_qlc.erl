@@ -8,8 +8,9 @@
 
 table(Server, MSet, Meta) ->
     EncoderFun = fun(mset, DrvState, Bin) ->
-        Name2Slot = xapian_drv:name_to_slot(DrvState),
-        xapian_record:encode(Meta, Name2Slot, Bin)
+        Name2Slot  = xapian_drv:name_to_slot(DrvState),
+        Value2Type = xapian_drv:value_to_type(DrvState),
+        xapian_record:encode(Meta, Name2Slot, Value2Type, Bin)
         end,
     #internal_qlc_info{
         num_of_objects = Size,
