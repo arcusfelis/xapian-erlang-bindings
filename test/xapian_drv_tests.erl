@@ -11,6 +11,7 @@
 %% ------------------------------------------------------------------
 
 -ifdef(TEST).
+-include_lib("proper/include/proper.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
 testdb_path(Name) -> 
@@ -1029,9 +1030,9 @@ multi_db_test_() ->
     LookupRecords5 = multidb_record_by_id(Server, Query, 5),
 
     [?_assertEqual(Ids, [1,1])
-    ,?_assertEqual(DbNames, [multi2, multi1])
+    ,?_assertEqual(DbNames, [multi1, multi2])
     ,?_assertEqual(MultiIds, [1,2])
-    ,?_assertEqual(DbNums, [1,0])
+    ,?_assertEqual(DbNums, [0,1])
     ,?_assertEqual(LookupRecords2, [])
     ,?_assertEqual(LookupRecords5, [])
     ,?_assertEqual(length(LookupRecords1), 2)
@@ -1042,6 +1043,65 @@ multi_db_test_() ->
 elements(Pos, Records) ->
     [erlang:element(Pos, Rec) || Rec <- Records].
 
+
+
+run_proper_test_() ->
+         EunitLeader = erlang:group_leader(),
+         erlang:group_leader(whereis(user), self()),
+         Res = proper:module(?MODULE),
+         erlang:group_leader(EunitLeader, self()),
+         ?_assertEqual([], Res). 
+
+
+prop_multi_docid_db() ->
+    Path1 = #x_database{name=multi1, path=testdb_path(multi_docid1)},
+    Path2 = #x_database{name=multi2, path=testdb_path(multi_docid2)},
+    Path3 = #x_database{name=multi3, path=testdb_path(multi_docid3)},
+    Params = [write, create, overwrite],
+    Document = [#x_term{value = "test"}],
+    {ok, Server1} = ?DRV:open(Path1, Params),
+    {ok, Server2} = ?DRV:open(Path2, Params),
+    {ok, Server3} = ?DRV:open(Path3, Params),
+    Servers = [Server1, Server2, Server3],
+    Paths = [Path1, Path2, Path3],
+    [begin
+        ?DRV:add_document(S, Document)
+     end || X <- lists:seq(1, 1000), 
+            S <- Servers ],
+    [ ?DRV:close(S) || S <- Servers ],
+
+    %% Merged server
+    {ok, Server} = ?DRV:open(Paths, []),
+    Query    = "test",
+    multidb_record_by_id(Server, Query, 1),
+    multidb_record_by_id(Server, Query, 2),
+    multidb_record_by_id(Server, Query, 5),
+
+    ?FORALL({DocId, Db}, 
+            {range(1,1000), oneof([0, 1, 2, multi1, multi2, multi3])},
+        begin
+        MultiDocId = ?DRV:multi_docid(Server, DocId, Db),
+        Doc = #mdocument{docid=DocId, 
+                    multi_docid=MultiDocId, 
+                    db_name=multi_sub_db_id_to_name(Db), 
+                    db_number=multi_sub_db_name_to_id(Db)},
+        equals([Doc], multidb_record_by_id(Server, Query, MultiDocId))
+        end).
+
+
+multi_sub_db_id_to_name(Id) when is_integer(Id) -> 
+    list_to_existing_atom("multi" ++ integer_to_list(Id+1));
+
+multi_sub_db_id_to_name(Name) when is_atom(Name) -> 
+    Name.
+
+
+multi_sub_db_name_to_id(Id) when is_integer(Id) -> 
+    Id;
+
+multi_sub_db_name_to_id(Name) when is_atom(Name) -> 
+    "multi" ++ IdList = atom_to_list(Name),
+    list_to_integer(IdList) - 1.
 
 -endif.
 

@@ -2031,7 +2031,7 @@ Driver::retrieveDocument(
             {
                 const Xapian::docid docid_combined = *mset_iter;
                 const Xapian::docid subdatabase_number = 
-                    docid_combined % m_number_of_databases; 
+                    (docid_combined - 1) % m_number_of_databases; 
                     // First sub-database is 0.
                 m_result << static_cast<uint32_t>(subdatabase_number);
                 break;
@@ -2116,7 +2116,7 @@ Driver::retrieveDocument(
             {
                 const Xapian::docid docid_combined = *mset_iter;
                 const Xapian::docid subdatabase_number = 
-                    docid_combined % m_number_of_databases; 
+                    (docid_combined - 1) % m_number_of_databases; 
                     // First sub-database is 0.
                 m_result << static_cast<uint32_t>(subdatabase_number);
                 break;

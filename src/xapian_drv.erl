@@ -47,7 +47,8 @@
 %% More information
 -export([name_to_slot/1, 
          name_to_slot/2,
-         subdb_names/1]).
+         subdb_names/1,
+         multi_docid/3]).
 
 
 
@@ -69,7 +70,8 @@
 %% with_state internals
 -export([internal_name_to_slot/2,
          internal_name_to_slot_dict/1,
-         internal_subdb_names/1]).
+         internal_subdb_names/1,
+         internal_multi_docid/2]).
 
 
 -import(xapian_common, [ 
@@ -550,6 +552,20 @@ subdb_names(Server) ->
     call(Server, {with_state, fun ?DRV:internal_subdb_names/1}).
 
 
+multi_docid(State=#state{subdb_name_to_id = N2I}, DocId, SubDbName) 
+    when is_atom(SubDbName) ->
+    SubDbId = orddict:fetch(SubDbName, N2I),
+    multi_docid(State, DocId, SubDbId);
+
+multi_docid(#state{subdb_names = Names}, DocId, SubDbNum) 
+    when is_integer(SubDbNum) ->
+    DbCount = size(Names),
+    (DbCount * (DocId-1)) + SubDbNum + 1;
+
+multi_docid(Server, DocId, SubDb) when not is_tuple(Server) ->
+    call(Server, {with_state, fun ?DRV:internal_multi_docid/2, {DocId, SubDb}}).
+
+
 %% ------------------------------------------------------------------
 %% Info Internal
 %% ------------------------------------------------------------------
@@ -558,10 +574,19 @@ internal_name_to_slot_dict(#state{name_to_slot = N2S}) ->
     {ok, N2S}.
 
 internal_name_to_slot(#state{name_to_slot = N2S}, Slot) -> 
-    orddict_find(N2S, Slot).
+    orddict_find(Slot, N2S).
 
 internal_subdb_names(#state{subdb_names = I2N}) -> 
     {ok, I2N}.
+
+internal_multi_docid(State, {DocId, SubDbName}) when is_atom(SubDbName) ->
+    #state{subdb_name_to_id = N2I} = State,
+    do([error_m ||
+        SubDbNum <- orddict_find(SubDbName, N2I),
+        {ok, multi_docid(State, DocId, SubDbNum)}]);
+
+internal_multi_docid(State, {DocId, SubDbNum}) ->
+    {ok, multi_docid(State, DocId, SubDbNum)}.
 
 %% ------------------------------------------------------------------
 %% API for other modules
