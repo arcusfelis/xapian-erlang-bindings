@@ -494,6 +494,12 @@ class Driver
         return (docid_combined - 1) / m_number_of_databases + 1;
     }
 
+    Xapian::docid subdb_num(const Xapian::docid docid_combined)
+    {
+        // Encounted from 1
+        return (docid_combined - 1) % m_number_of_databases + 1; 
+    }
+
     /*! \name Private static helpers. */
     /*! \{ */
     

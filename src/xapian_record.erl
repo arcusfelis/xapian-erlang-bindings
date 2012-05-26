@@ -221,8 +221,8 @@ db_id_to_name(Id, I2N) ->
     get_tuple_value(Id, I2N, Id).
 
 
-get_tuple_value(Key, Tuple, Def) ->
-    case erlang:element(Key+1, Tuple) of
+get_tuple_value(Key, Tuple, Def) when Key > 0 ->
+    case erlang:element(Key, Tuple) of
         undefined -> Def;
         Val -> Val
     end.

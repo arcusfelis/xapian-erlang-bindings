@@ -560,7 +560,7 @@ multi_docid(State=#state{subdb_name_to_id = N2I}, DocId, SubDbName)
 multi_docid(#state{subdb_names = Names}, DocId, SubDbNum) 
     when is_integer(SubDbNum) ->
     DbCount = size(Names),
-    (DbCount * (DocId-1)) + SubDbNum + 1;
+    (DbCount * (DocId-1)) + SubDbNum;
 
 multi_docid(Server, DocId, SubDb) when not is_tuple(Server) ->
     call(Server, {with_state, fun ?DRV:internal_multi_docid/2, {DocId, SubDb}}).
@@ -1599,7 +1599,8 @@ check_all([], Acc) ->
 
 
 subdb_numbers(Names) ->
-    subdb_numbers(Names, 0, []).
+    %% Encounting from 1.
+    subdb_numbers(Names, 1, []).
 
 
 subdb_numbers([undefined|T], Num, Acc) ->

@@ -2021,19 +2021,14 @@ Driver::retrieveDocument(
 
             case GET_MULTI_DOCID:
             {
-                const Xapian::docid docid_combined = *mset_iter;
-                m_result << static_cast<uint32_t>(docid_combined);
+                m_result << static_cast<uint32_t>(*mset_iter);
                 break;
             }
 
 
             case GET_DB_NUMBER:
             {
-                const Xapian::docid docid_combined = *mset_iter;
-                const Xapian::docid subdatabase_number = 
-                    (docid_combined - 1) % m_number_of_databases; 
-                    // First sub-database is 0.
-                m_result << static_cast<uint32_t>(subdatabase_number);
+                m_result << static_cast<uint32_t>(subdb_num(*mset_iter));
                 break;
             }
 
@@ -2107,18 +2102,13 @@ Driver::retrieveDocument(
             // http://trac.xapian.org/wiki/FAQ/MultiDatabaseDocumentID
             case GET_MULTI_DOCID:
             {
-                const Xapian::docid docid_combined = *mset_iter;
-                m_result << static_cast<uint32_t>(docid_combined);
+                m_result << static_cast<uint32_t>(*mset_iter);
                 break;
             }
 
             case GET_DB_NUMBER:
             {
-                const Xapian::docid docid_combined = *mset_iter;
-                const Xapian::docid subdatabase_number = 
-                    (docid_combined - 1) % m_number_of_databases; 
-                    // First sub-database is 0.
-                m_result << static_cast<uint32_t>(subdatabase_number);
+                m_result << static_cast<uint32_t>(subdb_num(*mset_iter));
                 break;
             }
 

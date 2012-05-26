@@ -1032,7 +1032,7 @@ multi_db_test_() ->
     [?_assertEqual(Ids, [1,1])
     ,?_assertEqual(DbNames, [multi1, multi2])
     ,?_assertEqual(MultiIds, [1,2])
-    ,?_assertEqual(DbNums, [0,1])
+    ,?_assertEqual(DbNums, [1,2])
     ,?_assertEqual(LookupRecords2, [])
     ,?_assertEqual(LookupRecords5, [])
     ,?_assertEqual(length(LookupRecords1), 2)
@@ -1078,7 +1078,7 @@ prop_multi_docid_db() ->
     multidb_record_by_id(Server, Query, 5),
 
     ?FORALL({DocId, Db}, 
-            {range(1,1000), oneof([0, 1, 2, multi1, multi2, multi3])},
+            {range(1,1000), oneof([1, 2, 3, multi1, multi2, multi3])},
         begin
         MultiDocId = ?DRV:multi_docid(Server, DocId, Db),
         Doc = #mdocument{docid=DocId, 
@@ -1090,7 +1090,7 @@ prop_multi_docid_db() ->
 
 
 multi_sub_db_id_to_name(Id) when is_integer(Id) -> 
-    list_to_existing_atom("multi" ++ integer_to_list(Id+1));
+    list_to_existing_atom("multi" ++ integer_to_list(Id));
 
 multi_sub_db_id_to_name(Name) when is_atom(Name) -> 
     Name.
@@ -1101,7 +1101,7 @@ multi_sub_db_name_to_id(Id) when is_integer(Id) ->
 
 multi_sub_db_name_to_id(Name) when is_atom(Name) -> 
     "multi" ++ IdList = atom_to_list(Name),
-    list_to_integer(IdList) - 1.
+    list_to_integer(IdList).
 
 -endif.
 
