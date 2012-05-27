@@ -622,6 +622,35 @@ read_document_test() ->
     ?DRV:close(Server).
 
 
+read_float_value_test_() ->
+    % Open test
+    Path = testdb_path(read_float),
+    Params = [write, create, overwrite, 
+        #x_value_name{type = float, slot = 1, name = slot1}],
+    {ok, Server} = ?DRV:open(Path, Params),
+    Document1 =
+        [ #x_data{value = "My test data as iolist"} 
+        , #x_value{slot = slot1, value = 7} 
+        ],
+    Document2 =
+        [ #x_data{value = "My test data as iolist"} 
+        , #x_value{slot = slot1, value = 66} 
+        ],
+
+    DocId1 = ?DRV:add_document(Server, Document1),
+    DocId2 = ?DRV:add_document(Server, Document2),
+    Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
+    Rec1 = ?DRV:read_document(Server, DocId1, Meta),
+    Rec2 = ?DRV:read_document(Server, DocId2, Meta),
+    [?_assertEqual(Rec1#rec_test.docid, 1)
+    ,?_assertEqual(Rec1#rec_test.slot1, 7.0)
+    ,?_assertEqual(Rec1#rec_test.data, <<"My test data as iolist">>)
+    ,?_assertEqual(Rec2#rec_test.docid, 2)
+    ,?_assertEqual(Rec2#rec_test.slot1, 66.0)
+    ,?_assertEqual(Rec2#rec_test.data, <<"My test data as iolist">>)
+    ].
+
+
 short_record_test() ->
     Path = testdb_path(short_rec_test),
     Params = [write, create, overwrite],

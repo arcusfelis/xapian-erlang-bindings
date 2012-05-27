@@ -1540,6 +1540,22 @@ Driver::handleTerm(uint8_t command,
 }
 
 
+const std::string 
+Driver::decodeValue(ParamDecoder& params)
+{
+    switch(uint8_t type = params)
+    {
+        case STRING_TYPE:
+            return params;
+
+        case DOUBLE_TYPE:
+            return Xapian::sortable_serialise(params);
+
+        default:
+            throw BadCommandDriverError(type);
+     }
+}
+
 void
 Driver::handleValue(uint8_t command,
     ParamDecoder& params, 
@@ -1547,7 +1563,7 @@ Driver::handleValue(uint8_t command,
 {
     // see xapian_document:append_value
     const uint32_t         slot     = params;
-    const std::string&     value    = params;
+    const std::string&     value    = decodeValue(params);
     const bool             ignore   = params; 
 
     const Xapian::valueno slot_no  = 

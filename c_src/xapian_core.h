@@ -606,6 +606,11 @@ class Driver
         ResultEncoder& result,
         Xapian::TermIterator iter,
         const Xapian::TermIterator end);
+
+
+
+    static const std::string 
+    decodeValue(ParamDecoder& params);
     /*! \} */
 };
 

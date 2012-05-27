@@ -9,6 +9,7 @@
 -compile({parse_transform, seqbind}).
 -import(xapian_common, [ 
     append_iolist/2,
+    append_double/2,
     append_uint/2,
     append_int/2,
     append_uint8/2,
@@ -208,7 +209,7 @@ append_term_wdf(Type, Value, WDF, Ignore, Bin@) ->
 append_value(Action, Slot, Value, Ignore, Bin@) ->
     Bin@ = append_type(value_type(Action), Bin@),
     Bin@ = append_uint(Slot, Bin@),
-    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_value(Value, Bin@),
     Bin@ = append_boolean(Ignore, Bin@),
     Bin@.
 
@@ -233,6 +234,16 @@ append_type(Type, Bin) ->
     append_uint8(part_id(Type), Bin).
 
 
+%% see XapianErlang::Driver::decodeValue
+append_value(Value, Bin@) when is_number(Value) ->
+    append_double(Value, append_uint8(value_type_id(double), Bin@)); 
+
+append_value(Value, Bin@) ->
+    append_iolist(Value, append_uint8(value_type_id(string), Bin@)).
+
+
+value_type_id(string) -> 0;
+value_type_id(double) -> 1.
 
 
 -ifdef(TEST).
