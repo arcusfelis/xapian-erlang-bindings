@@ -4,8 +4,7 @@
 -behaviour(gen_server).
 
 %% API
--export([prog_server/2, 
-         tcp_server/2, 
+-export([tcp_server/2, 
          replicate_client/2, 
          replicate_server/2]).
 
@@ -29,11 +28,6 @@
 %% -------------------------------------------------------------------
 
 -type start_result() :: {ok, pid()} | {error, term()}.
-
--type prog_server_param() :: 
-      writable 
-    | {timeout, xapian:x_timeout()}
-    | link.
 
 -type replicate_server_param() :: 
       link 
@@ -66,23 +60,6 @@
 %%  API
 %% -------------------------------------------------------------------
 
--spec prog_server([string()], [prog_server_param()]) -> start_result().
-
-prog_server(DbDirs, Params) ->
-    %% xapian-progsrv [OPTIONS] DATABASE_DIRECTORY...
-    Writable = lists:member(writable, Params),
-    WritableOpt = if 
-        Writable, length(DbDirs) =:= 1 -> ["--writable"]; 
-        Writable -> erlang:error(multiple_writable_dbs);
-        true -> [] end,
-
-    Timeout = proplists:get_value(timeout, Params),
-    TimeoutOpt = encode_timeout("timeout", Timeout),
-
-    Args = ["xapian-progsrv"] ++ WritableOpt ++ TimeoutOpt ++ DbDirs,
-    start(Args, Params).
-   
-
 -spec tcp_server([string()], [tcp_server_param()]) -> start_result().
 
 tcp_server(DbDirs, Params) ->
@@ -103,7 +80,7 @@ tcp_server(DbDirs, Params) ->
     PortOpt = 
         case Port of undefined -> 
             erlang:error(undefined_port); 
-            _Port -> ["--port", Port] 
+            _Port -> ["--port", integer_to_list(Port)] 
     end,
 
     Timeout = proplists:get_value(timeout, Params),
@@ -148,7 +125,7 @@ replicate_client(DbDir, Params) ->
     PortOpt = 
         case Port of 
             undefined -> erlang:error(undefined_port); 
-            _Port -> ["--port", Port] 
+            _Port -> ["--port", integer_to_list(Port)] 
         end,
 
     Interval = proplists:get_value(interval, Params),
@@ -182,7 +159,7 @@ replicate_server(DirWithDatabases, Params) ->
     PortOpt = 
         case Port of 
             undefined -> erlang:error(undefined_port); 
-            _Port -> ["--port", Port] 
+            _Port -> ["--port", integer_to_list(Port)] 
         end,
 
     Args = ["xapian-replicate-server"] ++ OneShotOpt 
@@ -203,7 +180,8 @@ start(Args, Params) ->
 %% -------------------------------------------------------------------
 
 init([Cmd|Args]) ->
-    Port = open_port({spawn_executable, Cmd}, [{args, Args}]),
+   Port = open_port({spawn_executable, os:find_executable(Cmd)},
+                     [{args, Args}, exit_status]),
     {ok, #state{port = Port}}.
 
 handle_call(_Request, _From, State) ->

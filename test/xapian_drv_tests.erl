@@ -1078,6 +1078,16 @@ elements(Pos, Records) ->
     [erlang:element(Pos, Rec) || Rec <- Records].
 
 
+remote_db_test() ->
+    Params = [writable, link, {port, 6666}],
+    DBList = [testdb_path(tcp_remote)],
+    xapian_utils:tcp_server(DBList, Params),
+
+    DBConfig = #x_tcp_database{port = 6666, host = "127.0.0.1"},
+    {ok, Server1} = ?DRV:open(DBConfig, [write]).
+
+
+
 %% This test tests the lookup function of a mset qlc table.
 %% Besides, it tests `xapian_drv:multi_docid/3' function and 
 %% other functions for conversation between: 
@@ -1144,6 +1154,7 @@ run_property_testing_test_() ->
     Res = proper:module(?MODULE),
     erlang:group_leader(EunitLeader, self()),
     ?_assertEqual([], Res). 
+
 
 -endif.
 
