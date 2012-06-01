@@ -90,6 +90,7 @@ start_link(Args) ->
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -define(POOL, ?MODULE).
+-record(test_pool, {names, pool_pids}).
 
 testdb_path(Name) -> 
 	TestDir = filename:join(code:priv_dir(xapian), test_db),
@@ -97,10 +98,16 @@ testdb_path(Name) ->
 	filename:join(TestDir, Name).
 
 
--record(test_pool, {names, pool_pids}).
+try_start_application() ->
+    case application:start(xapian) of
+        ok -> ok;
+        {error,{already_started,xapian}} ->
+            ok
+    end.
+
 
 pool_test_() ->
-    application:start(xapian),
+    try_start_application(),
     {foreach,
     fun pool_setup/0,
     fun pool_clean/1,

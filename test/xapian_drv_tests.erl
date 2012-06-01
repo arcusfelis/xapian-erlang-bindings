@@ -2,6 +2,7 @@
 -module(xapian_drv_tests).
 -include_lib("xapian/include/xapian.hrl").
 -include_lib("xapian/src/xapian.hrl").
+-compile([export_all]).
 
 %% Used for testing, then can be moved to an another file
 -define(DRV, xapian_drv).
@@ -13,15 +14,80 @@
 -ifdef(TEST).
 -include_lib("proper/include/proper.hrl").
 -include_lib("eunit/include/eunit.hrl").
+    
+
+%% ------------------------------------------------------------------
+%% Call C++ tests
+%% ------------------------------------------------------------------
+    
+%% @doc Check basic memory operations (malloc, free).
+memory_test() ->
+    {ok, Server} = ?DRV:open([], []),
+    ?DRV:internal_test_run(Server, memory, []),
+    ?DRV:close(Server),
+    ok.
+
+-ifdef(T).
+-endif.
+    
+echo_test() ->
+    {ok, Server} = ?DRV:open([], []),
+    ?assertEqual(?DRV:internal_test_run(Server, echo, <<0,5>>), <<0,5>>),
+    Bin = list_to_binary(lists:duplicate(1100, 1)),
+    ?assertEqual(?DRV:internal_test_run(Server, echo, Bin), Bin),
+    ok.
+
+
+-define(DOCUMENT_ID(X), X:32/native-unsigned-integer).
+    
+%% @doc This test checks the work of `ResultEncoder'.
+result_encoder_test() ->
+    {ok, Server} = ?DRV:open([], []),
+    Reply = ?DRV:internal_test_run(Server, result_encoder, [1, 1000]),
+    Reply = ?DRV:internal_test_run(Server, result_encoder, [1, 1000]),
+    Reply = ?DRV:internal_test_run(Server, result_encoder, [1, 1000]),
+    ?DRV:close(Server),
+    ?assertEqual(lists:seq(1, 1000), [ Id || <<?DOCUMENT_ID(Id)>> <= Reply ]),
+    ok.
+    
+
+%% @doc Check an exception.
+exception_test() ->
+    {ok, Server} = ?DRV:open([], []),
+    % ?assertException(ClassPattern, TermPattern, Expr)
+    ?assertException(error, 
+        #x_error{type = <<"MemoryAllocationDriverError">>}, 
+        ?DRV:internal_test_run(Server, exception, [])),
+    ?DRV:close(Server),
+    ok.
+
+
+%% ------------------------------------------------------------------
+%% Call test generators
+%% ------------------------------------------------------------------
 
 testdb_path(Name) -> 
+    io:format(user, "~nTest DB: ~s~n ", [Name]),
 	TestDir = filename:join(code:priv_dir(xapian), test_db),
 	file:make_dir(TestDir),
 	filename:join(TestDir, Name).
 
 
+wrapper(Name) ->
+    [{setup, 
+      fun() -> ok end, 
+      fun(_) -> [{atom_to_list(Name), ?MODULE:Name()}] end}].
+
+
+run_test_generators_once_test_() ->
+    AllFuns = ?MODULE:module_info(exports),
+    [wrapper(Name) || {Name, Arity} <- AllFuns, 
+                       Arity =:= 0, 
+                       lists:suffix("_gen", atom_to_list(Name))].
+
+
 %% This test tries to create a document with all kinds of fields.
-simple_test_() ->
+simple_gen() ->
     % Open test
     Path = testdb_path(simple),
     Params = [write, create, overwrite, 
@@ -54,6 +120,7 @@ simple_test_() ->
     , ?_assertEqual(DocId, DocIdReplaced1)
     , ?_assertEqual(DocId, DocIdReplaced2)
     ].
+
 
 
 update_document_test() ->
@@ -111,7 +178,7 @@ term_actions_test() ->
 -record(spy_term, {value, freq}).
 
 
-term_qlc_test_() ->
+term_qlc_gen() ->
     Path = testdb_path(term_qlc),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
@@ -143,7 +210,7 @@ term_qlc_test_() ->
     ].
 
 
-short_term_qlc_test_() ->
+short_term_qlc_gen() ->
     Path = testdb_path(short_term_qlc),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
@@ -164,7 +231,7 @@ short_term_qlc_test_() ->
     ].
 
 
-term_ext_qlc_test_() ->
+term_ext_qlc_gen() ->
     Path = testdb_path(term_ext_qlc),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
@@ -191,7 +258,7 @@ term_ext_qlc_test_() ->
     ].
 
 
-term_pos_qlc_test_() ->
+term_pos_qlc_gen() ->
     Path = testdb_path(term_pos_qlc),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
@@ -229,7 +296,7 @@ term_pos_qlc_test_() ->
     ].
 
 
-value_count_match_spy_test_() ->
+value_count_match_spy_gen() ->
     Path = testdb_path(value_count_mspy),
     Params = [write, create, overwrite, 
         #x_value_name{slot = 1, name = color}],
@@ -291,7 +358,7 @@ add_color_document(Server, Color) ->
     DocId = ?DRV:add_document(Server, Document).
 
 
-term_advanced_actions_test_() ->
+term_advanced_actions_gen() ->
     Path = testdb_path(adv_actions),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
@@ -389,7 +456,7 @@ term_advanced_actions_test_() ->
 
 reopen_test() ->
     % Open test
-    Path = testdb_path(simple),
+    Path = testdb_path(reopen),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
     ?DRV:close(Server),
@@ -457,7 +524,7 @@ stemmer_test() ->
 %% Transations tests
 %% ------------------------------------------------------------------
 
-transaction_test_() ->
+transaction_gen() ->
     % Open test
     Path1 = testdb_path(transaction1),
     Path2 = testdb_path(transaction2),
@@ -533,7 +600,7 @@ transaction_test_() ->
         ]}.
 
 
-transaction_readonly_error_test_() ->
+transaction_readonly_error_gen() ->
     % Open test
     Path = testdb_path(transaction1),
     Params = [],
@@ -555,39 +622,6 @@ transaction_readonly_error_test_() ->
         ]}.
     
 
-    
-
-%% ------------------------------------------------------------------
-%% Call C++ tests
-%% ------------------------------------------------------------------
-
--define(DOCUMENT_ID(X), X:32/native-unsigned-integer).
-    
-%% @doc This test checks the work of `ResultEncoder'.
-result_encoder_test() ->
-    % Open test
-    Path = testdb_path(simple),
-    Params = [],
-    {ok, Server} = ?DRV:open(Path, Params),
-    Reply = ?DRV:internal_run_test(Server, result_encoder, [1, 1000]),
-    Reply = ?DRV:internal_run_test(Server, result_encoder, [1, 1000]),
-    Reply = ?DRV:internal_run_test(Server, result_encoder, [1, 1000]),
-    ?DRV:close(Server),
-    ?assertEqual(lists:seq(1, 1000), [ Id || <<?DOCUMENT_ID(Id)>> <= Reply ]),
-    ok.
-    
-
-%% @doc Check an exception.
-exception_test() ->
-    Path = testdb_path(simple),
-    Params = [],
-    {ok, Server} = ?DRV:open(Path, Params),
-    % ?assertException(ClassPattern, TermPattern, Expr)
-    ?assertException(error, 
-        #x_error{type = <<"MemoryAllocationDriverError">>}, 
-        ?DRV:internal_run_test(Server, exception, [])),
-    ?DRV:close(Server),
-    ok.
 
 
 
@@ -622,7 +656,7 @@ read_document_test() ->
     ?DRV:close(Server).
 
 
-read_float_value_test_() ->
+read_float_value_gen() ->
     % Open test
     Path = testdb_path(read_float),
     Params = [write, create, overwrite, 
@@ -692,7 +726,7 @@ read_bad_docid_test() ->
 %% These cases will be runned sequencly.
 %% `Server' will be passed as a parameter.
 %% `Server' will be opened just once for all cases.
-cases_test_() ->
+cases_gen() ->
     Cases = 
     [ fun single_term_query_page_case/1
     , fun value_range_query_page_case/1
@@ -964,7 +998,7 @@ database_info_case(Server) ->
     {"Check database_info function.", Case}.
 
 
-metadata_test_() ->
+metadata_gen() ->
     Path = testdb_path(metadata),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
@@ -976,7 +1010,7 @@ metadata_test_() ->
 
 
 %% http://trac.xapian.org/wiki/FAQ/ExtraWeight
-extra_weight_test_() ->
+extra_weight_gen() ->
     Path = testdb_path(extra_weight),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
@@ -1035,7 +1069,7 @@ multidb_record_by_id(Server, Query, Id) ->
 
 
 %% Simple usage of a merged DB.
-multi_db_test_() ->
+multi_db_gen() ->
     Path1 = #x_database{name=multi1, path=testdb_path(multi1)},
     Path2 = #x_database{name=multi2, path=testdb_path(multi2)},
     Params = [write, create, overwrite],
@@ -1082,9 +1116,10 @@ remote_db_test() ->
     Params = [writable, link, {port, 6666}],
     DBList = [testdb_path(tcp_remote)],
     xapian_utils:tcp_server(DBList, Params),
-
+    timer:sleep(200),
     DBConfig = #x_tcp_database{port = 6666, host = "127.0.0.1"},
-    {ok, Server1} = ?DRV:open(DBConfig, [write]).
+    {ok, Server} = ?DRV:open(DBConfig, [write]),
+    ?DRV:close(Server).
 
 
 
@@ -1148,13 +1183,12 @@ multi_sub_db_name_to_id(Name) when is_atom(Name) ->
 %% Property Testing
 %% -------------------------------------------------------------------
 
-run_property_testing_test_() ->
+run_property_testing_gen() ->
     EunitLeader = erlang:group_leader(),
     erlang:group_leader(whereis(user), self()),
     Res = proper:module(?MODULE),
     erlang:group_leader(EunitLeader, self()),
     ?_assertEqual([], Res). 
-
 
 -endif.
 

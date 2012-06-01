@@ -1,7 +1,7 @@
 #!/bin/sh
 cd `dirname $0`
 
-make 
+#make 
 
 # NOTE: mustache templates need \ because they are not awesome.
 exec erl -pa $PWD/ebin edit $PWD/deps/*/ebin \

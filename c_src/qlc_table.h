@@ -13,6 +13,7 @@
 XAPIAN_ERLANG_NS_BEGIN
 
 class Driver;
+class ResultEncoder;
 
 class QlcType
 {
@@ -45,10 +46,10 @@ class QlcTable
     numOfObjects() = 0;
 
     virtual void
-    getPage(uint32_t from, uint32_t count) = 0;
+    getPage(ResultEncoder&, uint32_t from, uint32_t count) = 0;
 
     virtual void
-    lookup(ParamDecoder& driver_params) = 0;
+    lookup(PR) = 0;
 };
 
 
@@ -63,9 +64,9 @@ class MSetQlcTable : public QlcTable
 
     uint32_t numOfObjects();
 
-    void getPage(uint32_t from, uint32_t count);
+    void getPage(ResultEncoder&, uint32_t from, uint32_t count);
 
-    void lookup(ParamDecoder& driver_params);
+    void lookup(PR);
 };
 
 
@@ -98,16 +99,18 @@ class TermQlcTable : public QlcTable
      */
     uint32_t numOfObjects();
 
-    void getPage(uint32_t from, uint32_t count);
+    void getPage(ResultEncoder&, uint32_t from, uint32_t count);
 
-    void lookup(ParamDecoder& driver_params);
+    void lookup(PR);
 
     // Helpers
     private:
     void goToAndCheckBorder(const uint32_t skip);
     void goTo(const uint32_t skip);
-    void getPageKnownSize(const uint32_t skip, const uint32_t count);
-    void getPageUnknownSize(const uint32_t skip, const uint32_t count);
+    void getPageKnownSize(
+            ResultEncoder&, const uint32_t skip, const uint32_t count);
+    void getPageUnknownSize(
+            ResultEncoder&, const uint32_t skip, const uint32_t count);
 };
 
 XAPIAN_ERLANG_NS_END

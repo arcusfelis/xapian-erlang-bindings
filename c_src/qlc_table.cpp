@@ -41,7 +41,8 @@ MSetQlcTable::numOfObjects()
  * Read not more then "count" documents.
  */
 void
-MSetQlcTable::getPage(const uint32_t skip, const uint32_t count)
+MSetQlcTable::getPage(
+        ResultEncoder& result, const uint32_t skip, const uint32_t count)
 {
     uint32_t size = m_mset.size();
     assert(skip <= size);
@@ -55,7 +56,7 @@ MSetQlcTable::getPage(const uint32_t skip, const uint32_t count)
     const uint32_t left = std::min(size, count);
 
     // Put count of elements
-    m_driver.m_result << left;
+    result << left;
 
     Xapian::MSetIterator iter = m_mset[skip];
     Xapian::MSetIterator last = (count < size) 
@@ -63,12 +64,12 @@ MSetQlcTable::getPage(const uint32_t skip, const uint32_t count)
                               : m_mset.end();
 
     ParamDecoder params = m_controller;
-    m_driver.retrieveDocuments(params, iter, last);
+    m_driver.retrieveDocuments(params, result, iter, last);
 }
 
 
 void
-MSetQlcTable::lookup(ParamDecoder& driver_params)
+MSetQlcTable::lookup(ParamDecoder& driver_params, ResultEncoder& result)
 {
     std::set<Xapian::docid> docids;
     uint8_t key = driver_params;
@@ -101,10 +102,10 @@ MSetQlcTable::lookup(ParamDecoder& driver_params)
         if (doc_iter != docids.end())
         {
             docids.erase(doc_iter);
-            m_driver.m_result << MORE;
+            result << MORE;
 
             ParamDecoder params = m_controller;
-            m_driver.selectEncoderAndRetrieveDocument(params, miter);
+            m_driver.selectEncoderAndRetrieveDocument(params, result, miter);
             if (docids.empty())
                 break;
         }
@@ -116,14 +117,14 @@ MSetQlcTable::lookup(ParamDecoder& driver_params)
             
         if (docids.find(current_docid) != docids.end())
         {
-            m_driver.m_result << MORE;
+            result << MORE;
 
             ParamDecoder params = m_controller;
-            m_driver.selectEncoderAndRetrieveDocument(params, miter);
+            m_driver.selectEncoderAndRetrieveDocument(params, result, miter);
         }
     }
 
-    m_driver.m_result << STOP;
+    result << STOP;
 }
 
 
@@ -163,21 +164,22 @@ TermQlcTable::numOfObjects()
  * Read not more then "count" documents.
  */
 void
-TermQlcTable::getPage(const uint32_t skip, const uint32_t count)
+TermQlcTable::getPage(
+        ResultEncoder& result, const uint32_t skip, const uint32_t count)
 {
     if (m_size)
-        getPageKnownSize(skip, count);
+        getPageKnownSize(result, skip, count);
     else
-        getPageUnknownSize(skip, count);
+        getPageUnknownSize(result, skip, count);
 }
 
 void
-TermQlcTable::lookup(ParamDecoder& driver_params)
+TermQlcTable::lookup(ParamDecoder& driver_params, ResultEncoder& result)
 {
     ParamDecoder schema_params = m_controller;
 
     Driver::qlcTermIteratorLookup(
-        driver_params, schema_params, m_driver.m_result,
+        driver_params, schema_params, result,
         mp_gen->begin(), m_end);
 }
 
@@ -188,13 +190,14 @@ TermQlcTable::lookup(ParamDecoder& driver_params)
 // ------------------------------------------------------------------
         
 void
-TermQlcTable::getPageUnknownSize(const uint32_t skip, const uint32_t count)
+TermQlcTable::getPageUnknownSize(
+        ResultEncoder& result, const uint32_t skip, const uint32_t count)
 {
     assert(!m_size);
 
     const uint32_t left = count;
 
-    m_driver.m_result << UNKNOWN_SIZE;
+    result << UNKNOWN_SIZE;
 
     // Skip first elements
     if (skip != m_current_pos)
@@ -207,11 +210,11 @@ TermQlcTable::getPageUnknownSize(const uint32_t skip, const uint32_t count)
     for (uint32_t i = left; i && (m_iter != m_end); m_iter++, i--, passed++)
     {
         assert(m_iter != m_end);
-        m_driver.m_result << MORE;
+        result << MORE;
         ParamDecoder params = m_controller;
-        m_driver.retrieveTerm(params, m_iter);
+        m_driver.retrieveTerm(params, result, m_iter);
     }
-    m_driver.m_result << STOP;
+    result << STOP;
 
     // Save cur pos of an iterator
     m_current_pos = skip + passed;
@@ -223,7 +226,8 @@ TermQlcTable::getPageUnknownSize(const uint32_t skip, const uint32_t count)
 
 
 void
-TermQlcTable::getPageKnownSize(const uint32_t skip, const uint32_t count)
+TermQlcTable::getPageKnownSize(
+        ResultEncoder& result, const uint32_t skip, const uint32_t count)
 {
     uint32_t size = m_size;
     assert(skip <= size);
@@ -237,9 +241,9 @@ TermQlcTable::getPageKnownSize(const uint32_t skip, const uint32_t count)
     // * and not more then wanted count of documents were extracted.
     const uint32_t left = std::min(size, count);
 
-    m_driver.m_result << KNOWN_SIZE;
+    result << KNOWN_SIZE;
     // Put count of elements
-    m_driver.m_result << left;
+    result << left;
 
     // Skip first elements
     if (skip != m_current_pos)
@@ -252,7 +256,7 @@ TermQlcTable::getPageKnownSize(const uint32_t skip, const uint32_t count)
     {
         assert(m_iter != m_end);
         ParamDecoder params = m_controller;
-        m_driver.retrieveTerm(params, m_iter);
+        m_driver.retrieveTerm(params, result, m_iter);
     }
 
     // Save cur pos of an iterator

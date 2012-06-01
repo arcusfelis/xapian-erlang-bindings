@@ -64,7 +64,7 @@
 
          internal_create_resource/2,
          internal_create_resource/3,
-         internal_run_test/3
+         internal_test_run/3
          ]).
 
 
@@ -93,11 +93,11 @@
 
 %% Used for testing, then can be moved to an another file
 -define(DRV, ?MODULE).
+-define(APP, xapian).
 
--define(DRIVER_NAME, "xapian_drv").
 
 -record(state, {
-    port :: port(),
+    port :: record(),
 
     %% Information was retrieved from #x_prefix_name{}
     name_to_prefix :: orddict:orddict(),
@@ -192,8 +192,7 @@
 -spec open(term(), [term()]) -> {ok, x_server()}.
 
 open(Path, Params) ->
-    load_driver(),
-    Args = [Path, Params],
+    Args = [Path, append_default_params(Params)],
     case proplists:get_value(name, Params) of
         undefined ->
             gen_server:start_link(?MODULE, Args, []);
@@ -352,7 +351,7 @@ set_metadata(Server, Key, Value) ->
 %% Tests
 %% ------------------------------------------------------------------
 
-internal_run_test(Server, TestName, Params) ->
+internal_test_run(Server, TestName, Params) ->
     call(Server, {test, TestName, Params}).
 
 
@@ -694,10 +693,14 @@ init([Path, Params]) ->
     %% This stemmer will be used by default
     DefaultStemmer = lists:keyfind(m_stemmer, 1, Params),
 
+    PortType = 
+        case lists:member(port, Params) of
+            true -> port;
+            false -> driver
+        end,
+    Port = xapian_port:open(PortType),
 
-    Port = erlang:open_port({spawn, ?DRIVER_NAME}, []),
-
-    do([error_m ||
+    stop_if_error(do([error_m ||
         SubDbNames <- 
             open_databases(Port, Path, Params),
         <<>> <- 
@@ -728,7 +731,7 @@ init([Path, Params]) ->
             subdb_name_to_id = Name2SubdbDict,
             subdb_names = list_to_tuple(SubDbNames)
         }}
-        end]);
+        end]));
 
 %% Add a copy of the server for the transaction
 init([{from_state, State}]) ->
@@ -748,7 +751,10 @@ handle_call(last_document_id, _From, State) ->
 
 handle_call(close, _From, State=#state{master=undefined}) ->
     #state{ port = Port } = State,
-    erlang:port_close(Port),
+    %% Flush on disk, close DB.
+    close_db_port(Port),
+    %% Destroy connection (send EOF to a prog port).
+    xapian_port:close(Port),
     Reply = ok,
     Reason = normal,
     {stop, Reason, Reply, State};
@@ -987,7 +993,7 @@ handle_call({transaction, Ref}, From, State) ->
             {ok, NewServer} = gen_server:start_link(?MODULE, Args, []),
 
             %% Change the owner of the port
-            erlang:port_connect(Port, NewServer),
+            xapian_port:connect(Port, NewServer),
 
             %% Reply back
             Reply = NewServer,
@@ -1026,6 +1032,14 @@ do_reply(_State, Other) ->
     Other.
 
 
+stop_if_error({error, _Reason} = Error) ->
+    io:format(user, "~p", [Error]),
+    {stop, Error};
+
+stop_if_error(Other) ->
+    Other.
+
+
 handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
     #state{ 
         port = Port, 
@@ -1044,12 +1058,13 @@ handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
 
 
 
-terminate(_Reason, #state{master = undefined}) ->
+terminate(_Reason, #state{master = undefined, port = Port}) ->
+    close_db_port(Port),
     ok;
 
 terminate(_Reason, #state{master = Master, port = Port}) ->
     %% Change the owner of the port
-    erlang:port_connect(Port, Master),
+    xapian_port:connect(Port, Master),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -1068,20 +1083,6 @@ document_encode(Document, #state{
         value_to_type = Value2TypeArray
     }) ->
     xapian_document:encode(Document, Name2Prefix, Name2Slot, Value2TypeArray).
-
-load_driver() ->
-    PrivDir = code:priv_dir(xapian),
-    case erl_ddll:load_driver(PrivDir, ?DRIVER_NAME) of
-    ok -> ok;
-    {error, Error} -> 
-        Message = erl_ddll:format_error(Error),
-        error_logger:error_msg("[~s:~w] Cannot load ~s~n" 
-                "From: ~ts~n"
-                "Error: ~s~n"
-                "Error code: ~w~n", 
-            [?MODULE_STRING, ?LINE, ?DRIVER_NAME, PrivDir, Message, Error]),
-        erlang:exit(bad_lib)
-    end.
 
 %% Command ids
 %% Returns an operation for port_control/3 
@@ -1113,7 +1114,8 @@ command_id(update_document)             -> 24;
 command_id(update_or_create_document)   -> 25;
 command_id(document)                    -> 26;
 command_id(open_prog)                   -> 27;
-command_id(open_tcp)                    -> 28.
+command_id(open_tcp)                    -> 28;
+command_id(close)                       -> 29.
 
 
 open_mode_id(read_open)                 -> 0;
@@ -1158,7 +1160,9 @@ resource_type_name(11) -> document.
 
 
 test_id(result_encoder) -> 1;
-test_id(exception)      -> 2.
+test_id(exception)      -> 2;
+test_id(echo)           -> 3;
+test_id(memory)         -> 4.
 
 
 open_mode(Params) ->
@@ -1186,7 +1190,7 @@ control(Port, Operation) ->
 
 control(Port, Operation, Data) ->
     <<Status:8/native-unsigned-integer, Result/binary>> = 
-        erlang:port_control(Port, command_id(Operation), Data),
+        xapian_port:control(Port, command_id(Operation), Data),
     case Status of
         0 -> {ok, Result};
         1 -> 
@@ -1222,8 +1226,13 @@ open_tcp_database(Port, Mode, TcpHost, TcpPort, Timeout, ConnectTimeout) ->
     control(Port, open_tcp, Bin@).
 
 
-open_databases(_Port, [], _Params) ->
-    {error, empty_path_list};
+close_db_port(Port) ->
+    [control(Port, close, <<>>) || xapian_port:is_port_alive(Port)],
+    ok.
+
+
+%%open_databases(_Port, [], _Params) ->
+%%    {error, empty_path_list};
 
 open_databases(Port, PathList, Params) ->
     Mode = open_mode(Params),
@@ -1329,6 +1338,13 @@ port_set_metadata(Port, Key, Value) ->
 port_last_document_id(Port) ->
     decode_docid_result(control(Port, last_document_id)).
 
+port_test(Port, echo, ValueBin) ->
+    Num = test_id(echo),
+    Bin@ = <<>>,
+    Bin@ = append_int8(Num, Bin@),
+    Bin@ = append_uint(byte_size(ValueBin), Bin@),
+    Bin@ = <<Bin@/binary, ValueBin/binary>>,
+    control(Port, test, Bin@);
 
 port_test(Port, result_encoder, [From, To]) ->
     Num = test_id(result_encoder),
@@ -1338,8 +1354,8 @@ port_test(Port, result_encoder, [From, To]) ->
     Bin@ = append_document_id(To, Bin@),
     control(Port, test, Bin@);
 
-port_test(Port, exception, []) ->
-    Num = test_id(exception),
+port_test(Port, Type, _) when Type =:= exception; Type =:= memory ->
+    Num = test_id(Type),
     Bin = append_int8(Num, <<>>),
     control(Port, test, Bin).
 
@@ -1640,6 +1656,14 @@ subdb_numbers([H|T], Num, Acc) ->
 subdb_numbers([], _Num, Acc) ->
     lists:reverse(Acc).
     
+
+append_default_params(Params) ->
+    case application:get_env(?APP, default_open_parameters) of
+        undefined ->
+            Params;
+        [_|_] = DefParams ->
+            DefParams ++ Params 
+    end.
 
 %% -----------------------------------------------------------------
 %% Helpers for monitoring.

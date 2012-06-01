@@ -10,13 +10,6 @@
 #include <string>
 #include <stdint.h>
 
-#include "erl_driver.h"
-/* Hack to handle R15 driver used with pre R15 driver */
-#if ERL_DRV_EXTENDED_MAJOR_VERSION == 1
-typedef int  ErlDrvSizeT;
-typedef int  ErlDrvSSizeT;
-#endif
-
 
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
@@ -35,7 +28,6 @@ class Driver
     Xapian::WritableDatabase m_wdb;
     Xapian::Stem m_default_stemmer;
 
-    ResultEncoder m_result;
     Xapian::QueryParser m_default_parser;
     Xapian::QueryParser m_empty_parser;
     ObjectRegister<Xapian::Document>            m_document_store;
@@ -64,6 +56,7 @@ class Driver
      */
     ResourceManager     m_stores;
     unsigned            m_number_of_databases;
+    MemoryManager&      m_mm;
 
     public:
     friend class MSetQlcTable;
@@ -100,7 +93,8 @@ class Driver
         UPDATE_OR_CREATE_DOCUMENT   = 25,
         DOCUMENT                    = 26,
         OPEN_PROG                   = 27,
-        OPEN_TCP                    = 28
+        OPEN_TCP                    = 28,
+        CLOSE                       = 29
     };
 
 
@@ -182,7 +176,9 @@ class Driver
     /// Used in the test function.
     enum testNumber {
         TEST_RESULT_ENCODER         = 1,
-        TEST_EXCEPTION              = 2
+        TEST_EXCEPTION              = 2,
+        TEST_ECHO                   = 3,
+        TEST_MEMORY                 = 4
     };
 
     enum queryType {
@@ -295,154 +291,144 @@ class Driver
     DOCID_ORDER_TYPES[];
 
 
-    /**
-     * The driver is loaded.
-     * This is called only once.
-     */
-    static int 
-    init();
-
-    /**
-     * The driver is unloaded.
-     * This is called only once.
-     */
-    static void
-    finish();
-
-    /**
-     * Here we do some initialization, start is called from `open_port'. 
-     * The drv_data will be passed to control and stop.
-     * This is called multiple times.
-     */
-    static ErlDrvData 
-    start(ErlDrvPort port, char* /* buf */);
-
-    /**
-     * This is called multiple times.
-     */
-    static void 
-    stop(ErlDrvData drv_data);
-
-    static ErlDrvSSizeT control(
-        ErlDrvData      drv_data, 
-        unsigned int    command, 
-        char*           buf, 
-        ErlDrvSizeT     len, 
-        char**          rbuf, 
-        ErlDrvSizeT     rlen);
-
     ResultEncoder* getResultEncoder();
 
     /**
      * A constructor.
      */
-    Driver(ResourceGenerator&);
+    Driver(MemoryManager&, ResourceGenerator&);
 
     ~Driver();
 
+    /**
+     * Read and execute one command from a client.
+     */
+    void
+    handleCommand(PR, const unsigned int  command);
+
     void setDefaultStemmer(const Xapian::Stem& stemmer);
-
-    size_t setDefaultStemmer(ParamDecoder& params);
-
-    size_t setDefaultPrefixes(ParamDecoder& params);
 
     ObjectBaseRegister&
     getRegisterByType(uint8_t type);
 
-    size_t open(uint8_t mode, const std::string& dbpath);
-    size_t open(uint8_t mode, const std::string& host, uint16_t port, 
-                uint32_t timeout, uint32_t connect_timeout);
-    size_t open(uint8_t mode, const std::string& prog, const std::string& args, 
-                uint32_t timeout);
-
     int openWriteMode(uint8_t mode);
 
-    size_t getLastDocId();
+    Xapian::Document
+    getDocument(ParamDecoder&);
 
-    size_t addDocument(ParamDecoder& params);
-    size_t replaceDocument(ParamDecoder& params);
-    size_t updateDocument(ParamDecoder& params, bool create);
-    void deleteDocument(ParamDecoder& params);
-    void setMetadata(ParamDecoder& params);
+    /*! \name Command helpers. */
+    /*! \{ */
+    void setDefaultStemmer(ParamDecoder& params);
+    void setDefaultPrefixes(ParamDecoder& params);
+
+    void open(uint8_t mode, const std::string& dbpath);
+    void open(uint8_t mode, const std::string& host, uint16_t port, 
+                uint32_t timeout, uint32_t connect_timeout);
+    void open(uint8_t mode, const std::string& prog, const std::string& args, 
+                uint32_t timeout);
+
+    void getLastDocId(ResultEncoder&);
+
+    void addDocument(PR);
+    void replaceDocument(PR);
+    void updateDocument(PR, bool create);
+    void deleteDocument(ParamDecoder&);
+    void setMetadata(ParamDecoder&);
 
     /**
      * `query_page'
      */
-    size_t query(ParamDecoder& params);
+    void query(PR);
 
     /**
-     * Return a resource.
+     * Write a resource.
      */
-    size_t enquire(ParamDecoder& params);
-
-    Xapian::Document
-    getDocument(ParamDecoder& params);
+    void enquire(PR);
 
     /**
-     * Return a resource 
+     * Write a resource.
      */
-    size_t document(ParamDecoder& params);
+    void document(PR);
 
     /**
      * Erase the stored object.
      */
-    size_t releaseResource(ParamDecoder& params);
+    void releaseResource(ParamDecoder&);
 
     /**
      * Converts an enquire into a match set.
-     * Return a resource.
+     * Write a resource.
      */
-    size_t matchSet(ParamDecoder& params);
+    void matchSet(PR);
 
-    size_t qlcInit(ParamDecoder& params);
+    void qlcInit(PR);
 
-    size_t qlcNext(ParamDecoder& params);
+    void qlcNext(PR);
 
-    size_t qlcLookup(ParamDecoder& params);
+    void qlcLookup(PR);
+
+    void startTransaction();
+
+    void cancelTransaction();
+
+    void commitTransaction();
+
+    void getDocumentById(PR);
+
+
+    void testResultEncoder(ResultEncoder&, Xapian::docid from, Xapian::docid to);
+    void testEcho(PR);
+    void testException();
+    void testMemory();
+
+    void getResourceInfo(ResultEncoder&);
+
+    /**
+     * Create a resource object using an user function.
+     */
+    void createResource(PR);
+    void test(PR);
+    void msetInfo(PR);
+    void databaseInfo(PR);
+    /*! \} */
 
     /** 
      * Gets a copy of params.
      *
      * `params' is a clone.
      */
-    void retrieveDocument(ParamDecoder, Xapian::Document&, Xapian::MSetIterator&);
-    void retrieveDocument(ParamDecoder, Xapian::Document&);
-    void retrieveDocument(ParamDecoder, Xapian::MSetIterator&);
-    void retrieveDocuments(ParamDecoder, 
-        Xapian::MSetIterator, Xapian::MSetIterator);
-    void selectEncoderAndRetrieveDocument(ParamDecoder&, Xapian::MSetIterator&);
+    void retrieveDocument(PCR, Xapian::Document&, Xapian::MSetIterator&);
+    void retrieveDocument(PCR, Xapian::Document&);
+    void retrieveDocument(PCR, Xapian::MSetIterator&);
+    void retrieveDocuments(PCR, Xapian::MSetIterator, Xapian::MSetIterator);
+    void selectEncoderAndRetrieveDocument(PR, Xapian::MSetIterator&);
 
     ParamDecoderController
     retrieveDocumentSchema(ParamDecoder&) const;
 
-
-    void retrieveTerm(ParamDecoder params, const Xapian::TermIterator& iter);
+    static void
+    retrieveTerm(PCR, const Xapian::TermIterator& iter);
     
-    static void 
-    retrieveTerm(
-        ParamDecoder params,  
-        ResultEncoder& result,
-        const Xapian::TermIterator& iter);
-
-
+     
     ParamDecoderController
-    retrieveTermSchema(ParamDecoder& params) const; 
+    retrieveTermSchema(ParamDecoder&) const; 
 
 
     /**
      * Read commands, encoded by `xapian_document:encode'.
      * Used in update, replace, add document functions.
      */
-    void applyDocument(ParamDecoder& params, Xapian::Document& doc);
+    void 
+    applyDocument(ParamDecoder&, Xapian::Document& doc);
 
     ParamDecoderController
-    applyDocumentSchema(ParamDecoder& params) const;
+    applyDocumentSchema(ParamDecoder&) const;
     
 
     Xapian::Query 
-    buildQuery(ParamDecoder& params);
+    buildQuery(ParamDecoder&);
 
-    void fillEnquire(Xapian::Enquire& enquire, ParamDecoder& params);
+    void fillEnquire(ParamDecoder&, Xapian::Enquire& enquire);
 
     void fillEnquireOrder(Xapian::Enquire& enquire, 
         const uint8_t type, const uint32_t value, const bool reverse);
@@ -452,45 +438,22 @@ class Driver
      */
     void assertWriteable() const;
 
-    size_t startTransaction();
-
-    size_t cancelTransaction();
-
-    size_t commitTransaction();
-
-    size_t getDocumentById(ParamDecoder& params);
-
-    size_t test(ParamDecoder& params);
-
-    size_t testResultEncoder(Xapian::docid from, Xapian::docid to);
-
-    size_t testException();
-
-    size_t getResourceInfo();
-
-    /**
-     * Create a resource object using an user function.
-     */
-    size_t createResource(ParamDecoder& params);
-    size_t msetInfo(ParamDecoder& params);
-    size_t databaseInfo(ParamDecoder& params);
-
     static unsigned
     idToParserFeature(uint8_t type);
 
     static unsigned 
-    decodeParserFeatureFlags(ParamDecoder& params);
+    decodeParserFeatureFlags(ParamDecoder&);
 
     static Xapian::QueryParser::stem_strategy
-    readStemmingStrategy(ParamDecoder& params);
+    readStemmingStrategy(ParamDecoder&);
 
     Xapian::QueryParser
-    readParser(ParamDecoder& params);
+    readParser(ParamDecoder&);
 
     Xapian::QueryParser 
-    selectParser(ParamDecoder& params);
+    selectParser(ParamDecoder&);
 
-    void addPrefix(Xapian::QueryParser& qp, ParamDecoder& params);
+    void addPrefix(ParamDecoder&, Xapian::QueryParser& qp);
 
 
 
@@ -584,19 +547,13 @@ class Driver
 
     
     static void
-    handlePosting(uint8_t command,
-        ParamDecoder& params, 
-        Xapian::Document& doc);
+    handlePosting(ParamDecoder&, uint8_t command, Xapian::Document& doc);
 
     static void
-    handleValue(uint8_t command,
-        ParamDecoder& params, 
-        Xapian::Document& doc);
+    handleValue  (ParamDecoder&, uint8_t command, Xapian::Document& doc);
 
     static void
-    handleTerm(uint8_t command,
-        ParamDecoder& params, 
-        Xapian::Document& doc);
+    handleTerm   (ParamDecoder&, uint8_t command, Xapian::Document& doc);
 
 
     static void

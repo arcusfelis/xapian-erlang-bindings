@@ -1,5 +1,4 @@
 #include "param_decoder_controller.h"
-#include "erl_driver.h"
 #include "xapian_exception.h"
 
 
@@ -10,9 +9,7 @@ void
 ParamDecoderController::init(const char *buf, const size_t len)
 {
     m_len = len;
-    m_buf = static_cast<char*>( driver_alloc(len) );
-    if (m_buf == NULL)
-        throw MemoryAllocationDriverError(len);
+    m_buf = reinterpret_cast<char*>(m_mm.alloc(len));
 
     // Copy data into a buffer 
     // From buf into m_buf
@@ -22,19 +19,23 @@ ParamDecoderController::init(const char *buf, const size_t len)
 /**
  * Constructor
  */
-ParamDecoderController::ParamDecoderController(const char *buf, const size_t len)
+ParamDecoderController::ParamDecoderController(MemoryManager& mm, 
+        const char *buf, const size_t len) 
+    : m_mm(mm)
 {
     init(buf, len);
 }
 
-ParamDecoderController::ParamDecoderController(const ParamDecoderController& prototype)
+ParamDecoderController::ParamDecoderController(
+        const ParamDecoderController& prototype) 
+    : m_mm(getMemoryManager(prototype))
 {
     init(prototype.m_buf, prototype.m_len);
 }
 
 ParamDecoderController::~ParamDecoderController()
 {
-    driver_free(m_buf);
+    m_mm.free(m_buf);
 }
 
 ParamDecoderController::operator ParamDecoder() const {

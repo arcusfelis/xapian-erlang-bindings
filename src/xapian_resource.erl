@@ -86,7 +86,8 @@ resource_setup() ->
     
 
 resource_clean(Server) ->
-    ?DRV:close(Server).
+%   ?DRV:close(Server).
+    ok.
 
 
 bool_weight_case(Server) ->

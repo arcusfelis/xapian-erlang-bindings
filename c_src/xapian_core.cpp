@@ -29,16 +29,7 @@
 
 #include "xapian_core.h"
 
-#include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
-
-
-// -------------------------------------------------------------------
-// Globals
-// -------------------------------------------------------------------
-
-ResourceGenerator* gp_generator = NULL;
-
 
 const uint8_t Driver::PARSER_FEATURE_COUNT = 13;
 const unsigned 
@@ -77,69 +68,8 @@ Driver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
 };
 
 
-/**
- * Create global variables
- */
-int 
-Driver::init()
-{
-    if (gp_generator == NULL)
-    {
-        gp_generator = new ResourceGenerator();
-        registerUserCallbacks(*gp_generator);
-    }
-    return 0;
-}
-
-
-/**
- * Delete global variables
- */
-void 
-Driver::finish()
-{
-    if (gp_generator != NULL)
-        delete gp_generator;
-
-    gp_generator = NULL;
-}
-
-
-ErlDrvData 
-Driver::start(
-    ErlDrvPort port, 
-    char* /* buf */)
-{
-    /* If the flag is set to PORT_CONTROL_FLAG_BINARY, 
-       a binary will be returned. */       
-    set_port_control_flags(port, PORT_CONTROL_FLAG_BINARY); 
-    assert(gp_generator != NULL);
-    Driver* drv_data = new Driver(*gp_generator);
-    return reinterpret_cast<ErlDrvData>( drv_data );
-}
-
-
-void 
-Driver::stop(
-    ErlDrvData drv_data) 
-{
-    Driver* 
-    drv = reinterpret_cast<Driver*>( drv_data );
-
-    if (drv != NULL)
-        delete drv;
-}   
-
-
-ResultEncoder* 
-Driver::getResultEncoder()
-{
-    return &m_result;
-}
-
-
-Driver::Driver(ResourceGenerator& generator)
-: m_generator(generator), m_stores(generator), m_number_of_databases(0)
+Driver::Driver(MemoryManager& mm, ResourceGenerator& generator)
+: m_generator(generator), m_stores(generator), m_number_of_databases(0), m_mm(mm)
 {
     // RESOURCE_TYPE_ID_MARK
     m_stores.add(ResourceType::DOCUMENT,       &m_document_store);
@@ -176,24 +106,22 @@ Driver::setDefaultStemmer(const Xapian::Stem& stemmer)
 }
 
 
-size_t 
+void
 Driver::setDefaultStemmer(ParamDecoder& params)
 {
     const Xapian::Stem&  stemmer = params;
     setDefaultStemmer(Xapian::Stem(stemmer));
-    return m_result;
 }
 
 
-size_t 
+void
 Driver::setDefaultPrefixes(ParamDecoder& params)
 {
     const uint32_t count   = params;
     for (uint32_t i = 0; i < count; i++)
     {
-        addPrefix(m_default_parser, params);
+        addPrefix(params, m_default_parser);
     }
-    return m_result;
 }
 
 
@@ -204,19 +132,18 @@ Driver::getRegisterByType(uint8_t type)
 }
 
 
-size_t 
-Driver::getLastDocId()
+void
+Driver::getLastDocId(ResultEncoder& result)
 {
     //Xapian::docid get_lastdocid() const
     const Xapian::docid 
     docid = m_db.get_lastdocid();
-    m_result << static_cast<uint32_t>(docid);
-    return m_result;
+    result << static_cast<uint32_t>(docid);
 }
 
 
-size_t 
-Driver::addDocument(ParamDecoder& params)
+void
+Driver::addDocument(PR)
 {
     assertWriteable();
 
@@ -224,13 +151,12 @@ Driver::addDocument(ParamDecoder& params)
     applyDocument(params, doc);
     const Xapian::docid
     docid = m_wdb.add_document(doc);
-    m_result << static_cast<uint32_t>(docid);
-    return m_result;
+    result << static_cast<uint32_t>(docid);
 }
 
 
-size_t 
-Driver::replaceDocument(ParamDecoder& params)
+void
+Driver::replaceDocument(PR)
 {
     assertWriteable();
 
@@ -258,13 +184,12 @@ Driver::replaceDocument(ParamDecoder& params)
             throw BadCommandDriverError(idType);
     }
         
-    m_result << static_cast<uint32_t>(docid);
-    return m_result;
+    result << static_cast<uint32_t>(docid);
 }
 
 
-size_t 
-Driver::updateDocument(ParamDecoder& params, bool create)
+void
+Driver::updateDocument(PR, bool create)
 {
     assertWriteable();
     const ParamDecoderController& schema  
@@ -336,8 +261,7 @@ Driver::updateDocument(ParamDecoder& params, bool create)
             throw BadCommandDriverError(idType);
     }
         
-    m_result << static_cast<uint32_t>(docid);
-    return m_result;
+    result << static_cast<uint32_t>(docid);
 }
 
 
@@ -368,8 +292,8 @@ Driver::deleteDocument(ParamDecoder& params)
     }
 }
 
-size_t 
-Driver::query(ParamDecoder& params)
+void
+Driver::query(PR)
 {
     /* offset, pagesize, query, template */
     const uint32_t offset   = params;
@@ -386,13 +310,12 @@ Driver::query(ParamDecoder& params)
         static_cast<Xapian::termcount>(pagesize));
 
     Xapian::doccount count = mset.size();
-    m_result << static_cast<uint32_t>(count);
-    retrieveDocuments(params, mset.begin(), mset.end());
-    return m_result;
+    result << static_cast<uint32_t>(count);
+    retrieveDocuments(params, result, mset.begin(), mset.end());
 }
 
 void
-Driver::retrieveDocuments(ParamDecoder params, 
+Driver::retrieveDocuments(PCR, 
     Xapian::MSetIterator iter, Xapian::MSetIterator end)
 {
     ParamDecoder params_copy = params;
@@ -402,20 +325,20 @@ Driver::retrieveDocuments(ParamDecoder params,
             for (; iter != end; ++iter)
             {
                 Xapian::Document doc = iter.get_document();
-                retrieveDocument(params, doc);
+                retrieveDocument(params, result, doc);
             }
             break;
 
         case DEC_ITERATOR:
             for (; iter != end; ++iter)
-                retrieveDocument(params, iter);
+                retrieveDocument(params, result, iter);
             break;
 
         case DEC_BOTH:
             for (; iter != end; ++iter)
             {
                 Xapian::Document doc = iter.get_document();
-                retrieveDocument(params, doc, iter);
+                retrieveDocument(params, result, doc, iter);
             }
             break;
 
@@ -426,8 +349,7 @@ Driver::retrieveDocuments(ParamDecoder params,
 
 
 void
-Driver::selectEncoderAndRetrieveDocument(
-    ParamDecoder& params, Xapian::MSetIterator& iter)
+Driver::selectEncoderAndRetrieveDocument(PR, Xapian::MSetIterator& iter)
 {
     ParamDecoder params_copy = params;
     switch (uint8_t decoder_type = params_copy)
@@ -435,18 +357,18 @@ Driver::selectEncoderAndRetrieveDocument(
         case DEC_DOCUMENT:
         {
             Xapian::Document doc = iter.get_document();
-            retrieveDocument(params, doc);
+            retrieveDocument(params, result, doc);
             break;
         }
 
         case DEC_ITERATOR:
-            retrieveDocument(params, iter);
+            retrieveDocument(params, result, iter);
             break;
 
         case DEC_BOTH:
         {
             Xapian::Document doc = iter.get_document();
-            retrieveDocument(params, doc, iter);
+            retrieveDocument(params, result, doc, iter);
             break;
         }
 
@@ -456,18 +378,16 @@ Driver::selectEncoderAndRetrieveDocument(
 }
 
 
-size_t 
-Driver::enquire(ParamDecoder& params)
+void
+Driver::enquire(PR)
 {
     // Use an Enquire object on the database to run the query.
     Xapian::Enquire* p_enquire = new Xapian::Enquire(m_db);
-    fillEnquire(*p_enquire, params);
+    fillEnquire(params, *p_enquire);
 
     // m_enquire_store will call the delete operator.
     uint32_t num = m_enquire_store.put(p_enquire);
-    m_result << num;
-
-    return m_result;
+    result << num;
 }
 
 
@@ -515,19 +435,17 @@ Driver::getDocument(ParamDecoder& params)
 
 
 // Create a doc as a resource
-size_t
-Driver::document(ParamDecoder& params)
+void
+Driver::document(PR)
 {
     const Xapian::Document& doc = getDocument(params);
     // m_document_store will call delete
     uint32_t num = m_document_store.put(new Xapian::Document(doc));
-    m_result << num;
-
-    return m_result;
+    result << num;
 }
 
 
-size_t 
+void 
 Driver::releaseResource(ParamDecoder& params)
 {
     uint8_t   type = params;
@@ -535,13 +453,11 @@ Driver::releaseResource(ParamDecoder& params)
     ObjectBaseRegister&
     reg = getRegisterByType(type);
     reg.remove(num);
-
-    return m_result;
 }
 
 
-size_t 
-Driver::matchSet(ParamDecoder& params)
+void 
+Driver::matchSet(PR)
 {
     uint32_t   enquire_num = params;
     Xapian::Enquire& enquire = *m_enquire_store.get(enquire_num);
@@ -580,14 +496,12 @@ Driver::matchSet(ParamDecoder& params)
 
     // m_mset_store will call delete
     uint32_t mset_num = m_mset_store.put(new Xapian::MSet(mset));
-    m_result << mset_num;
-
-    return m_result;
+    result << mset_num;
 }
 
 
-size_t 
-Driver::qlcInit(ParamDecoder& params)
+void
+Driver::qlcInit(PR)
 {
     uint8_t   qlc_type      = params;
     uint8_t   resource_type = params;
@@ -606,8 +520,8 @@ Driver::qlcInit(ParamDecoder& params)
             const uint32_t qlc_num = m_qlc_store.put(qlcTable);
             const uint32_t mset_size = qlcTable->numOfObjects();
         
-            m_result << qlc_num << mset_size;
-            return m_result;
+            result << qlc_num << mset_size;
+            break;
         }
 
         case QlcType::TERMS:
@@ -623,8 +537,8 @@ Driver::qlcInit(ParamDecoder& params)
             const uint32_t qlc_num = m_qlc_store.put(qlcTable);
             const uint32_t list_size = qlcTable->numOfObjects();
         
-            m_result << qlc_num << list_size;
-            return m_result;
+            result << qlc_num << list_size;
+            break;
         }
 
         default:
@@ -666,27 +580,24 @@ Driver::termGenerator(ParamDecoder& params,
     }
 }
 
-size_t 
-Driver::qlcNext(ParamDecoder& params)
+void
+Driver::qlcNext(PR)
 {
     uint32_t   resource_num = params;
     uint32_t   from         = params;
     uint32_t   count        = params;
  
     QlcTable& qlcTable = *m_qlc_store.get(resource_num);
-    qlcTable.getPage(from, count);
-    return m_result;
+    qlcTable.getPage(result, from, count);
 }
 
-
-size_t 
-Driver::qlcLookup(ParamDecoder& params)
+void
+Driver::qlcLookup(PR)
 {
     uint32_t   resource_num = params;
  
     QlcTable& qlcTable = *m_qlc_store.get(resource_num);
-    qlcTable.lookup(params);
-    return m_result;
+    qlcTable.lookup(params, result);
 }
 
 
@@ -695,48 +606,44 @@ Driver::assertWriteable() const
 {}
 
 
-size_t 
+void
 Driver::startTransaction()
 {
     assertWriteable();
 
     m_wdb.begin_transaction();
-    return m_result;
 }
 
 
-size_t 
+void
 Driver::cancelTransaction()
 {
     assertWriteable();
 
     m_wdb.cancel_transaction();
-    return m_result;
 }
 
 
-size_t 
+void
 Driver::commitTransaction()
 {
     assertWriteable();
 
     m_wdb.commit_transaction();
-    return m_result;
 }
 
 
-size_t 
-Driver::getDocumentById(ParamDecoder& params)
+void
+Driver::getDocumentById(PR)
 {
     const Xapian::docid docid = params;
     Xapian::Document doc = m_db.get_document(docid);
-    retrieveDocument(params, doc);
-    return m_result;
+    retrieveDocument(params, result, doc);
 }
 
 
-size_t 
-Driver::test(ParamDecoder& params)
+void
+Driver::test(PR)
 {
     const int8_t num = params;
     switch (num)
@@ -746,30 +653,62 @@ Driver::test(ParamDecoder& params)
             const Xapian::docid from = params;
             const Xapian::docid to = params;
 
-            return testResultEncoder(from, to);
+            testResultEncoder(result, from, to);
+            break;
         }
 
         case TEST_EXCEPTION:
-            return testException();
+            testException();
+            break;
+
+        case TEST_ECHO:
+            testEcho(params, result);
+            break;
+
+        case TEST_MEMORY:
+            testMemory();
+            break;
+
+        default:
+            throw BadCommandDriverError(num);
     }
-    return 0;
 }
 
 
-size_t 
-Driver::testResultEncoder(Xapian::docid from, Xapian::docid to)
+void 
+Driver::testResultEncoder(ResultEncoder& result, 
+    Xapian::docid from, Xapian::docid to)
 {
     for (; from <= to; from++)
-        m_result << static_cast<uint32_t>(from);
-    return m_result;
+        result << static_cast<uint32_t>(from);
 }
 
 
-size_t 
+void Driver::testEcho(PR)
+{
+    for (uint32_t len = params; len; len--)
+    {
+        uint8_t value = params;
+        result << value;
+    }
+}
+
+
+void
 Driver::testException()
 {
     throw MemoryAllocationDriverError(1000);
-    return 0;
+}
+
+
+void
+Driver::testMemory()
+{
+    void* cblock = malloc(100);
+    free(cblock);
+    
+    void* block = m_mm.alloc(100);
+    m_mm.free(block);
 }
 
 
@@ -805,7 +744,7 @@ Driver::readStemmingStrategy(ParamDecoder& params)
 
 
 void 
-Driver::addPrefix(Xapian::QueryParser& qp, ParamDecoder& params)
+Driver::addPrefix(ParamDecoder& params, Xapian::QueryParser& qp)
 {
     const std::string&      field          = params;
     const std::string&      prefix         = params;
@@ -918,7 +857,7 @@ Driver::buildQuery(ParamDecoder& params)
 
 
 void 
-Driver::fillEnquire(Xapian::Enquire& enquire, ParamDecoder& params)
+Driver::fillEnquire(ParamDecoder& params, Xapian::Enquire& enquire)
 {
     Xapian::termcount   qlen = 0;
 
@@ -1094,7 +1033,7 @@ Driver::readParser(ParamDecoder& params)
         }
 
     case QP_PREFIX:
-        addPrefix(qp, params);
+        addPrefix(params, qp);
         break;
 
     default:
@@ -1107,22 +1046,10 @@ Driver::readParser(ParamDecoder& params)
 }
 
 
-ErlDrvSSizeT 
-Driver::control(
-    ErlDrvData drv_data, 
-    const unsigned int  command, 
-    char*         buf, 
-    ErlDrvSizeT   e_len, 
-    char**        rbuf, 
-    ErlDrvSizeT   e_rlen)
+void
+Driver::handleCommand(PR,
+    const unsigned int  command)
 {
-    const size_t len  = static_cast<int>(e_len);
-    const size_t rlen = static_cast<int>(e_rlen);
-
-    ParamDecoder params(buf, len); 
-    Driver& drv = * reinterpret_cast<Driver*>( drv_data );
-    ResultEncoder& result = * drv.getResultEncoder();
-    result.setBuffer(rbuf, rlen);
     result << static_cast<uint8_t>( SUCCESS );
 
     try
@@ -1132,7 +1059,8 @@ Driver::control(
             {
             const uint8_t        mode   = params;
             const std::string&   dbpath = params;
-            return drv.open(mode, dbpath);
+            open(mode, dbpath);
+            break;
             }
 
         case OPEN_PROG: 
@@ -1141,7 +1069,8 @@ Driver::control(
             const std::string&   prog     = params;
             const std::string&   args     = params;
             const uint32_t       timeout  = params;
-            return drv.open(mode, prog, args, timeout);
+            open(mode, prog, args, timeout);
+            break;
             }
 
         case OPEN_TCP: 
@@ -1151,88 +1080,116 @@ Driver::control(
             const uint16_t       port     = params;
             const uint32_t       timeout  = params;
             const uint32_t       ctimeout = params;
-            return drv.open(mode, host, port, timeout, ctimeout);
+            open(mode, host, port, timeout, ctimeout);
+            break;
             }
 
         case LAST_DOC_ID:
-            return drv.getLastDocId();
+            getLastDocId(result);
+            break;
 
         case ADD_DOCUMENT:
-            return drv.addDocument(params);
+            addDocument(params, result);
+            break;
 
         case UPDATE_DOCUMENT:
-
         case UPDATE_OR_CREATE_DOCUMENT:
-            return drv.updateDocument(params, 
+            updateDocument(params, result,
                 command == UPDATE_OR_CREATE_DOCUMENT);
+            break;
 
         case DELETE_DOCUMENT:
-            drv.deleteDocument(params);
-            return result;
+            deleteDocument(params);
+            break;
 
         case REPLACE_DOCUMENT:
-            return drv.replaceDocument(params);
+            replaceDocument(params, result);
+            break;
 
         case TEST:
-            return drv.test(params);
+            test(params, result);
+            break;
 
         case GET_DOCUMENT_BY_ID:
-            return drv.getDocumentById(params);
+            getDocumentById(params, result);
+            break;
 
         case START_TRANSACTION:
-            return drv.startTransaction();
+            startTransaction();
+            break;
 
         case CANCEL_TRANSACTION:
-            return drv.cancelTransaction();
+            cancelTransaction();
+            break;
 
         case COMMIT_TRANSACTION:
-            return drv.commitTransaction();
+            commitTransaction();
+            break;
 
         case QUERY_PAGE:
-            return drv.query(params);
+            query(params, result);
+            break;
 
         case SET_DEFAULT_STEMMER:
-            return drv.setDefaultStemmer(params);
+            setDefaultStemmer(params);
+            break;
 
         case SET_DEFAULT_PREFIXES:
-            return drv.setDefaultPrefixes(params);
+            setDefaultPrefixes(params);
+            break;
 
         case ENQUIRE:
-            return drv.enquire(params);
+            enquire(params, result);
+            break;
 
         case DOCUMENT:
-            return drv.document(params);
+            document(params, result);
+            break;
 
         case RELEASE_RESOURCE:
-            return drv.releaseResource(params);
+            releaseResource(params);
+            break;
 
         case MATCH_SET:
-            return drv.matchSet(params);
+            matchSet(params, result);
+            break;
 
         case QLC_INIT:
-            return drv.qlcInit(params);
+            qlcInit(params, result);
+            break;
 
         case QLC_NEXT_PORTION:
-            return drv.qlcNext(params);
+            qlcNext(params, result);
+            break;
 
         case QLC_LOOKUP:
-            return drv.qlcLookup(params);
+            qlcLookup(params, result);
+            break;
 
         case GET_RESOURCE_INFO:
-            return drv.getResourceInfo();
+            getResourceInfo(result);
+            break;
 
         case CREATE_RESOURCE:
-            return drv.createResource(params);
+            createResource(params, result);
+            break;
 
         case MSET_INFO:
-            return drv.msetInfo(params);
+            msetInfo(params, result);
+            break;
 
         case DB_INFO:
-            return drv.databaseInfo(params);
+            databaseInfo(params, result);
+            break;
 
         case SET_METADATA:
-            drv.setMetadata(params);
-            return result;
+            setMetadata(params);
+            break;
+
+        case CLOSE: 
+            m_wdb.close();
+            m_db.close();
+            break;
 
         default:
             throw BadCommandDriverError(command);
@@ -1240,27 +1197,22 @@ Driver::control(
     }
     catch (DriverRuntimeError& e) 
     {
-        result.clear();
-        result.setBuffer(rbuf, rlen);
+        result.reset();
         result << static_cast<uint8_t>( ERROR );
         result << e.get_type();
         result << e.what();
-        return result;
     }
     catch (Xapian::Error& e) 
     {
-        result.clear();
-        result.setBuffer(rbuf, rlen);
+        result.reset();
         result << static_cast<uint8_t>( ERROR );
         result << e.get_type();
         result << e.get_msg();
-        return result;
     }
-    return -1;
 }
 
 
-size_t 
+void 
 Driver::open(uint8_t mode, const std::string& dbpath)
 {
     switch(mode) 
@@ -1283,8 +1235,6 @@ Driver::open(uint8_t mode, const std::string& dbpath)
         default:
             throw BadCommandDriverError(mode);
     }
-    
-    return m_result;
 }
 
 int 
@@ -1319,7 +1269,7 @@ Driver::openWriteMode(uint8_t mode)
  *
  * http://xapian.org/docs/apidoc/html/namespaceXapian_1_1Remote.html
  */
-size_t 
+void 
 Driver::open(uint8_t mode, const std::string& host, uint16_t port, 
              uint32_t timeout, uint32_t connect_timeout)
 {
@@ -1343,7 +1293,6 @@ Driver::open(uint8_t mode, const std::string& host, uint16_t port,
         default:
             throw BadCommandDriverError(mode);
     }
-    return m_result;
 }
 
 
@@ -1352,7 +1301,7 @@ Driver::open(uint8_t mode, const std::string& host, uint16_t port,
  *
  * http://xapian.org/docs/apidoc/html/namespaceXapian_1_1Remote.html
  */
-size_t 
+void 
 Driver::open(uint8_t mode, const std::string& prog, const std::string& args, 
              uint32_t timeout)
 {
@@ -1373,7 +1322,6 @@ Driver::open(uint8_t mode, const std::string& prog, const std::string& args,
         default:
             throw BadCommandDriverError(mode);
     }
-    return m_result;
 }
 
 void 
@@ -1430,21 +1378,21 @@ Driver::applyDocument(
             case ADD_TERM:
             case UPDATE_TERM:
             case REMOVE_TERM:
-                handleTerm(command, params, doc);
+                handleTerm(params, command, doc);
                 break;
 
             case ADD_VALUE:
             case SET_VALUE:
             case UPDATE_VALUE:
             case REMOVE_VALUE:
-                handleValue(command, params, doc);
+                handleValue(params, command, doc);
                 break;
 
             case SET_POSTING:
             case ADD_POSTING:
             case UPDATE_POSTING:
             case REMOVE_POSTING:
-                handlePosting(command, params, doc);
+                handlePosting(params, command, doc);
                 break;
 
             case SET_WDF:
@@ -1494,8 +1442,9 @@ Driver::applyDocument(
 
 
 void
-Driver::handleTerm(uint8_t command,
+Driver::handleTerm(
     ParamDecoder& params, 
+    uint8_t command,
     Xapian::Document& doc)
 {
     // see xapian_document:append_term
@@ -1557,8 +1506,9 @@ Driver::decodeValue(ParamDecoder& params)
 }
 
 void
-Driver::handleValue(uint8_t command,
+Driver::handleValue(
     ParamDecoder& params, 
+    uint8_t command,
     Xapian::Document& doc)
 {
     // see xapian_document:append_value
@@ -1603,8 +1553,9 @@ Driver::handleValue(uint8_t command,
 
 
 void
-Driver::handlePosting(uint8_t command,
+Driver::handlePosting(
     ParamDecoder& params, 
+    uint8_t command,
     Xapian::Document& doc)
 {
     // see xapian_document:append_term
@@ -1951,8 +1902,7 @@ Driver::isPostingExist(
 }
 
 void 
-Driver::retrieveDocument(
-    ParamDecoder params,  /* yes, it is a copy */
+Driver::retrieveDocument(PCR,
     Xapian::Document& doc)
 {
     const uint8_t decoder_type = params;
@@ -1970,7 +1920,7 @@ Driver::retrieveDocument(
                 const uint8_t      type  = STRING_TYPE;
                 const std::string& value = 
                     doc.get_value(static_cast<Xapian::valueno>(slot));
-                m_result << type << value;
+                result << type << value;
                 break;
             }
 
@@ -1981,21 +1931,21 @@ Driver::retrieveDocument(
                 const double       value = 
                     Xapian::sortable_unserialise(
                         doc.get_value(static_cast<Xapian::valueno>(slot)));
-                m_result << type << value;
+                result << type << value;
                 break;
             }
 
             case GET_DATA:
             {
                 const std::string& data = doc.get_data();
-                m_result << data;
+                result << data;
                 break;
             }
 
             case GET_DOCID:
             {
                 const Xapian::docid docid = doc.get_docid();
-                m_result << static_cast<uint32_t>(docid);
+                result << static_cast<uint32_t>(docid);
                 break;
             }
 
@@ -2006,8 +1956,7 @@ Driver::retrieveDocument(
 }
 
 void 
-Driver::retrieveDocument(
-    ParamDecoder params,  /* yes, it is a copy */
+Driver::retrieveDocument(PCR,
     Xapian::MSetIterator& mset_iter)
 {
     const uint8_t decoder_type = params;
@@ -2022,41 +1971,41 @@ Driver::retrieveDocument(
             case GET_WEIGHT:
             {
                 const Xapian::weight    w = mset_iter.get_weight();
-                m_result << static_cast<double>(w);
+                result << static_cast<double>(w);
                 break;
             }
 
             case GET_RANK:
             {
                 const Xapian::doccount    r = mset_iter.get_rank();
-                m_result << static_cast<uint32_t>(r);
+                result << static_cast<uint32_t>(r);
                 break;
             }
 
             case GET_PERCENT:
             {
                 const Xapian::percent    p = mset_iter.get_percent();
-                m_result << static_cast<uint8_t>(p);
+                result << static_cast<uint8_t>(p);
                 break;
             }
 
             // http://trac.xapian.org/wiki/FAQ/MultiDatabaseDocumentID
             case GET_DOCID:
             {
-                m_result << static_cast<uint32_t>(docid_sub(*mset_iter));
+                result << static_cast<uint32_t>(docid_sub(*mset_iter));
                 break;
             }
 
             case GET_MULTI_DOCID:
             {
-                m_result << static_cast<uint32_t>(*mset_iter);
+                result << static_cast<uint32_t>(*mset_iter);
                 break;
             }
 
 
             case GET_DB_NUMBER:
             {
-                m_result << static_cast<uint32_t>(subdb_num(*mset_iter));
+                result << static_cast<uint32_t>(subdb_num(*mset_iter));
                 break;
             }
 
@@ -2068,8 +2017,7 @@ Driver::retrieveDocument(
 
 
 void 
-Driver::retrieveDocument(
-    ParamDecoder params,  /* yes, it is a copy */
+Driver::retrieveDocument(PCR,
     Xapian::Document& doc,
     Xapian::MSetIterator& mset_iter)
 {
@@ -2089,7 +2037,7 @@ Driver::retrieveDocument(
                 const uint8_t      type  = STRING_TYPE;
                 const std::string& value = 
                     doc.get_value(static_cast<Xapian::valueno>(slot));
-                m_result << type << value;
+                result << type << value;
                 break;
             }
 
@@ -2100,55 +2048,55 @@ Driver::retrieveDocument(
                 const double       value = 
                     Xapian::sortable_unserialise(
                         doc.get_value(static_cast<Xapian::valueno>(slot)));
-                m_result << type << value;
+                result << type << value;
                 break;
             }
 
             case GET_DATA:
             {
                 const std::string& data = doc.get_data();
-                m_result << data;
+                result << data;
                 break;
             }
 
             case GET_DOCID:
             {
                 const Xapian::docid docid = doc.get_docid();
-                m_result << static_cast<uint32_t>(docid);
+                result << static_cast<uint32_t>(docid);
                 break;
             }
 
             case GET_WEIGHT:
             {
                 const Xapian::weight    w = mset_iter.get_weight();
-                m_result << static_cast<double>(w);
+                result << static_cast<double>(w);
                 break;
             }
 
             case GET_RANK:
             {
                 const Xapian::doccount    r = mset_iter.get_rank();
-                m_result << static_cast<uint32_t>(r);
+                result << static_cast<uint32_t>(r);
                 break;
             }
 
             case GET_PERCENT:
             {
                 const Xapian::percent    p = mset_iter.get_percent();
-                m_result << static_cast<uint8_t>(p);
+                result << static_cast<uint8_t>(p);
                 break;
             }
 
             // http://trac.xapian.org/wiki/FAQ/MultiDatabaseDocumentID
             case GET_MULTI_DOCID:
             {
-                m_result << static_cast<uint32_t>(*mset_iter);
+                result << static_cast<uint32_t>(*mset_iter);
                 break;
             }
 
             case GET_DB_NUMBER:
             {
-                m_result << static_cast<uint32_t>(subdb_num(*mset_iter));
+                result << static_cast<uint32_t>(subdb_num(*mset_iter));
                 break;
             }
 
@@ -2159,20 +2107,11 @@ Driver::retrieveDocument(
 }
 
 
+/**
+ * @a params is copy.
+ */
 void 
-Driver::retrieveTerm(
-    ParamDecoder params,  /* yes, it is a copy */
-    const Xapian::TermIterator& iter)
-{
-    retrieveTerm(params, m_result, iter);
-}
-
-
-void 
-Driver::retrieveTerm(
-    ParamDecoder params,  /* yes, it is a copy */
-    ResultEncoder& result,
-    const Xapian::TermIterator& iter)
+Driver::retrieveTerm(PCR, const Xapian::TermIterator& iter)
 {
     while (const uint8_t command = params)
     /* Do, while command != stop != 0 */
@@ -2237,7 +2176,7 @@ Driver::retrieveTermSchema(
     const char* to = params.currentPosition();
 
     size_t len = to - from;
-    ParamDecoderController ctrl(from, len);
+    ParamDecoderController ctrl(m_mm, from, len);
     return ctrl;
 }
 
@@ -2283,7 +2222,7 @@ Driver::retrieveDocumentSchema(
     const char* to = params.currentPosition();
 
     size_t len = to - from;
-    ParamDecoderController ctrl(from, len);
+    ParamDecoderController ctrl(m_mm, from, len);
     return ctrl;
 }
 
@@ -2410,7 +2349,7 @@ Driver::applyDocumentSchema(
     const char* to = params.currentPosition();
 
     size_t len = to - from;
-    ParamDecoderController ctrl(from, len);
+    ParamDecoderController ctrl(m_mm, from, len);
     return ctrl;
 }
 
@@ -2422,8 +2361,8 @@ Driver::applyDocumentSchema(
 /**
  * This function will be called inside xapian_drv:init
  */
-size_t
-Driver::getResourceInfo()
+void
+Driver::getResourceInfo(ResultEncoder& result)
 {
     ObjectRegister<UserResource>& 
     reg = m_generator.getRegister();
@@ -2439,24 +2378,21 @@ Driver::getResourceInfo()
         UserResource&       res     = * (i->second);
         const std::string&  name    = res.getName();
         uint8_t             type    = res.getType();
-        m_result << type << num << name;
+        result << type << num << name;
     }
-
-    return m_result;
 }
 
 
-size_t 
-Driver::createResource(ParamDecoder& params)
+void 
+Driver::createResource(PR)
 {
     uint32_t resource_num = m_stores.createAndRegister(params);
-    m_result << resource_num;
-    return m_result;
+    result << resource_num;
 }
 
 
-size_t 
-Driver::msetInfo(ParamDecoder& params)
+void 
+Driver::msetInfo(PR)
 {
     uint32_t   mset_num = params;
     Xapian::MSet& mset = *m_mset_store.get(mset_num);
@@ -2464,161 +2400,159 @@ Driver::msetInfo(ParamDecoder& params)
     switch(command)
     {
         case MI_MATCHES_LOWER_BOUND:
-            m_result << static_cast<uint32_t>(mset.get_matches_lower_bound());
+            result << static_cast<uint32_t>(mset.get_matches_lower_bound());
             break;
 
         case MI_MATCHES_ESTIMATED:
-            m_result << static_cast<uint32_t>(mset.get_matches_estimated());
+            result << static_cast<uint32_t>(mset.get_matches_estimated());
             break;
 
         case MI_MATCHES_UPPER_BOUND:
-            m_result << static_cast<uint32_t>(mset.get_matches_upper_bound());
+            result << static_cast<uint32_t>(mset.get_matches_upper_bound());
             break;
 
         case MI_UNCOLLAPSED_MATCHES_LOWER_BOUND:
-            m_result << static_cast<uint32_t>(
+            result << static_cast<uint32_t>(
                 mset.get_uncollapsed_matches_lower_bound());
             break;
 
         case MI_UNCOLLAPSED_MATCHES_ESTIMATED:
-            m_result << static_cast<uint32_t>(
+            result << static_cast<uint32_t>(
                     mset.get_uncollapsed_matches_estimated());
             break;
 
         case MI_UNCOLLAPSED_MATCHES_UPPER_BOUND:
-            m_result << static_cast<uint32_t>(
+            result << static_cast<uint32_t>(
                 mset.get_uncollapsed_matches_upper_bound());
             break;
 
         case MI_SIZE:
-            m_result << static_cast<uint32_t>(mset.size());
+            result << static_cast<uint32_t>(mset.size());
             break;
 
         case MI_GET_MAX_POSSIBLE:
-            m_result << static_cast<double>(mset.get_max_possible());
+            result << static_cast<double>(mset.get_max_possible());
             break;
 
         case MI_GET_MAX_ATTAINED:
-            m_result << static_cast<double>(mset.get_max_attained());
+            result << static_cast<double>(mset.get_max_attained());
             break;
 
         case MI_TERM_WEIGHT:
         {
             const std::string& tname = params;
-            m_result << static_cast<double>(mset.get_termweight(tname));
+            result << static_cast<double>(mset.get_termweight(tname));
             break;
         }
 
         case MI_TERM_FREQ:
         {
             const std::string& tname = params;
-            m_result << static_cast<uint32_t>(mset.get_termfreq(tname));
+            result << static_cast<uint32_t>(mset.get_termfreq(tname));
             break;
         }
 
         default:
             throw BadCommandDriverError(command);
     }
-
-    return m_result;
 }
 
 
-size_t 
-Driver::databaseInfo(ParamDecoder& params)
+void
+Driver::databaseInfo(PR)
 {
     while (uint8_t command = params)
     switch(command)
     {
         case DBI_HAS_POSITIONS:
-            m_result << static_cast<uint8_t>(m_db.has_positions());
+            result << static_cast<uint8_t>(m_db.has_positions());
             break;
 
         case DBI_DOCCOUNT:
-            m_result << static_cast<uint32_t>(m_db.get_doccount());
+            result << static_cast<uint32_t>(m_db.get_doccount());
             break;
 
         case DBI_LASTDOCID:
-            m_result << static_cast<uint32_t>(m_db.get_lastdocid());
+            result << static_cast<uint32_t>(m_db.get_lastdocid());
             break;
 
         case DBI_AVLENGTH:
-            m_result << static_cast<double>(m_db.get_avlength());
+            result << static_cast<double>(m_db.get_avlength());
             break;
 
 
         case DBI_TERM_EXISTS:
         {
             const std::string& tname = params;
-            m_result << static_cast<uint8_t>(m_db.term_exists(tname));
+            result << static_cast<uint8_t>(m_db.term_exists(tname));
             break;
         }
 
         case DBI_TERM_FREQ:
         {
             const std::string& tname = params;
-            m_result << static_cast<uint32_t>(m_db.get_termfreq(tname));
+            result << static_cast<uint32_t>(m_db.get_termfreq(tname));
             break;
         }
 
         case DBI_COLLECTION_FREQ:
         {
             const std::string& tname = params;
-            m_result << static_cast<uint32_t>(m_db.get_collection_freq(tname));
+            result << static_cast<uint32_t>(m_db.get_collection_freq(tname));
             break;
         }
 
         case DBI_VALUE_FREQ:
         {
             const Xapian::valueno slot = params;
-            m_result << static_cast<uint32_t>(m_db.get_value_freq(slot));
+            result << static_cast<uint32_t>(m_db.get_value_freq(slot));
             break;
         }
 
         case DBI_VALUE_LOWER_BOUND:
         {
             const Xapian::valueno slot = params;
-            m_result << m_db.get_value_lower_bound(slot);
+            result << m_db.get_value_lower_bound(slot);
             break;
         }
 
         case DBI_VALUE_UPPER_BOUND:
         {
             const Xapian::valueno slot = params;
-            m_result << m_db.get_value_upper_bound(slot);
+            result << m_db.get_value_upper_bound(slot);
             break;
         }
 
         case DBI_DOCLENGTH_LOWER_BOUND:
-            m_result << m_db.get_doclength_lower_bound();
+            result << m_db.get_doclength_lower_bound();
             break;
 
         case DBI_DOCLENGTH_UPPER_BOUND:
-            m_result << m_db.get_doclength_upper_bound();
+            result << m_db.get_doclength_upper_bound();
             break;
 
         case DBI_WDF_UPPER_BOUND:
         {
             const std::string& tname = params;
-            m_result << static_cast<uint32_t>(m_db.get_wdf_upper_bound(tname));
+            result << static_cast<uint32_t>(m_db.get_wdf_upper_bound(tname));
             break;
         }
 
         case DBI_DOCLENGTH:
         {
             const Xapian::docid docid = params;
-            m_result << static_cast<uint32_t>(m_db.get_doclength(docid));
+            result << static_cast<uint32_t>(m_db.get_doclength(docid));
             break;
         }
 
         case DBI_UUID:
-            m_result << m_db.get_uuid();
+            result << m_db.get_uuid();
             break;
 
         case DBI_METADATA:
         {
             const std::string& key = params;
-            m_result << m_db.get_metadata(key);
+            result << m_db.get_metadata(key);
             break;
         }
 
@@ -2627,8 +2561,6 @@ Driver::databaseInfo(ParamDecoder& params)
         default:
             throw BadCommandDriverError(command);
     }
-
-    return m_result;
 }
 
 

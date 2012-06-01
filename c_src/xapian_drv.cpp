@@ -8,7 +8,7 @@
 // Includes
 // -------------------------------------------------------------------
 
-#include "xapian_core.h"
+#include "xapian_drvctrl.h"
 
 
 // -------------------------------------------------------------------
@@ -35,7 +35,7 @@ ErlDrvEntry xapian_driver_entry = {
       
        int (*init)(void);
      */
-    XapianErlang::Driver::init,               
+    XapianErlang::DriverController::init,               
 
     /* L_PTR start, called when port is opened.
        called when open_port/2 is invoked.
@@ -43,14 +43,14 @@ ErlDrvEntry xapian_driver_entry = {
 
        ErlDrvData (*start)(ErlDrvPort port, char *command);
      */
-    XapianErlang::Driver::start,    
+    XapianErlang::DriverController::start,    
 
     /* F_PTR stop, called when port is closed.
        called when port is closed, and when the emulator is halted. 
 
        void (*stop)(ErlDrvData drv_data);
      */
-    XapianErlang::Driver::stop,
+    XapianErlang::DriverController::stop,
 
     /* F_PTR output, called when erlang has sent.
         called when we have output from erlang to the port.
@@ -85,7 +85,7 @@ ErlDrvEntry xapian_driver_entry = {
 
        void (*finish)(void);
      */
-    XapianErlang::Driver::finish,
+    XapianErlang::DriverController::finish,
 
     /* Reserved -- Used by emulator internally. */
     NULL,
@@ -98,7 +98,7 @@ ErlDrvEntry xapian_driver_entry = {
                 char *buf, ErlDrvSizeT len,
                 char **rbuf, ErlDrvSizeT rlen);
      */
-    XapianErlang::Driver::control,  
+    XapianErlang::DriverController::control,  
 
     /* F_PTR timeout, reserved. 
        Handling of timeout in driver.

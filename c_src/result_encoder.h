@@ -1,10 +1,13 @@
 #ifndef RESULT_ENCODER_H
 #define RESULT_ENCODER_H
 
+// External imports
 #include <string>
 #include <stdint.h>
 
+// Internal imports
 #include "xapian_config.h"
+#include "memory_manager.h"
 XAPIAN_ERLANG_NS_BEGIN
 
 typedef struct DataSegment DataSegment;
@@ -23,18 +26,19 @@ struct DataSegment;
  */
 class ResultEncoder
 {
-    /* Here will be a pointer on data after all operations */
-    char**  m_result_buf;
-    size_t  m_result_len;
-
-    /* Preallocated */
-    char*   m_default_buf;
+    MemoryManager& m_mm;
 
     /* Where to write now */
     char*   m_current_buf;
 
+    /* Current size of filled data in bytes */
+    size_t  m_current_len;
+
+    /* Preallocated */
+    char*   m_default_buf;
     /* Len of buffer, allocated by a port */
     size_t  m_default_len;
+
     size_t  m_left_len;
 
     /* Next segment */
@@ -42,9 +46,18 @@ class ResultEncoder
     DataSegment* m_last_segment;
 
     public:
+    ResultEncoder(MemoryManager& mm) 
+        : m_mm(mm), m_current_buf(NULL)
+    {}
 
     void
-    setBuffer(char** rbuf, const size_t rlen);
+    setBuffer(char* rbuf, const size_t rlen);
+
+    ResultEncoder(MemoryManager& mm, char* rbuf, const size_t rlen) 
+        : m_mm(mm)
+    {
+        setBuffer(rbuf, rlen);
+    }
 
     /*! \name Appends variables to the buffer. */
     /*! \{ */
@@ -67,11 +80,16 @@ class ResultEncoder
     DataSegment* 
     alloc(size_t size);
 
+    void free(DataSegment*& pos);
+
     void put(const char* term, const size_t term_len);
 
-    operator size_t();
+    void finalize(char*);
+    size_t finalSize() const;
+    bool isExtended() const;
 
     void clear();
+    void reset();
 };
 
 XAPIAN_ERLANG_NS_END
