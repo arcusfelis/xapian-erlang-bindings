@@ -26,10 +26,8 @@ memory_test() ->
     ?DRV:internal_test_run(Server, memory, []),
     ?DRV:close(Server),
     ok.
-
--ifdef(T).
--endif.
     
+
 echo_test() ->
     {ok, Server} = ?DRV:open([], []),
     ?assertEqual(?DRV:internal_test_run(Server, echo, <<0,5>>), <<0,5>>),
@@ -1161,6 +1159,14 @@ prop_multi_db() ->
                     db_name=multi_sub_db_id_to_name(Db), 
                     db_number=multi_sub_db_name_to_id(Db)},
         equals([Doc], multidb_record_by_id(Server, Query, MultiDocId))
+        end).
+
+
+prop_echo() ->
+    {ok, Server} = ?DRV:open([], []),
+    ?FORALL(Bin, binary(),
+        begin
+        equals(Bin, ?DRV:internal_test_run(Server, echo, Bin))
         end).
 
 

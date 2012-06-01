@@ -1661,7 +1661,7 @@ append_default_params(Params) ->
     case application:get_env(?APP, default_open_parameters) of
         undefined ->
             Params;
-        [_|_] = DefParams ->
+        {ok, [_|_] = DefParams} ->
             DefParams ++ Params 
     end.
 

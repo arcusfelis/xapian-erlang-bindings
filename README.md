@@ -132,3 +132,34 @@ example() ->
     Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
     qlc:e(qlc:q([X || #document{multi_docid=DocId} <- Table])).
 ```
+
+Using a port 
+============
+
+Ports cannot crash Erlang VM.
+To compile a port program use 
+
+```bash
+./bin/compile_port.escript
+```
+
+For running a single server in the port mode use:
+
+```erkang
+{ok, Server} = xapian_driver:open(Path, [port|Params]).
+```
+
+For running all servers in the port mode use:
+
+```erlang
+application:set_env(xapian, default_open_parameters, [port]).
+```
+
+Testing a port 
+==============
+
+```
+erl -pa ./.eunit/ ./../xapian/ebin ./deps/*/ebin
+application:set_env(xapian, default_open_parameters, [port]).
+eunit:test({application, xapian}, [verbose]).
+```
