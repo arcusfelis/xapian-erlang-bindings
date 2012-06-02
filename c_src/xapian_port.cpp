@@ -91,7 +91,7 @@ void run()
         delete[] buf;
 
         /* The real length of data */
-        const size_t result_len = result.finalSize();
+        const uint32_t result_len = static_cast<uint32_t>( result.finalSize() );
 
         write_packet_length(std::cout, result_len);
         /* It is too long */
