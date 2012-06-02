@@ -160,6 +160,12 @@ Testing a port
 
 ```
 erl -pa ./.eunit/ ./../xapian/ebin ./deps/*/ebin
+
 application:set_env(xapian, default_open_parameters, [port]).
 eunit:test({application, xapian}, [verbose]).
 ```
+
+Code examples
+=============
+
+* [escripts](https://github.com/freeakk/xapian-examples)
