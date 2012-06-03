@@ -14,7 +14,7 @@ new() ->
 put(Store, ClientPid, Elem) ->
     Ref = erlang:monitor(process, ClientPid),
     NewStore = gb_trees:insert(Ref, Elem, Store),
-    {ok, NewStore, Ref}.
+    {ok, {NewStore, Ref}}.
 
 
 erase(Store, Ref) ->
@@ -23,7 +23,7 @@ erase(Store, Ref) ->
     true ->
         Elem = gb_trees:get(Ref, Store),
         NewStore = gb_trees:delete(Ref, Store),
-        {ok, NewStore, Elem};
+        {ok, {NewStore, Elem}};
     false ->
         {error, elem_not_found}
     end.

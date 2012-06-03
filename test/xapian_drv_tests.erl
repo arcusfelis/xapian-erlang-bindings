@@ -91,7 +91,6 @@ simple_gen() ->
     Params = [write, create, overwrite, 
         #x_value_name{slot = 1, name = slot1}, 
         #x_prefix_name{name = author, prefix = <<$A>>}],
-    {ok, Server} = ?DRV:open(Path, Params),
     Document =
         [ #x_stemmer{language = <<"english">>}
         , #x_data{value = "My test data as iolist"} 
@@ -106,18 +105,23 @@ simple_gen() ->
         , #x_text{value = <<"Paragraph 2">>} 
         , #x_text{value = <<"Michael">>, prefix = author} 
         ],
-    DocId = ?DRV:add_document(Server, Document),
-    DocIdReplaced1 = ?DRV:replace_document(Server, DocId, Document),
-    DocIdReplaced2 = ?DRV:replace_document(Server, "Simple", Document),
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
+        DocId = ?DRV:add_document(Server, Document),
+        DocIdReplaced1 = ?DRV:replace_document(Server, DocId, Document),
+        DocIdReplaced2 = ?DRV:replace_document(Server, "Simple", Document),
 
-    Last = ?DRV:last_document_id(Server),
-    ?DRV:delete_document(Server, DocId),
-    ?DRV:delete_document(Server, "Simple"),
-    ?DRV:close(Server),
-    [ ?_assert(is_integer(DocId))
-    , ?_assertEqual(DocId, DocIdReplaced1)
-    , ?_assertEqual(DocId, DocIdReplaced2)
-    ].
+        Last = ?DRV:last_document_id(Server),
+        ?DRV:delete_document(Server, DocId),
+        ?DRV:delete_document(Server, "Simple"),
+
+        [ ?_assert(is_integer(DocId))
+        , ?_assertEqual(DocId, DocIdReplaced1)
+        , ?_assertEqual(DocId, DocIdReplaced2)
+        ]
+    after
+        ?DRV:close(Server)
+    end.
 
 
 
@@ -125,48 +129,59 @@ update_document_test() ->
     Path = testdb_path(update_document),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
-    DocId = ?DRV:add_document(Server, []),
+    try
+        DocId = ?DRV:add_document(Server, []),
 
-    %% The document with DocId will be extended.
-    ?DRV:update_document(Server, DocId, [#x_term{value = "more"}]),
+        %% The document with DocId will be extended.
+        ?DRV:update_document(Server, DocId, [#x_term{value = "more"}]),
 
-    %% Cannot add this term again, because the action is `add'.
-    ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
-        ?DRV:update_document(Server, DocId, 
-            [#x_term{action = add, value = "more", ignore = false}])),
+        %% Cannot add this term again, because the action is `add'.
+        ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
+            ?DRV:update_document(Server, DocId, 
+                [#x_term{action = add, value = "more", ignore = false}])),
 
-    %% Cannot update the document that is not found.
-    ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
-        ?DRV:update_document(Server, "fail", [])),
+        %% Cannot update the document that is not found.
+        ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
+            ?DRV:update_document(Server, "fail", [])),
 
-    %% Now we can.
-    ?DRV:update_or_create_document(Server, "fail", []).
+        %% Now we can.
+        ?DRV:update_or_create_document(Server, "fail", [])
+    after
+        ?DRV:close(Server)
+    end.
+    
 
 
 frequency_test() ->
     Path = testdb_path(frequency),
     Params = [write, create, overwrite],
-    {ok, Server} = ?DRV:open(Path, Params),
     Doc = 
-    [
-      #x_term{value = "term", frequency = {cur, 1}}
+    [ #x_term{value = "term", frequency = {cur, 1}}
     , #x_term{value = "term", frequency = {abs, 5}}
     , #x_term{value = "term", frequency = {cur, -1}}
     ],
-    DocId = ?DRV:add_document(Server, Doc).
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
+        ?DRV:add_document(Server, Doc)
+    after
+        ?DRV:close(Server)
+    end.
 
 
 term_actions_test() ->
     Path = testdb_path(actions),
     Params = [write, create, overwrite],
-    {ok, Server} = ?DRV:open(Path, Params),
     Doc = 
-    [
-      #x_term{action = add,     value = "term"}
+    [ #x_term{action = add,     value = "term"}
     , #x_term{action = update,  value = "term"}
     , #x_term{action = set,     value = "term"}
     ],
-    DocId = ?DRV:add_document(Server, Doc).
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
+        ?DRV:add_document(Server, Doc)
+    after
+        ?DRV:close(Server)
+    end.
 
 
 -record(term, {value, wdf}).
@@ -179,60 +194,67 @@ term_actions_test() ->
 term_qlc_gen() ->
     Path = testdb_path(term_qlc),
     Params = [write, create, overwrite],
-    {ok, Server} = ?DRV:open(Path, Params),
-    
+
     %% Create a document with terms
     TermNames = 
     [erlang:list_to_binary(erlang:integer_to_list(X)) 
         || X <- lists:seq(1, 100)],
 
     Fields = [#x_term{value = Term} || Term <- TermNames], 
-    DocId = ?DRV:add_document(Server, Fields),
-    Meta = xapian_term_record:record(term, record_info(fields, term)),
-    Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
-    Records = qlc:e(qlc:q([X || X <- Table])),
-    Values = [Value || #term{value = Value} <- Records],
-    Not1Wdf = [X || X = #term{wdf = Wdf} <- Records, Wdf =/= 1],
 
-    %% Lookup order test.
-    %% It is an important test.
-    %% Actually, it tests the fact, that skip_to("") move an TermIterator in
-    %% the beginning of the document.
-    OrderTestQuery = qlc:q([Value || #term{value = Value} <- Table, 
-        Value =:= "2" orelse Value =:= "1" orelse Value =:= "3"]),
-    OrderTestValues = qlc:e(OrderTestQuery),
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
+        DocId = ?DRV:add_document(Server, Fields),
+        Meta = xapian_term_record:record(term, record_info(fields, term)),
+        Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
+        Records = qlc:e(qlc:q([X || X <- Table])),
+        Values = [Value || #term{value = Value} <- Records],
+        Not1Wdf = [X || X = #term{wdf = Wdf} <- Records, Wdf =/= 1],
 
-    [ ?_assertEqual(Values, lists:sort(TermNames))
-    , ?_assertEqual(Not1Wdf, [])
-    , ?_assertEqual(OrderTestValues, [<<"1">>, <<"2">>, <<"3">>])
-    ].
+        %% Lookup order test.
+        %% It is an important test.
+        %% Actually, it tests the fact, that skip_to("") move an TermIterator 
+        %% in the beginning of the document.
+        OrderTestQuery = qlc:q([Value || #term{value = Value} <- Table, 
+            Value =:= "2" orelse Value =:= "1" orelse Value =:= "3"]),
+        OrderTestValues = qlc:e(OrderTestQuery),
+        [ ?_assertEqual(Values, lists:sort(TermNames))
+        , ?_assertEqual(Not1Wdf, [])
+        , ?_assertEqual(OrderTestValues, [<<"1">>, <<"2">>, <<"3">>])
+        ]
+    after
+        ?DRV:close(Server)
+    end.
+
 
 
 short_term_qlc_gen() ->
     Path = testdb_path(short_term_qlc),
     Params = [write, create, overwrite],
-    {ok, Server} = ?DRV:open(Path, Params),
-    
     %% Create a document with terms
     TermNames = 
     [erlang:list_to_binary(erlang:integer_to_list(X)) 
         || X <- lists:seq(1, 100)],
 
     Fields = [#x_term{value = Term} || Term <- TermNames], 
-    DocId = ?DRV:add_document(Server, Fields),
-    Meta = xapian_term_record:record(short_term, 
-        record_info(fields, short_term)),
-    Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
-    Q = qlc:q([Wdf || #short_term{wdf = Wdf} <- Table]),
-    WdfSum = qlc:fold(fun erlang:'+'/2, 0, Q),
-    [ ?_assertEqual(WdfSum, 100)
-    ].
+    
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
+        DocId = ?DRV:add_document(Server, Fields),
+        Meta = xapian_term_record:record(short_term, 
+            record_info(fields, short_term)),
+        Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
+        Q = qlc:q([Wdf || #short_term{wdf = Wdf} <- Table]),
+        WdfSum = qlc:fold(fun erlang:'+'/2, 0, Q),
+        [ ?_assertEqual(WdfSum, 100) ]
+    after
+        ?DRV:close(Server)
+    end.
 
 
 term_ext_qlc_gen() ->
     Path = testdb_path(term_ext_qlc),
     Params = [write, create, overwrite],
-    {ok, Server} = ?DRV:open(Path, Params),
     
     %% Create a document with terms
     TermNames = 
@@ -240,26 +262,33 @@ term_ext_qlc_gen() ->
         || X <- lists:seq(1, 100)],
 
     Fields = [#x_term{value = Term} || Term <- TermNames], 
-    DocId = ?DRV:add_document(Server, Fields),
-    Meta = xapian_term_record:record(term_ext, record_info(fields, term_ext)),
-    Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
-    Records = qlc:e(qlc:q([X || X <- Table])),
 
-    Not0Pos = 
-    [X || X = #term_ext{position_count = Count} <- Records, Count =/= 0],
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
+        DocId = ?DRV:add_document(Server, Fields),
+        Meta = xapian_term_record:record(term_ext, 
+                    record_info(fields, term_ext)),
+        Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
+        Records = qlc:e(qlc:q([X || X <- Table])),
 
-    NotEmptyPos = 
-    [X || X = #term_ext{positions = Poss} <- Records, Poss =/= []],
+        Not0Pos = 
+        [X || X = #term_ext{position_count = Count} <- Records, Count =/= 0],
 
-    [ ?_assertEqual(Not0Pos, [])
-    , ?_assertEqual(NotEmptyPos, [])
-    ].
+        NotEmptyPos = 
+        [X || X = #term_ext{positions = Poss} <- Records, Poss =/= []],
+
+        [ ?_assertEqual(Not0Pos, [])
+        , ?_assertEqual(NotEmptyPos, [])
+        ]
+    after
+        ?DRV:close(Server)
+    end.
+
 
 
 term_pos_qlc_gen() ->
     Path = testdb_path(term_pos_qlc),
     Params = [write, create, overwrite],
-    {ok, Server} = ?DRV:open(Path, Params),
 
     Fields = 
     [ #x_term{value = "term1", position = [1,2,3]}
@@ -267,31 +296,37 @@ term_pos_qlc_gen() ->
     , #x_term{value = "term3", position = [1]}
     , #x_term{value = "term3", position = [2,3]}
     ], 
-    DocId = ?DRV:add_document(Server, Fields),
-    Meta = xapian_term_record:record(term_pos, record_info(fields, term_pos)),
-    Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
+        DocId = ?DRV:add_document(Server, Fields),
+        Meta = xapian_term_record:record(term_pos, 
+                record_info(fields, term_pos)),
+        Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
 
-    Term1Records = 
-    qlc:e(qlc:q([X || X = #term_pos{value = <<"term1">>} <- Table])),
-    Term2Records = 
-    qlc:e(qlc:q([X || X = #term_pos{value = <<"term2">>} <- Table])),
-    Term3Records = 
-    qlc:e(qlc:q([X || X = #term_pos{value = <<"term3">>} <- Table])),
-    AllRecords = 
-    qlc:e(qlc:q([X || X <- Table])),
+        Term1Records = 
+        qlc:e(qlc:q([X || X = #term_pos{value = <<"term1">>} <- Table])),
+        Term2Records = 
+        qlc:e(qlc:q([X || X = #term_pos{value = <<"term2">>} <- Table])),
+        Term3Records = 
+        qlc:e(qlc:q([X || X = #term_pos{value = <<"term3">>} <- Table])),
+        AllRecords = 
+        qlc:e(qlc:q([X || X <- Table])),
+        Term1 = #term_pos{
+            value = <<"term1">>, position_count = 3, positions = [1,2,3]},
+        Term2 = #term_pos{
+            value = <<"term2">>, position_count = 3, positions = [1,2,3]},
+        Term3 = #term_pos{
+            value = <<"term3">>, position_count = 3, positions = [1,2,3]},
 
-    Term1 = #term_pos{
-        value = <<"term1">>, position_count = 3, positions = [1,2,3]},
-    Term2 = #term_pos{
-        value = <<"term2">>, position_count = 3, positions = [1,2,3]},
-    Term3 = #term_pos{
-        value = <<"term3">>, position_count = 3, positions = [1,2,3]},
+        [ ?_assertEqual([Term1], Term1Records)
+        , ?_assertEqual([Term2], Term2Records)
+        , ?_assertEqual([Term3], Term3Records)
+        , ?_assertEqual(erlang:length(AllRecords), 3)
+        ]
+    after
+        ?DRV:close(Server)
+    end.
 
-    [ ?_assertEqual([Term1], Term1Records)
-    , ?_assertEqual([Term2], Term2Records)
-    , ?_assertEqual([Term3], Term3Records)
-    , ?_assertEqual(erlang:length(AllRecords), 3)
-    ].
 
 
 value_count_match_spy_gen() ->
@@ -299,55 +334,60 @@ value_count_match_spy_gen() ->
     Params = [write, create, overwrite, 
         #x_value_name{slot = 1, name = color}],
     {ok, Server} = ?DRV:open(Path, Params),
-    %% There are 2 "green" documents.
-    Colors = ["Red", "Blue", "green", "white", "black", "green"],
-    [add_color_document(Server, Color) || Color <- Colors],
+    try
+        %% There are 2 "green" documents.
+        Colors = ["Red", "Blue", "green", "white", "black", "green"],
+        [add_color_document(Server, Color) || Color <- Colors],
 
-    SpySlot1 = xapian_match_spy:value_count(Server, color),
-    Query = "",
-    EnquireResourceId = ?DRV:enquire(Server, Query),
-    MSetParams = #x_match_set{
-        enquire = EnquireResourceId, 
-        spies = [SpySlot1]},
-    MSetResourceId = ?DRV:match_set(Server, MSetParams),
-    Meta = xapian_term_record:record(spy_term, record_info(fields, spy_term)),
+        SpySlot1 = xapian_match_spy:value_count(Server, color),
+        Query = "",
+        EnquireResourceId = ?DRV:enquire(Server, Query),
+        MSetParams = #x_match_set{
+            enquire = EnquireResourceId, 
+            spies = [SpySlot1]},
+        MSetResourceId = ?DRV:match_set(Server, MSetParams),
+        Meta = xapian_term_record:record(spy_term, 
+                    record_info(fields, spy_term)),
 
-    %% These elements sorted by value.
-    Table = xapian_term_qlc:value_count_match_spy_table(
-        Server, SpySlot1, Meta),
+        %% These elements sorted by value.
+        Table = xapian_term_qlc:value_count_match_spy_table(
+            Server, SpySlot1, Meta),
 
-    %% These elements sorted by freq.
-    TopTable = xapian_term_qlc:top_value_count_match_spy_table(
-        Server, SpySlot1, 100, Meta),
+        %% These elements sorted by freq.
+        TopTable = xapian_term_qlc:top_value_count_match_spy_table(
+            Server, SpySlot1, 100, Meta),
 
-    Values = qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table])),
+        Values = qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table])),
 
-    %% "Red" was converted to <<"Red">> because of lookup function call.
-    %% Erlang did not match it, but Xapian did.
-    RedValues = qlc:e(qlc:q([Value 
-        || #spy_term{value = Value} <- Table, Value =:= "Red"])),
+        %% "Red" was converted to <<"Red">> because of lookup function call.
+        %% Erlang did not match it, but Xapian did.
+        RedValues = qlc:e(qlc:q([Value 
+            || #spy_term{value = Value} <- Table, Value =:= "Red"])),
 
-    OrderValues = qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table, 
-        Value =:= "white" orelse Value =:= "black"])),
+        OrderValues = qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table, 
+            Value =:= "white" orelse Value =:= "black"])),
 
-    TopAlphOrderValues = 
-    qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
-        Value =:= "white" orelse Value =:= "black"])),
+        TopAlphOrderValues = 
+        qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
+            Value =:= "white" orelse Value =:= "black"])),
 
-    TopFreqOrderValues = 
-    qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
-        Value =:= "white" orelse Value =:= "green"])),
+        TopFreqOrderValues = 
+        qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
+            Value =:= "white" orelse Value =:= "green"])),
 
-    [ ?_assertEqual(Values, 
-        [<<"Blue">>, <<"Red">>, <<"black">>, <<"green">>, <<"white">>])
-    , ?_assertEqual(RedValues, [<<"Red">>])
-    , {"Check order", 
-        [ ?_assertEqual(OrderValues,        [<<"black">>, <<"white">>])
-        , ?_assertEqual(TopAlphOrderValues, [<<"black">>, <<"white">>])
-        , ?_assertEqual(TopFreqOrderValues, [<<"green">>, <<"white">>])
-        ]}
-    , ?_assertEqual(RedValues, [<<"Red">>])
-    ].
+        [ ?_assertEqual(Values, 
+            [<<"Blue">>, <<"Red">>, <<"black">>, <<"green">>, <<"white">>])
+        , ?_assertEqual(RedValues, [<<"Red">>])
+        , {"Check order", 
+            [ ?_assertEqual(OrderValues,        [<<"black">>, <<"white">>])
+            , ?_assertEqual(TopAlphOrderValues, [<<"black">>, <<"white">>])
+            , ?_assertEqual(TopFreqOrderValues, [<<"green">>, <<"white">>])
+            ]}
+        , ?_assertEqual(RedValues, [<<"Red">>])
+        ]
+    after
+        ?DRV:close(Server)
+    end.
     
     
 
@@ -360,95 +400,99 @@ term_advanced_actions_gen() ->
     Path = testdb_path(adv_actions),
     Params = [write, create, overwrite],
     {ok, Server} = ?DRV:open(Path, Params),
-    DocId = ?DRV:add_document(Server, []),
-    U = fun(Doc) ->
-        ?DRV:update_document(Server, DocId, Doc)
-        end,
-    
-    Meta = xapian_term_record:record(term, record_info(fields, term)),
-    FindTermFn = 
-    fun(Value) ->
-        DocRes = xapian_drv:document(Server, DocId),
-        Table = xapian_term_qlc:document_term_table(
-            Server, DocRes, Meta, [ignore_empty]),
-        ?DRV:release_resource(Server, DocRes),
-        qlc:e(qlc:q([X || X = #term{value = Value} <- Table]))
-        end,
+    try
+        DocId = ?DRV:add_document(Server, []),
+        U = fun(Doc) ->
+            ?DRV:update_document(Server, DocId, Doc)
+            end,
+        
+        Meta = xapian_term_record:record(term, record_info(fields, term)),
+        FindTermFn = 
+        fun(Value) ->
+            DocRes = xapian_drv:document(Server, DocId),
+            Table = xapian_term_qlc:document_term_table(
+                Server, DocRes, Meta, [ignore_empty]),
+            ?DRV:release_resource(Server, DocRes),
+            qlc:e(qlc:q([X || X = #term{value = Value} <- Table]))
+            end,
 
-    FF = fun() -> FindTermFn("term") end,
-    UU = fun(Field) -> U([Field]), FF() end,
+        FF = fun() -> FindTermFn("term") end,
+        UU = fun(Field) -> U([Field]), FF() end,
 
-    Term             = #x_term{value = "term"},
-    TermAdd          = Term#x_term{action = add}, 
-    TermAddNotIgnore = Term#x_term{action = add, ignore = false}, 
-    TermUpdate       = Term#x_term{action = update}, 
-    TermUpdateNotIgnore = TermUpdate#x_term{ignore = false}, 
-    TermSet          = Term#x_term{action = set}, 
-    TermDec          = TermSet#x_term{frequency = -1}, 
-    TermSetAbs       = TermSet#x_term{frequency = {abs, 10}}, 
-    TermRemoveIgnore = Term#x_term{action = remove, frequency = 0},
-    TermRemove       = TermRemoveIgnore#x_term{ignore = false},
-    TermRemove2      = TermRemove#x_term{frequency = 123},
+        Term             = #x_term{value = "term"},
+        TermAdd          = Term#x_term{action = add}, 
+        TermAddNotIgnore = Term#x_term{action = add, ignore = false}, 
+        TermUpdate       = Term#x_term{action = update}, 
+        TermUpdateNotIgnore = TermUpdate#x_term{ignore = false}, 
+        TermSet          = Term#x_term{action = set}, 
+        TermDec          = TermSet#x_term{frequency = -1}, 
+        TermSetAbs       = TermSet#x_term{frequency = {abs, 10}}, 
+        TermRemoveIgnore = Term#x_term{action = remove, frequency = 0},
+        TermRemove       = TermRemoveIgnore#x_term{ignore = false},
+        TermRemove2      = TermRemove#x_term{frequency = 123},
 
-    Terms1 = FF(),
-    Terms2 = UU(TermAddNotIgnore),
+        Terms1 = FF(),
+        Terms2 = UU(TermAddNotIgnore),
 
-    %% Error will be thrown. Value was not changed.
-    ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
-        UU(TermAddNotIgnore)),
+        %% Error will be thrown. Value was not changed.
+        ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
+            UU(TermAddNotIgnore)),
 
-    Terms3 = FF(),
+        Terms3 = FF(),
 
-    %% Error will be ignored. Value was not changed.
-    Terms4 = UU(TermAdd),
+        %% Error will be ignored. Value was not changed.
+        Terms4 = UU(TermAdd),
 
-    %% Start changing of WDF
-    Terms5 = UU(TermUpdate),
-    Terms6 = UU(TermSet),
-    Terms7 = UU(TermDec),
-    Terms8 = UU(TermSetAbs),
+        %% Start changing of WDF
+        Terms5 = UU(TermUpdate),
+        Terms6 = UU(TermSet),
+        Terms7 = UU(TermDec),
+        Terms8 = UU(TermSetAbs),
 
-    %% Cannot remove term, because WDF is not matched.
-    ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
-        UU(TermRemove2)),
-    Terms9 = FF(),
+        %% Cannot remove term, because WDF is not matched.
+        ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
+            UU(TermRemove2)),
+        Terms9 = FF(),
 
-    %% Delete the term
-    Terms10 = UU(TermRemove),
+        %% Delete the term
+        Terms10 = UU(TermRemove),
 
-    %% Cannot delete the term twoce
-    ?assertError(#x_error{type = <<"InvalidArgumentError">>}, 
-        UU(TermRemove)),
-    Terms11 = FF(),
+        %% Cannot delete the term twoce
+        ?assertError(#x_error{type = <<"InvalidArgumentError">>}, 
+            UU(TermRemove)),
+        Terms11 = FF(),
 
 
-    %% Cannot update a non-existing term 
-    ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
-        UU(TermUpdateNotIgnore)),
-    Terms12 = FF(),
+        %% Cannot update a non-existing term 
+        ?assertError(#x_error{type = <<"BadArgumentDriverError">>}, 
+            UU(TermUpdateNotIgnore)),
+        Terms12 = FF(),
 
-    %% It will be ignored.
-    Terms13 = UU(TermUpdate),
+        %% It will be ignored.
+        Terms13 = UU(TermUpdate),
 
-    NormTerm1 = #term{value = <<"term">>, wdf = 1},
-    NormTerm2 = #term{value = <<"term">>, wdf = 2},
-    NormTerm3 = #term{value = <<"term">>, wdf = 3},
-    NormTerm4 = #term{value = <<"term">>, wdf = 10},
+        NormTerm1 = #term{value = <<"term">>, wdf = 1},
+        NormTerm2 = #term{value = <<"term">>, wdf = 2},
+        NormTerm3 = #term{value = <<"term">>, wdf = 3},
+        NormTerm4 = #term{value = <<"term">>, wdf = 10},
 
-    [ ?_assertEqual(Terms1, [])
-    , ?_assertEqual(Terms2, [NormTerm1])
-    , ?_assertEqual(Terms3, [NormTerm1])
-    , ?_assertEqual(Terms4, [NormTerm1])
-    , ?_assertEqual(Terms5, [NormTerm2])
-    , ?_assertEqual(Terms6, [NormTerm3])
-    , ?_assertEqual(Terms7, [NormTerm2])
-    , ?_assertEqual(Terms8, [NormTerm4])
-    , ?_assertEqual(Terms9, [NormTerm4])
-    , ?_assertEqual(Terms10, [])
-    , ?_assertEqual(Terms11, [])
-    , ?_assertEqual(Terms12, [])
-    , ?_assertEqual(Terms13, [])
-    ].
+        [ ?_assertEqual(Terms1, [])
+        , ?_assertEqual(Terms2, [NormTerm1])
+        , ?_assertEqual(Terms3, [NormTerm1])
+        , ?_assertEqual(Terms4, [NormTerm1])
+        , ?_assertEqual(Terms5, [NormTerm2])
+        , ?_assertEqual(Terms6, [NormTerm3])
+        , ?_assertEqual(Terms7, [NormTerm2])
+        , ?_assertEqual(Terms8, [NormTerm4])
+        , ?_assertEqual(Terms9, [NormTerm4])
+        , ?_assertEqual(Terms10, [])
+        , ?_assertEqual(Terms11, [])
+        , ?_assertEqual(Terms12, [])
+        , ?_assertEqual(Terms13, [])
+        ]
+    after
+        ?DRV:close(Server)
+    end.
     
 
 
@@ -471,7 +515,6 @@ stemmer_test() ->
     Params = [write, create, overwrite, 
         #x_stemmer{language = <<"english">>},
         #x_prefix_name{name = author, prefix = <<$A>>, is_boolean=true}],
-    {ok, Server} = ?DRV:open(Path, Params),
     Document =
         [ #x_data{value = "My test data as iolist (NOT INDEXED)"} 
         , #x_text{value = "Return a list of available languages."} 
@@ -480,42 +523,44 @@ stemmer_test() ->
         , #x_text{value = "And other string is here."} 
         , #x_text{value = <<"Michael">>, prefix = author} 
         ],
-    %% Test a term generator
-    DocId = ?DRV:add_document(Server, Document),
-    ?assert(is_integer(DocId)),
-    Last = ?DRV:last_document_id(Server),
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
+        %% Test a term generator
+        DocId = ?DRV:add_document(Server, Document),
+        ?assert(is_integer(DocId)),
+        Last = ?DRV:last_document_id(Server),
 
-    %% Test a query parser
-    Offset = 0,
-    PageSize = 10,
-    Meta = xapian_record:record(stemmer_test_record, 
-        record_info(fields, stemmer_test_record)),
+        %% Test a query parser
+        Offset = 0,
+        PageSize = 10,
+        Meta = xapian_record:record(stemmer_test_record, 
+            record_info(fields, stemmer_test_record)),
 
-    Q0 = #x_query_string{string="return"},
-    Q1 = #x_query_string{string="return AND list"},
-    Q2 = #x_query_string{string="author:michael"},
-    Q3 = #x_query_string{string="author:olly list"},
-    Q4 = #x_query_string{string="author:Michael"},
-    Q5 = #x_query_string{string="retur*", features=[default, wildcard]},
-    Q6 = #x_query_string{string="other AND Return"},
-    Q7 = #x_query_string{string="list NEAR here"},
-    Q8 = #x_query_string{string="list NEAR filter"},
+        Q0 = #x_query_string{string="return"},
+        Q1 = #x_query_string{string="return AND list"},
+        Q2 = #x_query_string{string="author:michael"},
+        Q3 = #x_query_string{string="author:olly list"},
+        Q4 = #x_query_string{string="author:Michael"},
+        Q5 = #x_query_string{string="retur*", features=[default, wildcard]},
+        Q6 = #x_query_string{string="other AND Return"},
+        Q7 = #x_query_string{string="list NEAR here"},
+        Q8 = #x_query_string{string="list NEAR filter"},
 
-    F = fun(Query) ->
-        RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
-        io:format(user, "~n~p~n", [RecList]),
-        RecList
-        end,
+        F = fun(Query) ->
+            RecList = ?DRV:query_page(Server, Offset, PageSize, Query, Meta),
+            io:format(user, "~n~p~n", [RecList]),
+            RecList
+            end,
+        Qs =
+        [Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8],
+        [R0, R1, R2, R3, R4, R5, R6, R7, R8] = 
+        lists:map(F, Qs),
+        ?assertEqual(R7, []),
+        ?assertEqual(R8, R0)
+    after
+        ?DRV:close(Server)
+    end.
 
-    Qs =
-    [Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8],
-    [R0, R1, R2, R3, R4, R5, R6, R7, R8] = 
-    lists:map(F, Qs),
-    ?assertEqual(R7, []),
-    ?assertEqual(R8, R0),
-    
-    ?DRV:close(Server),
-    Last.
 
 
 %% ------------------------------------------------------------------
@@ -639,19 +684,22 @@ read_document_test() ->
     Path = testdb_path(read_document),
     Params = [write, create, overwrite, 
         #x_value_name{slot = 1, name = slot1}],
-    {ok, Server} = ?DRV:open(Path, Params),
     Document =
         [ #x_stemmer{language = <<"english">>}
         , #x_data{value = "My test data as iolist"} 
         , #x_value{slot = slot1, value = "Slot #0"} 
         ],
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
     DocId = ?DRV:add_document(Server, Document),
     Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
     Rec = ?DRV:read_document(Server, DocId, Meta),
     ?assertEqual(Rec#rec_test.docid, 1),
     ?assertEqual(Rec#rec_test.slot1, <<"Slot #0">>),
-    ?assertEqual(Rec#rec_test.data, <<"My test data as iolist">>),
-    ?DRV:close(Server).
+    ?assertEqual(Rec#rec_test.data, <<"My test data as iolist">>)
+    after
+        ?DRV:close(Server)
+    end.
 
 
 read_float_value_gen() ->
@@ -659,7 +707,6 @@ read_float_value_gen() ->
     Path = testdb_path(read_float),
     Params = [write, create, overwrite, 
         #x_value_name{type = float, slot = 1, name = slot1}],
-    {ok, Server} = ?DRV:open(Path, Params),
     Document1 =
         [ #x_data{value = "My test data as iolist"} 
         , #x_value{slot = slot1, value = 7} 
@@ -668,19 +715,23 @@ read_float_value_gen() ->
         [ #x_data{value = "My test data as iolist"} 
         , #x_value{slot = slot1, value = 66} 
         ],
-
-    DocId1 = ?DRV:add_document(Server, Document1),
-    DocId2 = ?DRV:add_document(Server, Document2),
-    Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
-    Rec1 = ?DRV:read_document(Server, DocId1, Meta),
-    Rec2 = ?DRV:read_document(Server, DocId2, Meta),
-    [?_assertEqual(Rec1#rec_test.docid, 1)
-    ,?_assertEqual(Rec1#rec_test.slot1, 7.0)
-    ,?_assertEqual(Rec1#rec_test.data, <<"My test data as iolist">>)
-    ,?_assertEqual(Rec2#rec_test.docid, 2)
-    ,?_assertEqual(Rec2#rec_test.slot1, 66.0)
-    ,?_assertEqual(Rec2#rec_test.data, <<"My test data as iolist">>)
-    ].
+    {ok, Server} = ?DRV:open(Path, Params),
+    try
+        DocId1 = ?DRV:add_document(Server, Document1),
+        DocId2 = ?DRV:add_document(Server, Document2),
+        Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
+        Rec1 = ?DRV:read_document(Server, DocId1, Meta),
+        Rec2 = ?DRV:read_document(Server, DocId2, Meta),
+        [?_assertEqual(Rec1#rec_test.docid, 1)
+        ,?_assertEqual(Rec1#rec_test.slot1, 7.0)
+        ,?_assertEqual(Rec1#rec_test.data, <<"My test data as iolist">>)
+        ,?_assertEqual(Rec2#rec_test.docid, 2)
+        ,?_assertEqual(Rec2#rec_test.slot1, 66.0)
+        ,?_assertEqual(Rec2#rec_test.data, <<"My test data as iolist">>)
+        ]
+    after
+        ?DRV:close(Server)
+    end.
 
 
 short_record_test() ->
@@ -1137,11 +1188,13 @@ prop_multi_db() ->
     {ok, Server3} = ?DRV:open(Path3, Params),
     Servers = [Server1, Server2, Server3],
     Paths = [Path1, Path2, Path3],
-    [begin
-        ?DRV:add_document(S, Document)
-     end || X <- lists:seq(1, 1000), 
-            S <- Servers ],
-    [ ?DRV:close(S) || S <- Servers ],
+    try
+        [?DRV:add_document(S, Document) 
+            || X <- lists:seq(1, 1000), 
+               S <- Servers ]
+    after
+        [ ?DRV:close(S) || S <- Servers ]
+    end,
 
     %% Merged server
     {ok, Server} = ?DRV:open(Paths, []),

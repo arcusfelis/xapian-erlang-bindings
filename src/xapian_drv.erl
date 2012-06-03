@@ -841,7 +841,7 @@ handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
         {ok, ResourceNum} ->
             Elem = #resource{type=enquire, number=ResourceNum},
             %% Reply is a reference
-            {ok, NewRegister, Ref} = 
+            {ok, {NewRegister, Ref}} = 
             xapian_register:put(Register, FromPid, Elem),
             NewState = State#state{register = NewRegister},
             {reply, {ok, Ref}, NewState}
@@ -859,7 +859,7 @@ handle_call({document, DocId}, {FromPid, _FromRef}, State) ->
         {ok, ResourceNum} ->
             Elem = #resource{type=document, number=ResourceNum},
             %% Reply is a reference
-            {ok, NewRegister, Ref} = 
+            {ok, {NewRegister, Ref}} = 
             xapian_register:put(Register, FromPid, Elem),
             NewState = State#state{register = NewRegister},
             {reply, {ok, Ref}, NewState}
@@ -889,7 +889,7 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
         begin
             MSetElem = #resource{type=mset, number=MSetNum},
             %% Reply is a reference
-            {ok, NewRegister, MSetRef} = 
+            {ok, {NewRegister, MSetRef}} = 
             xapian_register:put(Register, FromPid, MSetElem),
             NewState = State#state{register = NewRegister},
             {reply, {ok, MSetRef}, NewState}
@@ -897,16 +897,19 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
 
 handle_call({release_resource, Ref}, _From, State) ->
     #state{port = Port, register = Register } = State,
-    case xapian_register:erase(Register, Ref) of
-        {ok, NewRegister, Elem} ->
+    do_reply(State, do([error_m ||
+    {NewRegister, Elem} <- 
+        xapian_register:erase(Register, Ref),
+    <<>> <- 
+        begin
             #resource{type=ResourceType, number=ResourceNum} = Elem,
-            port_release_resource(Port, ResourceType, ResourceNum),
+            port_release_resource(Port, ResourceType, ResourceNum)
+        end,
+        begin
             NewState = State#state{register = NewRegister},
-            {reply, ok, NewState};
-
-        {error, _Reason} = Error ->
-            {reply, Error, State}
-    end;
+            {reply, {ok, ok}, NewState}
+        end
+    ]));
 
 
 %% Convert Res into QlcRes.
@@ -925,7 +928,7 @@ handle_call({qlc_init, QlcType, ResRef, EncFun}, {FromPid, _FromRef}, State) ->
 
         begin
             QlcElem = #resource{type=qlc, number=QlcResNum},
-            {ok, NewRegister, QlcRef} = 
+            {ok, {NewRegister, QlcRef}} = 
             xapian_register:put(Register, FromPid, QlcElem),
             NewState = State#state{register = NewRegister},
 
@@ -977,7 +980,7 @@ handle_call({create_resource, ResourceTypeName, ParamCreatorFun},
         begin
             Elem = #resource{type=ResouceType, number=ResourceObjectNumber},
             %% Reply is a reference
-            {ok, NewRegister, Ref} = 
+            {ok, {NewRegister, Ref}} = 
             xapian_register:put(Register, FromPid, Elem),
             NewState = State#state{register = NewRegister},
             {reply, {ok, Ref}, NewState}
@@ -1064,7 +1067,7 @@ handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
         port = Port, 
         register = Register } = State,
     case xapian_register:erase(Register, Ref) of
-        {ok, NewRegister, Elem} ->
+        {ok, {NewRegister, Elem}} ->
             #resource{type=ResourceType, number=ResourceNum} = Elem,
             %% TODO: handle a return value
             port_release_resource(Port, ResourceType, ResourceNum),
