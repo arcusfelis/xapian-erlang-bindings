@@ -116,7 +116,7 @@ this. This field is `undefined` by default.
  #x_database{name=db1, path="DB1"}
 ```
 
-Full multi-database example:
+A full multi-database example:
 
 ```erlang
 -record(document, {docid, db_name, multi_docid, db_number}).
@@ -127,10 +127,12 @@ example() ->
     {ok, Server} = xapian_driver:open([DB1, DB2], []),
     EnquireResourceId = xapian_driver:enquire(Server, "query string"),
     MSetResourceId = xapian_driver:match_set(Server, EnquireResourceId),
+    %% Use a record_info call for retrieving a list of field names
     Meta = xapian_record:record(document, record_info(fields, document)),
     Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
     qlc:e(qlc:q([X || #document{multi_docid=DocId} <- Table])).
 ```
+
 
 Resources
 =========
@@ -147,7 +149,7 @@ Use the function call for releasing:
 release_resource(Server, Resource).
 ```
 
-Second call of this function with the same arguments will throw an error:
+The second call of this function with the same arguments will cause an error:
 
 ```erlang
 1> Path = filename:join([code:priv_dir(xapian), test_db, simple]).
