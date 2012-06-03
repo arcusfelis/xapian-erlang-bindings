@@ -90,7 +90,6 @@ catch xapian_pool:checkout([simple], fun([S]) -> 5 = 2 + 2 end).
 Multi-database support
 ======================
 
-
 You can use this code for opening two databases from "DB1" and "DB2" directories.
 
 ```erlang
@@ -132,6 +131,37 @@ example() ->
     Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
     qlc:e(qlc:q([X || #document{multi_docid=DocId} <- Table])).
 ```
+
+Resources
+=========
+
+A resource is a C++ object, which can be passed and stored inside an Erlang VM.
+Each server can have an own set of resources. Resources from other servers 
+cannot be used or controlled.
+Resources are _not_ automatically garbidge-collected, but if a control process 
+(server) dies, all its resources are released.
+
+Use the function call for releasing:
+
+```erlang
+release_resource(Server, Resource).
+```
+
+Second call of this function with the same arguments will throw an error:
+
+```erlang
+1> Path = filename:join([code:priv_dir(xapian), test_db, simple]).
+"/home/user/erlang/xapian/priv/test_db/simple"
+2> {ok, Server} = xapian_drv:open(Path, []).
+{ok,<0.57.0>}
+3> ResourceId = xapian_drv:enquire(Server, "query").                    
+#Ref<0.0.0.69>
+4> xapian_drv:release_resource(Server, ResourceId).                     
+ok
+5> xapian_drv:release_resource(Server, ResourceId).
+** exception error: elem_not_found
+```
+
 
 Using a port 
 ============

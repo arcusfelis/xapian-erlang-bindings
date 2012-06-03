@@ -167,6 +167,9 @@
 -opaque x_unique_document_id() :: xapian:x_unique_document_id().
 -opaque x_document_index_part() :: xapian:x_document_index_part().
 
+-type multi_db_path() :: [#x_database{}|#x_prog_database{}|#x_tcp_database{}].
+-type db_path() :: x_string() | multi_db_path().
+
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -174,22 +177,31 @@
 
 
 %% @doc Open the database with params.
-%% Path is a directory name of the database.
-%% Params is a list of:
+%% `Path' is a directory name of the database.
+%% For opening multiple databases you can pass a list of:
 %%
-%% * Modes: read, write, overwrite, create, open
+%% * #x_database{};
+%% * #x_prog_database{};
+%% * #x_tcp_database{}.
+%%
+%% See the description of these records for more information.
+%%
+%% `Params' is a list of:
+%%
+%% * Modes: read, write, overwrite, create, open;
 %% * Names for values and for prefixes:
 %%      `#x_value_name{slot = 1, name = slotname}'
-%%      `#x_prefix_name{name = author, prefix = <<$A>>}'
+%%      `#x_prefix_name{name = author, prefix = <<$A>>}';
 %% * The default stemmer. It will be used in `TermGenerator' and in the 
 %%      `default_query_parser':
-%%      `#x_stemmer{language="english"}'
+%%      `#x_stemmer{language="english"}';
+%% * An interface to work: `port' (or `driver' by default).
 %%
 %% The `read' mode is only for reading. 
 %% The `write' mode is for reading and for writing.
 %% Write mode can be combined with:
 %% `open' (default), `create', `overwrite'.
--spec open(term(), [term()]) -> {ok, x_server()}.
+-spec open(db_path(), [term()]) -> {ok, x_server()}.
 
 open(Path, Params) ->
     Args = [Path, append_default_params(Params)],
@@ -203,12 +215,17 @@ open(Path, Params) ->
     end.
 
 
+-spec last_document_id(x_server()) -> x_document_id().
 last_document_id(Server) ->
     call(Server, last_document_id).
 
 
 %% @doc Close the database and kill a control process (aka Server).
-%%      Database will be automaticly close, if the server process is dead.
+%%      Database will be automaticly close, if a supervised server 
+%%      process will dead.
+%%
+%%      This function is used for flushing changes of the writable database.
+%%      The caller will be blocked while all changes will not flushed.
 close(Server) ->
     gen_server:call(Server, close).
 
@@ -295,7 +312,7 @@ database_info(Server, Params) ->
     call(Server, {database_info, Params}).
 
 
-%% @doc Release resources.
+%% @doc Release a resource.
 -spec release_resource(x_server(), x_resource()) -> void().
 release_resource(Server, ResourceRef) ->
     call(Server, {release_resource, ResourceRef}).
@@ -526,6 +543,7 @@ collect_status_info(Ref, Servers, StatusList) ->
 cancel_transaction(Server, Ref) ->
     Server ! {cancel_transaction, Ref}.
 
+
 %% ------------------------------------------------------------------
 %% Info  
 %% ------------------------------------------------------------------
@@ -599,6 +617,7 @@ internal_multi_docid(State, {DocId, SubDbName}) when is_atom(SubDbName) ->
 
 internal_multi_docid(State, {DocId, SubDbNum}) ->
     {ok, multi_docid(State, DocId, SubDbNum)}.
+
 
 %% ------------------------------------------------------------------
 %% API for other modules
@@ -881,9 +900,9 @@ handle_call({release_resource, Ref}, _From, State) ->
     case xapian_register:erase(Register, Ref) of
         {ok, NewRegister, Elem} ->
             #resource{type=ResourceType, number=ResourceNum} = Elem,
-            Reply = port_release_resource(Port, ResourceType, ResourceNum),
+            port_release_resource(Port, ResourceType, ResourceNum),
             NewState = State#state{register = NewRegister},
-            {reply, Reply, NewState};
+            {reply, ok, NewState};
 
         {error, _Reason} = Error ->
             {reply, Error, State}
