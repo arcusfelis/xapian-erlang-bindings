@@ -93,7 +93,7 @@ NotWritableDatabaseError::NotWritableDatabaseError() :
 // -------------------------------------------------------------------
 DbIsNotReadyDriverError::DbIsNotReadyDriverError() : 
     DriverRuntimeError(TYPE, 
-        "Call xapian_drv:port_open.") {}
+        "Call xapian_server:port_open.") {}
 
 
 // -------------------------------------------------------------------

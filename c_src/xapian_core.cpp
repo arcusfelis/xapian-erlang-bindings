@@ -2359,7 +2359,7 @@ Driver::applyDocumentSchema(
 // -------------------------------------------------------------------
 
 /**
- * This function will be called inside xapian_drv:init
+ * This function will be called inside xapian_open:init
  */
 void
 Driver::getResourceInfo(ResultEncoder& result)
