@@ -15,52 +15,13 @@
     append_uint8/2,
     append_boolean/2]).
 
-part_id(stop)       -> 0;
-part_id(stemmer)    -> 1;
-part_id(data)       -> 2;
-part_id(delta)      -> 3;
-part_id(text)       -> 4;
-
-part_id(set_posting)       -> 15;
-part_id(add_posting)       -> 25;
-part_id(update_posting)    -> 35;
-part_id(remove_posting)    -> 45;
-
-part_id(set_term)          -> 16;
-part_id(add_term)          -> 26;
-part_id(update_term)       -> 36;
-part_id(remove_term)       -> 46;
-
-part_id(add_value)         -> 17;
-part_id(set_value)         -> 27;
-part_id(update_value)      -> 37;
-part_id(remove_value)      -> 47;
-
-part_id(dec_wdf)                   -> 101;
-part_id(set_wdf)                   -> 111;
-part_id(remove_values)             -> 103;
-part_id(remove_terms)              -> 104;
-part_id(remove_positions)          -> 105;
-part_id(remove_term_positions)     -> 106;
-part_id(remove_term_positions_save)-> 116.
-
-
-value_type(add)       -> add_value;
-value_type(set)       -> set_value;
-value_type(update)    -> update_value;
-value_type(remove)    -> remove_value.
-
-
-posting_type(add)     -> add_posting;
-posting_type(set)     -> set_posting;
-posting_type(update)  -> update_posting;
-posting_type(remove)  -> remove_posting.
-
-
-term_type(add)     -> add_term;
-term_type(set)     -> set_term;
-term_type(update)  -> update_term;
-term_type(remove)  -> remove_term.
+-import(xapian_const, [ 
+    term_type/1,
+    posting_type/1,
+    value_type/1,
+    document_part_id/1,
+    value_type_id/1,
+    value_type_id/1]).
 
 
 %% @doc Encode parts of the document to a binary.
@@ -231,7 +192,7 @@ append_text(Value, WDF, Prefix, Bin@) ->
 %% ------------------------------------------------------------------
 
 append_type(Type, Bin) ->
-    append_uint8(part_id(Type), Bin).
+    append_uint8(document_part_id(Type), Bin).
 
 
 %% see XapianErlang::Driver::decodeValue
@@ -240,10 +201,6 @@ append_value(Value, Bin@) when is_number(Value) ->
 
 append_value(Value, Bin@) ->
     append_iolist(Value, append_uint8(value_type_id(string), Bin@)).
-
-
-value_type_id(string) -> 0;
-value_type_id(double) -> 1.
 
 
 -ifdef(TEST).

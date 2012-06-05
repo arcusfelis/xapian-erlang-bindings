@@ -7,22 +7,22 @@
 
 -record(x_database, {
     name :: atom(),
-    path = ?REQUIRED :: xapian:x_string()
+    path = ?REQUIRED :: xapian_type:x_string()
 }).
 
 -record(x_prog_database, {
     name :: atom(),
-    program = ?REQUIRED :: xapian:x_string(),
-    arguments = ?REQUIRED :: xapian:x_string(),
-    timeout = 10000 :: xapian:x_timeout()
+    program = ?REQUIRED :: xapian_type:x_string(),
+    arguments = ?REQUIRED :: xapian_type:x_string(),
+    timeout = 10000 :: xapian_type:x_timeout()
 }).
 
 -record(x_tcp_database, {
     name :: atom(),
-    host = ?REQUIRED :: xapian:x_inet_address(),
-    port = ?REQUIRED :: xapian:x_inet_port(),
-    timeout = 10000 :: xapian:x_timeout(),
-    connect_timeout = 10000 :: xapian:x_timeout()
+    host = ?REQUIRED :: xapian_type:x_inet_address(),
+    port = ?REQUIRED :: xapian_type:x_inet_port(),
+    timeout = 10000 :: xapian_type:x_timeout(),
+    connect_timeout = 10000 :: xapian_type:x_timeout()
 }).
 
 
@@ -31,18 +31,18 @@
 % ----------------------------------------------------------
 
 -record(x_stemmer, {
-    language = ?REQUIRED :: xapian:x_string()
+    language = ?REQUIRED :: xapian_type:x_string()
 }).
 
 
 -record(x_data, {
-    value = ?REQUIRED :: xapian:x_string()
+    value = ?REQUIRED :: xapian_type:x_string()
 }).
 
 
 -record(x_term, {
     %% The name of the term. 
-    value = ?REQUIRED :: xapian:x_string(),
+    value = ?REQUIRED :: xapian_type:x_string(),
 
     %% The position of the term. 
     %% If position = undefined, then we will use Xapian::Document::add_term,
@@ -54,7 +54,7 @@
     %% of the term="term".
     %%
     %% `#x_term{action=set, position=[]}' deletes all positions for all terms.
-    position :: xapian:x_position() | [xapian:x_position()] | undefined,
+    position :: xapian_type:x_position() | [xapian_type:x_position()] | undefined,
 
     %% The within-document frequency, or wdf, of a term t in D is the 
     %% number of times it is pulled out of D in the indexing process. 
@@ -71,7 +71,7 @@
     %% 1 means `{cur, 1}'.
 
     %% All postings and terms with the same value have common WDF.
-    frequency = 1 :: xapian:x_term_count(),
+    frequency = 1 :: xapian_type:x_term_count(),
 
     %% If position is undefined, then:
     %%   If action = remove and WDF = 0, then the term will be deleted.
@@ -114,8 +114,8 @@
 
 
 -record(x_value, {
-    slot = ?REQUIRED  :: xapian:x_slot() | xapian:x_slot_name(),
-    value = ?REQUIRED :: xapian:x_string(),
+    slot = ?REQUIRED  :: xapian_type:x_slot() | xapian_type:x_slot_name(),
+    value = ?REQUIRED :: xapian_type:x_string(),
     %% If action = remove and value = "", then remove slot with any value.
     %% If action = remove and value != "", then remove slot with passed value.
     %% If action = add, then value will be seted only if the slot is free.
@@ -129,19 +129,19 @@
 %% Calls Xapian::TermGenerator::increase_termpos.
 -record(x_delta, {
     %% Amount to increase the term position by (default: 100). 
-    position = 100 :: xapian:x_position()
+    position = 100 :: xapian_type:x_position()
 }).
 
 
 -record(x_text, {
     %% The text to index.
-    value = ?REQUIRED :: xapian:x_string(),
+    value = ?REQUIRED :: xapian_type:x_string(),
 
     %% The wdf increment.
-    frequency = 1 :: xapian:x_term_count(),
+    frequency = 1 :: xapian_type:x_term_count(),
 
     %% The term prefix to use (default is no prefix). 
-    prefix = <<>> :: xapian:x_string()
+    prefix = <<>> :: xapian_type:x_string()
 }).
 
 
@@ -260,7 +260,7 @@
 -record(x_query, {
     op='AND',
     %% List of other queries or terms (term is a string).
-    value :: [xapian:x_query() | xapian:x_string()],
+    value :: [xapian_type:x_query() | xapian_type:x_string()],
     %% For `NEAR' and `PHRASE', a window size can be specified in parameter.
     %% For `ELITE_SET', the elite set size can be specified in parameter. 
     parameter=0 :: non_neg_integer()
@@ -270,20 +270,20 @@
     %% `VALUE GE' or `VALUE LE'
     op = ?REQUIRED,
     slot :: non_neg_integer(),
-    value :: xapian:x_string()
+    value :: xapian_type:x_string()
 }).
 
 -record(x_query_value_range, {
     op='VALUE RANGE',
     slot :: non_neg_integer(),
-    from :: xapian:x_string(),
-    to :: xapian:x_string()
+    from :: xapian_type:x_string(),
+    to :: xapian_type:x_string()
 }).
 
 -record(x_query_term, {
-    name :: xapian:x_string(),
+    name :: xapian_type:x_string(),
     wqf = 1,
-    position = 0 :: xapian:x_position()
+    position = 0 :: xapian_type:x_position()
 }).
 
 
@@ -303,8 +303,8 @@
     parser = default :: #x_query_parser{} | default | empty,
 
     %% Encoded query string
-    string = ?REQUIRED :: xapian:x_string(),
-    default_prefix = <<>>  :: xapian:x_string(),
+    string = ?REQUIRED :: xapian_type:x_string(),
+    default_prefix = <<>>  :: xapian_type:x_string(),
 
     %% @see XapianErlangDriver::PARSER_FEATURES
     %% If undefined, then features=[default].
@@ -317,20 +317,20 @@
 -record(x_query_scale_weight, {
     op = 'SCALE WEIGHT',
     %% Sub-query
-    value = ?REQUIRED :: xapian:x_query(), 
+    value = ?REQUIRED :: xapian_type:x_query(), 
     factor = ?REQUIRED :: float()
 }). 
 
 
 -record(x_sort_order, {
-    type = relevance :: xapian:x_order_type(),
-    value :: xapian:x_slot_value() | xapian:x_resource(), %% KeyMaker resource
+    type = relevance :: xapian_type:x_order_type(),
+    value :: xapian_type:x_slot_value() | xapian_type:x_resource(), %% KeyMaker resource
     is_reversed = false :: boolean()
 }).
 
 
 -record(x_enquire, {
-    x_query = xapian:x_query(),
+    x_query = xapian_type:x_query(),
     %% the query length to use in weight calculations 
     %% by default the sum of the wqf of all terms is used. 
     query_len = 0 :: non_neg_integer(),
@@ -341,10 +341,10 @@
     %% dont_care = undefined
     docid_order = asc :: asc | desc | undefined | default | dont_care,
     %% Weighting scheme
-    weighting_scheme :: undefined | xapian:x_resource(),
+    weighting_scheme :: undefined | xapian_type:x_resource(),
     percent_cutoff = 0,
     weight_cutoff = 0,
-    collapse_key :: undefined | xapian:x_slot_value(),
+    collapse_key :: undefined | xapian_type:x_slot_value(),
     %% Max number of items with the same key to leave after collapsing
     collapse_max = 1 :: non_neg_integer()
 }).
@@ -360,12 +360,12 @@
 
 
 -record(x_match_set, {
-    enquire = ?REQUIRED :: xapian:x_resource(), 
+    enquire = ?REQUIRED :: xapian_type:x_resource(), 
     from = 0 :: non_neg_integer(), 
     %% `undefined' means all documents.
     max_items = undefined :: non_neg_integer() | undefined, 
     check_at_least = 0 :: non_neg_integer(), 
-    spies = [] :: [xapian:x_resource()]
+    spies = [] :: [xapian_type:x_resource()]
 }).
 
 

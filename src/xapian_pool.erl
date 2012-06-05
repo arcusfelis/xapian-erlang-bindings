@@ -1,7 +1,7 @@
 %% This module provides `start_link' function for Poolboy.
 %% This module is used for grouping a set of __readers__.
 -module(xapian_pool).
--define(SERVER, xapian_drv).
+-define(SERVER, xapian_server).
 -define(WORKER, ?MODULE).
 -define(SUPERVISOR, xapian_pool_sup).
 
@@ -122,10 +122,10 @@ pool_setup() ->
     Modes = [write, create, overwrite],
     Dbs =
     [begin
-        {ok, Pid} = xapian_drv:open(testdb_path(Name), Modes),
+        {ok, Pid} = xapian_server:open(testdb_path(Name), Modes),
         Pid
      end || Name <- Names],
-    [ok = xapian_drv:close(Db) || Db <- Dbs],
+    [ok = xapian_server:close(Db) || Db <- Dbs],
     
     %% Create pools of readers
     Workers = 

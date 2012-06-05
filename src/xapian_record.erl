@@ -26,6 +26,9 @@
     read_double/1,
     index_of/2]).
 
+-import(xapian_const, [source_type_id/1, document_field_id/1]).
+
+
 %% ------------------------------------------------------------------
 %% API
 %% ------------------------------------------------------------------
@@ -52,10 +55,6 @@ tuple(#rec{name=TupleName, fields=TupleFields}) ->
     list_to_tuple([TupleName | TupleFields]).
 
 
-append_key_field(Key, Bin) ->
-    append_uint8(part_id(Key), Bin).
-
-
 %% Creates tuples {Name, Field1, ....}
 encode(Meta, Name2Slot, Value2TypeArray) when not is_binary(Value2TypeArray) ->
     encode(Meta, Name2Slot, Value2TypeArray, <<>>).
@@ -63,25 +62,21 @@ encode(Meta, Name2Slot, Value2TypeArray) when not is_binary(Value2TypeArray) ->
 encode(Meta, Name2Slot, Value2TypeArray, Bin) ->
     #rec{name=_TupleName, fields=TupleFields} = Meta,
     enc(TupleFields, Name2Slot, Value2TypeArray, 
-        append_uint8(encoder_type_id(TupleFields), Bin)).
+        append_uint8(encoder_source_type_id(TupleFields), Bin)).
 
 
 %% Select from few encoders: some of them need Document, MsetIterator or both.
-encoder_type_id([_|_] = TupleFields) ->
+encoder_source_type_id([_|_] = TupleFields) ->
     case type(TupleFields) of
         {true, false} ->
-            type_id(document);
+            source_type_id(document);
 
         {true, true} ->
-            type_id(both);
+            source_type_id(both);
 
         _Other ->
-            type_id(iterator)
+            source_type_id(iterator)
     end.
-
-type_id(document) ->    0;
-type_id(iterator) ->    1;
-type_id(both) ->        2.
 
 
 -spec decode(term(), orddict:orddict(), binary()) -> {term(), binary()}.
@@ -179,24 +174,16 @@ enc([], _N2S, _V2T, Bin) ->
     append_type(stop, Bin).
 
 
+%% Type of the field
 append_type(Type, Bin) ->
-    append_uint8(part_id(Type), Bin).
+    append_uint8(document_field_id(Type), Bin).
+
+%% Type of the key field
+append_key_field(Key, Bin) ->
+    append_uint8(document_field_id(Key), Bin).
 
 append_value(Slot, Bin) ->
     append_uint(Slot, Bin).
-
-   
-part_id(stop)        -> 0;
-part_id(value)       -> 1;
-part_id(float_value) -> 2;
-part_id(data)        -> 3;
-part_id(docid)       -> 4;
-part_id(weight)      -> 5;
-part_id(rank)        -> 6;
-part_id(percent)     -> 7;
-part_id(multi_docid) -> 8;
-part_id(db_number)   -> 9;
-part_id(db_name)     -> part_id(db_number).
 
 
 

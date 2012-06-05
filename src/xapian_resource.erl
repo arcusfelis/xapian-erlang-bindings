@@ -14,7 +14,7 @@
 
 
 bool_weight(Server) ->
-    xapian_drv:internal_create_resource(Server, bool_weight).
+    xapian_server:internal_create_resource(Server, bool_weight).
 
 
 bm25_weight(Server, 
@@ -32,7 +32,7 @@ bm25_weight(Server, K1, K2, K3, B, MinNormLen) ->
             Bin@ = append_double(MinNormLen, Bin@),
             {ok, Bin@}
         end,
-    xapian_drv:internal_create_resource(Server, bm25_weight, GenFn).
+    xapian_server:internal_create_resource(Server, bm25_weight, GenFn).
     
 
 trad_weight(Server) ->
@@ -43,7 +43,7 @@ trad_weight(Server, K) ->
         fun() ->
             {ok, append_double(K, <<>>)}
         end,
-    xapian_drv:internal_create_resource(Server, trad_weight, GenFn).
+    xapian_server:internal_create_resource(Server, trad_weight, GenFn).
 
 
 
@@ -54,7 +54,7 @@ trad_weight(Server, K) ->
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--define(DRV, xapian_drv).
+-define(SRV, xapian_server).
 -define(RES, ?MODULE).
 
 testdb_path(Name) -> 
@@ -81,12 +81,12 @@ resource_setup() ->
     % Open test
     Path = testdb_path(resource_creation),
     Params = [write, create, overwrite],
-    {ok, Server} = ?DRV:open(Path, Params),
+    {ok, Server} = ?SRV:open(Path, Params),
     Server.
     
 
 resource_clean(Server) ->
-%   ?DRV:close(Server).
+%   ?SRV:close(Server).
     ok.
 
 

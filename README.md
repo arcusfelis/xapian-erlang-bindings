@@ -55,8 +55,8 @@ There is only one writer for each database, so there is no a writer pool.
 You can use a named process and a supervisor instead:
 
 ```erlang
-{ok, Pid} = xapian_drv:open(Path, [{name, simple_writer}, write]).
-xapian_drv:add_document(simple_writer, [#x_text{value = "Paragraph 1"}]).
+{ok, Pid} = xapian_server:open(Path, [{name, simple_writer}, write]).
+xapian_server:add_document(simple_writer, [#x_text{value = "Paragraph 1"}]).
 ```
 
 If you try run this code from console, then next command will be useful:
@@ -154,13 +154,13 @@ The second call of this function with the same arguments will cause an error:
 ```erlang
 1> Path = filename:join([code:priv_dir(xapian), test_db, simple]).
 "/home/user/erlang/xapian/priv/test_db/simple"
-2> {ok, Server} = xapian_drv:open(Path, []).
+2> {ok, Server} = xapian_server:open(Path, []).
 {ok,<0.57.0>}
-3> ResourceId = xapian_drv:enquire(Server, "query").                    
+3> ResourceId = xapian_server:enquire(Server, "query").                    
 #Ref<0.0.0.69>
-4> xapian_drv:release_resource(Server, ResourceId).                     
+4> xapian_server:release_resource(Server, ResourceId).                     
 ok
-5> xapian_drv:release_resource(Server, ResourceId).
+5> xapian_server:release_resource(Server, ResourceId).
 ** exception error: elem_not_found
 ```
 

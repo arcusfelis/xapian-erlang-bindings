@@ -10,6 +10,7 @@
     read_weight/1
 ]).
 
+-import(xapian_const, [mset_info_param_id/1]).
     
 encode(Params, Bin) ->
     append_uint8(mset_info_param_id(stop),
@@ -44,20 +45,6 @@ properties() ->
     [matches_lower_bound, matches_estimated, matches_upper_bound,
      uncollapsed_matches_lower_bound, uncollapsed_matches_estimated,
      uncollapsed_matches_upper_bound, size, max_possible, max_attained].
-
-
-mset_info_param_id(stop)                            -> 0;
-mset_info_param_id(matches_lower_bound)             -> 1;
-mset_info_param_id(matches_estimated)               -> 2;
-mset_info_param_id(matches_upper_bound)             -> 3;
-mset_info_param_id(uncollapsed_matches_lower_bound) -> 4;
-mset_info_param_id(uncollapsed_matches_estimated)   -> 5;
-mset_info_param_id(uncollapsed_matches_upper_bound) -> 6;
-mset_info_param_id(size)                            -> 7;
-mset_info_param_id(max_possible)                    -> 8;
-mset_info_param_id(max_attained)                    -> 9;
-mset_info_param_id(term_weight)                     -> 10;
-mset_info_param_id(term_freq)                       -> 11.
 
 
 decode_param(matches_lower_bound, Bin) ->

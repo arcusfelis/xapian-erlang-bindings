@@ -11,6 +11,7 @@
 -include_lib("xapian/include/xapian.hrl").
 -include("xapian.hrl").
 -compile({parse_transform, seqbind}).
+-import(xapian_const, [spy_type_id/1]).
 
 
 %% Fields of the record are limited:
@@ -54,11 +55,11 @@ document_term_table(Server, DocRes, Meta, UserParams)
     table_int(Server, terms, EncoderFun, DocRes, Meta, UserParams);
 
 document_term_table(Server, DocId, Meta, UserParams) ->
-    DocRes = xapian_drv:document(Server, DocId),
+    DocRes = xapian_server:document(Server, DocId),
     try
         document_term_table(Server, DocRes, Meta, UserParams)
     after
-        xapian_drv:release_resource(Server, DocRes)
+        xapian_server:release_resource(Server, DocRes)
     end.
 
 
@@ -75,7 +76,7 @@ table_int(Server, QlcType, EncFun, IterRes, Meta, UserParams)
     InitializationResult = 
     try
         fix_unknown_num_of_object(
-            xapian_drv:internal_qlc_init(Server, QlcType, IterRes, EncFun))
+            xapian_server:internal_qlc_init(Server, QlcType, IterRes, EncFun))
     catch error:#x_error{type = <<"EmptySetDriverError">>} when IgnoreEmpty ->
         empty_table()
     end,
@@ -94,7 +95,7 @@ table_int(Server, QlcType, EncFun, IterRes, Meta, UserParams)
 
             %% Cannot skip more elements then in the set.
             true ->
-                xapian_drv:release_resource(Server, QlcRes),
+                xapian_server:release_resource(Server, QlcRes),
                 %% Throw an error or return an empty table
                 [erlang:error(empty_sub_list) || not IgnoreEmpty],
                 empty_table()
@@ -142,7 +143,7 @@ lookup_fun(Server, ResNum, Meta, KeyPos) ->
     fun(KeyPosI, Terms) when KeyPosI =:= KeyPos ->
         case lists:all(fun is_valid_term_name/1, Terms) of
         true ->
-            Bin = xapian_drv:internal_qlc_lookup(Server, encoder(Terms), ResNum),
+            Bin = xapian_server:internal_qlc_lookup(Server, encoder(Terms), ResNum),
             {Records, <<>>} = xapian_term_record:decode_list2(Meta, Bin),
             Records;
         false ->
@@ -155,7 +156,7 @@ lookup_fun(Server, ResNum, Meta, KeyPos) ->
 %% `From' records will be skipped from the beginning of the collection.
 traverse_fun(Server, ResNum, Meta, From, Len, TotalLen) ->
     fun() ->
-        Bin = xapian_drv:internal_qlc_get_next_portion(Server, ResNum, From, Len),
+        Bin = xapian_server:internal_qlc_get_next_portion(Server, ResNum, From, Len),
         NextFrom = From+Len,
         MoreFun = traverse_fun(Server, ResNum, Meta, NextFrom, Len, TotalLen),
         {Records, <<>>} = xapian_term_record:decode_list3(Meta, Bin),
@@ -187,9 +188,6 @@ encoder(Terms = [_|_]) ->
         end.
 
 is_valid_term_name(_Term) -> true.
-
-spy_type_id(values)     -> 0;
-spy_type_id(top_values) -> 1.
 
 append_spy_type(Type, Bin) ->
     xapian_common:append_uint8(spy_type_id(Type), Bin).

@@ -17,6 +17,7 @@
     read_term_count/1
 ]).
 
+-import(xapian_const, [db_info_param_id/1]).
     
 encode(Params, Bin) ->
     append_uint8(db_info_param_id(stop),
@@ -50,25 +51,6 @@ decode_db_info_param({Param, _Term} = Id, {Acc, Bin}) when is_atom(Param) ->
 properties() ->
     [has_positions, document_count, last_document_id, average_length,
      document_length_lower_bound, document_length_upper_bound, uuid].
-
-
-db_info_param_id(stop)                          -> 0;
-db_info_param_id(has_positions)                 -> 1;
-db_info_param_id(document_count)                -> 2;
-db_info_param_id(last_document_id)              -> 3;
-db_info_param_id(average_length)                -> 4;
-db_info_param_id(term_exists)                   -> 5;
-db_info_param_id(term_freq)                     -> 6;
-db_info_param_id(collection_freq)               -> 7;
-db_info_param_id(value_freq)                    -> 8;
-db_info_param_id(value_lower_bound)             -> 9;
-db_info_param_id(value_upper_bound)             -> 10;
-db_info_param_id(document_length_lower_bound)   -> 11;
-db_info_param_id(document_length_upper_bound)   -> 12;
-db_info_param_id(wdf_upper_bound)               -> 13;
-db_info_param_id(document_length)               -> 14;
-db_info_param_id(uuid)                          -> 15;
-db_info_param_id(metadata)                      -> 16.
 
 
 decode_param(has_positions, Bin) ->

@@ -21,6 +21,8 @@
     read_uint8/1,
     index_of/2]).
 
+-import(xapian_const, [term_field_id/1]).
+
 %% ------------------------------------------------------------------
 %% API
 %% ------------------------------------------------------------------
@@ -116,16 +118,7 @@ enc(Parts, Bin) ->
 
 
 append_type(Type, Bin) ->
-    append_uint8(part_id(Type), Bin).
-
-   
-part_id(stop)       -> 0;
-part_id(value)      -> 1;
-part_id(wdf)        -> 2;
-part_id(freq)       -> 3;
-part_id(positions)  -> 4;
-part_id(position_count) -> 5.
-
+    append_uint8(term_field_id(Type), Bin).
 
 
 %% ------------------------------------------------------------------

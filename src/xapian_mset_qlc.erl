@@ -8,17 +8,17 @@
 
 table(Server, MSet, Meta) ->
     EncoderFun = fun(mset, DrvState, Bin) ->
-        Name2Slot  = xapian_drv:name_to_slot(DrvState),
-        Value2Type = xapian_drv:value_to_type(DrvState),
+        Name2Slot  = xapian_server:name_to_slot(DrvState),
+        Value2Type = xapian_server:value_to_type(DrvState),
         xapian_record:encode(Meta, Name2Slot, Value2Type, Bin)
         end,
     #internal_qlc_info{
         num_of_objects = Size,
         resource_number = ResNum
-    } = xapian_drv:internal_qlc_init(Server, mset, MSet, EncoderFun),
+    } = xapian_server:internal_qlc_init(Server, mset, MSet, EncoderFun),
     From = 0,
     Len = 20,
-    SubDbNames = xapian_drv:subdb_names(Server),
+    SubDbNames = xapian_server:subdb_names(Server),
     DocIdPos      = xapian_record:key_position(Meta, docid),
     MultiDocIdPos = xapian_record:key_position(Meta, multi_docid),
     KeyPos = 
@@ -60,7 +60,7 @@ lookup_fun(Server, ResNum, Meta, SubDbNames) ->
         KeyId = element(KeyPos, Tuple),
         case lists:all(fun is_valid_document_id/1, DocIds) of
         true ->
-            Bin = xapian_drv:internal_qlc_lookup(
+            Bin = xapian_server:internal_qlc_lookup(
                 Server, encoder(KeyId, DocIds), ResNum),
             {Records, <<>>} = xapian_record:decode_list2(Meta, SubDbNames, Bin),
             Records;
@@ -84,7 +84,7 @@ is_valid_document_id(DocId) -> is_integer(DocId) andalso DocId > 0.
 %% `From' records will be skipped from the beginning of the collection.
 traverse_fun(Server, ResNum, Meta, SubDbNames, From, Len, TotalLen) ->
     fun() ->
-        Bin = xapian_drv:internal_qlc_get_next_portion(Server, ResNum, 
+        Bin = xapian_server:internal_qlc_get_next_portion(Server, ResNum, 
                                                        From, Len),
         NextFrom = From+Len,
         MoreFun = traverse_fun(Server, ResNum, Meta, SubDbNames, NextFrom, 

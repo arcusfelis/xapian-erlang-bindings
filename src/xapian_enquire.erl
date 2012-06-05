@@ -11,6 +11,12 @@
     slot_id/2,
     append_double/2]).
 
+-import(xapian_const, [
+    order_type_id/1,
+    docid_order_type_id/1,
+    enquire_command_id/1]).
+
+
 encode(Enquire=#x_enquire{x_query=Query}, Name2Slot, Register, Bin@) ->
     #x_enquire{
         x_query = Query,
@@ -38,31 +44,6 @@ encode(Query, Name2Slot, _Register, Bin@) ->
     Bin@ = append_command(stop, Bin@),
     Bin@.
 
-
-command_id(stop)            -> 0;
-command_id(x_query)         -> 1;
-command_id(query_len)       -> 2;
-command_id(order)           -> 3;
-command_id(docid_order)     -> 4;
-command_id(weighting_scheme)-> 5;
-command_id(cutoff)          -> 6;
-command_id(collapse_key)    -> 7.
-
-
--spec order_type_id(xapian:x_order_type()) -> non_neg_integer().
-order_type_id(key)              -> 1;
-order_type_id(value)            -> 2;
-order_type_id(key_relevance)    -> 3;
-order_type_id(relevance_key)    -> 4;
-order_type_id(relevance_value)  -> 5;
-order_type_id(value_relevance)  -> 6.
-
-
-docid_order_type_id(default)    -> 1;
-docid_order_type_id(asc)        -> 1;
-docid_order_type_id(desc)       -> 2;
-docid_order_type_id(undefined)  -> 3;
-docid_order_type_id(dont_care)  -> 3.
 
 
 append_query_len(QueryLen, Bin@) ->
@@ -151,7 +132,7 @@ append_collapse_key(CollapseKey, CollapseMax, N2S, Bin@) ->
 
 
 append_command(Type, Bin) ->
-    append_uint8(command_id(Type), Bin).
+    append_uint8(enquire_command_id(Type), Bin).
 
 
 append_weight(Value, Bin) ->
