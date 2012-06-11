@@ -111,7 +111,6 @@ simple_gen() ->
         DocIdReplaced1 = ?SRV:replace_document(Server, DocId, Document),
         DocIdReplaced2 = ?SRV:replace_document(Server, "Simple", Document),
 
-        Last = ?SRV:last_document_id(Server),
         ?SRV:delete_document(Server, DocId),
         ?SRV:delete_document(Server, "Simple"),
 
@@ -123,6 +122,27 @@ simple_gen() ->
         ?SRV:close(Server)
     end.
 
+
+last_document_id_gen() ->
+    % Open test
+    Path = testdb_path(last_docid),
+    Params = [write, create, overwrite],
+    Document = [],
+    {ok, Server} = ?SRV:open(Path, Params),
+    try
+        %% The DB is empty.
+        NoId = ?SRV:last_document_id(Server),
+
+        %% Add 1 document, check a last id.
+        DocId = ?SRV:add_document(Server, Document),
+        Last = ?SRV:last_document_id(Server),
+
+        [ {"Db is empty.", ?_assertEqual(undefined, NoId)}
+        , ?_assertEqual(DocId, Last)
+        ]
+    after
+        ?SRV:close(Server)
+    end.
 
 
 update_document_test() ->

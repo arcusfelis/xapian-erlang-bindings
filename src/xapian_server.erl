@@ -105,13 +105,21 @@
 
 
 -record(state, {
+    %% The record is defined inside `xapian_port' as `port_rec'.
+    %% It contains matadata for controlling a linked-in port driver or a port.
     port :: record(),
 
-    %% Information was retrieved from #x_prefix_name{}
+    %% Information was retrieved from #x_prefix_name{}.
     name_to_prefix :: orddict:orddict(),
 
-    %% Information was retrieved from #x_value_name{}
+    %% A value slot is an unsigned integer in C++.
+    %% They are mapped into atoms in Erlang (it is optional).
+    %% Information was retrieved from #x_value_name{}.
     name_to_slot :: ordict:orddict(),
+
+    %% It is used for float values. Usually, type is `string', it is the 
+    %% same as `undefined'.
+    %% An index of the array is a slot number.
     value_to_type :: array() | undefined,
 
     %% Used for creating resources.
@@ -120,20 +128,47 @@
     name_to_resource :: ordict:orddict(),
 
     %% Each sub-database can have a name for identification.
+    %% `undefined' names are not stored by this dict.
     subdb_name_to_id :: ordict:orddict(),
+
+    %% If `base1', `base2' and `base3' is open, then contains  
+    %% `{base1, base2, base3}'.
+    %% If sub-database has no name, then `undefined' is used as an element of 
+    %% the tuple.
+    %% For example, it is often contains `{undefined}'. That means, that the
+    %% only one database is open by the process. This database is without a 
+    %% name.
     subdb_names :: tuple(),
 
     %% Pid of the real server (used by a transaction).
     %% If the process will be terminated, then new owner of the port will 
     %% be master.
-    master,
+    master :: pid() | undefined,
+    %% Stores information about active resources of this server.
     register = xapian_register:new()
 }).
 
 
+%% Describes information about objects (resources) that can be created 
+%% with special C++ code.
+%% When the port will be open, this server (gen_server) will load 
+%% information about each resource type which can be created.
+%%
+%% Values `type = match_spy' and `name = value_count_match_spy' are passed 
+%% using the call:
+%%
+%% ```
+%% generator.add(new userResource(ResourceType::MATCH_SPY, 
+%%     std::string("value_count_match_spy"), &createValueCountMatchSpy));
+%% '''
 -record(resource_info, {
+    %% `type' is `enquery' or `mset'. 
+    %% See `xapian_const:resource_type_id/1' for all variants.
+    %% Each type is stored inside special table (see ObjectRegister).
     type :: atom(),
+    %% `number' is `name' for C++. It is auto-generated.
     number :: non_neg_integer(),
+    %% Name is `trad_weight' or `value_count_match_spy'.
     name :: atom()
 }).
 
@@ -223,9 +258,14 @@ open(Path, Params) ->
     end.
 
 
--spec last_document_id(x_server()) -> x_document_id().
+%% @doc Return an identifier of the last added document.
+%%      If the database is empty, returns `undefined'.
+-spec last_document_id(x_server()) -> x_document_id() | undefined.
 last_document_id(Server) ->
-    call(Server, last_document_id).
+    case call(Server, last_document_id) of
+        0 -> undefined;
+        DocId -> DocId
+    end.
 
 
 %% @doc Close the database and kill a control process (aka Server).
@@ -256,7 +296,12 @@ query_page(Server, Offset, PageSize, Query, RecordMetaDefinition) ->
     call(Server, {query_page, Offset, PageSize, Query, RecordMetaDefinition}).
 
 
-%% @doc Return enquire.
+
+%% -------------------------------------------------------------------
+%% Resource manipulation
+%% -------------------------------------------------------------------
+
+%% @doc Return an enquire.
 -spec enquire(x_server(), x_query()) -> x_resource().
 enquire(Server, Query) ->
     call(Server, {enquire, Query}).
@@ -268,6 +313,12 @@ document(Server, DocId) ->
     call(Server, {document, DocId}).
 
 
+%% @doc Return a match set.
+%% A match set can be created from:
+%% * an enquire (`x_resource()' type);
+%% * from record `#x_match_set{}', which contains an enquire and 
+%%   addition parameters.
+-spec match_set(x_server(), #x_match_set{} | x_resource()) -> x_resource().
 match_set(Server, #x_match_set{} = Rec) ->
     call(Server, Rec);
 
@@ -310,14 +361,6 @@ match_set(Server, EnquireResource, From, MaxItems, CheckAtLeast, Spies)
         spies = Spies
     },
     match_set(Server, Rec).
-
-
-mset_info(Server, MSetResource, Params) ->
-    call(Server, {mset_info, MSetResource, Params}).
-
-
-database_info(Server, Params) ->
-    call(Server, {database_info, Params}).
 
 
 %% @doc Release a resource.
@@ -373,7 +416,7 @@ set_metadata(Server, Key, Value) ->
 
 
 %% ------------------------------------------------------------------
-%% Tests
+%% Tests (internal)
 %% ------------------------------------------------------------------
 
 internal_test_run(Server, TestName, Params) ->
@@ -417,7 +460,19 @@ transaction(Servers, F, Timeout) ->
 
 
 %% ------------------------------------------------------------------
-%% Info  
+%% Information about database objects
+%% ------------------------------------------------------------------
+
+mset_info(Server, MSetResource, Params) ->
+    call(Server, {mset_info, MSetResource, Params}).
+
+
+database_info(Server, Params) ->
+    call(Server, {database_info, Params}).
+
+
+%% ------------------------------------------------------------------
+%% Information about the state of the process
 %% ------------------------------------------------------------------
 
 name_to_slot(_ServerOrState, Slot) when is_integer(Slot) ->
@@ -466,7 +521,7 @@ multi_docid(Server, DocId, SubDb) when not is_tuple(Server) ->
 
 
 %% ------------------------------------------------------------------
-%% Info Internal
+%% Information for internal use
 %% ------------------------------------------------------------------
 
 internal_name_to_slot_dict(#state{name_to_slot = N2S}) -> 
@@ -1384,22 +1439,34 @@ decode_resource_result(Data) ->
 decode_qlc_info_result({ok, Bin@}) -> 
     {ResNum, Bin@} = read_uint(Bin@),
     {Size,   <<>>} = read_uint(Bin@),
-    {ok, #internal_qlc_info{
-            num_of_objects = Size,
-            resource_number = ResNum %% Num of a QLC table
-        }};
+    Result = encode_qlc_info(Size, ResNum),
+    {ok, Result};
 
 decode_qlc_info_result(Other) -> 
     Other.
 
 
+%% Forms a state, will be used in the `table' function of different modules. 
+%% `Size' is a count of elements in the table.
+%% `ResNum' is a QLC resource number.
+encode_qlc_info(Size, ResNum) ->
+    #internal_qlc_info{
+        num_of_objects = Size,
+        resource_number = ResNum
+    }.
 
+
+
+%% Read a list of `#resource_info{}' from binary, while it is not empty.
 decode_resource_info({ok, Bin}) ->
     {ok, decode_resource_info_cycle(Bin, [])};
 
 decode_resource_info(Other) -> 
     Other.
 
+
+-spec decode_resource_info_cycle(binary(), [#resource_info{}]) -> 
+    [#resource_info{}].
 
 decode_resource_info_cycle(<<>>, Acc) ->
     lists:reverse(Acc);

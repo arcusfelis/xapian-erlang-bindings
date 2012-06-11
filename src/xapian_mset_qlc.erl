@@ -4,6 +4,8 @@
 -include_lib("stdlib/include/qlc.hrl").
 -include("xapian.hrl").
 
+-opaque x_document_id() :: xapian:x_document_id().
+
 
 
 table(Server, MSet, Meta) ->
@@ -52,6 +54,7 @@ table(Server, MSet, Meta) ->
         ]).
 
 
+%% Returns HOF that is used by the Erlang QLC module.
 lookup_fun(Server, ResNum, Meta, SubDbNames) ->
     %% {name, fields, ...}
     Tuple = xapian_record:tuple(Meta),
@@ -70,6 +73,11 @@ lookup_fun(Server, ResNum, Meta, SubDbNames) ->
         end.
 
 
+%% Encodes a list of document identifiers. 
+%% `KeyId' is an identifier type.
+%% `KeyId' contains values like `docid' or `multi_docid'.
+%% `KeyId' is used because we can use different fields as a key.
+-spec encoder(atom(), [x_document_id()]) -> boolean().
 encoder(KeyId, DocIds) ->
     fun(Bin) -> 
         xapian_common:append_docids(DocIds, 
@@ -77,6 +85,7 @@ encoder(KeyId, DocIds) ->
         end.
 
 
+-spec is_valid_document_id(x_document_id()) -> boolean().
 is_valid_document_id(DocId) -> is_integer(DocId) andalso DocId > 0.
 
 
