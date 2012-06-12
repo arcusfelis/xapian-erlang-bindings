@@ -124,8 +124,8 @@ __abstract datatype__: `x_unique_document_id()`
 ##Function Index##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#code_change-3">code_change/3</a></td><td></td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td></td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#handle_call-3">handle_call/3</a></td><td></td></tr><tr><td valign="top"><a href="#handle_cast-2">handle_cast/2</a></td><td></td></tr><tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td></td></tr><tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr><tr><td valign="top"><a href="#internal_create_resource-2">internal_create_resource/2</a></td><td></td></tr><tr><td valign="top"><a href="#internal_create_resource-3">internal_create_resource/3</a></td><td></td></tr><tr><td valign="top"><a href="#internal_multi_docid-2">internal_multi_docid/2</a></td><td></td></tr><tr><td valign="top"><a href="#internal_name_to_slot-2">internal_name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#internal_name_to_slot_dict-1">internal_name_to_slot_dict/1</a></td><td></td></tr><tr><td valign="top"><a href="#internal_qlc_get_next_portion-4">internal_qlc_get_next_portion/4</a></td><td></td></tr><tr><td valign="top"><a href="#internal_qlc_init-4">internal_qlc_init/4</a></td><td></td></tr><tr><td valign="top"><a href="#internal_qlc_lookup-3">internal_qlc_lookup/3</a></td><td></td></tr><tr><td valign="top"><a href="#internal_subdb_names-1">internal_subdb_names/1</a></td><td></td></tr><tr><td valign="top"><a href="#internal_test_run-3">internal_test_run/3</a></td><td></td></tr><tr><td valign="top"><a href="#internal_value_to_type_array-1">internal_value_to_type_array/1</a></td><td></td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set.</td></tr><tr><td valign="top"><a href="#match_set-3">match_set/3</a></td><td></td></tr><tr><td valign="top"><a href="#match_set-4">match_set/4</a></td><td></td></tr><tr><td valign="top"><a href="#match_set-5">match_set/5</a></td><td></td></tr><tr><td valign="top"><a href="#match_set-6">match_set/6</a></td><td></td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td></td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
-defined by <code>RecordMetaDefinition</code>.</td></tr><tr><td valign="top"><a href="#release_resource-2">release_resource/2</a></td><td>Release a resource.</td></tr><tr><td valign="top"><a href="#replace_document-3">replace_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#set_metadata-3">set_metadata/3</a></td><td></td></tr><tr><td valign="top"><a href="#subdb_names-1">subdb_names/1</a></td><td></td></tr><tr><td valign="top"><a href="#terminate-2">terminate/2</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-2">transaction/2</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-3">transaction/3</a></td><td>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.</td></tr><tr><td valign="top"><a href="#update_document-3">update_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#update_or_create_document-3">update_or_create_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#value_to_type-1">value_to_type/1</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td></td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set.</td></tr><tr><td valign="top"><a href="#match_set-3">match_set/3</a></td><td></td></tr><tr><td valign="top"><a href="#match_set-4">match_set/4</a></td><td></td></tr><tr><td valign="top"><a href="#match_set-5">match_set/5</a></td><td></td></tr><tr><td valign="top"><a href="#match_set-6">match_set/6</a></td><td></td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td></td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
+defined by <code>RecordMetaDefinition</code>.</td></tr><tr><td valign="top"><a href="#release_resource-2">release_resource/2</a></td><td>Release a resource.</td></tr><tr><td valign="top"><a href="#replace_document-3">replace_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#set_metadata-3">set_metadata/3</a></td><td></td></tr><tr><td valign="top"><a href="#subdb_names-1">subdb_names/1</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-2">transaction/2</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-3">transaction/3</a></td><td>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.</td></tr><tr><td valign="top"><a href="#update_document-3">update_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#update_or_create_document-3">update_or_create_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#value_to_type-1">value_to_type/1</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -161,16 +161,7 @@ Database will be automaticly close, if a supervised server
 process will dead.
 
 This function is used for flushing changes of the writable database.
-The caller will be blocked while all changes will not flushed.<a name="code_change-3"></a>
-
-###code_change/3##
-
-
-
-
-`code_change(OldVsn, State, Extra) -> any()`
-
-<a name="database_info-2"></a>
+The caller will be blocked while all changes will not flushed.<a name="database_info-2"></a>
 
 ###database_info/2##
 
@@ -216,152 +207,7 @@ Return a document.<a name="enquire-2"></a>
 
 
 
-Return an enquire.<a name="handle_call-3"></a>
-
-###handle_call/3##
-
-
-
-
-`handle_call(X_match_set, From, State) -> any()`
-
-<a name="handle_cast-2"></a>
-
-###handle_cast/2##
-
-
-
-
-`handle_cast(X1, State) -> any()`
-
-<a name="handle_info-2"></a>
-
-###handle_info/2##
-
-
-
-
-`handle_info(DOWN, State) -> any()`
-
-<a name="init-1"></a>
-
-###init/1##
-
-
-
-
-`init(X1) -> any()`
-
-<a name="internal_create_resource-2"></a>
-
-###internal_create_resource/2##
-
-
-
-
-<pre>internal_create_resource(Server::<a href="#type-x_server">x_server()</a>, ResourceTypeName::atom()) -> <a href="#type-x_resource">x_resource()</a></pre>
-<br></br>
-
-
-<a name="internal_create_resource-3"></a>
-
-###internal_create_resource/3##
-
-
-
-
-<pre>internal_create_resource(Server::<a href="#type-x_server">x_server()</a>, ResourceTypeName::atom(), ParamCreatorFun::function()) -> <a href="#type-x_resource">x_resource()</a></pre>
-<br></br>
-
-
-<a name="internal_multi_docid-2"></a>
-
-###internal_multi_docid/2##
-
-
-
-
-`internal_multi_docid(State, X2) -> any()`
-
-<a name="internal_name_to_slot-2"></a>
-
-###internal_name_to_slot/2##
-
-
-
-
-`internal_name_to_slot(State, Slot) -> any()`
-
-<a name="internal_name_to_slot_dict-1"></a>
-
-###internal_name_to_slot_dict/1##
-
-
-
-
-`internal_name_to_slot_dict(State) -> any()`
-
-<a name="internal_qlc_get_next_portion-4"></a>
-
-###internal_qlc_get_next_portion/4##
-
-
-
-
-<pre>internal_qlc_get_next_portion(Server::<a href="#type-x_server">x_server()</a>, QlcResNum::non_neg_integer(), From::non_neg_integer(), Count::non_neg_integer()) -> binary()</pre>
-<br></br>
-
-
-<a name="internal_qlc_init-4"></a>
-
-###internal_qlc_init/4##
-
-
-
-
-<pre>internal_qlc_init(Server::<a href="#type-x_server">x_server()</a>, Type::atom(), ResourceRef::reference(), EncoderFun::function()) -> #internal_qlc_info{}</pre>
-<br></br>
-
-
-<a name="internal_qlc_lookup-3"></a>
-
-###internal_qlc_lookup/3##
-
-
-
-
-<pre>internal_qlc_lookup(Server::<a href="#type-x_server">x_server()</a>, EncoderFun::function(), ResNum::non_neg_integer()) -> binary()</pre>
-<br></br>
-
-
-<a name="internal_subdb_names-1"></a>
-
-###internal_subdb_names/1##
-
-
-
-
-`internal_subdb_names(State) -> any()`
-
-<a name="internal_test_run-3"></a>
-
-###internal_test_run/3##
-
-
-
-
-`internal_test_run(Server, TestName, Params) -> any()`
-
-<a name="internal_value_to_type_array-1"></a>
-
-###internal_value_to_type_array/1##
-
-
-
-
-`internal_value_to_type_array(State) -> any()`
-
-<a name="last_document_id-1"></a>
+Return an enquire.<a name="last_document_id-1"></a>
 
 ###last_document_id/1##
 
@@ -584,15 +430,6 @@ Release a resource.<a name="replace_document-3"></a>
 
 
 `subdb_names(State) -> any()`
-
-<a name="terminate-2"></a>
-
-###terminate/2##
-
-
-
-
-`terminate(Reason, State) -> any()`
 
 <a name="transaction-2"></a>
 

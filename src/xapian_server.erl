@@ -419,6 +419,7 @@ set_metadata(Server, Key, Value) ->
 %% Tests (internal)
 %% ------------------------------------------------------------------
 
+%% @private
 internal_test_run(Server, TestName, Params) ->
     call(Server, {test, TestName, Params}).
 
@@ -524,18 +525,23 @@ multi_docid(Server, DocId, SubDb) when not is_tuple(Server) ->
 %% Information for internal use
 %% ------------------------------------------------------------------
 
+%% @private
 internal_name_to_slot_dict(#state{name_to_slot = N2S}) -> 
     {ok, N2S}.
 
+%% @private
 internal_value_to_type_array(#state{value_to_type = V2T}) -> 
     {ok, V2T}.
 
+%% @private
 internal_name_to_slot(#state{name_to_slot = N2S}, Slot) -> 
     orddict_find(Slot, N2S).
 
+%% @private
 internal_subdb_names(#state{subdb_names = I2N}) -> 
     {ok, I2N}.
 
+%% @private
 internal_multi_docid(State, {DocId, SubDbName}) when is_atom(SubDbName) ->
     #state{subdb_name_to_id = N2I} = State,
     do([error_m ||
@@ -551,6 +557,7 @@ internal_multi_docid(State, {DocId, SubDbNum}) ->
 %% ------------------------------------------------------------------
 
 %% Create a qlc resource, collect basic information about a set.
+%% @private
 -spec internal_qlc_init(x_server(), atom(), reference(), fun()) ->
     #internal_qlc_info{}.
 
@@ -559,6 +566,7 @@ internal_qlc_init(Server, Type, ResourceRef, EncoderFun) ->
 
 
 %% Read next `Count' elements starting from `From' from QlcResNum.
+%% @private
 -spec internal_qlc_get_next_portion(x_server(), 
     non_neg_integer(), non_neg_integer(), non_neg_integer()) ->
     binary().
@@ -567,6 +575,7 @@ internal_qlc_get_next_portion(Server, QlcResNum, From, Count) ->
     call(Server, {qlc_next_portion, QlcResNum, From, Count}).
 
 
+%% @private
 -spec internal_qlc_lookup(x_server(), fun(),
     non_neg_integer()) -> binary().
 
@@ -578,12 +587,14 @@ internal_qlc_lookup(Server, EncoderFun, ResNum) ->
 %% ParamCreatorFun returns `{ok, Bin}', where `Bin' is encoded binary, 
 %% this binary will be passed as `ParamEncoder' into a resource 
 %% creator function on C++ side.
+%% @private
 -spec internal_create_resource(x_server(), atom(), fun()) -> x_resource().
 
 internal_create_resource(Server, ResourceTypeName, ParamCreatorFun) ->
     call(Server, {create_resource, ResourceTypeName, ParamCreatorFun}).
 
 
+%% @private
 -spec internal_create_resource(x_server(), atom()) -> x_resource().
 
 internal_create_resource(Server, ResourceTypeName) ->
@@ -609,6 +620,7 @@ client_error_handler({error, Reason}) ->
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
+%% @private
 init([Path, Params]) ->
     Prefixes = 
     [xapian_check:check_prefix(X) || X=#x_prefix_name{} <- Params],
@@ -684,6 +696,7 @@ init([{from_state, State}]) ->
     {ok, State}.
 
  
+%% @private
 handle_call({with_state, Fun}, _From, State) ->
     {reply, Fun(State), State};
 
@@ -970,6 +983,7 @@ handle_call({transaction, Ref}, From, State) ->
     end.
 
 
+%% @private
 handle_cast(_, State) ->
     {noreply, State}.
 
@@ -989,6 +1003,7 @@ stop_if_error(Other) ->
     Other.
 
 
+%% @private
 handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
     #state{ 
         port = Port, 
@@ -1007,6 +1022,7 @@ handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
 
 
 
+%% @private
 terminate(_Reason, #state{master = undefined, port = Port}) ->
     close_db_port(Port),
     ok;
@@ -1016,6 +1032,8 @@ terminate(_Reason, #state{master = Master, port = Port}) ->
     xapian_port:connect(Port, Master),
     ok.
 
+
+%% @private
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
