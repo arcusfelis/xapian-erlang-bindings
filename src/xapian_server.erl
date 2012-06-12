@@ -26,21 +26,16 @@
 
 %% Resources
 -export([enquire/2,
-         document/2]).
+         document/2,
+         match_set/2]).
 
 %% Resources
 -export([release_resource/2]).
 
-%% Match set (M-set)
--export([match_set/2,
-         match_set/3,
-         match_set/4,
-         match_set/5,
-         match_set/6
-        ]).
-
 %% Information
--export([mset_info/3,
+-export([mset_info/2,
+         mset_info/3,
+         database_info/1,
          database_info/2]).
 
 
@@ -262,10 +257,7 @@ open(Path, Params) ->
 %%      If the database is empty, returns `undefined'.
 -spec last_document_id(x_server()) -> x_document_id() | undefined.
 last_document_id(Server) ->
-    case call(Server, last_document_id) of
-        0 -> undefined;
-        DocId -> DocId
-    end.
+    call(Server, last_document_id).
 
 
 %% @doc Close the database and kill a control process (aka Server).
@@ -313,53 +305,42 @@ document(Server, DocId) ->
     call(Server, {document, DocId}).
 
 
-%% @doc Return a match set.
+%% @doc Return a match set (M-Set).
 %% A match set can be created from:
 %% * an enquire (`x_resource()' type);
 %% * from record `#x_match_set{}', which contains an enquire and 
 %%   addition parameters.
+%%
+%% Match set record is:
+%%
+%%  ```
+%%  #x_match_set{
+%%      enquire = EnquireResource, 
+%%      from = From, 
+%%      max_items = MaxItems, 
+%%      check_at_least = CheckAtLeast, 
+%%      spies = Spies
+%%  }
+%%  '''
+%%
+%%  where 
+%%      * `EnquireResource' contains the result of the search. 
+%%              @see enquire/2. It is required;
+%%      * `From' means how many elements to skip. It is 0 by default;
+%%      * `MaxItems' means how many elements to return. 
+%%              Not more than `MaxItems' elements will be return. 
+%%              It is `undefined' by default, 
+%%              that means all items will be selected;
+%%      * `Spies' is a list of MatchSpy resources (@see xapian_match_spy).
+%%
+%% @see xapian_mset_qlc
+%% @see mset_info/3
 -spec match_set(x_server(), #x_match_set{} | x_resource()) -> x_resource().
 match_set(Server, #x_match_set{} = Rec) ->
     call(Server, Rec);
 
 match_set(Server, EnquireResource) ->
     Rec = #x_match_set{enquire = EnquireResource},
-    match_set(Server, Rec).
-
-
-match_set(Server, EnquireResource, From) ->
-    Rec = #x_match_set{enquire = EnquireResource, from = From},
-    match_set(Server, Rec).
-
-
-match_set(Server, EnquireResource, From, MaxItems) ->
-    Rec = #x_match_set{
-        enquire = EnquireResource, 
-        from = From, 
-        max_items = MaxItems
-    },
-    match_set(Server, Rec).
-
-
-match_set(Server, EnquireResource, From, MaxItems, CheckAtLeast) ->
-    Rec = #x_match_set{
-        enquire = EnquireResource, 
-        from = From, 
-        max_items = MaxItems, 
-        check_at_least = CheckAtLeast
-    },
-    match_set(Server, Rec).
-
-
-match_set(Server, EnquireResource, From, MaxItems, CheckAtLeast, Spies) 
-    when is_list(Spies) ->
-    Rec = #x_match_set{
-        enquire = EnquireResource, 
-        from = From, 
-        max_items = MaxItems, 
-        check_at_least = CheckAtLeast, 
-        spies = Spies
-    },
     match_set(Server, Rec).
 
 
@@ -464,10 +445,56 @@ transaction(Servers, F, Timeout) ->
 %% Information about database objects
 %% ------------------------------------------------------------------
 
+%% Returns the list of all properties.
+mset_info(Server, MSetResource) ->
+    Params = xapian_mset_info:properties(),
+    call(Server, {mset_info, MSetResource, Params}).
+
+
+%% Returns the list of selected properties and wanted values.
+%% Properties:
+%% * `matches_lower_bound';
+%% * `matches_estimated';
+%% * `matches_upper_bound';
+%% * `uncollapsed_matches_lower_bound';
+%% * `uncollapsed_matches_estimated';
+%% * `uncollapsed_matches_upper_bound';
+%% * `size'; 
+%% * `max_possible'; 
+%% * `max_attained';
+%% * `{term_weight, Term}';
+%% * `{term_freq, Term}'.
 mset_info(Server, MSetResource, Params) ->
     call(Server, {mset_info, MSetResource, Params}).
 
 
+%% Returns the list of all properties.
+database_info(Server) ->
+    Params = xapian_db_info:properties(),
+    call(Server, {database_info, Params}).
+
+
+%% Returns the list of selected properties and wanted values.
+%% Properties:
+%% * `has_positions'; 
+%% * `document_count'; 
+%% * `last_document_id'
+%%      @{see last_document_id/1}; 
+%% * `average_length';
+%% * `document_length_lower_bound';
+%% * `document_length_upper_bound'; 
+%% * `uuid'
+%%      Get a UUID for the database;
+%% * `{term_exists, Term}';
+%% * `{term_freq, Term}';
+%% * `{collection_freq, WTF}';
+%% * `{value_freq, Value}';
+%% * `{value_lower_bound, Value}';
+%% * `{value_upper_bound, Value}';
+%% * `{wdf_upper_bound, Term}'; 
+%% * `{document_length, DocId}';
+%% * `{metadata, Key}'
+%%      Get the user-specified metadata associated with a given key.
 database_info(Server, Params) ->
     call(Server, {database_info, Params}).
 

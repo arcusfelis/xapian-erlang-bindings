@@ -71,8 +71,12 @@ append_unique_document_id(Term, Bin) ->
     append_iolist(Term, append_uint8(2, Bin)).
 
 
+%% Zero id will be replaced by `undefined'.
 read_document_id(Bin) ->
-    read_uint(Bin).
+    case read_uint(Bin) of
+        0 -> undefined;
+        DocId -> DocId
+    end.
 
 
 read_db_id(Bin) ->
