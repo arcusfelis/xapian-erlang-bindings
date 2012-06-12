@@ -150,7 +150,7 @@ append_stemmer(#x_stemmer{}=Stemmer, Bin@) ->
     Bin@.
 
 
-%% @see `XapianErlangDriver::readStemmingStrategy'
+%% See `XapianErlangDriver::readStemmingStrategy'
 append_stemming_strategy(Strategy, Bin@) ->
     case stem_strategy_id(Strategy) of
     %% Default
@@ -196,7 +196,7 @@ append_prefixes(undefined, Bin) ->
 
 
 %% Checks `undefined' value
-%% @see `XapianErlangDriver::decodeParserFeatureFlags'
+%% See `XapianErlangDriver::decodeParserFeatureFlags'
 append_parser_feature_ids(undefined, Bin) ->
     append_features([default], Bin);
 
@@ -204,7 +204,7 @@ append_parser_feature_ids(Features, Bin) ->
     append_features(Features, Bin).
 
 
-%% @see `XapianErlangDriver::decodeParserFeatureFlags'
+%% See `XapianErlangDriver::decodeParserFeatureFlags'
 append_features([], Bin) ->
     append_parser_feature_id(stop, Bin);
 

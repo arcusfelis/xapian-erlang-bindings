@@ -27,7 +27,7 @@
 
 
 %% Command ids
-%% Returns an operation for port_control/3 
+%% Returns an operation for @{see erlang:port_control/3}
 command_id(open)                        -> 0;
 command_id(last_document_id)            -> 1;
 command_id(add_document)                -> 2;
@@ -145,7 +145,7 @@ query_id(query_scale_weight) -> 6.
 %% Query Parser Header
 %% ------------------------------------------------------------
 
-%% @see XapianErlangDriver::queryParserCommand
+%% From `XapianErlangDriver::queryParserCommand'
 parser_command_id(stop)                     -> 0;
 parser_command_id(stemmer)                  -> 1;
 parser_command_id(stemming_strategy)        -> 2;
@@ -155,11 +155,11 @@ parser_command_id(parser_type)              -> 5;
 parser_command_id(prefix)                   -> 6.
 
 
-%% @see XapianErlangDriver::queryParserType
+%% From `XapianErlangDriver::queryParserType'
 parser_type_id(default) -> 0;
 parser_type_id(empty)   -> 1.
 
-%% @see XapianErlangDriver::STEM_STRATEGIES
+%% From `XapianErlangDriver::STEM_STRATEGIES'
 stem_strategy_id(none)    -> 0;
 stem_strategy_id(default) -> 0;
 stem_strategy_id(some)    -> 1;
