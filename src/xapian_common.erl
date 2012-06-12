@@ -74,8 +74,8 @@ append_unique_document_id(Term, Bin) ->
 %% Zero id will be replaced by `undefined'.
 read_document_id(Bin) ->
     case read_uint(Bin) of
-        0 -> undefined;
-        DocId -> DocId
+        {0, Bin1} -> {undefined, Bin1};
+        Other -> Other
     end.
 
 
