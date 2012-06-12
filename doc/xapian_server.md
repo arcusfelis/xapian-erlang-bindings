@@ -124,8 +124,8 @@ __abstract datatype__: `x_unique_document_id()`
 ##Function Index##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td></td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td></td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr><tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td></td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td></td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
-defined by <code>RecordMetaDefinition</code>.</td></tr><tr><td valign="top"><a href="#release_resource-2">release_resource/2</a></td><td>Release a resource.</td></tr><tr><td valign="top"><a href="#replace_document-3">replace_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#set_metadata-3">set_metadata/3</a></td><td></td></tr><tr><td valign="top"><a href="#subdb_names-1">subdb_names/1</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-2">transaction/2</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-3">transaction/3</a></td><td>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.</td></tr><tr><td valign="top"><a href="#update_document-3">update_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#update_or_create_document-3">update_or_create_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#value_to_type-1">value_to_type/1</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr><tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
+defined by <code>RecordMetaDefinition</code>.</td></tr><tr><td valign="top"><a href="#release_resource-2">release_resource/2</a></td><td>Release a resource.</td></tr><tr><td valign="top"><a href="#replace_document-3">replace_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#set_metadata-3">set_metadata/3</a></td><td></td></tr><tr><td valign="top"><a href="#subdb_names-1">subdb_names/1</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-2">transaction/2</a></td><td>Run a transaction with 5-second timeout.</td></tr><tr><td valign="top"><a href="#transaction-3">transaction/3</a></td><td>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.</td></tr><tr><td valign="top"><a href="#update_document-3">update_document/3</a></td><td>Extend (edit) the document with data.</td></tr><tr><td valign="top"><a href="#update_or_create_document-3">update_or_create_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#value_to_type-1">value_to_type/1</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -170,7 +170,9 @@ The caller will be blocked while all changes will not flushed.<a name="database_
 
 `database_info(Server) -> any()`
 
-<a name="database_info-2"></a>
+
+
+Returns the list of all properties.<a name="database_info-2"></a>
 
 ###database_info/2##
 
@@ -179,7 +181,29 @@ The caller will be blocked while all changes will not flushed.<a name="database_
 
 `database_info(Server, Params) -> any()`
 
-<a name="delete_document-2"></a>
+
+
+Returns the list of selected properties and wanted values.
+Properties:
+* `has_positions`;
+* `document_count`;
+* `last_document_id`
+{see last_document_id/1};
+* `average_length`;
+* `document_length_lower_bound`;
+* `document_length_upper_bound`;
+* `uuid`
+Get a UUID for the database;
+* `{term_exists, Term}`;
+* `{term_freq, Term}`;
+* `{collection_freq, WTF}`;
+* `{value_freq, Value}`;
+* `{value_lower_bound, Value}`;
+* `{value_upper_bound, Value}`;
+* `{wdf_upper_bound, Term}`;
+* `{document_length, DocId}`;
+* `{metadata, Key}`
+Get the user-specified metadata associated with a given key.<a name="delete_document-2"></a>
 
 ###delete_document/2##
 
@@ -282,7 +306,9 @@ that means all items will be selected;
 
 `mset_info(Server, MSetResource) -> any()`
 
-<a name="mset_info-3"></a>
+
+
+Returns the list of all properties.<a name="mset_info-3"></a>
 
 ###mset_info/3##
 
@@ -291,7 +317,21 @@ that means all items will be selected;
 
 `mset_info(Server, MSetResource, Params) -> any()`
 
-<a name="multi_docid-3"></a>
+
+
+Returns the list of selected properties and wanted values.
+Properties:
+* `matches_lower_bound`;
+* `matches_estimated`;
+* `matches_upper_bound`;
+* `uncollapsed_matches_lower_bound`;
+* `uncollapsed_matches_estimated`;
+* `uncollapsed_matches_upper_bound`;
+* `size`;
+* `max_possible`;
+* `max_attained`;
+* `{term_weight, Term}`;
+* `{term_freq, Term}`.<a name="multi_docid-3"></a>
 
 ###multi_docid/3##
 
@@ -448,7 +488,9 @@ Release a resource.<a name="replace_document-3"></a>
 
 `transaction(Servers, F) -> any()`
 
-<a name="transaction-3"></a>
+
+
+Run a transaction with 5-second timeout.<a name="transaction-3"></a>
 
 ###transaction/3##
 
@@ -496,7 +538,9 @@ will be killed using `cancel_transaction` with reason `crashed_server`.<a name="
 <br></br>
 
 
-<a name="update_or_create_document-3"></a>
+
+
+Extend (edit) the document with data.<a name="update_or_create_document-3"></a>
 
 ###update_or_create_document/3##
 

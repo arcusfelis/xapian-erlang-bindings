@@ -144,8 +144,9 @@
 }).
 
 
-%% Describes information about objects (resources) that can be created 
-%% with special C++ code.
+%% Describes information about objects (resources) 
+%% that can be created with special C++ code.
+%%
 %% When the port will be open, this server (gen_server) will load 
 %% information about each resource type which can be created.
 %%
@@ -368,7 +369,7 @@ replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
     call(Server, {replace_document, DocIdOrUniqueTerm, NewDocument}).
 
 
-%% Extend (edit) the document with data.
+%% @doc Extend (edit) the document with data.
 -spec update_document(x_server(), x_unique_document_id(), 
     [x_document_index_part()]) -> x_document_id().
 
@@ -409,7 +410,7 @@ internal_test_run(Server, TestName, Params) ->
 %% Transactions
 %% ------------------------------------------------------------------
 
-
+%% @doc Run a transaction with 5-second timeout.
 transaction(Servers, F) ->
     transaction(Servers, F, 5000).
 
@@ -445,13 +446,13 @@ transaction(Servers, F, Timeout) ->
 %% Information about database objects
 %% ------------------------------------------------------------------
 
-%% Returns the list of all properties.
+%% @doc Returns the list of all properties.
 mset_info(Server, MSetResource) ->
     Params = xapian_mset_info:properties(),
     call(Server, {mset_info, MSetResource, Params}).
 
 
-%% Returns the list of selected properties and wanted values.
+%% @doc Returns the list of selected properties and wanted values.
 %% Properties:
 %% * `matches_lower_bound';
 %% * `matches_estimated';
@@ -468,13 +469,13 @@ mset_info(Server, MSetResource, Params) ->
     call(Server, {mset_info, MSetResource, Params}).
 
 
-%% Returns the list of all properties.
+%% @doc Returns the list of all properties.
 database_info(Server) ->
     Params = xapian_db_info:properties(),
     call(Server, {database_info, Params}).
 
 
-%% Returns the list of selected properties and wanted values.
+%% @doc Returns the list of selected properties and wanted values.
 %% Properties:
 %% * `has_positions'; 
 %% * `document_count'; 
@@ -583,7 +584,7 @@ internal_multi_docid(State, {DocId, SubDbNum}) ->
 %% API for other modules
 %% ------------------------------------------------------------------
 
-%% Create a qlc resource, collect basic information about a set.
+%% @doc Create a qlc resource, collect basic information about a set.
 %% @private
 -spec internal_qlc_init(x_server(), atom(), reference(), fun()) ->
     #internal_qlc_info{}.
@@ -592,7 +593,7 @@ internal_qlc_init(Server, Type, ResourceRef, EncoderFun) ->
     call(Server, {qlc_init, Type, ResourceRef, EncoderFun}).
 
 
-%% Read next `Count' elements starting from `From' from QlcResNum.
+%% @doc Read next `Count' elements starting from `From' from QlcResNum.
 %% @private
 -spec internal_qlc_get_next_portion(x_server(), 
     non_neg_integer(), non_neg_integer(), non_neg_integer()) ->
@@ -610,6 +611,8 @@ internal_qlc_lookup(Server, EncoderFun, ResNum) ->
     call(Server, {qlc_lookup, EncoderFun, ResNum}).
 
 
+%% @doc Create a resource object of the specified type.
+%%
 %% ParamCreatorFun will be called as ParamCreatorFun(Register).
 %% ParamCreatorFun returns `{ok, Bin}', where `Bin' is encoded binary, 
 %% this binary will be passed as `ParamEncoder' into a resource 
@@ -1275,7 +1278,7 @@ port_test(Port, Type, _) when Type =:= exception; Type =:= memory ->
 
 
 
-%% helper for port_*_transaction.
+%% @doc Helper for port_*_transaction.
 replace_result(Value, {ok, <<>>}) -> 
     Value;
 
@@ -1491,7 +1494,7 @@ decode_qlc_info_result(Other) ->
     Other.
 
 
-%% Forms a state, will be used in the `table' function of different modules. 
+%% @doc Forms a state, will be used in the `table' function of different modules. 
 %% `Size' is a count of elements in the table.
 %% `ResNum' is a QLC resource number.
 encode_qlc_info(Size, ResNum) ->
@@ -1502,7 +1505,7 @@ encode_qlc_info(Size, ResNum) ->
 
 
 
-%% Read a list of `#resource_info{}' from binary, while it is not empty.
+%% @doc Read a list of `#resource_info{}' from binary, while it is not empty.
 decode_resource_info({ok, Bin}) ->
     {ok, decode_resource_info_cycle(Bin, [])};
 
@@ -1554,7 +1557,7 @@ ref_to_num(Register, ResRef, Type) ->
     end.
 
 
-%% Helper for monades and list comprehensions
+%% @doc Helper for monades and list comprehensions.
 check_all(List) ->
     check_all(List, []).
 
