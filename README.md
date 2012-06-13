@@ -31,6 +31,17 @@ Here is a package name of this library in the Ubuntu repository
 `libsparsehash-dev`.
 
 
+Using
+=====
+
+This application uses records, defined in the file `include/xapian.hrl`. 
+To include it use:
+
+```erlang
+-include_lib("xapian/include/xapian.hrl").
+```
+
+
 Tests
 =====
 
