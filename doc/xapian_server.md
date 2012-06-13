@@ -188,7 +188,7 @@ Properties:
 * `has_positions`;
 * `document_count`;
 * `last_document_id`
-{see last_document_id/1};
+[`last_document_id/1`](#last_document_id-1);
 * `average_length`;
 * `document_length_lower_bound`;
 * `document_length_upper_bound`;

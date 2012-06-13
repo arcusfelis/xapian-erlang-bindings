@@ -21,8 +21,8 @@ load_driver() ->
         Message = erl_ddll:format_error(Error),
         error_logger:error_msg("[~s:~w] Cannot load ~s~n" 
                 "From: ~ts~n"
-                "Error: ~s~n"
-                "Error code: ~w~n", 
+                "Error message: ~s~n"
+                "Error code: ~w~n",
             [?MODULE_STRING, ?LINE, ?DRIVER_NAME, PrivDir, Message, Error]),
         erlang:exit(bad_lib)
     end.

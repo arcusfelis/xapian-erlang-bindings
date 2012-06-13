@@ -240,14 +240,29 @@
 -record(x_transaction_result, {
     is_committed,
     is_consistent,
+
+    %% If the transaction was completed, then contains result of transaction.
     result,
+
+    %% Contains proplist `[{Server, StatusOfTransaction}]'.
     statuses,
+
+    %% Contains the code of the error, that cancelled the current transaction.
     reason
 }).
 
 
+
+
+% ----------------------------------------------------------
+%% These records used for error handling 
+% ----------------------------------------------------------
+
 -record(x_error, {
+    %% Short error code
     type,
+
+    %% Long description
     reason
 }).
 

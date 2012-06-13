@@ -27,7 +27,7 @@
 
 
 %% Command ids
-%% Returns an operation for @{see erlang:port_control/3}
+%% Returns an operation for {@see erlang:port_control/3}
 command_id(open)                        -> 0;
 command_id(last_document_id)            -> 1;
 command_id(add_document)                -> 2;

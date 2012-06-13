@@ -169,11 +169,7 @@ Using a port
 ============
 
 Ports cannot crash Erlang VM.
-To compile a port program use 
-
-```bash
-./bin/compile_port.escript
-```
+The port program will be compilled by rebar.
 
 For running a single server in the port mode use:
 
