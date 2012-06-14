@@ -33,3 +33,6 @@ app:
 	@$(REBAR) create template=mochiwebapp dest=$(DEST) appid=$(PROJECT)
 
 
+force-compile:
+	@$(REBAR) clean update-deps get-deps compile
+
