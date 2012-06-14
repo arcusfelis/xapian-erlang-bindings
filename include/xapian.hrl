@@ -114,23 +114,23 @@
 %% === x_term.ignore === 
 %% Ignore errors.
 %%
-%% If `action = add AND ignore', 
+%% * If `action = add AND ignore', 
 %%      then if a term exists, then it will be skipped.
-%% If `action = add AND NOT ignore', 
+%% * If `action = add AND NOT ignore', 
 %%      then if a term exists, then an an exception will be thrown.
-%% If `action = update AND ignore', 
+%% * If `action = update AND ignore', 
 %%      then if a term exists, then it will be skipped.
-%% If `action = update AND NOT ignore', 
+%% * If `action = update AND NOT ignore', 
 %%      then if a term not exists, then an an exception will be thrown.
-%% If `action = set', 
+%% * If `action = set', 
 %%      then if a term exists, then it will be rewritten.
-%% If `action = set', 
+%% * If `action = set', 
 %%      then if a term does not exist, then it will be created.
-%% If `action = remove', 
+%% * If `action = remove', 
 %%      then if a term exists, then it will be deleted.
-%% If `action = remove AND ignore', 
+%% * If `action = remove AND ignore', 
 %%      then if a term does not exist, then it will be skipped.
-%% If `action = remove AND NOT ignore', 
+%% ** If `action = remove AND NOT ignore', 
 %%      then if a term does not exist, then an an exception will be thrown.
 %%
 %% The default value of this field is `true'.
