@@ -103,30 +103,38 @@ The defaut value of this field is 1.
 ####<a name="x_term.action">x_term.action</a>##
 
 
-  
-If position is undefined, then:    
-If action = remove and WDF = 0, then the term will be deleted.    
-If action = remove and WDF != 0, then the term with exactly same         
+
+
+If position is undefined, then:  
+* If action = remove and WDF = 0, then the term will be deleted.  
+* If action = remove and WDF != 0, then the term with exactly same         
 WDF will be deleted otherwise error will be occured (it can         
 be diabled with ignore = true).
 
 
 
 If position is an integer, then:
-If action = add, then posting will be added, WDF will be increased
+* If action = add, then posting will be added, WDF will be increased
 with frequency.
-If action = remove, then `Xapian::Document::remove_posting`       
+*  If action = remove, then `Xapian::Document::remove_posting`       
 will be used.
 
 
 
 If the action is `add`, then the term must not exist.
+
+
+
 If the action is `set`, then don't care about old version of the term.
+
+
+
 If the action is `update`, then the term must exist.
 
 
 
 The defaut value of this field is `set`.
+
 
 
 
