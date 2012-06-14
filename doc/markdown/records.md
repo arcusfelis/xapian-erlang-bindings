@@ -1,12 +1,18 @@
-== x_term ==
+x_term
+======
+
 Term record.
 
-=== x_term.value === 
+x_term.value
+------------
+
 The name of the term.
 This field is required.
 
 
-=== x_term.position === 
+x_term.position
+---------------
+
 The position of the term. 
 If position = undefined, then we will use Xapian::Document::add_term,
 otherwise Xapian::Document::add_posting.
@@ -21,7 +27,9 @@ of the term="term".
 This field is optional.
 
 
-=== x_term.frequency === 
+x_term.frequency
+----------------
+
 The within-document frequency, or wdf, of a term t in D is the 
 number of times it is pulled out of D in the indexing process. 
 Usually this is the size of the wdp vector, but in Xapian it can 
@@ -41,7 +49,8 @@ All postings and terms with the same value have common WDF.
 The defaut value of this field is 1.
 
 
-=== x_term.action === 
+x_term.action
+-------------
 
 * If position is undefined, then:
    * If action = remove and WDF = 0, then the term will be deleted.
@@ -61,7 +70,9 @@ The defaut value of this field is 1.
 The defaut value of this field is `set`.
 
 
-=== x_term.ignore === 
+x_term.ignore
+-------------
+
 Ignore errors.
 
 
