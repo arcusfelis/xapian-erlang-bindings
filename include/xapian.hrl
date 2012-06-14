@@ -102,6 +102,7 @@
     name :: iolist(),
     prefix :: binary() | char() | iolist(),
     is_boolean = false :: boolean(),
+    is_exclusive = true :: boolean(),
     is_default = true :: boolean()
 }).
 

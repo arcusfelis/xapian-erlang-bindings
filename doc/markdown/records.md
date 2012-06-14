@@ -106,7 +106,8 @@ x_prefix_name
 
 Describes meta-information about term prefixes.
 
-This record is used with `xapian_server:open` as a parameter.
+This record is used with `xapian_server:open` or with `QueryParser` 
+as a parameter.
 
 Example of using for 
 ```c++
@@ -159,6 +160,9 @@ It often is an uppercase letter, so it can be a char, for example,
 There is no difference in the format for this field.
 
 
+x_prefix_name.is_boolean
+------------------------
+
 If true, then QueryParser will combine this prefix 
 with `Xapian::Query::OP_FILTER`.
 
@@ -172,6 +176,8 @@ call a parser with a query string `"language:erlang process linux OTP"`.
 This field is only used with `Xapian::QueryParser`.
 
 
+If `thue`, then this method will be called:
+
 ```c++
 Xapian::QueryParser::add_boolean_prefix
 ```
@@ -179,6 +185,8 @@ Xapian::QueryParser::add_boolean_prefix
 
 x_prefix_name.is_exclusive
 --------------------------
+
+This field is used by `QueryParser`.
 
 If `true`, each document can have at most one term with this prefix, 
 so multiple filters with this prefix should be combined with `OR`. 
@@ -190,11 +198,12 @@ filters with different prefixes.
 Ignored, if `is_boolean` is not `true`.
 
 
+
 x_prefix_name.is_default
 ------------------------
 
 This rule only used, when this record is passed as a parameter of
 the `xapian_server:open` method.
 
-* If `true`, this rule will be applied for a default QueryParser.
-* If `false`, this rule will be ignored for a default QueryParser.
+* If `true`, this rule will be applied for a default `QueryParser`.
+* If `false`, this rule will be ignored for a default `QueryParser`.
