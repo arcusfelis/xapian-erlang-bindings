@@ -97,3 +97,104 @@ Ignore errors.
 
 
 The default value of this field is `true`.
+
+
+
+
+x_prefix_name
+=============
+
+Describes meta-information about term prefixes.
+
+This record is used with `xapian_server:open` as a parameter.
+
+Example of using for 
+```c++
+queryparser.add_prefix("title", "S");
+```
+
+```erlang
+#x_prefix_name{name=title, prefix=<<"S">>}
+```
+
+It contains alternative name for keys.
+Xapian is schemaless, so the schema is storing in the client code.
+Prefixes are a part of the schema.
+
+`is_boolean`, `is_exclusive` and `is_default` are only 
+important for QueryParser.
+
+
+x_prefix_name.name
+------------------
+
+It is a full field name.
+
+A prefix name `#x_prefix_name.name` is a pseudonym for prefix 
+`#x_prefix_name.prefix`.
+
+This name is for a client and the prefix is for Xapian.
+
+A prefix name is usually an atom, because of speed.
+But it can be any iolist, it will be converted into a binary with 
+`iolist_to_binary` before to pass to Xapian (for example, it will be
+passed for `QueryParser`).
+
+In Erlang code, the name can be a term, but it will be matched with an 
+operator `=:=`. 
+That is why, `#x_prefix_name{name="author"}` and `#x_prefix_name{name=author}`
+are different prefixes. That is why just use atoms for names everywhere.
+
+
+
+x_prefix_name.prefix
+--------------------
+
+It is a short field name.
+
+This value is used internally by Xapian.
+It often is an uppercase letter, so it can be a char, for example,
+`#x_prefix_name{prefix=$A, name=author}`. 
+
+There is no difference in the format for this field.
+
+
+If true, then QueryParser will combine this prefix 
+with `Xapian::Query::OP_FILTER`.
+
+This allows to use `field:value` for retrieve only documents, that have 
+the field with the name `field` and the value `value`.
+
+For example, we want to search for books about Erlang, then we can pass 
+`#x_prefix_name{name = language, prefix = $L}` as a config parameter and
+call a parser with a query string `"language:erlang process linux OTP"`.
+
+This field is only used with `Xapian::QueryParser`.
+
+
+```c++
+Xapian::QueryParser::add_boolean_prefix
+```
+
+
+x_prefix_name.is_exclusive
+--------------------------
+
+If `true`, each document can have at most one term with this prefix, 
+so multiple filters with this prefix should be combined with `OR`. 
+
+If `false`, each document can have multiple terms with this prefix, 
+so multiple filters should be combined with `AND`, like happens with 
+filters with different prefixes.
+
+Ignored, if `is_boolean` is not `true`.
+
+
+x_prefix_name.is_default
+------------------------
+
+This rule only used, when this record is passed as a parameter of
+the `xapian_server:open` method.
+
+* If `true`, this rule will be applied for a default QueryParser.
+* If `false`, this rule will be ignored for a default QueryParser.
