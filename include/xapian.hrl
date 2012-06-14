@@ -98,6 +98,7 @@
 %% These records contain metainfo
 % ----------------------------------------------------------
 
+%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_prefix_name]
 -record(x_prefix_name, {
     name :: iolist(),
     prefix :: binary() | char() | iolist(),
