@@ -3,11 +3,22 @@
 
 #include <stdint.h>
 
+#ifndef GOOGLE_HASH_MAP
+/* Use google hash map */
 #include <google/dense_hash_map>
 /* dirty code begin */
 #include HASH_FUN_H
 #define HASH_TPL SPARSEHASH_HASH
+#define HASH_MAP google::dense_hash_map
 /* dirty code end */
+
+#else
+
+/* Use xapian wrapper for hash map */
+#include "unordered_map.h"
+#define HASH_TPL std::hash
+#define HASH_MAP std::unordered_map
+#endif
 
 
 #include "xapian_config.h"
@@ -40,7 +51,7 @@ class ObjectRegister : public ObjectBaseRegister
 {
     public:
     typedef 
-    google::dense_hash_map< uint32_t, Child*, HASH_TPL<uint32_t> > Hash;
+    HASH_MAP< uint32_t, Child*, HASH_TPL<uint32_t> > Hash;
 
     private:
     /* Contains a number of the latest added object */

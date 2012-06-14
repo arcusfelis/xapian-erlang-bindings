@@ -24,11 +24,16 @@ cd xapian
 ./rebar compile
 ```
 
-I use [google sparse hash](http://code.google.com/p/sparsehash/?redir=1) 
+Google hash map (optional)
+--------------------------
+
+You can use [google sparse hash](http://code.google.com/p/sparsehash/?redir=1) 
 for storing resources' ids.
 
 Here is a package name of this library in the Ubuntu repository
 `libsparsehash-dev`.
+
+The macro `GOOGLE_HASH_MAP` enables google hash map.
 
 
 Using
