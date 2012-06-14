@@ -90,23 +90,27 @@
 %%
 %% === x_term.action === 
 %%
-%% If position is undefined, then:
-%% * If action = remove and WDF = 0, then the term will be deleted.
-%% * If action = remove and WDF != 0, then the term with exactly same 
-%%        WDF will be deleted otherwise error will be occured (it can
-%%        be diabled with ignore = true).
+%% <ul>
+%%   <li> If position is undefined, then:
+%%     <ul>
+%%       <li> If action = remove and WDF = 0, then the term will be deleted. </li>
+%%       <li> If action = remove and WDF != 0, then the term with exactly same 
+%%            WDF will be deleted otherwise error will be occured (it can
+%%            be diabled with ignore = true). </li>
+%%     </ul></li>
 %%
-%% If position is an integer, then:
-%% * If action = add, then posting will be added, WDF will be increased 
-%%      with frequency.
-%% *  If action = remove, then `Xapian::Document::remove_posting' 
-%%      will be used. 
+%%   <li> If position is an integer, then:
+%%     <ul>
+%%       <li> If action = add, then posting will be added, WDF will be increased 
+%%            with frequency. </li>
+%%       <li> If action = remove, then `Xapian::Document::remove_posting' 
+%%            will be used. </li>
+%%     </ul></li>
 %%
-%% If the action is `add', then the term must not exist.
-%%
-%% If the action is `set', then don't care about old version of the term.
-%%
-%% If the action is `update', then the term must exist.
+%%   <li> If the action is `add', then the term must not exist. </li>
+%%   <li> If the action is `set', then don't care about old version of the term. </li>
+%%   <li> If the action is `update', then the term must exist. </li>
+%% </ul>
 %%
 %% The defaut value of this field is `set'.
 %%
@@ -114,24 +118,26 @@
 %% === x_term.ignore === 
 %% Ignore errors.
 %%
-%% * If `action = add AND ignore', 
-%%      then if a term exists, then it will be skipped.
-%% * If `action = add AND NOT ignore', 
-%%      then if a term exists, then an an exception will be thrown.
-%% * If `action = update AND ignore', 
-%%      then if a term exists, then it will be skipped.
-%% * If `action = update AND NOT ignore', 
-%%      then if a term not exists, then an an exception will be thrown.
-%% * If `action = set', 
-%%      then if a term exists, then it will be rewritten.
-%% * If `action = set', 
-%%      then if a term does not exist, then it will be created.
-%% * If `action = remove', 
-%%      then if a term exists, then it will be deleted.
-%% * If `action = remove AND ignore', 
-%%      then if a term does not exist, then it will be skipped.
-%% ** If `action = remove AND NOT ignore', 
-%%      then if a term does not exist, then an an exception will be thrown.
+%% <ul>
+%%   <li> If `action = add AND ignore', 
+%%        then if a term exists, then it will be skipped. </li>
+%%   <li> If `action = add AND NOT ignore', 
+%%        then if a term exists, then an an exception will be thrown. </li>
+%%   <li> If `action = update AND ignore', 
+%%        then if a term exists, then it will be skipped. </li>
+%%   <li> If `action = update AND NOT ignore', 
+%%        then if a term not exists, then an an exception will be thrown. </li>
+%%   <li> If `action = set', 
+%%        then if a term exists, then it will be rewritten. </li>
+%%   <li> If `action = set', 
+%%        then if a term does not exist, then it will be created. </li>
+%%   <li> If `action = remove', 
+%%        then if a term exists, then it will be deleted. </li>
+%%   <li> If `action = remove AND ignore', 
+%%        then if a term does not exist, then it will be skipped. </li>
+%%   <li> If `action = remove AND NOT ignore', 
+%%        then if a term does not exist, then an an exception will be thrown. </li>
+%% </ul>
 %%
 %% The default value of this field is `true'.
 -record(x_term, {
