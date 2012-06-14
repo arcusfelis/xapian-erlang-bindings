@@ -68,7 +68,6 @@ typedef ResourceObjectP (*CreateUserResourceFn)
     (ResourceManager& manager, ParamDecoder& params);
 
 
-#include <iostream>
 /**
  * Encapsulate information about how to create new resource.
  */
