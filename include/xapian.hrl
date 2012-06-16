@@ -236,7 +236,7 @@
 
 %% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_enquire]
 -record(x_enquire, {
-    x_query = xapian_type:x_query(),
+    value = xapian_type:x_query(),
     query_len = 0 :: non_neg_integer(),
     order = relevance :: #x_sort_order{} | relevance,
     docid_order = asc :: asc | desc | undefined | default | dont_care,

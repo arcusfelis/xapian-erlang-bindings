@@ -297,10 +297,10 @@ statistics while a query will be processed.
 x_enquire
 =========
 
-x_enquire.x_query
------------------
+x_enquire.value
+---------------
 
-It is required.
+It is required. It holds a query.
 
 
 x_enquire.query_len

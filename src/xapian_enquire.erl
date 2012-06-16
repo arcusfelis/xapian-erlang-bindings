@@ -17,9 +17,9 @@
     enquire_command_id/1]).
 
 
-encode(Enquire=#x_enquire{x_query=Query}, Name2Slot, Register, Bin@) ->
+encode(Enquire=#x_enquire{}, Name2Slot, Register, Bin@) ->
     #x_enquire{
-        x_query = Query,
+        value = Query,
         query_len = QueryLen,
         order = Order,
         docid_order = DocidOrder,

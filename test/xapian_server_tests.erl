@@ -1016,7 +1016,7 @@ create_user_resource_case(Server) ->
 advanced_enquire_case(Server) ->
     Case = fun() ->
         Query = #x_enquire{
-            x_query = "Erlang"
+            value = "Erlang"
         },
         EnquireResourceId = ?SRV:enquire(Server, Query),
         ?assert(is_reference(EnquireResourceId)),
@@ -1031,7 +1031,7 @@ advanced_enquire_case(Server) ->
 advanced_enquire_weight_case(Server) ->
     Case = fun() ->
         Query = #x_enquire{
-            x_query = "Erlang",
+            value = "Erlang",
             weighting_scheme = xapian_resource:bool_weight(Server)
         },
         EnquireResourceId = ?SRV:enquire(Server, Query),
