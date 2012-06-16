@@ -108,10 +108,9 @@
 }).
 
 
+%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_value_name]
 -record(x_value_name, {
-    %% full field name
     name :: atom(),
-
     slot :: non_neg_integer(),
     type = string :: float | string
 }).
@@ -200,6 +199,7 @@
 
 %% `#x_query_string' will be decoded using QueryParser.
 -record(x_query_string, {
+    %% The default parser is passed to `xapian_server:open/2' function.
     parser = default :: #x_query_parser{} | default | empty,
 
     %% Encoded query string
@@ -209,6 +209,11 @@
     %% @see XapianErlangDriver::PARSER_FEATURES
     %% If undefined, then features=[default].
     %% `[default]' and `[]' are _different_.
+    %%
+    %% `[]' means no features.
+    %%
+    %% `[default]' means to use default options for `QueryParser'. 
+    %% Default options are hardcoded inside Xapian.
     features :: [atom()]
 }).
 
@@ -229,23 +234,16 @@
 }).
 
 
+%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_enquire]
 -record(x_enquire, {
     x_query = xapian_type:x_query(),
-    %% the query length to use in weight calculations 
-    %% by default the sum of the wqf of all terms is used. 
     query_len = 0 :: non_neg_integer(),
-    %% Primary document order
     order = relevance :: #x_sort_order{} | relevance,
-    %% Secondary order
-    %% asc = default
-    %% dont_care = undefined
     docid_order = asc :: asc | desc | undefined | default | dont_care,
-    %% Weighting scheme
     weighting_scheme :: undefined | xapian_type:x_resource(),
     percent_cutoff = 0,
     weight_cutoff = 0,
     collapse_key :: undefined | xapian_type:x_slot_value(),
-    %% Max number of items with the same key to leave after collapsing
     collapse_max = 1 :: non_neg_integer()
 }).
 
@@ -259,10 +257,10 @@
 }).
 
 
+%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_match_set]
 -record(x_match_set, {
-    enquire = ?REQUIRED :: xapian_type:x_resource(), 
+    enquire = ?REQUIRED :: xapian_type:x_resource(),
     from = 0 :: non_neg_integer(), 
-    %% `undefined' means all documents.
     max_items = undefined :: non_neg_integer() | undefined, 
     check_at_least = 0 :: non_neg_integer(), 
     spies = [] :: [xapian_type:x_resource()]

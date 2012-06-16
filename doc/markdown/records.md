@@ -207,3 +207,152 @@ the `xapian_server:open` method.
 
 * If `true`, this rule will be applied for a default `QueryParser`.
 * If `false`, this rule will be ignored for a default `QueryParser`.
+
+
+x_value_name
+============
+
+Xapian uses slots for storing information inside a document. Values 
+are not indexed for fulltext search, but can be used for sorting or filtering.
+A slot is an unsigned integer. For example, you can use slot 0 for a price and 
+slot 1 for an year.
+
+Erlang Bindings allows to use atoms as an id for a slot number.
+
+
+x_value_name.name
+-----------------
+
+It is a full field name. It is an atom, because it used as a record field name
+from MSet QLC tables.
+
+
+x_value_name.slot
+-----------------
+
+It is a positive integer or zero. It is used by Xapian as a nubmer of slot.
+
+
+x_value_name.type
+-----------------
+
+It can be:
+
+- string - by default; 
+- float - a value in the slot is double. It will be serialized. It can be 
+          sorted in the numerical order. For example, this slot can be used for 
+          storing information about prices with this type.
+
+
+x_match_set
+===========
+
+This record is used because to decrease a count of parameters of the 
+`xapian_server:match_set/2` function.
+
+
+x_match_set.enquire
+-------------------
+
+This field is an enquire resource that defines a set of documents to handle.
+It is required.
+
+
+x_match_set.from
+----------------
+
+This field  contains non negative integer, that means how many objects to skip 
+from the beginning.
+The default value is 0.
+
+
+x_match_set.max_items
+---------------------
+
+This field means the maximum count of the records inside the set. 
+`undefined` means all documents (this is by default).
+
+
+x_match_set.check_at_least
+--------------------------
+
+It contains the minimum count of documents, 
+which will be processed by `MatchSpy`.
+
+Actually, the lower count of documents can be passed to `MatchSpy`. 
+That means, that the count of matched documents is lower than the 
+`check_at_least` value.
+
+The default value is 0.
+
+
+x_match_set.spies
+-----------------
+
+Contains a list of resources of objects, which will calculate 
+statistics while a query will be processed.
+
+
+
+x_enquire
+=========
+
+x_enquire.x_query
+-----------------
+
+It is required.
+
+
+x_enquire.query_len
+-------------------
+
+The query length to use in weight calculations.
+By default (0 value) the sum of the wqf of all terms is used. 
+
+
+x_enquire.order
+---------------
+
+Primary document order.
+Documents will be sorted by `relevance` by default.
+`#x_sort_order{}` allows to use an advanced document order.
+
+
+x_enquire.docid_order
+---------------------
+
+Secondary document order.
+
+* desc
+* `asc` and `default` are equal.
+* `dont_care is `undefined` are equal.
+
+
+x_enquire.weighting_scheme
+--------------------------
+
+Weighting scheme.
+It is a resource defines how to rank documents.
+
+
+x_enquire.percent_cutoff
+------------------------
+
+
+x_enquire.weight_cutoff
+-----------------------
+
+
+x_enquire.collapse_key
+----------------------
+
+Defines the slot in which the same values will be collapsed 
+(each valuae of the slot will be repeated only once).
+It is `undefined` by default. That means that this feature is disabled.
+
+
+x_enquire.collapse_max
+----------------------
+
+number of items with the same key to leave after collapsing.
+The default value is 1.
