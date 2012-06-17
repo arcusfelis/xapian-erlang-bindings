@@ -89,7 +89,7 @@ Driver::Driver(MemoryManager& mm, ResourceGenerator& generator)
 
 
     m_default_parser.set_database(m_db);
-    m_empty_parser.set_database(m_db);
+    m_standard_parser.set_database(m_db);
     m_stores.set_database(m_db);
 }
 
@@ -966,6 +966,9 @@ Driver::fillEnquireOrder(Xapian::Enquire& enquire,
 }
 
 
+/** 
+ * Returns a clone of a prototype
+ */
 Xapian::QueryParser 
 Driver::selectParser(ParamDecoder& params)
 {
@@ -976,7 +979,7 @@ Driver::selectParser(ParamDecoder& params)
         return m_default_parser;
 
     case QP_TYPE_EMPTY:
-        return m_empty_parser;
+        return m_standard_parser;
 
     default:
         throw BadCommandDriverError(type);
@@ -1000,6 +1003,7 @@ Driver::readParser(ParamDecoder& params)
     switch (command)
     {
     case QP_PARSER_TYPE: 
+        // Clone
         qp = selectParser(params);
         break; 
 

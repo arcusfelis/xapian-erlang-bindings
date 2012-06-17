@@ -29,7 +29,7 @@ class Driver
     Xapian::Stem m_default_stemmer;
 
     Xapian::QueryParser m_default_parser;
-    Xapian::QueryParser m_empty_parser;
+    Xapian::QueryParser m_standard_parser;
     ObjectRegister<Xapian::Document>            m_document_store;
     ObjectRegister<Xapian::Enquire>             m_enquire_store;
     ObjectRegister<Xapian::MSet>                m_mset_store;

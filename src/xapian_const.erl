@@ -156,8 +156,8 @@ parser_command_id(prefix)                   -> 6.
 
 
 %% From `XapianErlangDriver::queryParserType'
-parser_type_id(default) -> 0;
-parser_type_id(empty)   -> 1.
+parser_type_id(default)  -> 0;
+parser_type_id(standard) -> 1.
 
 %% From `XapianErlangDriver::STEM_STRATEGIES'
 stem_strategy_id(none)    -> 0;

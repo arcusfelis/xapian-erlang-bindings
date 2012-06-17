@@ -219,9 +219,9 @@
 %% `Path' is a directory name of the database.
 %% For opening multiple databases you can pass a list of:
 %%
-%% * #x_database{};
-%% * #x_prog_database{};
-%% * #x_tcp_database{}.
+%% * `#x_database{}';
+%% * `#x_prog_database{}';
+%% * `#x_tcp_database{}'.
 %%
 %% See the description of these records for more information.
 %%
@@ -232,7 +232,7 @@
 %%      `#x_value_name{slot = 1, name = slotname}'
 %%      `#x_prefix_name{name = author, prefix = <<$A>>}';
 %% * The default stemmer. It will be used in `TermGenerator' and in the 
-%%      `default_query_parser':
+%%      default query parser:
 %%      `#x_stemmer{language="english"}';
 %% * An interface to work: `port' (or `driver' by default).
 %%

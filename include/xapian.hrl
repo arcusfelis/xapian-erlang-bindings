@@ -187,11 +187,21 @@
 
 
 -record(x_query_parser, {
-    name = default :: default | empty,
+    %% It is a parser type to use as a prototype to extend.
+    %%
+    %% * `standard` - the basic Xapian parser will be selected;
+    %% * `default` - the parser with a stemmer, which is passed to `xapian_server:open/2` will be selected. 
+    %% 
+    %% If a stemmer did not passed to `xapian_server:open/2`, then `standard` and `default` parsers are equal. 
+    name = default :: default | standard,
+    %% When this field is `undefined`:
+    %% * and `name` is `standard` - the `standard` stemmer will be used;
+    %% * and `name` is `default` - the stemmer, passed into `xapian_server:open/2` will be used.
     stemmer :: #x_stemmer{} | undefined,
     stemming_strategy = default :: none | some | all |default,
-    %% 0 or `unlimited' for no limit
+    %% 0 or `unlimited' for no limit (by default).
     max_wildcard_expansion = unlimited :: non_neg_integer(),
+    %% It is a default operator for combining terms.
     default_op = 'OR',
     prefixes :: [#x_prefix_name{}]
 }).
@@ -199,8 +209,9 @@
 
 %% `#x_query_string' will be decoded using QueryParser.
 -record(x_query_string, {
-    %% The default parser is passed to `xapian_server:open/2' function.
-    parser = default :: #x_query_parser{} | default | empty,
+    %% * `default` - The default parser;
+    %% * `standard` - The basic Xapian parser will be used.
+    parser = default :: #x_query_parser{} | default | standard,
 
     %% Encoded query string
     string = ?REQUIRED :: xapian_type:x_string(),
