@@ -130,7 +130,12 @@ operator_id('SCALE WEIGHT') -> 9;
 operator_id('ELITE SET')    -> 10;
 operator_id('VALUE GE')     -> 11;
 operator_id('VALUE LE')     -> 12;
-operator_id('SYNONYM')      -> 13.
+operator_id('SYNONYM')      -> 13;
+
+%% They are often used, that is why short version is usefult.
+operator_id('greater')      -> operator_id('VALUE GE');
+operator_id('lower')        -> operator_id('VALUE LE');
+operator_id('less')         -> operator_id('VALUE LE').
 
 
 query_id(query_group)       -> 1;

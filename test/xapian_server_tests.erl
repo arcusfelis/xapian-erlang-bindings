@@ -747,10 +747,15 @@ read_float_value_gen() ->
 
         %% #document{} is the simple container.
         Meta2 = xapian_record:record(document, record_info(fields, document)),
-        Offset = 0,
-        PageSize = 10,
-        Query = #x_query_value_range{slot=slot1, from=6, to=8},
-        RecList68 = ?SRV:query_page(Server, Offset, PageSize, Query, Meta2),
+        Offset    = 0,
+        PageSize  = 10,
+        Query68   = #x_query_value_range{slot=slot1, from=6, to=8},
+        Query8    = #x_query_value{op=lower, slot=slot1, value=8},
+        Query7    = #x_query_value_range{op=lower, slot=slot1, from=7, to=7},
+
+        RecList68 = ?SRV:query_page(Server, Offset, PageSize, Query68, Meta2),
+        RecList8  = ?SRV:query_page(Server, Offset, PageSize, Query8, Meta2),
+        RecList7  = ?SRV:query_page(Server, Offset, PageSize, Query7, Meta2),
 
         [?_assertEqual(Rec1#rec_test.docid, 1)
         ,?_assertEqual(Rec1#rec_test.slot1, 7.0)
@@ -759,6 +764,8 @@ read_float_value_gen() ->
         ,?_assertEqual(Rec2#rec_test.slot1, 66.0)
         ,?_assertEqual(Rec2#rec_test.data, <<"My test data as iolist">>)
         ,?_assertEqual(RecList68, [#document{docid=1}])
+        ,?_assertEqual(RecList7,  [#document{docid=1}])
+        ,?_assertEqual(RecList8,  [#document{docid=1}])
         ]
     after
         ?SRV:close(Server)

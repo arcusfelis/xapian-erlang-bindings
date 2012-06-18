@@ -187,8 +187,23 @@
     parameter=0 :: non_neg_integer()
 }).
 
+
+%% The operator is required.
+%%
+%% To match prices lower than 500$ use:
+%%
+%% ```erlang
+%% #x_query_value{slot=price, op=less, value=500}
+%% ```
+%%
+%%
+%% If you want to match  by an exact value, then use:
+%%
+%% ```erlang
+%% #x_query_value_range{slot=Slot, from=Value, to=Value}
+%% ```
 -record(x_query_value, {
-    %% `'VALUE GE'` or `'VALUE LE'`
+    %% `'VALUE GE'` (`greater`) or `'VALUE LE'` (`less`, `lower`)
     op = ?REQUIRED,
     slot :: xapian_type:x_slot() | xapian_type:x_slot_name(),
     value :: xapian_type:x_string()
