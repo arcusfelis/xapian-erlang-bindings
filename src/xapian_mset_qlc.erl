@@ -11,7 +11,7 @@
 table(Server, MSet, Meta) ->
     EncoderFun = fun(mset, DrvState, Bin) ->
         Name2Slot  = xapian_server:name_to_slot(DrvState),
-        Value2Type = xapian_server:value_to_type(DrvState),
+        Value2Type = xapian_server:slot_to_type(DrvState),
         xapian_record:encode(Meta, Name2Slot, Value2Type, Bin)
         end,
     #internal_qlc_info{

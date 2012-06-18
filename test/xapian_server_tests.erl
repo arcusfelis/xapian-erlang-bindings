@@ -14,6 +14,8 @@
 -ifdef(TEST).
 -include_lib("proper/include/proper.hrl").
 -include_lib("eunit/include/eunit.hrl").
+
+-record(document, {docid}).
     
 
 %% ------------------------------------------------------------------
@@ -742,12 +744,21 @@ read_float_value_gen() ->
         Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
         Rec1 = ?SRV:read_document(Server, DocId1, Meta),
         Rec2 = ?SRV:read_document(Server, DocId2, Meta),
+
+        %% #document{} is the simple container.
+        Meta2 = xapian_record:record(document, record_info(fields, document)),
+        Offset = 0,
+        PageSize = 10,
+        Query = #x_query_value_range{slot=slot1, from=6, to=8},
+        RecList68 = ?SRV:query_page(Server, Offset, PageSize, Query, Meta2),
+
         [?_assertEqual(Rec1#rec_test.docid, 1)
         ,?_assertEqual(Rec1#rec_test.slot1, 7.0)
         ,?_assertEqual(Rec1#rec_test.data, <<"My test data as iolist">>)
         ,?_assertEqual(Rec2#rec_test.docid, 2)
         ,?_assertEqual(Rec2#rec_test.slot1, 66.0)
         ,?_assertEqual(Rec2#rec_test.data, <<"My test data as iolist">>)
+        ,?_assertEqual(RecList68, [#document{docid=1}])
         ]
     after
         ?SRV:close(Server)
@@ -1102,7 +1113,6 @@ extra_weight_query(Factor, Title, Body) ->
 %%  Multi-DB support
 %% -------------------------------------------------------------------
 
--record(document, {docid}).
 -record(mdocument, {docid, db_name, multi_docid, db_number}).
 
 all_record_ids(Server, Query) ->

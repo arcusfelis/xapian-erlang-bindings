@@ -382,7 +382,7 @@ There are few predefined parsers:
 
 <table>
   <tr><th>Name</th><th>Stemmer</th><th>Prefixes</th></tr>
-  <tr><td>default</td><td>from `open`</td><td>from `open`</td></tr>
+  <tr><td>default</td><td>from open params</td><td>from open params</td></tr>
   <tr><td>standard</td><td>not defined</td><td>not defined</td></tr>
 </table>
 

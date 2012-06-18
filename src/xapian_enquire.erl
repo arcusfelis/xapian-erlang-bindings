@@ -1,5 +1,5 @@
 -module(xapian_enquire).
--export([encode/4]).
+-export([encode/5]).
 -compile({parse_transform, seqbind}).
 
 -include_lib("xapian/include/xapian.hrl").
@@ -17,7 +17,7 @@
     enquire_command_id/1]).
 
 
-encode(Enquire=#x_enquire{}, Name2Slot, Register, Bin@) ->
+encode(Enquire=#x_enquire{}, Name2Slot, Slot2TypeArray, Register, Bin@) ->
     #x_enquire{
         value = Query,
         query_len = QueryLen,
@@ -30,7 +30,7 @@ encode(Enquire=#x_enquire{}, Name2Slot, Register, Bin@) ->
         collapse_max = CollapseMax
     } = Enquire,
     Bin@ = append_query_len(QueryLen, Bin@),
-    Bin@ = append_query(Query, Name2Slot, Bin@),
+    Bin@ = append_query(Query, Name2Slot, Slot2TypeArray, Bin@),
     Bin@ = append_order(Order, Name2Slot, Register, Bin@),
     Bin@ = append_docid_order(DocidOrder, Bin@),
     Bin@ = append_weighting_scheme(Weight, Register, Bin@),
@@ -39,8 +39,8 @@ encode(Enquire=#x_enquire{}, Name2Slot, Register, Bin@) ->
     Bin@ = append_command(stop, Bin@),
     Bin@;
 
-encode(Query, Name2Slot, _Register, Bin@) ->
-    Bin@ = append_query(Query, Name2Slot, Bin@),
+encode(Query, Name2Slot, Slot2TypeArray, _Register, Bin@) ->
+    Bin@ = append_query(Query, Name2Slot, Slot2TypeArray, Bin@),
     Bin@ = append_command(stop, Bin@),
     Bin@.
 
@@ -52,9 +52,9 @@ append_query_len(QueryLen, Bin@) ->
     Bin@.
 
 
-append_query(Query,  N2S, Bin@) ->
+append_query(Query,  N2S, Slot2TypeArray, Bin@) ->
     Bin@ = append_command(x_query, Bin@),
-    Bin@ = xapian_query:encode(Query, N2S, Bin@),
+    Bin@ = xapian_query:encode(Query, N2S, Slot2TypeArray, Bin@),
     Bin@.
 
     

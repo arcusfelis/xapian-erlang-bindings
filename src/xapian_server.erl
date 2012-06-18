@@ -42,7 +42,7 @@
 %% More information
 -export([name_to_slot/1, 
          name_to_slot/2,
-         value_to_type/1,
+         slot_to_type/1,
          subdb_names/1,
          multi_docid/3]).
 
@@ -66,7 +66,7 @@
 %% with_state internals
 -export([internal_name_to_slot/2,
          internal_name_to_slot_dict/1,
-         internal_value_to_type_array/1,
+         internal_slot_to_type_array/1,
          internal_subdb_names/1,
          internal_multi_docid/2]).
 
@@ -115,7 +115,7 @@
     %% It is used for float values. Usually, type is `string', it is the 
     %% same as `undefined'.
     %% An index of the array is a slot number.
-    value_to_type :: array() | undefined,
+    slot_to_type :: array() | undefined,
 
     %% Used for creating resources.
     %% It contains mapping from an atom to information, about how to create 
@@ -521,11 +521,11 @@ name_to_slot(Server) ->
     call(Server, {with_state, fun ?SRV:internal_name_to_slot_dict/1}).
 
 
-value_to_type(#state{value_to_type = V2T}) ->
+slot_to_type(#state{slot_to_type = V2T}) ->
     V2T;
 
-value_to_type(Server) ->
-    call(Server, {with_state, fun ?SRV:internal_value_to_type_array/1}).
+slot_to_type(Server) ->
+    call(Server, {with_state, fun ?SRV:internal_slot_to_type_array/1}).
 
 
 subdb_names(#state{subdb_names = I2N}) ->
@@ -558,7 +558,7 @@ internal_name_to_slot_dict(#state{name_to_slot = N2S}) ->
     {ok, N2S}.
 
 %% @private
-internal_value_to_type_array(#state{value_to_type = V2T}) -> 
+internal_slot_to_type_array(#state{slot_to_type = V2T}) -> 
     {ok, V2T}.
 
 %% @private
@@ -665,14 +665,14 @@ init([Path, Params]) ->
     [{Name, Slot} 
         || #x_value_name{name = Name, slot = Slot} <- Params],
 
-    Value2Type =
+    Slot2Type =
     [{Slot, Type} 
         || #x_value_name{type = Type, slot = Slot} <- Params, Type =/= string],
 
-    Value2TypeArray = 
+    Slot2TypeArray = 
         if 
-            Value2Type =:= []   -> undefined; 
-            true                -> array:from_orddict(Value2Type) 
+            Slot2Type =:= []   -> undefined; 
+            true                -> array:from_orddict(Slot2Type) 
         end,
 
     Name2PrefixDict = orddict:from_list(Name2Prefix),
@@ -714,7 +714,7 @@ init([Path, Params]) ->
             port = Port,
             name_to_prefix = Name2PrefixDict,
             name_to_slot = Name2SlotDict,
-            value_to_type = Value2TypeArray,
+            slot_to_type = Slot2TypeArray,
             name_to_resource = Name2ResourceDict,
             subdb_name_to_id = Name2SubdbDict,
             subdb_names = list_to_tuple(SubDbNames)
@@ -786,26 +786,27 @@ handle_call({test, TestName, Params}, _From, State) ->
 
 handle_call({read_document_by_id, Id, Meta}, _From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
-          subdb_names = Id2Name, value_to_type = Value2Type } = State,
+          subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
     Reply = port_read_document_by_id(Port, Id, 
-                                     Meta, Name2Slot, Id2Name, Value2Type),
+                                     Meta, Name2Slot, Id2Name, Slot2Type),
     {reply, Reply, State};
 
 handle_call({query_page, Offset, PageSize, Query, Meta}, _From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
-          subdb_names = Id2Name, value_to_type = Value2Type } = State,
+        subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
     Reply = port_query_page(Port, Offset, PageSize, Query, 
-                            Meta, Name2Slot, Id2Name, Value2Type),
+                            Meta, Name2Slot, Id2Name, Slot2Type),
     {reply, Reply, State};
 
 handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
     #state{ 
         port = Port, 
         name_to_slot = Name2Slot, 
+        slot_to_type = Slot2TypeArray,
         register = Register } = State,
 
     %% Special handling of errors
-    case port_enquire(Port, Query, Name2Slot, Register) of
+    case port_enquire(Port, Query, Name2Slot, Slot2TypeArray, Register) of
         {error, _Reason} = Error ->
             {reply, Error, State};
         {ok, ResourceNum} ->
@@ -1077,9 +1078,9 @@ code_change(_OldVsn, State, _Extra) ->
 document_encode(Document, #state{
         name_to_prefix = Name2Prefix,
         name_to_slot = Name2Slot,
-        value_to_type = Value2TypeArray
+        slot_to_type = Slot2TypeArray
     }) ->
-    xapian_document:encode(Document, Name2Prefix, Name2Slot, Value2TypeArray).
+    xapian_document:encode(Document, Name2Prefix, Name2Slot, Slot2TypeArray).
 
 
 open_mode(Params) ->
@@ -1302,26 +1303,26 @@ port_cancel_transaction(Port) ->
 
 %% @doc Read and decode one document from the port.
 port_read_document_by_id(Port, Id, Meta, Name2Slot, Id2Name, 
-                         Value2Type) ->
+                         Slot2Type) ->
     Bin@ = <<>>,
     Bin@ = append_document_id(Id, Bin@),
-    Bin@ = xapian_record:encode(Meta, Name2Slot, Value2Type, Bin@),
+    Bin@ = xapian_record:encode(Meta, Name2Slot, Slot2Type, Bin@),
     decode_record_result(control(Port, read_document_by_id, Bin@), Meta, Id2Name).
 
 
 port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot, Id2Name, 
-                Value2Type) ->
+                Slot2Type) ->
     Bin@ = <<>>,
     Bin@ = append_uint(Offset, Bin@),
     Bin@ = append_uint(PageSize, Bin@),
-    Bin@ = xapian_query:encode(Query, Name2Slot, Bin@),
-    Bin@ = xapian_record:encode(Meta, Name2Slot, Value2Type, Bin@),
+    Bin@ = xapian_query:encode(Query, Name2Slot, Slot2Type, Bin@),
+    Bin@ = xapian_record:encode(Meta, Name2Slot, Slot2Type, Bin@),
     decode_records_result(control(Port, query_page, Bin@), Meta, Id2Name).
 
 
-port_enquire(Port, Enquire, Name2Slot, Register) ->
+port_enquire(Port, Enquire, Name2Slot, Slot2TypeArray, Register) ->
     Bin@ = <<>>,
-    Bin@ = xapian_enquire:encode(Enquire, Name2Slot, Register, Bin@),
+    Bin@ = xapian_enquire:encode(Enquire, Name2Slot, Slot2TypeArray, Register, Bin@),
     decode_resource_result(control(Port, enquire, Bin@)).
 
 

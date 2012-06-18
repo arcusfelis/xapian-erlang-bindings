@@ -12,19 +12,19 @@
 ##Function Index##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#encode-3">encode/3</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#encode-4">encode/4</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
 
 ##Function Details##
 
-<a name="encode-3"></a>
+<a name="encode-4"></a>
 
-###encode/3##
-
-
+###encode/4##
 
 
-`encode(X_query, N2S, Bin@) -> any()`
+
+
+`encode(X_query, N2S, S2T, Bin@) -> any()`
 

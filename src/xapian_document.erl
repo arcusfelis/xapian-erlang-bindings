@@ -9,40 +9,44 @@
 -compile({parse_transform, seqbind}).
 -import(xapian_common, [ 
     append_iolist/2,
-    append_double/2,
     append_uint/2,
     append_int/2,
     append_uint8/2,
-    append_boolean/2]).
+    append_boolean/2,
+    slot_id/2,
+    append_value/2]).
 
 -import(xapian_const, [ 
     term_type/1,
     posting_type/1,
     value_type/1,
-    document_part_id/1,
-    value_type_id/1,
-    value_type_id/1]).
+    document_part_id/1]).
 
 
 %% @doc Encode parts of the document to a binary.
 -spec encode([xapian:x_document_index_part()], 
              orddict:orddict(), orddict:orddict(), array()) -> binary().
 
-encode(List, Name2Prefix, Name2Slot, Value2TypeArray) ->
-    Pre = preprocess_hof(Name2Prefix, Name2Slot, Value2TypeArray),
+encode(List, Name2Prefix, Name2Slot, Slot2TypeArray) ->
+    Pre = preprocess_hof(Name2Prefix, Name2Slot, Slot2TypeArray),
     List2 = [Pre(X) || X <- List], % lists:map(Pre, List)
     enc(List2, <<>>).
 
 
 %% @doc Replace all pseudonames on real values.
-preprocess_hof(Name2Prefix, Name2Slot, Value2TypeArray) ->
-    fun(Rec=#x_value{slot = Name}) when is_atom(Name) ->
-            %% Set real slot id (integer) for values.
-            %% Throw an error if there is no this name.
-            NewRec = Rec#x_value{slot = orddict:fetch(Name, Name2Slot)},
-            fix_float(NewRec, Value2TypeArray);
+preprocess_hof(Name2Prefix, Name2Slot, Slot2TypeArray) ->
+    fun(Rec=#x_value{}) ->
+            %% NOTE: Name can be a number
+            #x_value{slot = Name, value=Value} = Rec, 
+            %% Convert the name into the slot id (integer number).
+            SlotId = slot_id(Name, Name2Slot),
+            %% Throw an error if there is no this name inside `Slot2TypeArray' 
+            %% __and__ `Value' is a number.
+            CheckedValue = xapian_common:fix_value(SlotId, Value, Slot2TypeArray),
+            Rec#x_value{slot = SlotId, value=CheckedValue};
 
-       (Rec=#x_text{prefix = Name}) ->
+       (Rec=#x_text{}) ->
+            #x_text{prefix = Name} = Rec,
             %% Set short version for prefixes.
             %% Left as is if there is no this name.
             case orddict:find(Name, Name2Prefix) of
@@ -58,12 +62,11 @@ preprocess_hof(Name2Prefix, Name2Slot, Value2TypeArray) ->
 fix_float(Rec, undefined) -> 
     Rec;
 
-fix_float(Rec=#x_value{slot = Slot, value = Value}, Value2TypeArray) 
-    when is_number(Value) -> 
-    float = array:get(Slot, Value2TypeArray), 
+fix_float(Rec=#x_value{slot = Slot, value = Value}, Slot2TypeArray) 
+    when is_number(Value) ->
     Rec;
 
-fix_float(Rec, _Value2TypeArray) ->
+fix_float(Rec, _Slot2TypeArray) ->
     Rec.
 
 
@@ -193,14 +196,6 @@ append_text(Value, WDF, Prefix, Bin@) ->
 
 append_type(Type, Bin) ->
     append_uint8(document_part_id(Type), Bin).
-
-
-%% see XapianErlang::Driver::decodeValue
-append_value(Value, Bin@) when is_number(Value) ->
-    append_double(Value, append_uint8(value_type_id(double), Bin@)); 
-
-append_value(Value, Bin@) ->
-    append_iolist(Value, append_uint8(value_type_id(string), Bin@)).
 
 
 -ifdef(TEST).

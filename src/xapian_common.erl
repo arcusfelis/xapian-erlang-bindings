@@ -189,3 +189,34 @@ append_terms(Terms, Bin@) ->
     Bin@ = append_iolist("", Bin@),
     Bin@.
 
+
+
+%% see XapianErlang::Driver::decodeValue
+append_value(Value, Bin@) when is_number(Value) ->
+    append_double(Value, append_uint8(xapian_const:value_type_id(double), Bin@)); 
+
+append_value(Value, Bin@) ->
+    append_iolist(Value, append_uint8(xapian_const:value_type_id(string), Bin@)).
+
+
+
+%% @doc Returns the fixed value: float or string if all is ok.
+%%      Othervise, throws an error.
+%% @end 
+%% All slots has the string type.
+fix_value(_Slot, Value, undefined) ->
+    Value;
+
+fix_value(Slot, Value, Slot2TypeArray) 
+    when is_number(Value) -> 
+    %% The passed value has type `float'.
+    %% The field type must be `float' too.
+    ExpectedType = array:get(Slot, Slot2TypeArray),
+    %% If Type is not float, then throw an error.
+    [xapian_error:bad_slot_value_type_error(bad_value, Slot, Value, ExpectedType) 
+        || ExpectedType =/= float], 
+    %% No errors, continue.
+    Value;
+
+fix_value(_Slot, Value, _Slot2TypeArray) ->
+    Value.

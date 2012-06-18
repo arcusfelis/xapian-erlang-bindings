@@ -1,5 +1,5 @@
 -module(xapian_query).
--export([encode/3]).
+-export([encode/4]).
 
 -include_lib("xapian/include/xapian.hrl").
 -compile({parse_transform, seqbind}).
@@ -7,8 +7,8 @@
     append_uint/2,
     append_uint8/2,
     append_double/2,
-    append_slot/3,
-    append_iolist/2]).
+    append_iolist/2,
+    slot_id/2]).
 
 -import(xapian_const, [
     query_id/1,
@@ -18,30 +18,32 @@
     parser_feature_id/1,
     stem_strategy_id/1]).
 
-
-encode(#x_query{op=Op, value=Value, parameter=Param}, N2S, Bin@) ->
+%% S2T stands for Slot2TypeArray.
+encode(#x_query{op=Op, value=Value, parameter=Param}, N2S, S2T, Bin@) ->
     Bin@ = append_type(query_group, Bin@),
     Bin@ = append_operator(Op, Bin@),
     Bin@ = append_uint(Param, Bin@),
-    Bin@ = append_query(Value, N2S, Bin@),
+    Bin@ = append_query(Value, N2S, S2T, Bin@),
     Bin@;
 
-encode(#x_query_value{op=Op, slot=Slot, value=Value}, N2S, Bin@) ->
+encode(#x_query_value{op=Op, slot=Slot, value=Value}, N2S, S2T, Bin@) ->
+    SlotId = slot_id(Slot, N2S),
     Bin@ = append_type(query_value, Bin@),
     Bin@ = append_operator(Op, Bin@),
-    Bin@ = append_slot(Slot, N2S, Bin@),
-    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_uint(SlotId, Bin@),
+    Bin@ = append_value(SlotId, Value, S2T, Bin@),
     Bin@;
 
-encode(#x_query_value_range{op=Op, slot=Slot, from=From, to=To}, N2S, Bin@) ->
+encode(#x_query_value_range{op=Op, slot=Slot, from=From, to=To}, N2S, S2T, Bin@) ->
+    SlotId = slot_id(Slot, N2S),
     Bin@ = append_type(query_value_range, Bin@),
     Bin@ = append_operator(Op, Bin@),
-    Bin@ = append_slot(Slot, N2S, Bin@),
-    Bin@ = append_iolist(From, Bin@),
-    Bin@ = append_iolist(To, Bin@),
+    Bin@ = append_uint(SlotId, Bin@),
+    Bin@ = append_value(SlotId, From, S2T, Bin@),
+    Bin@ = append_value(SlotId, To, S2T, Bin@),
     Bin@;
 
-encode(#x_query_term{name=Name, wqf=WQF, position=Pos}, _N2S, Bin@) ->
+encode(#x_query_term{name=Name, wqf=WQF, position=Pos}, _N2S, _S2T, Bin@) ->
     Bin@ = append_type(query_term, Bin@),
     Bin@ = append_iolist(Name, Bin@),
     Bin@ = append_uint(WQF, Bin@),
@@ -49,7 +51,7 @@ encode(#x_query_term{name=Name, wqf=WQF, position=Pos}, _N2S, Bin@) ->
     Bin@;
 
 encode(#x_query_string{parser=Parser, string=String, 
-    default_prefix=Prefix, features=Features}, _N2S, Bin@) ->
+    default_prefix=Prefix, features=Features}, _N2S, _S2T, Bin@) ->
     Bin@ = append_type(query_string, Bin@),
     Bin@ = append_parser(Parser, Bin@),
     Bin@ = append_iolist(String, Bin@),
@@ -57,15 +59,15 @@ encode(#x_query_string{parser=Parser, string=String,
     Bin@ = append_parser_feature_ids(Features, Bin@),
     Bin@;
 
-encode(#x_query_scale_weight{value=SubQuery, op=Op, factor=Fac}, N2S, Bin@) ->
+encode(#x_query_scale_weight{value=SubQuery, op=Op, factor=Fac}, N2S, S2T, Bin@) ->
     Bin@ = append_type(query_scale_weight, Bin@),
     Bin@ = append_operator(Op, Bin@),
     Bin@ = append_double(Fac, Bin@),
-    Bin@ = encode(SubQuery, N2S, Bin@),
+    Bin@ = encode(SubQuery, N2S, S2T, Bin@),
     Bin@;
 
-encode(Term, N2S, Bin) ->
-    encode(#x_query_term{name=Term}, N2S, Bin).
+encode(Term, N2S, S2T, Bin) ->
+    encode(#x_query_term{name=Term}, N2S, S2T, Bin).
 
 
 append_operator(Op, Bin) ->
@@ -76,11 +78,11 @@ append_type(Type, Bin) ->
     append_uint8(query_id(Type), Bin).
 
 
-append_query(Query, N2S, Bin@) ->
+append_query(Query, N2S, S2T, Bin@) ->
     %% Defines when to stop.
     SubQueryCount = erlang:length(Query),
     Bin@ = append_uint(SubQueryCount, Bin@),
-    lists:foldl(fun(Rec, Acc) -> encode(Rec, N2S, Acc) end, Bin@, Query).
+    lists:foldl(fun(Rec, Acc) -> encode(Rec, N2S, S2T, Acc) end, Bin@, Query).
 
 append_parser_type_id(Id, Bin) ->
     append_uint8(parser_type_id(Id), Bin).
@@ -210,11 +212,16 @@ append_features([H|T], Bin) ->
 
 
 
+append_value(SlotId, Value, Slot2TypeArray, Bin) when is_integer(SlotId) -> 
+    CheckedValue = xapian_common:fix_value(SlotId, Value, Slot2TypeArray),
+    xapian_common:append_value(CheckedValue, Bin).
+
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
 encode_test() ->
-    Result = encode(#x_query{value=["test1", <<"test2">>]}, [], <<>>),
+    Result = encode(#x_query{value=["test1", <<"test2">>]}, [], [], <<>>),
     io:write(user, Result).
 
 -endif.

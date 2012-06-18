@@ -26,7 +26,7 @@
 
 
 
-<pre>encode(List::[<a href="xapian.md#type-x_document_index_part">xapian:x_document_index_part()</a>], Name2Prefix::<a href="orddict.md#type-orddict">orddict:orddict()</a>, Name2Slot::<a href="orddict.md#type-orddict">orddict:orddict()</a>, Value2TypeArray::array()) -> binary()</pre>
+<pre>encode(List::[<a href="xapian.md#type-x_document_index_part">xapian:x_document_index_part()</a>], Name2Prefix::<a href="orddict.md#type-orddict">orddict:orddict()</a>, Name2Slot::<a href="orddict.md#type-orddict">orddict:orddict()</a>, Slot2TypeArray::array()) -> binary()</pre>
 <br></br>
 
 

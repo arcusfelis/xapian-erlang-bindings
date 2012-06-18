@@ -788,7 +788,7 @@ Driver::buildQuery(ParamDecoder& params)
         {    
             const uint8_t           op       = params;
             const Xapian::valueno   slot     = params;
-            const std::string&      value    = params;
+            const std::string&      value    = decodeValue(params);
             Xapian::Query q(
                 static_cast<Xapian::Query::op>(op), 
                 slot, 
@@ -800,8 +800,8 @@ Driver::buildQuery(ParamDecoder& params)
         {    
             const uint8_t           op       = params;
             const Xapian::valueno   slot     = params;
-            const std::string&      from     = params;
-            const std::string&      to       = params;
+            const std::string&      from     = decodeValue(params);
+            const std::string&      to       = decodeValue(params);
             Xapian::Query q(
                 static_cast<Xapian::Query::op>(op), 
                 slot, 

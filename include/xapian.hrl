@@ -30,11 +30,18 @@
 %% These records are used by indexer
 % ----------------------------------------------------------
 
+
+%% A stemmer is used for deleting duplicate terms. 
+%% Terms with the same meaning but in the different forms will be equal 
+%% after stemming. 
+%%
+%% For example, terms `"day"` and `"days"` will be equal after stemming.
 -record(x_stemmer, {
     language = ?REQUIRED :: xapian_type:x_string()
 }).
 
 
+%% x_data.value will not indexed.
 -record(x_data, {
     value = ?REQUIRED :: xapian_type:x_string()
 }).
@@ -56,27 +63,42 @@
     ignore = true :: boolean()
 }).
 
-
+%% Values can be used for sorting or for filtering.
+%% Values are not stemmed.
 -record(x_value, {
+    %% The number or the name of the slot.
+    %% 
+    %% This field is required.
     slot = ?REQUIRED  :: xapian_type:x_slot() | xapian_type:x_slot_name(),
+    %% This field is required.
     value = ?REQUIRED :: xapian_type:x_string(),
     %% If action = remove and value = "", then remove slot with any value.
     %% If action = remove and value != "", then remove slot with passed value.
     %% If action = add, then value will be seted only if the slot is free.
     action = set :: add | set | update | remove,
 
-    %% Ignore errors 
+    %% Ignore errors.
     ignore = true :: boolean()
 }).
 
 
 %% Calls Xapian::TermGenerator::increase_termpos.
+%% Can be used as a delimeter for `'NEAR'` operator:
+%%
+%% Index the document:
+%%
+%% ```erlang
+%% [#x_term{value="term1"}, #x_delta{}, #x_term{value="term2"}]
+%% ```
+%%
+%% After this, the query "term1 NEAR term2" will skip this document.
 -record(x_delta, {
     %% Amount to increase the term position by (default: 100). 
     position = 100 :: xapian_type:x_position()
 }).
 
 
+%% The text will be indexed as a set of terms.
 -record(x_text, {
     %% The text to index.
     value = ?REQUIRED :: xapian_type:x_string(),
@@ -160,21 +182,21 @@
     op='AND',
     %% List of other queries or terms (term is a string).
     value :: [xapian_type:x_query() | xapian_type:x_string()],
-    %% For `NEAR' and `PHRASE', a window size can be specified in parameter.
-    %% For `ELITE_SET', the elite set size can be specified in parameter. 
+    %% For `'NEAR'` and `'PHRASE'`, a window size can be specified in parameter.
+    %% For `'ELITE_SET'`, the elite set size can be specified in parameter. 
     parameter=0 :: non_neg_integer()
 }).
 
 -record(x_query_value, {
-    %% `VALUE GE' or `VALUE LE'
+    %% `'VALUE GE'` or `'VALUE LE'`
     op = ?REQUIRED,
-    slot :: non_neg_integer(),
+    slot :: xapian_type:x_slot() | xapian_type:x_slot_name(),
     value :: xapian_type:x_string()
 }).
 
 -record(x_query_value_range, {
     op='VALUE RANGE',
-    slot :: non_neg_integer(),
+    slot :: xapian_type:x_slot() | xapian_type:x_slot_name(),
     from :: xapian_type:x_string(),
     to :: xapian_type:x_string()
 }).
