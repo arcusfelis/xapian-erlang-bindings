@@ -356,3 +356,108 @@ x_enquire.collapse_max
 
 number of items with the same key to leave after collapsing.
 The default value is 1.
+
+
+
+x_query_parser
+==============
+
+Converts a string, constructed using the special 
+[syntax](http://xapian.org/docs/queryparser.html) into a query.
+
+These records are equal:
+
+```erlang
+#x_query{op='OR', value=[
+    #x_query_term{name="weather"},
+    #x_query_term{name="forecast", position=8}]}
+```
+
+```erlang
+#x_query_parser{value="weather forecast"}
+```
+
+
+There are few predefined parsers:
+
+<table>
+  <tr><th>Name</th><th>Stemmer</th><th>Prefixes</th></tr>
+  <tr><td>default</td><td>from `open`</td><td>from `open`</td></tr>
+  <tr><td>standard</td><td>not defined</td><td>not defined</td></tr>
+</table>
+
+
+x_query_parser.name
+-------------------
+
+It is a parser type to use as a prototype to extend.
+
+* `standard` - the basic Xapian parser will be selected;
+* `default` - the parser with a stemmer, which is passed to 
+    `xapian_server:open/2` will be selected. 
+
+If a stemmer did not passed to `xapian_server:open/2`, then `standard` and 
+`default` parsers uses the same stemmer. 
+
+It the name is not defined, then `default` will be used.
+
+
+x_query_parser.stemmer
+----------------------
+
+When this field is `undefined`:
+* and `name` is `standard` - the `standard` stemmer will be used;
+* and `name` is `default` - the stemmer, passed into `xapian_server:open/2` will be used.
+    
+Pass `#x_stemmer{}` to use another stemmer.
+
+
+x_query_parser.stemming_strategy
+--------------------------------
+
+Set the stemming strategy.
+
+This controls how the query parser will apply the stemming algorithm. 
+Note that the stemming algorithm is only applied to words in probabilistic 
+fields - boolean filter terms are never stemmed.
+
+Possible values are:
+
+* `none`: Don't perform any stemming (the default).
+* `some`: Search for stemmed forms of terms except for those which start with 
+          a capital letter, or are followed by certain characters 
+          (currently: `(/@<>=*[{" `), or are used with operators which need 
+          positional information. Stemmed terms are prefixed with 'Z'.
+* `all`:  Search for stemmed forms of all words (note: no 'Z' prefix is added). 
+
+
+x_query_parser.max_wildcard_expansion
+-------------------------------------
+
+0 or `unlimited' for no limit (by default).
+
+
+x_query_parser.default_op
+-------------------------
+
+It is a default operator for combining terms.
+The most useful values for this are `'OR'` (the default) and `'AND'`. `'NEAR'` 
+and `'PHRASE'` can also be useful.
+
+So for example, 'weather forecast' is parsed as if it were 
+'weather OR forecast' by default. 
+
+
+x_query_parser.prefixes
+-----------------------
+
+A list of `#x_prefix_name{}` can be passed.
+If defined, then these prefixes will be added to existed prefixes.
+
+`Xapian::QueryParser::add_prefix` will be called for each prefix.
+
+If `name` = `default`, then default prefixes 
+    (prefixes, passed to `xapian_server:open/2`) will be already added.
+
+If `name` = `standard`, then default prefixes will be ignored.
+

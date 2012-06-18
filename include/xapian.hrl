@@ -186,24 +186,14 @@
 }).
 
 
+%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_query_parser]
 -record(x_query_parser, {
-    %% It is a parser type to use as a prototype to extend.
-    %%
-    %% * `standard` - the basic Xapian parser will be selected;
-    %% * `default` - the parser with a stemmer, which is passed to `xapian_server:open/2` will be selected. 
-    %% 
-    %% If a stemmer did not passed to `xapian_server:open/2`, then `standard` and `default` parsers are equal. 
     name = default :: default | standard,
-    %% When this field is `undefined`:
-    %% * and `name` is `standard` - the `standard` stemmer will be used;
-    %% * and `name` is `default` - the stemmer, passed into `xapian_server:open/2` will be used.
     stemmer :: #x_stemmer{} | undefined,
-    stemming_strategy = default :: none | some | all |default,
-    %% 0 or `unlimited' for no limit (by default).
+    stemming_strategy = default :: none | some | all | default,
     max_wildcard_expansion = unlimited :: non_neg_integer(),
-    %% It is a default operator for combining terms.
     default_op = 'OR',
-    prefixes :: [#x_prefix_name{}]
+    prefixes = [] :: [#x_prefix_name{}]
 }).
 
 

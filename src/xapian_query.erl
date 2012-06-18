@@ -188,9 +188,6 @@ append_prefixes([H|T], Bin@) ->
     append_prefixes(T, Bin@);
 
 append_prefixes([], Bin) -> 
-    Bin;
-
-append_prefixes(undefined, Bin) -> 
     Bin.
 
 
