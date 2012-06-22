@@ -30,6 +30,10 @@ int is_big_endian()
     return bint.c[0] == 1; 
 }
 
+
+/**
+ * Reverse bytes in the unsigned integer.
+ */
 uint32_t swapByteOrder(uint32_t ui)
 {
     ui = (ui >> 24) |
@@ -97,14 +101,19 @@ void run()
         /* It is too long */
         if (result.isExtended())
         {
+            // Copy few segments into one large buffer
             char* large_buf = new char[result_len];
             result.finalize(large_buf);
             std::cout.write(large_buf, result_len);
             delete[] large_buf;
         } else {
+            // Result is in the preallocated memory space.
             std::cout.write(result_buf, result_len);
         }
+
         std::cout.flush();
+
+        // Free memory, if it was allocated by ResultEncoder.
         result.clear();
     }
 }
