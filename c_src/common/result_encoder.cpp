@@ -55,8 +55,12 @@ void
 ResultEncoder::setBuffer(char* rbuf, const size_t rlen) 
 {
     m_default_buf = m_current_buf = rbuf;
+    // rlen bytes are free for use.
+    // New memory segments will be allocated after rlen bytes.
     m_default_len = m_left_len = rlen;
+    // No data in the result now.
     m_current_len = 0;
+    // No additional segments are allocated.
     m_first_segment = NULL;
 }
 
@@ -123,10 +127,6 @@ ResultEncoder::free(DataSegment*& pos)
 }
 
 
-
-/** 
- * Copy termLen bytes from term. 
- */
 void 
 ResultEncoder::put(const char* term, const size_t term_len)
 {
@@ -215,6 +215,7 @@ ResultEncoder::clear() {
         }
         while(m_first_segment != NULL);
     }
+    // All allocated memory is free now.
 
     m_first_segment = NULL;
     m_current_buf = NULL;
@@ -223,11 +224,13 @@ ResultEncoder::clear() {
 
 
 /**
- * Reset to the state before the @ref setBuffer call.
+ * Reset to the state after the @ref setBuffer call.
  */
 void ResultEncoder::reset()
 {
     clear();
+    // m_default_buf and m_default_len contains the values, 
+    // passed with the previous call of the setBuffer method.
     setBuffer(m_default_buf, m_default_len);
 }
 
@@ -236,6 +239,11 @@ void ResultEncoder::reset()
  * Return true, if this class allocated memory.
  */
 bool ResultEncoder::isExtended() const {
+    // m_current_len was modified with put calls.
+    // m_default_len is modified only by setBuffer call.
+    //
+    // This meand, that if m_current_len is lower or equal then m_default_len,
+    // then the result is too small and fits the preallocated buffer.
     return (m_current_len > m_default_len);
 }
 
@@ -247,9 +255,8 @@ bool ResultEncoder::isExtended() const {
  */
 void ResultEncoder::finalize(char* dest) {
     assert(isExtended());
-    // TODO: can be skipped
-    // memset(dest, 0, m_current_len);
     char* src = m_default_buf;
+    // Copy m_default_len bytes from src to dest.
     memcpy(dest, src, m_default_len);
     dest += m_default_len;
 
@@ -282,13 +289,15 @@ void ResultEncoder::finalize(char* dest) {
     }
     while(m_first_segment != NULL);
 
+    // All allocated memory is free now.
+
     m_first_segment = NULL;
     m_current_buf = NULL;
     m_current_len = 0;
 }
 
 /**
- * Returns result
+ * Returns the result's length.
  */
 size_t ResultEncoder::finalSize() const {
     return m_current_len;
