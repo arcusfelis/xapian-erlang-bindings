@@ -50,7 +50,7 @@ encode(#x_query_term{name=Name, wqf=WQF, position=Pos}, _N2S, _S2T, Bin@) ->
     Bin@ = append_uint(Pos, Bin@),
     Bin@;
 
-encode(#x_query_string{parser=Parser, string=String, 
+encode(#x_query_string{parser=Parser, value=String, 
     default_prefix=Prefix, features=Features}, _N2S, _S2T, Bin@) ->
     Bin@ = append_type(query_string, Bin@),
     Bin@ = append_parser(Parser, Bin@),
@@ -107,7 +107,9 @@ append_parser(default, Bin@) ->
     append_uint8(0, Bin@);
 
 append_parser(empty, Bin@) ->
-    append_parser_type(empty, Bin@);
+    Bin@ = append_parser_type(empty, Bin@),
+    Bin@ = append_parser_command(stop, Bin@),
+    Bin@;
 
 append_parser(#x_query_parser{}=Rec, Bin@) ->
     #x_query_parser
@@ -176,6 +178,9 @@ append_max_wildcard_expansion(Default, Bin)
     Bin.
 
 
+%% OR is by default.
+append_default_op('OR', Bin@) ->
+    Bin@;
 
 append_default_op(Op, Bin@) ->
     Bin@ = append_parser_command(default_op, Bin@),

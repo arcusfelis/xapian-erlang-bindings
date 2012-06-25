@@ -37,7 +37,7 @@
 %%
 %% For example, terms `"day"` and `"days"` will be equal after stemming.
 -record(x_stemmer, {
-    language = ?REQUIRED :: xapian_type:x_string()
+    language = ?REQUIRED :: xapian_type:x_language_code()
 }).
 
 
@@ -122,8 +122,8 @@
 
 %% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_prefix_name]
 -record(x_prefix_name, {
-    name :: iolist(),
-    prefix :: binary() | char() | iolist(),
+    name = ?REQUIRED  :: xapian_type:x_non_empty_string() | atom(),
+    prefix = ?REQUIRED :: xapian_type:x_non_empty_string() | char(),
     is_boolean = false :: boolean(),
     is_exclusive = true :: boolean(),
     is_default = true :: boolean()
@@ -179,7 +179,7 @@
 % ----------------------------------------------------------
 
 -record(x_query, {
-    op='AND',
+    op='AND' :: xapian_type:x_operator(),
     %% List of other queries or terms (term is a string).
     value :: [xapian_type:x_query() | xapian_type:x_string()],
     %% For `'NEAR'` and `'PHRASE'`, a window size can be specified in parameter.
@@ -204,13 +204,13 @@
 %% ```
 -record(x_query_value, {
     %% `'VALUE GE'` (`greater`) or `'VALUE LE'` (`less`, `lower`)
-    op = ?REQUIRED,
+    op = ?REQUIRED :: 'VALUE GE' | 'VALUE LE' | greater | less | lower,
     slot :: xapian_type:x_slot() | xapian_type:x_slot_name(),
     value :: xapian_type:x_string()
 }).
 
 -record(x_query_value_range, {
-    op='VALUE RANGE',
+    op='VALUE RANGE' :: xapian_type:x_operator(),
     slot :: xapian_type:x_slot() | xapian_type:x_slot_name(),
     from :: xapian_type:x_string(),
     to :: xapian_type:x_string()
@@ -226,11 +226,11 @@
 %% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_query_parser]
 -record(x_query_parser, {
     name = default :: default | standard,
-    stemmer :: #x_stemmer{} | undefined,
+    stemmer :: xapian_type:x_stemmer() | undefined,
     stemming_strategy = default :: none | some | all | default,
     max_wildcard_expansion = unlimited :: non_neg_integer(),
-    default_op = 'OR',
-    prefixes = [] :: [#x_prefix_name{}]
+    default_op = 'OR' :: xapian_type:x_operator(),
+    prefixes = [] :: [xapian_type:x_prefix_name()]
 }).
 
 
@@ -241,7 +241,7 @@
     parser = default :: #x_query_parser{} | default | standard,
 
     %% Encoded query string
-    string = ?REQUIRED :: xapian_type:x_string(),
+    value = ?REQUIRED :: xapian_type:x_string(),
     default_prefix = <<>>  :: xapian_type:x_string(),
 
     %% @see XapianErlangDriver::PARSER_FEATURES
@@ -252,13 +252,13 @@
     %%
     %% `[default]' means to use default options for `QueryParser'. 
     %% Default options are hardcoded inside Xapian.
-    features :: [atom()]
+    features :: [xapian_type:x_parser_feature()] | undefined
 }).
 
 
 %% [http://trac.xapian.org/wiki/FAQ/ExtraWeight](ExtraWeight on Wiki)
 -record(x_query_scale_weight, {
-    op = 'SCALE WEIGHT',
+    op = 'SCALE WEIGHT' :: xapian_type:x_operator(),
     %% Sub-query
     value = ?REQUIRED :: xapian_type:x_query(), 
     factor = ?REQUIRED :: float()

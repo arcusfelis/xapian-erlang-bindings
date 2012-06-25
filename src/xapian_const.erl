@@ -23,7 +23,8 @@
          docid_order_type_id/1,
          spy_type_id/1,
          term_field_id/1,
-         document_field_id/1]).
+         document_field_id/1,
+         parser_type_id/1]).
 
 
 %% Command ids
@@ -57,7 +58,9 @@ command_id(update_or_create_document)   -> 25;
 command_id(document)                    -> 26;
 command_id(open_prog)                   -> 27;
 command_id(open_tcp)                    -> 28;
-command_id(close)                       -> 29.
+command_id(close)                       -> 29;
+command_id(document_info)               -> 30;
+command_id(document_info_resource)      -> 31.
 
 
 %% Open modes of the DB

@@ -9,6 +9,7 @@
 -export([open/2,
          last_document_id/1,
          read_document/3,
+         document_info/3,
          close/1]).
 
 %% For writable DB
@@ -282,6 +283,14 @@ read_document(Server, DocId, RecordMetaDefinition) ->
     call(Server, {read_document_by_id, DocId, RecordMetaDefinition}).
 
 
+%% @doc Read document info, without putting it into database.
+-spec document_info(x_server(), 
+                    [x_document_index_part()], x_meta()) -> x_record().
+
+document_info(Server, DocumentConstructor, RecordMetaDefinition) ->
+    call(Server, {document_info, DocumentConstructor, RecordMetaDefinition}).
+
+
 %% @doc Return a list of records.
 -spec query_page(x_server(), non_neg_integer(), non_neg_integer(), 
         x_query(), x_meta()) -> [x_record()].
@@ -301,7 +310,11 @@ enquire(Server, Query) ->
 
 
 %% @doc Return a document.
--spec document(x_server(), x_unique_document_id()) -> x_resource().
+-spec document(x_server(), x_unique_document_id() 
+               | [x_document_index_part()]) -> x_resource().
+document(Server, DocumentConstructor) when is_list(DocumentConstructor) ->
+    call(Server, {document_info_resource, DocumentConstructor});
+
 document(Server, DocId) ->
     call(Server, {document, DocId}).
 
@@ -784,6 +797,20 @@ handle_call({test, TestName, Params}, _From, State) ->
     Reply = port_test(Port, TestName, Params),
     {reply, Reply, State};
 
+handle_call({document_info_resource, Document}, {FromPid, _FromRef}, State) ->
+    #state{ port = Port } = State,
+    EncodedDocument = document_encode(Document, State),
+    Result = port_document_info_resource(Port, EncodedDocument),
+    m_do_register_resource(State, document, FromPid, Result);
+
+handle_call({document_info, Document, Meta}, _From, State) ->
+    #state{ port = Port, name_to_slot = Name2Slot,
+          subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
+    EncodedDocument = document_encode(Document, State),
+    Reply = port_document_info(Port, EncodedDocument, 
+                               Meta, Name2Slot, Id2Name, Slot2Type),
+    {reply, Reply, State};
+
 handle_call({read_document_by_id, Id, Meta}, _From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
           subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
@@ -819,22 +846,10 @@ handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
     end;
 
 handle_call({document, DocId}, {FromPid, _FromRef}, State) ->
-    #state{ 
-        port = Port, 
-        register = Register } = State,
+    #state{ port = Port } = State,
 
-    %% Special handling of errors
-    case port_document(Port, DocId) of
-        {error, _Reason} = Error ->
-            {reply, Error, State};
-        {ok, ResourceNum} ->
-            Elem = #resource{type=document, number=ResourceNum},
-            %% Reply is a reference
-            {ok, {NewRegister, Ref}} = 
-            xapian_register:put(Register, FromPid, Elem),
-            NewState = State#state{register = NewRegister},
-            {reply, {ok, Ref}, NewState}
-    end;
+    m_do_register_resource(State, document, FromPid, 
+                           port_document(Port, DocId));
 
 
 handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
@@ -857,14 +872,7 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
             port_match_set(Port, EnquireNum, From, 
                 MaxItems, CheckAtLeast, SpyNums),
 
-        begin
-            MSetElem = #resource{type=mset, number=MSetNum},
-            %% Reply is a reference
-            {ok, {NewRegister, MSetRef}} = 
-            xapian_register:put(Register, FromPid, MSetElem),
-            NewState = State#state{register = NewRegister},
-            {reply, {ok, MSetRef}, NewState}
-        end]));
+        register_resource(State, mset, FromPid, MSetNum)]));
 
 handle_call({release_resource, Ref}, _From, State) ->
     #state{port = Port, register = Register } = State,
@@ -927,7 +935,7 @@ handle_call({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
 %% Return an Erlang reference of new object.
 handle_call({create_resource, ResourceTypeName, ParamCreatorFun}, 
     {FromPid, _FromRef}, State) ->
-    #state{ name_to_resource = N2R, port = Port, register = Register } = State,
+    #state{ name_to_resource = N2R, port = Port } = State,
     do_reply(State, do([error_m ||
         #resource{ type = ResouceType, number = UserResourceNumber }  
             <- orddict_find(ResourceTypeName, N2R),
@@ -948,14 +956,7 @@ handle_call({create_resource, ResourceTypeName, ParamCreatorFun},
             <- port_create_resource(
                 Port, ResouceType, UserResourceNumber, ParamBin),
 
-        begin
-            Elem = #resource{type=ResouceType, number=ResourceObjectNumber},
-            %% Reply is a reference
-            {ok, {NewRegister, Ref}} = 
-            xapian_register:put(Register, FromPid, Elem),
-            NewState = State#state{register = NewRegister},
-            {reply, {ok, Ref}, NewState}
-        end]));
+        register_resource(State, ResouceType, FromPid, ResourceObjectNumber)]));
 
 
 handle_call({mset_info, MSetRef, Params}, _From, State) ->
@@ -1310,6 +1311,16 @@ port_read_document_by_id(Port, Id, Meta, Name2Slot, Id2Name,
     decode_record_result(control(Port, read_document_by_id, Bin@), Meta, Id2Name).
 
 
+port_document_info(Port, EncodedDocument, 
+                   Meta, Name2Slot, Id2Name, Slot2Type) ->
+    Bin@ = EncodedDocument,
+    Bin@ = xapian_record:encode(Meta, Name2Slot, Slot2Type, Bin@),
+    decode_record_result(control(Port, document_info, Bin@), Meta, Id2Name).
+
+port_document_info_resource(Port, EncodedDocument) ->
+    decode_resource_result(control(Port, document_info_resource, EncodedDocument)).
+
+
 port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot, Id2Name, 
                 Slot2Type) ->
     Bin@ = <<>>,
@@ -1546,6 +1557,25 @@ orddict_find(Id, Dict) ->
 %% -----------------------------------------------------------------
 %% Internal helpers.
 %% -----------------------------------------------------------------
+%%
+register_resource(State, Type, FromPid, ResourceNum) ->
+    #state{ register = Register } = State,
+    Elem = #resource{type=Type, number=ResourceNum},
+    %% Reply is a reference
+    {ok, {NewRegister, Ref}} = 
+    xapian_register:put(Register, FromPid, Elem),
+    NewState = State#state{register = NewRegister},
+    {reply, {ok, Ref}, NewState}.
+
+m_do_register_resource(State, Type, FromPid, Result) ->
+    %% Special handling of errors
+    case Result of
+        {error, _Reason} = Error ->
+            {reply, Error, State};
+        {ok, ResourceNum} ->
+            register_resource(State, Type, FromPid, ResourceNum)
+    end.
+
          
 ref_to_num(Register, ResRef, Type) ->
     case xapian_register:get(Register, ResRef) of

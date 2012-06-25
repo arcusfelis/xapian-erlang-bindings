@@ -8,7 +8,7 @@
     append_boolean/2]).
 
 append_stemmer(#x_stemmer{language=Language}, Bin) ->
-    append_iolist(Language, Bin).
+    append_iolist(maybe_atom(Language), Bin).
 
 
 %% Prefix must be handled with `xapian_check:check_prefix/1'.
@@ -27,3 +27,8 @@ prefix_name_to_binary(A) when is_atom(A) ->
 
 prefix_name_to_binary(X) ->
     X.
+
+
+maybe_atom(X) when is_atom(X) -> atom_to_list(X);
+maybe_atom(X) -> X.
+

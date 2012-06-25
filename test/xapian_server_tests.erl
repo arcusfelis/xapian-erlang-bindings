@@ -558,15 +558,15 @@ stemmer_test() ->
         Meta = xapian_record:record(stemmer_test_record, 
             record_info(fields, stemmer_test_record)),
 
-        Q0 = #x_query_string{string="return"},
-        Q1 = #x_query_string{string="return AND list"},
-        Q2 = #x_query_string{string="author:michael"},
-        Q3 = #x_query_string{string="author:olly list"},
-        Q4 = #x_query_string{string="author:Michael"},
-        Q5 = #x_query_string{string="retur*", features=[default, wildcard]},
-        Q6 = #x_query_string{string="other AND Return"},
-        Q7 = #x_query_string{string="list NEAR here"},
-        Q8 = #x_query_string{string="list NEAR filter"},
+        Q0 = #x_query_string{value="return"},
+        Q1 = #x_query_string{value="return AND list"},
+        Q2 = #x_query_string{value="author:michael"},
+        Q3 = #x_query_string{value="author:olly list"},
+        Q4 = #x_query_string{value="author:Michael"},
+        Q5 = #x_query_string{value="retur*", features=[default, wildcard]},
+        Q6 = #x_query_string{value="other AND Return"},
+        Q7 = #x_query_string{value="list NEAR here"},
+        Q8 = #x_query_string{value="list NEAR filter"},
 
         F = fun(Query) ->
             RecList = ?SRV:query_page(Server, Offset, PageSize, Query, Meta),
@@ -583,6 +583,48 @@ stemmer_test() ->
         ?SRV:close(Server)
     end.
 
+
+query_parser_test() ->
+    Path = testdb_path(parser),
+    Params = [write, create, overwrite],
+    Document =
+        [ #x_data{value = "My test data as iolist (NOT INDEXED)"} 
+        , #x_text{value = "The quick brown fox jumps over the lazy dog."} 
+        ],
+    {ok, Server} = ?SRV:open(Path, Params),
+    try
+        %% Test a term generator
+        DocId = ?SRV:add_document(Server, Document),
+        ?assert(is_integer(DocId)),
+        Last = ?SRV:last_document_id(Server),
+
+        %% Test a query parser
+        Offset = 0,
+        PageSize = 10,
+        Meta = xapian_record:record(document, record_info(fields, document)),
+
+        F = fun(Query) ->
+            RecList = ?SRV:query_page(Server, Offset, PageSize, Query, Meta),
+            io:format(user, "~n~p~n", [RecList]),
+            RecList
+            end,
+
+        P1 = #x_query_parser{},
+        P2 = #x_query_parser{default_op='AND'},
+        P4 = #x_query_parser{name=standard},
+
+        Q1 = #x_query_string{parser=P1, value="dog"},
+        Q2 = #x_query_string{parser=P1, value="dog fox"},
+
+        %% Empty parsers
+        Q3 = #x_query_string{parser=standard, value="dog"},
+        Q4 = #x_query_string{parser=P4, value="dog"},
+
+        R1 = F(Q1),
+        R2 = F(Q2)
+    after
+        ?SRV:close(Server)
+    end.
 
 
 %% ------------------------------------------------------------------
@@ -724,6 +766,28 @@ read_document_test() ->
     end.
 
 
+document_info_test() ->
+    % Open test
+    Path = testdb_path(read_document),
+    Params = [write, create, overwrite, 
+        #x_value_name{slot = 1, name = slot1}],
+    Document =
+        [ #x_stemmer{language = <<"english">>}
+        , #x_data{value = "My test data as iolist"} 
+        , #x_value{slot = slot1, value = "Slot #0"} 
+        ],
+    {ok, Server} = ?SRV:open(Path, Params),
+    try
+    Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
+    Rec = ?SRV:document_info(Server, Document, Meta),
+    ?assertEqual(Rec#rec_test.docid, undefined),
+    ?assertEqual(Rec#rec_test.slot1, <<"Slot #0">>),
+    ?assertEqual(Rec#rec_test.data, <<"My test data as iolist">>)
+    after
+        ?SRV:close(Server)
+    end.
+
+
 read_float_value_gen() ->
     % Open test
     Path = testdb_path(read_float),
@@ -751,7 +815,7 @@ read_float_value_gen() ->
         PageSize  = 10,
         Query68   = #x_query_value_range{slot=slot1, from=6, to=8},
         Query8    = #x_query_value{op=lower, slot=slot1, value=8},
-        Query7    = #x_query_value_range{op=lower, slot=slot1, from=7, to=7},
+        Query7    = #x_query_value_range{slot=slot1, from=7, to=7},
 
         RecList68 = ?SRV:query_page(Server, Offset, PageSize, Query68, Meta2),
         RecList8  = ?SRV:query_page(Server, Offset, PageSize, Query8, Meta2),
@@ -1258,6 +1322,228 @@ prop_echo() ->
         begin
         equals(Bin, ?SRV:internal_test_run(Server, echo, Bin))
         end).
+
+
+-opaque x_query_parser() :: xapian_type:x_query_parser().
+
+prop_query_parser() ->
+    Path   = testdb_path(prop_parser),
+    Params = [write, create, overwrite],
+
+    Text   = "quick brown fox jumps over lazy dog",
+    Terms  = string:tokens(Text, " "),
+
+    {ok, Server} = ?SRV:open(Path, Params),
+
+    %% Test a term generator
+    Document = [#x_text{value = Text}],
+    DocId = 1,
+
+
+    %% Test a query parser
+    Meta = xapian_record:record(document, record_info(fields, document)),
+
+    F = fun(Query) ->
+        Offset   = 0,
+        PageSize = 10,
+        RecList  = ?SRV:query_page(Server, Offset, PageSize, Query, Meta),
+        io:format(user, "~n~p~n~p~n", [RecList, Query]),
+        RecList
+        end,
+
+    ?FORALL({Parser, Query}, 
+            {valid_query_parser(xapian_type:x_query_parser()), oneof(Terms)},
+        begin
+            ?SRV:replace_document(Server, DocId, indexing_stemmer(Parser) ++ Document),
+            QS = #x_query_string{parser=Parser, value=Query},
+            equals([#document{docid = DocId}], F(QS))
+        end).
+
+indexing_stemmer(#x_query_parser{stemming_strategy=none}) ->
+    [#x_stemmer{language=none}];
+
+indexing_stemmer(#x_query_parser{stemmer=undefined}) ->
+    [];
+
+indexing_stemmer(#x_query_parser{stemmer=Stem}) ->
+    [Stem].
+
+
+%% @doc Return a proper generator for the x_query_parser() type with 
+%%      fixed values.
+valid_query_parser(Gen) ->
+    ?SUCHTHAT(X, Gen, is_valid_query_parser(X)).
+
+
+is_valid_query_parser(#x_query_parser{prefixes=Prefixes}) ->
+    check_prefixes(Prefixes).
+
+check_prefixes(Prefixes) when is_list(Prefixes) ->
+    lists:all(fun check_prefix/1, Prefixes) 
+        andalso is_valid_prefixes(Prefixes).
+
+
+check_prefix(#x_prefix_name{name = Name, prefix = Prefix}) ->
+    is_valid_prefix_long_name(Name) andalso is_valid_prefix_short_name(Prefix).
+
+
+%% @doc Check a name pseudonym for Erlang.
+is_valid_prefix_long_name(Name) when is_atom(Name) ->
+    Name =/= '';
+
+is_valid_prefix_long_name(Name) ->
+    is_valid_non_empty_unicode_string(Name).
+
+
+%% @doc Check a name id for Xapian (used in C++).
+is_valid_prefix_short_name(Char) when is_integer(Char) ->
+    is_valid_unicode_char(Char);
+
+is_valid_prefix_short_name(Prefix) ->
+    is_valid_non_empty_unicode_string(Prefix).
+
+
+is_valid_unicode_char(Char) ->
+    (Char > 0) andalso (Char =< 16#10FFFF) andalso not is_surrogate(Char).
+
+
+%% Return true, if this true:
+%% Long names can used only with boolean or normal term.
+is_valid_prefixes([_,_|_] = Prefixes) -> 
+    KeyMaker = fun(#x_prefix_name{name = Prefix}) -> Prefix end,
+    GroupsAndKeys = group_with(Prefixes, KeyMaker),
+    Groups = delete_keys(GroupsAndKeys),
+    %% true, when each Prefix is used only with one type of the term.
+    lists:any(fun is_only_with_one_type/1, Prefixes);
+
+is_valid_prefixes(_NotEnoughPrefixes) -> 
+    true.
+
+
+is_valid_prefixes_test_(Prefixes) -> 
+    F  = fun is_valid_prefixes/1,
+    P1 = fun(Bool) -> #x_prefix_name{name = author, prefix = $A, is_boolean = Bool} end,
+    P2 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $A, is_boolean = Bool} end,
+    [ ?_assertEqual(F([ P1(false) ]),            true)
+    , ?_assertEqual(F([ P2(true)  ]),            true)
+    , ?_assertEqual(F([ P2(true),  P1(true)  ]), true)
+    , ?_assertEqual(F([ P1(false), P2(false) ]), true)
+    , ?_assertEqual(F([ P1(false), P2(true)  ]), false)
+    ].
+
+
+%% Prefixes are prefixes with same Name.
+is_only_with_one_type(Prefixes) ->
+    lists:all(fun is_boolean_prefix/1, Prefixes) orelse   
+        lists:all(fun is_normal_prefix/1, Prefixes).
+
+
+is_boolean_prefix(#x_prefix_name{is_boolean = X}) ->
+    X.
+
+
+is_normal_prefix(#x_prefix_name{is_boolean = X}) ->
+    not X.
+
+
+%% @doc Looks like `GROUP BY KeyMaker(List)` in SQL.
+-spec group_with(list(), fun()) -> list({term(),list()}).
+
+group_with([], _keymaker) ->
+    [];
+
+group_with(List, KeyMaker) ->
+    %% Map
+    Mapped = [{KeyMaker(X), X} || X <- List],
+    [SortedH|SortedT] = lists:keysort(1, Mapped),
+
+    %% Reduce
+    group_reduce(SortedT, [SortedH], []).
+    
+
+%% @doc Return `[{Key, [Value1, Value2, ...]}]'.
+%% @end
+%%
+%% Still the same group:
+group_reduce([{Key, _}=H|T],  [{Key, _}|_] = SubAcc,  Acc) ->
+    group_reduce(T,  [H|SubAcc],  Acc);
+
+%% Add the new group:
+group_reduce([H|T],  SubAcc,  Acc) ->
+    NewAcc = add_sub_acc(SubAcc, Acc),
+    group_reduce(T,  [H],  NewAcc);
+
+%% End of the list
+group_reduce([],  SubAcc,  Acc) ->
+    NewAcc = add_sub_acc(SubAcc, Acc),
+    lists:reverse(NewAcc).
+
+
+add_sub_acc([{Key, _Val}|_] = SubAcc, Acc) when is_list(Acc) ->
+    Elem = {Key, lists:reverse(delete_keys(SubAcc))},
+    [Elem | Acc].
+
+
+delete_keys(List) ->
+    [Val || {_Key, Val} <- List].
+
+
+%% Test the group_with function.
+prop_group_with() ->
+    ?FORALL(Result, [{unique(term()), non_empty([term()])}],
+        begin
+        %% Sorted by key, add the key as a part of the body
+        SortedData    = lists:flatmap(fun flatten_prop_group_result/1, Result),
+        ResultPlusKey = lists:map(fun result_plus_key/1, Result),
+        RandomData = shuffle(SortedData),
+        equals(group_with(RandomData, fun key_maker_prop_group_with/1), ResultPlusKey)
+        end).
+
+
+unique(ElemTypes) ->
+    ?LET(Values, list(ElemTypes), lists:usort(Values)).
+
+
+no_duplicates(L) ->
+        length(lists:usort(L)) =:= length(L).
+
+
+flatten_prop_group_result({Key, Values}) ->
+    [{Key, Value} || Value <- Values].
+
+
+result_plus_key({Key, _Values} = Group) ->
+    {Key, flatten_prop_group_result(Group)}.
+
+
+%% @doc `KeyMaker' for `fun prop_group_with/0'.
+key_maker_prop_group_with({Key, _Val}) ->
+    Key.
+
+
+shuffle(List) -> 
+    WithKey = [ {random:uniform(), X} || X <- List ],
+    Sorted  = lists:keysort(1, WithKey),
+    delete_keys(Sorted).
+
+
+%% group_with end
+
+
+%% @doc http://en.wikipedia.org/wiki/Mapping_of_Unicode_characters#Surrogates
+is_surrogate(Char) ->
+    (Char >= 16#D800) andalso (Char =< 16#DFFF).
+
+
+is_valid_non_empty_unicode_string(Str) ->
+    try
+        Chars = unicode:characters_to_list(Str), %% fail, if bad surrogates
+        ValidChars = [C || C <- Chars, C =/= 0],
+        ValidChars =/= []
+    catch 
+        error:_Reason -> false 
+    end.
+
 
 
 multi_sub_db_id_to_name(Id) when is_integer(Id) -> 

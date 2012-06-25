@@ -642,6 +642,31 @@ Driver::getDocumentById(PR)
 }
 
 
+/**
+ * Get document metadata without putting it in DB.
+ */
+void
+Driver::documentInfo(PR)
+{
+    Xapian::Document doc;
+    applyDocument(params, doc);
+    retrieveDocument(params, result, doc);
+}
+
+
+/**
+ * Return the document resource without putting it in DB.
+ */
+void
+Driver::documentInfoResource(PR)
+{
+    Xapian::Document* doc = new Xapian::Document();
+    applyDocument(params, *doc);
+    uint32_t res_num = m_document_store.put(doc);
+    result << res_num;
+}
+
+
 void
 Driver::test(PR)
 {
@@ -1117,6 +1142,15 @@ Driver::handleCommand(PR,
         case GET_DOCUMENT_BY_ID:
             getDocumentById(params, result);
             break;
+
+        case DOCUMENT_INFO:
+            documentInfo(params, result);
+            break;
+
+        case DOCUMENT_INFO_RESOURCE:
+            documentInfoResource(params, result);
+            break;
+
 
         case START_TRANSACTION:
             startTransaction();

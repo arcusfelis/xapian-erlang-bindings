@@ -94,7 +94,9 @@ class Driver
         DOCUMENT                    = 26,
         OPEN_PROG                   = 27,
         OPEN_TCP                    = 28,
-        CLOSE                       = 29
+        CLOSE                       = 29,
+        DOCUMENT_INFO               = 30,
+        DOCUMENT_INFO_RESOURCE      = 31
     };
 
 
@@ -374,6 +376,10 @@ class Driver
     void commitTransaction();
 
     void getDocumentById(PR);
+
+    void documentInfo(PR);
+
+    void documentInfoResource(PR);
 
 
     void testResultEncoder(ResultEncoder&, Xapian::docid from, Xapian::docid to);
