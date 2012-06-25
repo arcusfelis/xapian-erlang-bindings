@@ -1,5 +1,5 @@
 %%% TODO: Add xapian-compact support.
--module(xapian_utils).
+-module(xapian_utility).
 
 -behaviour(gen_server).
 
@@ -32,28 +32,28 @@
 -type replicate_server_param() :: 
       link 
     | one_shot 
-    | {port, xapian:x_inet_port()}          %% required
-    | {address, xapian:x_inet_address()}.
+    | {port, xapian_type:x_inet_port()}          %% required
+    | {address, xapian_type:x_inet_address()}.
 
 -type replicate_client_param() :: 
       writable 
     | link 
     | one_shot 
-    | {interval, xapian:x_timeout()}        %% in seconds
-    | {reader_time, xapian:x_timeout()}     %% in seconds
-    | {port, xapian:x_inet_port()}          %% required
-    | {address, xapian:x_init_address()}    %% required
-    | {master_name, xapian:x_string()}.
+    | {interval, xapian_type:x_timeout()}        %% in seconds
+    | {reader_time, xapian_type:x_timeout()}     %% in seconds
+    | {port, xapian_type:x_inet_port()}          %% required
+    | {address, xapian_type:x_init_address()}    %% required
+    | {master_name, xapian_type:x_string()}.
 
 -type tcp_server_param() :: 
       writable 
-    | {timeout, xapian:x_timeout()}
+    | {timeout, xapian_type:x_timeout()}
     | link
-    | {idle_timeout, xapian:x_timeout()}
-    | {active_timeout, xapian:x_timeout()}
+    | {idle_timeout, xapian_type:x_timeout()}
+    | {active_timeout, xapian_type:x_timeout()}
     | one_shot 
-    | {port, xapian:x_inet_port()} %% required
-    | {address, xapian:x_init_address()}.
+    | {port, xapian_type:x_inet_port()} %% required
+    | {address, xapian_type:x_init_address()}.
 
 
 %% -------------------------------------------------------------------

@@ -195,21 +195,20 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--opaque x_server() :: xapian:x_server().
--opaque x_transaction() :: xapian:x_transaction().
--opaque x_query() :: xapian:x_query().
--opaque x_resource() :: xapian:x_resource().
--opaque x_record() :: xapian:x_record().
--opaque x_meta() :: xapian:x_meta().
+-opaque x_server() :: xapian_type:x_server().
+-opaque x_transaction() :: xapian_type:x_transaction().
+-opaque x_query() :: xapian_type:x_query().
+-opaque x_resource() :: xapian_type:x_resource().
+-opaque x_record() :: xapian_type:x_record().
+-opaque x_meta() :: xapian_type:x_meta().
 -opaque void() :: 'VoiD'.
--opaque x_document_id() :: xapian:x_document_id().
--opaque x_string() :: xapian:x_string().
--opaque x_unique_document_id() :: xapian:x_unique_document_id().
--opaque x_document_index_part() :: xapian:x_document_index_part().
+-opaque x_document_id() :: xapian_type:x_document_id().
+-opaque x_string() :: xapian_type:x_string().
+-opaque x_unique_document_id() :: xapian_type:x_unique_document_id().
+-opaque x_document_constructor() :: xapian_type:x_document_constructor().
 
 -type multi_db_path() :: [#x_database{}|#x_prog_database{}|#x_tcp_database{}].
 -type db_path() :: x_string() | multi_db_path().
-
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -285,7 +284,7 @@ read_document(Server, DocId, RecordMetaDefinition) ->
 
 %% @doc Read document info, without putting it into database.
 -spec document_info(x_server(), 
-                    [x_document_index_part()], x_meta()) -> x_record().
+                    x_document_constructor(), x_meta()) -> x_record().
 
 document_info(Server, DocumentConstructor, RecordMetaDefinition) ->
     call(Server, {document_info, DocumentConstructor, RecordMetaDefinition}).
@@ -311,7 +310,7 @@ enquire(Server, Query) ->
 
 %% @doc Return a document.
 -spec document(x_server(), x_unique_document_id() 
-               | [x_document_index_part()]) -> x_resource().
+               | x_document_constructor()) -> x_resource().
 document(Server, DocumentConstructor) when is_list(DocumentConstructor) ->
     call(Server, {document_info_resource, DocumentConstructor});
 
@@ -368,7 +367,7 @@ release_resource(Server, ResourceRef) ->
 %% API Function Definitions for writable DB
 %% ------------------------------------------------------------------
 
--spec add_document(x_server(), [x_document_index_part()]) -> 
+-spec add_document(x_server(), x_document_constructor()) -> 
     x_document_id().
 
 add_document(Server, Document) ->
@@ -376,7 +375,7 @@ add_document(Server, Document) ->
 
 
 -spec replace_document(x_server(), x_unique_document_id(), 
-    [x_document_index_part()]) -> x_document_id().
+    x_document_constructor()) -> x_document_id().
 
 replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
     call(Server, {replace_document, DocIdOrUniqueTerm, NewDocument}).
@@ -384,14 +383,14 @@ replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
 
 %% @doc Extend (edit) the document with data.
 -spec update_document(x_server(), x_unique_document_id(), 
-    [x_document_index_part()]) -> x_document_id().
+    x_document_constructor()) -> x_document_id().
 
 update_document(Server, DocIdOrUniqueTerm, NewDocument) ->
     call(Server, {update_document, DocIdOrUniqueTerm, NewDocument, false}).
 
 
 -spec update_or_create_document(x_server(), x_unique_document_id(), 
-    [x_document_index_part()]) -> x_document_id().
+                                x_document_constructor()) -> x_document_id().
 
 update_or_create_document(Server, DocIdOrUniqueTerm, NewDocument) ->
     call(Server, {update_document, DocIdOrUniqueTerm, NewDocument, true}).

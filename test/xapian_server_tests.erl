@@ -568,17 +568,28 @@ stemmer_test() ->
         Q7 = #x_query_string{value="list NEAR here"},
         Q8 = #x_query_string{value="list NEAR filter"},
 
+%%      {x_query_string,{x_query_parser,default,{x_stemmer,da},none,0,'AND',[]},
+%%                       "trinitrotoluol",<<>>,undefined}
+        Q9Stem = #x_stemmer{language=da},
+        Q9Parser = #x_query_parser{stemmer=Q9Stem,
+                                   stemming_strategy=none, 
+                                   max_wildcard_expansion=0,
+                                   default_op='AND'},
+        Q9 = #x_query_string{value="return", parser=Q9Parser},
+
         F = fun(Query) ->
             RecList = ?SRV:query_page(Server, Offset, PageSize, Query, Meta),
             io:format(user, "~n~p~n", [RecList]),
             RecList
             end,
         Qs =
-        [Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8],
-        [R0, R1, R2, R3, R4, R5, R6, R7, R8] = 
+        [Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9],
+        [R0, R1, R2, R3, R4, R5, R6, R7, R8, R9] = 
         lists:map(F, Qs),
+        ?assert(is_list(R0) andalso length(R0) =:= 1),
         ?assertEqual(R7, []),
-        ?assertEqual(R8, R0)
+        ?assertEqual(R8, R0),
+        ?assertEqual(R9, R0)
     after
         ?SRV:close(Server)
     end.
@@ -1265,7 +1276,7 @@ elements(Pos, Records) ->
 remote_db_test() ->
     Params = [writable, link, {port, 6666}],
     DBList = [testdb_path(tcp_remote)],
-    xapian_utils:tcp_server(DBList, Params),
+    xapian_utility:tcp_server(DBList, Params),
     timer:sleep(200),
     DBConfig = #x_tcp_database{port = 6666, host = "127.0.0.1"},
     {ok, Server} = ?SRV:open(DBConfig, [write]),
@@ -1330,14 +1341,15 @@ prop_query_parser() ->
     Path   = testdb_path(prop_parser),
     Params = [write, create, overwrite],
 
-    Text   = "quick brown fox jumps over lazy dog",
+    Text   = "abc",
     Terms  = string:tokens(Text, " "),
 
     {ok, Server} = ?SRV:open(Path, Params),
 
     %% Test a term generator
-    Document = [#x_text{value = Text}],
-    DocId = 1,
+    %% TODO: There are different results with and without stemmer.
+    Document = [#x_stemmer{language = <<"english">>}, #x_text{value = Text}],
+    DocId = ?SRV:add_document(Server, Document),
 
 
     %% Test a query parser
@@ -1347,26 +1359,17 @@ prop_query_parser() ->
         Offset   = 0,
         PageSize = 10,
         RecList  = ?SRV:query_page(Server, Offset, PageSize, Query, Meta),
-        io:format(user, "~n~p~n~p~n", [RecList, Query]),
+        io:format(user, "~n~p~n~p~n", [Query, RecList]),
         RecList
         end,
 
     ?FORALL({Parser, Query}, 
             {valid_query_parser(xapian_type:x_query_parser()), oneof(Terms)},
         begin
-            ?SRV:replace_document(Server, DocId, indexing_stemmer(Parser) ++ Document),
             QS = #x_query_string{parser=Parser, value=Query},
             equals([#document{docid = DocId}], F(QS))
         end).
 
-indexing_stemmer(#x_query_parser{stemming_strategy=none}) ->
-    [#x_stemmer{language=none}];
-
-indexing_stemmer(#x_query_parser{stemmer=undefined}) ->
-    [];
-
-indexing_stemmer(#x_query_parser{stemmer=Stem}) ->
-    [Stem].
 
 
 %% @doc Return a proper generator for the x_query_parser() type with 
@@ -1414,7 +1417,7 @@ is_valid_prefixes([_,_|_] = Prefixes) ->
     GroupsAndKeys = group_with(Prefixes, KeyMaker),
     Groups = delete_keys(GroupsAndKeys),
     %% true, when each Prefix is used only with one type of the term.
-    lists:any(fun is_only_with_one_type/1, Prefixes);
+    lists:any(fun is_only_with_one_type/1, Groups);
 
 is_valid_prefixes(_NotEnoughPrefixes) -> 
     true.
@@ -1568,7 +1571,7 @@ multi_sub_db_name_to_id(Name) when is_atom(Name) ->
 run_property_testing_gen() ->
     EunitLeader = erlang:group_leader(),
     erlang:group_leader(whereis(user), self()),
-    Res = proper:module(?MODULE),
+    Res = proper:module(?MODULE, [{constraint_tries, 500}]),
     erlang:group_leader(EunitLeader, self()),
     ?_assertEqual([], Res). 
 

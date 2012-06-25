@@ -201,7 +201,7 @@ application:set_env(xapian, default_open_parameters, [port]).
 ```
 
 Testing a port 
-==============
+--------------
 
 ```
 erl -pa ./.eunit/ ./../xapian/ebin ./deps/*/ebin
@@ -209,6 +209,64 @@ erl -pa ./.eunit/ ./../xapian/ebin ./deps/*/ebin
 application:set_env(xapian, default_open_parameters, [port]).
 eunit:test({application, xapian}, [verbose]).
 ```
+
+
+Document forms
+==============
+
+* Document Constructor (CD)
+* Extracted Document (ED)
+* Document Id (ID)
+* Document Resource (RD)
+
+
+Conversations:
+
+* ID to RD: xapian_server:document(S, ID) -> RD
+* CD to RD: xapian_server:document(S, CD) -> RD
+* DC to EC: xapian_server:document_info(S, DC, Meta) -> EC
+* ID to EC: xapian_server:read_document(S, ID, Meta) -> EC
+
+
+Helpers
+=======
+
+Stand-alone Stemmer
+-------------------
+
+```erlang
+1> {ok, S} = xapian_server:open([],[]).                      
+{ok,<0.79.0>}
+
+2> xapian_helper:stem(S, <<"english">>, "octopus cat").      
+[#x_term{value = <<"Zcat">>,position = [],frequency = 1},
+ #x_term{value = <<"Zoctopus">>,position = [],frequency = 1},
+ #x_term{value = <<"cat">>, position = [2], frequency = 1},
+ #x_term{value = <<"octopus">>, position = [1], frequency = 1}]
+
+3> xapian_helper:stem(S, <<"english">>, "octopus cats").
+[#x_term{value = <<"Zcat">>,position = [],frequency = 1},
+ #x_term{value = <<"Zoctopus">>,position = [],frequency = 1},
+ #x_term{value = <<"cats">>, position = [2], frequency = 1},
+ #x_term{value = <<"octopus">>, position = [1], frequency = 1}]
+
+4> xapian_helper:stem(S, none, "octopus cats").         
+[#x_term{value = <<"cats">>, position = [2], frequency = 1},
+ #x_term{value = <<"octopus">>, position = [1], frequency = 1}]
+
+5> xapian_helper:stem(S, "english", "Zcat").    
+[#x_term{value = <<"Zzcat">>,position = [], frequency = 1},
+ #x_term{value = <<"zcat">>, position = [1], frequency = 1}]
+
+6> xapian_helper:stem(S, "english", "cat octo-cat").    
+[#x_term{value = <<"Zcat">>,position = [],frequency = 2},
+ #x_term{value = <<"Zocto">>,position = [],frequency = 1},
+ #x_term{value = <<"cat">>, position = [1,3], frequency = 2},
+ #x_term{value = <<"octo">>, position = [2], frequency = 1}]
+```
+
+`"Z"` is a prefix. It means stemmed term.
+
 
 Code examples
 =============

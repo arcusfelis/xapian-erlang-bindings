@@ -25,7 +25,10 @@
     x_record/0,
     x_prefix_name/0,
     x_stemmer/0,
-    x_language_code/0]).
+    x_language_code/0,
+    x_document_constructor/0]).
+
+-opaque x_document_constructor() :: [x_document_index_part()].
 
 -type noempty_binary() :: <<_:8, _:_ * 8>>.
 
@@ -155,5 +158,6 @@
     | sv | swedish 
     | tr | turkish
     | english_lovins | lovins %  Lovin's stemmer
-    | english_porter | porter % Porter's stemmer as described in his 1980 paper
+%   | english_porter % FIXME: unknown?
+    | porter % Porter's stemmer as described in his 1980 paper
     | kraaij_pohlmann. % A different Dutch stemmer
