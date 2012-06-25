@@ -1341,7 +1341,7 @@ prop_query_parser() ->
     Path   = testdb_path(prop_parser),
     Params = [write, create, overwrite],
 
-    Text   = "abc",
+    Text   = "a b c",
     Terms  = string:tokens(Text, " "),
 
     {ok, Server} = ?SRV:open(Path, Params),
@@ -1359,7 +1359,7 @@ prop_query_parser() ->
         Offset   = 0,
         PageSize = 10,
         RecList  = ?SRV:query_page(Server, Offset, PageSize, Query, Meta),
-        io:format(user, "~n~p~n~p~n", [Query, RecList]),
+%       io:format(user, "~n~p~n~p~n", [Query, RecList]),
         RecList
         end,
 
@@ -1381,6 +1381,7 @@ valid_query_parser(Gen) ->
 is_valid_query_parser(#x_query_parser{prefixes=Prefixes}) ->
     check_prefixes(Prefixes).
 
+
 check_prefixes(Prefixes) when is_list(Prefixes) ->
     lists:all(fun check_prefix/1, Prefixes) 
         andalso is_valid_prefixes(Prefixes).
@@ -1392,7 +1393,7 @@ check_prefix(#x_prefix_name{name = Name, prefix = Prefix}) ->
 
 %% @doc Check a name pseudonym for Erlang.
 is_valid_prefix_long_name(Name) when is_atom(Name) ->
-    Name =/= '';
+    is_valid_prefix_long_name(atom_to_list(Name));
 
 is_valid_prefix_long_name(Name) ->
     is_valid_non_empty_unicode_string(Name).
@@ -1404,10 +1405,6 @@ is_valid_prefix_short_name(Char) when is_integer(Char) ->
 
 is_valid_prefix_short_name(Prefix) ->
     is_valid_non_empty_unicode_string(Prefix).
-
-
-is_valid_unicode_char(Char) ->
-    (Char > 0) andalso (Char =< 16#10FFFF) andalso not is_surrogate(Char).
 
 
 %% Return true, if this true:
@@ -1507,10 +1504,6 @@ unique(ElemTypes) ->
     ?LET(Values, list(ElemTypes), lists:usort(Values)).
 
 
-no_duplicates(L) ->
-        length(lists:usort(L)) =:= length(L).
-
-
 flatten_prop_group_result({Key, Values}) ->
     [{Key, Value} || Value <- Values].
 
@@ -1533,19 +1526,23 @@ shuffle(List) ->
 %% group_with end
 
 
-%% @doc http://en.wikipedia.org/wiki/Mapping_of_Unicode_characters#Surrogates
-is_surrogate(Char) ->
-    (Char >= 16#D800) andalso (Char =< 16#DFFF).
-
-
 is_valid_non_empty_unicode_string(Str) ->
     try
-        Chars = unicode:characters_to_list(Str), %% fail, if bad surrogates
-        ValidChars = [C || C <- Chars, C =/= 0],
-        ValidChars =/= []
-    catch 
-        error:_Reason -> false 
+        Bin = unicode:characters_to_binary(Str),
+        Chars = unicode:characters_to_list(Str),
+        is_binary(Bin) andalso is_list(Chars) andalso are_valid_chars(Chars)
+    catch error:badarg ->
+        false
     end.
+
+
+are_valid_chars(Chars) ->
+    ValidChars = [C || C <- Chars, C =/= 0],
+    ValidChars =/= [] andalso ValidChars =:= Chars.
+
+
+is_valid_unicode_char(Char) when is_integer(Char) ->
+    is_valid_non_empty_unicode_string([Char]).
 
 
 

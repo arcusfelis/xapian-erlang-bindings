@@ -15,7 +15,7 @@ prefix_to_binary(B) when is_binary(B) ->
     B;
 
 prefix_to_binary([_|_]=L) ->
-    iolist_to_binary(L);
+    xapian_common:string_to_binary(L);
 
 prefix_to_binary(C) when is_integer(C) ->
     prefix_to_binary([C]).

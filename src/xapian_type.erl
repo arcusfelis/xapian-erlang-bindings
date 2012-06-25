@@ -30,11 +30,9 @@
 
 -opaque x_document_constructor() :: [x_document_index_part()].
 
--type noempty_binary() :: <<_:8, _:_ * 8>>.
 
--type x_string()        :: iolist() | binary().
--type x_non_empty_string() :: nonempty_string() | noempty_binary() 
-    | [x_non_empty_string() | nonempty_string() | noempty_binary(), ...].
+-type x_string()        :: string().
+-type x_non_empty_string() :: nonempty_string().
 -type x_slot_name()     :: atom().
 -type x_slot()          :: non_neg_integer().
 -type x_position()      :: non_neg_integer().
@@ -157,7 +155,7 @@
     | es | spanish 
     | sv | swedish 
     | tr | turkish
-    | english_lovins | lovins %  Lovin's stemmer
-%   | english_porter % FIXME: unknown?
+    | lovins % Lovin's stemmer
     | porter % Porter's stemmer as described in his 1980 paper
+%   | english_lovins | english_porter % FIXME: unknown?
     | kraaij_pohlmann. % A different Dutch stemmer

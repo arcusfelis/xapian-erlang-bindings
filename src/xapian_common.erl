@@ -13,15 +13,21 @@ read_string(Bin) ->
     {Str, Bin3}.
 
 
+string_to_binary(Str) ->
+    StrBin = unicode:characters_to_binary(Str),
+    [ erlang:error({not_unicode, StrBin}) || not is_binary(StrBin) ],
+    StrBin.
+
 %% Append iolist as a string
 append_iolist(Str, Bin) ->
-    StrBin = erlang:iolist_to_binary(Str),
+%   StrBin = erlang:iolist_to_binary(Str),
+    StrBin = string_to_binary(Str),
     StrLen = erlang:byte_size(StrBin),
     <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
 
 
 append_not_empty_iolist(Str, Bin) ->
-    StrBin = erlang:iolist_to_binary(Str),
+    StrBin = string_to_binary(Str),
     [erlang:error(iolist_is_empty) || Str =:= <<>>],
     StrLen = erlang:byte_size(StrBin),
     <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.

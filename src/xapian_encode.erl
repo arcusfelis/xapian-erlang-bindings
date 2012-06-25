@@ -23,7 +23,7 @@ append_prefix(#x_prefix_name{name=Name, prefix=Prefix,
 
 
 prefix_name_to_binary(A) when is_atom(A) ->
-    list_to_binary(atom_to_list(A));
+    xapian_common:string_to_binary(atom_to_list(A));
 
 prefix_name_to_binary(X) ->
     X.
