@@ -459,6 +459,7 @@ transaction(Servers, F, Timeout) ->
 %% ------------------------------------------------------------------
 
 %% @doc Returns the list of all properties.
+%% @equiv mset_info(Server, MSetResource, xapian_mset_info:properties())
 mset_info(Server, MSetResource) ->
     Params = xapian_mset_info:properties(),
     call(Server, {mset_info, MSetResource, Params}).

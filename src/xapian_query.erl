@@ -106,8 +106,8 @@ append_parser(default, Bin@) ->
     %% No commands, the default parser
     append_uint8(0, Bin@);
 
-append_parser(empty, Bin@) ->
-    Bin@ = append_parser_type(empty, Bin@),
+append_parser(standard, Bin@) ->
+    Bin@ = append_parser_type(standard, Bin@),
     Bin@ = append_parser_command(stop, Bin@),
     Bin@;
 

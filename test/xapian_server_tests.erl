@@ -558,7 +558,7 @@ stemmer_test() ->
         Meta = xapian_record:record(stemmer_test_record, 
             record_info(fields, stemmer_test_record)),
 
-        Q0 = #x_query_string{value="return"},
+        Q0 = #x_query_string{parser=standard, value="return"},
         Q1 = #x_query_string{value="return AND list"},
         Q2 = #x_query_string{value="author:michael"},
         Q3 = #x_query_string{value="author:olly list"},
@@ -1140,12 +1140,27 @@ match_set_info_case(Server) ->
         EnquireResourceId = ?SRV:enquire(Server, Query),
         ?assert(is_reference(EnquireResourceId)),
         MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
-        Info = 
-        ?SRV:mset_info(Server, MSetResourceId, [matches_lower_bound, size]),
-        ?SRV:mset_info(Server, MSetResourceId, xapian_mset_info:properties()),
-        ?SRV:release_resource(Server, EnquireResourceId),
-        ?SRV:release_resource(Server, MSetResourceId),
-        io:format(user, "~nMSet Info: ~p~n", [Info])
+
+        try
+            Info = 
+            ?SRV:mset_info(Server, MSetResourceId, [matches_lower_bound, size]),
+
+            %% All atom props
+            PropKeys = xapian_mset_info:properties(),
+            ?SRV:mset_info(Server, MSetResourceId, PropKeys),
+            io:format(user, "~nMSet Info: ~p~n", [Info]),
+
+            %% All pair props
+            [Pair1Key, Pair2Key] = 
+            PairProps = [{term_weight, "erlang"}, {term_freq, "erlang"}],
+            PairPropResult = ?SRV:mset_info(Server, MSetResourceId, PairProps),
+            ?assertMatch([{Pair1Key, _}, {Pair2Key, 1}], 
+                         PairPropResult)
+
+        after
+            ?SRV:release_resource(Server, EnquireResourceId),
+            ?SRV:release_resource(Server, MSetResourceId)
+        end
         end,
     {"Check mset_info function.", Case}.
 
@@ -1351,7 +1366,6 @@ prop_query_parser() ->
     Document = [#x_stemmer{language = <<"english">>}, #x_text{value = Text}],
     DocId = ?SRV:add_document(Server, Document),
 
-
     %% Test a query parser
     Meta = xapian_record:record(document, record_info(fields, document)),
 
@@ -1384,7 +1398,7 @@ is_valid_query_parser(#x_query_parser{prefixes=Prefixes}) ->
 
 check_prefixes(Prefixes) when is_list(Prefixes) ->
     lists:all(fun check_prefix/1, Prefixes) 
-        andalso is_valid_prefixes(Prefixes).
+        andalso are_valid_prefixes(Prefixes).
 
 
 check_prefix(#x_prefix_name{name = Name, prefix = Prefix}) ->
@@ -1409,26 +1423,34 @@ is_valid_prefix_short_name(Prefix) ->
 
 %% Return true, if this true:
 %% Long names can used only with boolean or normal term.
-is_valid_prefixes([_,_|_] = Prefixes) -> 
+%%
+%% If this function works bad, then error occures <<"InvalidOperationError">>:
+%% <<"Can't use add_prefix() and add_boolean_prefix() on the same field name, 
+%%   or add_boolean_prefix() with different values of the 'exclusive' parameter">>
+are_valid_prefixes([_,_|_] = Prefixes) -> 
     KeyMaker = fun(#x_prefix_name{name = Prefix}) -> Prefix end,
     GroupsAndKeys = group_with(Prefixes, KeyMaker),
     Groups = delete_keys(GroupsAndKeys),
     %% true, when each Prefix is used only with one type of the term.
-    lists:any(fun is_only_with_one_type/1, Groups);
+    lists:any(fun is_only_with_one_type/1, Groups)
+        andalso lists:any(fun is_same_exclusive_value/1, Groups);
 
-is_valid_prefixes(_NotEnoughPrefixes) -> 
+are_valid_prefixes(_NotEnoughPrefixes) -> 
     true.
 
 
-is_valid_prefixes_test_(Prefixes) -> 
-    F  = fun is_valid_prefixes/1,
+are_valid_prefixes_test_(Prefixes) -> 
+    F  = fun are_valid_prefixes/1,
     P1 = fun(Bool) -> #x_prefix_name{name = author, prefix = $A, is_boolean = Bool} end,
     P2 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $A, is_boolean = Bool} end,
+    P3 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $A, is_boolean = Bool, 
+                                     is_exclusive = false} end,
     [ ?_assertEqual(F([ P1(false) ]),            true)
     , ?_assertEqual(F([ P2(true)  ]),            true)
     , ?_assertEqual(F([ P2(true),  P1(true)  ]), true)
     , ?_assertEqual(F([ P1(false), P2(false) ]), true)
     , ?_assertEqual(F([ P1(false), P2(true)  ]), false)
+    , ?_assertEqual(F([ P2(true),  P3(true)  ]), false)
     ].
 
 
@@ -1436,6 +1458,22 @@ is_valid_prefixes_test_(Prefixes) ->
 is_only_with_one_type(Prefixes) ->
     lists:all(fun is_boolean_prefix/1, Prefixes) orelse   
         lists:all(fun is_normal_prefix/1, Prefixes).
+
+
+%% For booleans:
+is_same_exclusive_value(Prefixes) ->
+    IsTrue  = at_position_hof(#x_prefix_name.is_boolean, true),
+    IsFalse = at_position_hof(#x_prefix_name.is_boolean, false),
+    %% Are they not booleans?
+    lists:any(fun is_normal_prefix/1, Prefixes) orelse
+    %% They are booleans.
+        lists:all(fun is_boolean_prefix/1, Prefixes) orelse   
+            lists:all(IsTrue, Prefixes) orelse
+                lists:all(IsFalse, Prefixes).
+
+
+at_position_hof(Pos, Val) ->
+    fun(Tuple) -> erlang:element(Pos, Tuple) =:= Val end.
 
 
 is_boolean_prefix(#x_prefix_name{is_boolean = X}) ->
