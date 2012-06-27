@@ -751,6 +751,7 @@ transaction_readonly_error_gen() ->
 %% slot1 is a value.
 %% docid and data are special fields.
 -record(rec_test, {docid, slot1, data}).
+-record(rec_test2, {docid, slot1, slot2, data}).
 -record(short_rec_test, {data}).
 
 
@@ -802,8 +803,10 @@ document_info_test() ->
 read_float_value_gen() ->
     % Open test
     Path = testdb_path(read_float),
-    Params = [write, create, overwrite, 
-        #x_value_name{type = float, slot = 1, name = slot1}],
+    Params = [write, create, overwrite
+        , #x_value_name{slot = 1, name = slot1, type = float}
+        , #x_value_name{slot = 2, name = slot2, type = string}
+        ],
     Document1 =
         [ #x_data{value = "My test data as iolist"} 
         , #x_value{slot = slot1, value = 7} 
@@ -811,14 +814,21 @@ read_float_value_gen() ->
     Document2 =
         [ #x_data{value = "My test data as iolist"} 
         , #x_value{slot = slot1, value = 66} 
+        , #x_value{slot = slot2, value = "tentacle"} 
+        ],
+    Document3 =
+        [ #x_data{value = "My test data as iolist"} 
         ],
     {ok, Server} = ?SRV:open(Path, Params),
     try
         DocId1 = ?SRV:add_document(Server, Document1),
         DocId2 = ?SRV:add_document(Server, Document2),
-        Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
+        DocId3 = ?SRV:add_document(Server, Document3),
+
+        Meta = xapian_record:record(rec_test2, record_info(fields, rec_test2)),
         Rec1 = ?SRV:read_document(Server, DocId1, Meta),
         Rec2 = ?SRV:read_document(Server, DocId2, Meta),
+        Rec3 = ?SRV:read_document(Server, DocId3, Meta),
 
         %% #document{} is the simple container.
         Meta2 = xapian_record:record(document, record_info(fields, document)),
@@ -832,15 +842,24 @@ read_float_value_gen() ->
         RecList8  = ?SRV:query_page(Server, Offset, PageSize, Query8, Meta2),
         RecList7  = ?SRV:query_page(Server, Offset, PageSize, Query7, Meta2),
 
-        [?_assertEqual(Rec1#rec_test.docid, 1)
-        ,?_assertEqual(Rec1#rec_test.slot1, 7.0)
-        ,?_assertEqual(Rec1#rec_test.data, <<"My test data as iolist">>)
-        ,?_assertEqual(Rec2#rec_test.docid, 2)
-        ,?_assertEqual(Rec2#rec_test.slot1, 66.0)
-        ,?_assertEqual(Rec2#rec_test.data, <<"My test data as iolist">>)
-        ,?_assertEqual(RecList68, [#document{docid=1}])
-        ,?_assertEqual(RecList7,  [#document{docid=1}])
-        ,?_assertEqual(RecList8,  [#document{docid=1}])
+        [ ?_assertEqual(Rec1#rec_test2.docid, 1)
+        , ?_assertEqual(Rec1#rec_test2.slot1, 7.0)
+        , ?_assertEqual(Rec1#rec_test2.slot2, undefined)
+        , ?_assertEqual(Rec1#rec_test2.data, <<"My test data as iolist">>)
+          
+        , ?_assertEqual(Rec2#rec_test2.docid, 2)
+        , ?_assertEqual(Rec2#rec_test2.slot1, 66.0)
+        , ?_assertEqual(Rec2#rec_test2.slot2, <<"tentacle">>)
+        , ?_assertEqual(Rec2#rec_test2.data, <<"My test data as iolist">>)
+          
+        , ?_assertEqual(Rec3#rec_test2.docid, 3)
+        , ?_assertEqual(Rec3#rec_test2.slot1, undefined)
+        , ?_assertEqual(Rec3#rec_test2.slot2, undefined)
+        , ?_assertEqual(Rec3#rec_test2.data, <<"My test data as iolist">>)
+          
+        , ?_assertEqual(RecList68, [#document{docid=1}])
+        , ?_assertEqual(RecList7,  [#document{docid=1}])
+        , ?_assertEqual(RecList8,  [#document{docid=1}])
         ]
     after
         ?SRV:close(Server)
@@ -1144,6 +1163,7 @@ match_set_info_case(Server) ->
         try
             Info = 
             ?SRV:mset_info(Server, MSetResourceId, [matches_lower_bound, size]),
+            ?assertEqual(1, ?SRV:mset_info(Server, MSetResourceId, size)),
 
             %% All atom props
             PropKeys = xapian_mset_info:properties(),
@@ -1154,7 +1174,7 @@ match_set_info_case(Server) ->
             [Pair1Key, Pair2Key] = 
             PairProps = [{term_weight, "erlang"}, {term_freq, "erlang"}],
             PairPropResult = ?SRV:mset_info(Server, MSetResourceId, PairProps),
-            ?assertMatch([{Pair1Key, _}, {Pair2Key, 1}], 
+            ?assertMatch([{Pair1Key, _0dot4}, {Pair2Key, 1}], 
                          PairPropResult)
 
         after
@@ -1169,8 +1189,19 @@ database_info_case(Server) ->
     Case = fun() ->
         Info = 
         ?SRV:database_info(Server, [document_count]),
+        io:format(user, "~nDB Info: ~p~n", [Info]),
+
+        %% Atoms
         ?SRV:database_info(Server, xapian_db_info:properties()),
-        io:format(user, "~nDB Info: ~p~n", [Info])
+
+        %% Pairs
+        ?assertEqual(?SRV:database_info(Server, [{term_exists, <<"erlang">>}]),
+                     [{{term_exists, <<"erlang">>}, true}]),
+        ?assertEqual(?SRV:database_info(Server, [{term_exists, <<"prolog">>}]),
+                     [{{term_exists, <<"prolog">>}, false}]),
+
+        ?assert(?SRV:database_info(Server, {term_exists, <<"erlang">>})),
+        ?assertNot(?SRV:database_info(Server, {term_exists, <<"prolog">>}))
         end,
     {"Check database_info function.", Case}.
 
@@ -1433,7 +1464,7 @@ are_valid_prefixes([_,_|_] = Prefixes) ->
     Groups = delete_keys(GroupsAndKeys),
     %% true, when each Prefix is used only with one type of the term.
     lists:any(fun is_only_with_one_type/1, Groups)
-        andalso lists:any(fun is_same_exclusive_value/1, Groups);
+        andalso is_same_exclusive_value(Prefixes);
 
 are_valid_prefixes(_NotEnoughPrefixes) -> 
     true.
@@ -1443,14 +1474,22 @@ are_valid_prefixes_test_(Prefixes) ->
     F  = fun are_valid_prefixes/1,
     P1 = fun(Bool) -> #x_prefix_name{name = author, prefix = $A, is_boolean = Bool} end,
     P2 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $A, is_boolean = Bool} end,
-    P3 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $A, is_boolean = Bool, 
-                                     is_exclusive = false} end,
+    P3 = fun(Bool) -> #x_prefix_name{name = author, prefix = $A, is_boolean = true, 
+                                     is_exclusive = Bool} end,
+    P4 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $A, is_boolean = true, 
+                                     is_exclusive = Bool} end,
+    P5 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $B, is_boolean = true, 
+                                     is_exclusive = Bool} end,
     [ ?_assertEqual(F([ P1(false) ]),            true)
     , ?_assertEqual(F([ P2(true)  ]),            true)
     , ?_assertEqual(F([ P2(true),  P1(true)  ]), true)
     , ?_assertEqual(F([ P1(false), P2(false) ]), true)
     , ?_assertEqual(F([ P1(false), P2(true)  ]), false)
-    , ?_assertEqual(F([ P2(true),  P3(true)  ]), false)
+
+    , ?_assertEqual(F([ P3(true),  P4(true)  ]), true)
+    , ?_assertEqual(F([ P3(false), P4(false) ]), true)
+    , ?_assertEqual(F([ P3(true),  P4(false) ]), false)
+    , ?_assertEqual(F([ P3(true),  P5(false) ]), false)
     ].
 
 

@@ -1,6 +1,55 @@
 -module(xapian_common).
--compile(export_all).
 -compile({parse_transform, seqbind}).
+
+
+%% Basic decoding functions
+-export([read_string/1,
+         read_uint8/1,
+         read_uint/1,
+         read_double/1,
+         read_boolean/1
+        ]).
+
+%% Basic encoding functions
+-export([append_iolist/2,
+         append_int/2,
+         append_int8/2,
+         append_uint/2,
+         append_uint8/2,
+         append_uint16/2,
+         append_double/2,
+         append_boolean/2
+        ]).
+
+%% Advanced decoding functions
+-export([read_document_id/1,
+         read_document_count/1,
+         read_document_length/1,
+         read_doccount/1,
+         read_position_list/1,
+         read_unknown_type_value/1,
+         read_term_count/1,
+         read_rank/1,
+         read_weight/1,
+         read_percent/1,
+         read_db_id/1
+        ]).
+
+%% Advanced encoding functions
+-export([append_document_id/2,
+         append_docids/2,
+         append_unique_document_id/2,
+         append_slot/2,
+         append_slot/3,
+         append_value/2,
+         append_terms/2
+        ]).
+
+%% Other functions
+-export([string_to_binary/1,
+         index_of/2,
+         slot_id/2, 
+         fix_value/3]).
 
 
 %% Order of functions:
@@ -11,6 +60,16 @@ read_string(Bin) ->
     <<Num:32/native-unsigned-integer, Bin2/binary>> = Bin,  
     <<Str:Num/binary, Bin3/binary>> = Bin2,
     {Str, Bin3}.
+
+
+save_read_string(Bin) ->
+    <<Num:32/native-unsigned-integer, Bin2/binary>> = Bin,  
+    case Num of
+        0 -> {undefined, Bin2};
+        _ ->
+            <<Str:Num/binary, Bin3/binary>> = Bin2,
+            {Str, Bin3}
+    end.
 
 
 string_to_binary(Str) ->
@@ -124,6 +183,17 @@ read_double(Bin) ->
     {W, Bin2}.
 
 
+save_read_double(Bin) ->
+    %% `native-float' is `double' from C++.
+    try
+        read_double(Bin)
+    catch error:{badmatch, _Bin} ->
+        BitCount = bit_size(<<0/native-float>>),
+        <<_Skip:BitCount, Bin2/binary>> = Bin,  
+        {undefined, Bin2}
+    end.
+
+
 %% Append bool
 append_boolean(Value, Bin) ->
     append_uint8(boolean_to_integer(Value), Bin).
@@ -226,3 +296,19 @@ fix_value(Slot, Value, Slot2TypeArray)
 
 fix_value(_Slot, Value, _Slot2TypeArray) ->
     Value.
+
+
+read_value(string, Bin) ->
+    save_read_string(Bin);
+
+read_value(double, Bin) ->
+    save_read_double(Bin).
+
+
+read_unknown_type_value(Bin1) ->
+    {Type, Bin2} = read_uint8(Bin1), 
+    read_value(value_type(Type), Bin2).
+
+
+value_type(0) -> string;
+value_type(1) -> double.

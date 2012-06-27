@@ -11,16 +11,22 @@
 ]).
 
 -import(xapian_const, [mset_info_param_id/1]).
-    
-encode(Params, Bin) ->
+encode(Params, Bin) when is_list(Params) ->
     append_uint8(mset_info_param_id(stop),
-        lists:foldl(fun append_mset_info_param/2, Bin, Params)).
+        lists:foldl(fun append_mset_info_param/2, Bin, Params));
+
+encode(Param, Bin) ->
+    append_uint8(mset_info_param_id(stop),
+        append_mset_info_param(Param, Bin)).
 
     
-decode(Params, Bin) ->
+decode(Params, Bin) when is_list(Params) ->
     {RevRes, RemBin} = 
     lists:foldl(fun decode_mset_info_param/2, {[], Bin}, Params),
-    {lists:reverse(RevRes), RemBin}.
+    {lists:reverse(RevRes), RemBin};
+
+decode(Param, Bin) ->
+    decode_mset_info_param2(Param, Bin).
 
 
 append_mset_info_param(Param, Bin) when is_atom(Param) ->
@@ -31,13 +37,16 @@ append_mset_info_param({Param, Term}, Bin) when is_atom(Param) ->
     append_iolist(Term, append_uint8(mset_info_param_id(Param), Bin)).
 
 
-decode_mset_info_param(Param, {Acc, Bin}) when is_atom(Param) ->
-    {DecodedParam, RemBin} = decode_param(Param, Bin),
-    {[{Param, DecodedParam}|Acc], RemBin};
+decode_mset_info_param(Param, {Acc, Bin}) ->
+    {Value, RemBin} = decode_mset_info_param2(Param, Bin),
+    {[{Param, Value}|Acc], RemBin}.
 
-decode_mset_info_param({Param, _Term} = Id, {Acc, Bin}) when is_atom(Param) ->
-    {DecodedParam, RemBin} = decode_param(Param, Bin),
-    {[{Id, DecodedParam}|Acc], RemBin}.
+
+decode_mset_info_param2(Param, Bin) when is_atom(Param) ->
+    decode_param(Param, Bin);
+
+decode_mset_info_param2({Param, _Term}, Bin) when is_atom(Param) ->
+    decode_param(Param, Bin).
 
 
 %% These properties can be accessed without an additional parameter.

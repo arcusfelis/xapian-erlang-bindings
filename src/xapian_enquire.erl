@@ -7,8 +7,8 @@
 
 -import(xapian_common, [ 
     append_uint/2,
+    append_slot/3,
     append_boolean/2,
-    slot_id/2,
     append_double/2]).
 
 -import(xapian_const, [
@@ -77,7 +77,7 @@ append_value(ResourceId, _N2S, Register, Bin) when is_reference(ResourceId) ->
     append_uint(xapian_register:fetch(Register, ResourceId), Bin);
 
 append_value(Value, N2S, _Register, Bin) ->
-    append_uint(slot_id(Value, N2S), Bin).
+    append_slot(Value, N2S, Bin).
 
 
 append_docid_order(DocidOrder, Bin) ->
@@ -126,7 +126,7 @@ append_collapse_key(undefined, CollapseMax, N2S, Bin) ->
 
 append_collapse_key(CollapseKey, CollapseMax, N2S, Bin@) ->
     Bin@ = append_command(collapse_key, Bin@),
-    Bin@ = append_uint(slot_id(CollapseKey, N2S), Bin@),
+    Bin@ = append_slot(CollapseKey, N2S, Bin@),
     Bin@ = append_uint(CollapseMax, Bin@),
     Bin@.
 

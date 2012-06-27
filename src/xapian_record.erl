@@ -23,7 +23,7 @@
     read_string/1,
     read_percent/1,
     read_uint8/1,
-    read_double/1,
+    read_unknown_type_value/1,
     index_of/2]).
 
 -import(xapian_const, [source_type_id/1, document_field_id/1]).
@@ -202,7 +202,7 @@ dec([H|T], I2N, Bin, Acc) ->
             multi_docid -> read_document_id(Bin);
             db_number   -> read_db_id(Bin);
             db_name     -> read_db_name(Bin, I2N);
-            _ValueField -> read_other(Bin)
+            _ValueField -> read_unknown_type_value(Bin)
         end,
     dec(T, I2N, NewBin, [Val|Acc]);
 
@@ -223,14 +223,3 @@ get_tuple_value(Key, Tuple, Def) when Key > 0 ->
         undefined -> Def;
         Val -> Val
     end.
-
-read_other(Bin1) ->
-    {Type, Bin2} = read_uint8(Bin1), 
-    case value_type(Type) of
-        string -> read_string(Bin2);
-        double -> read_double(Bin2)
-    end.
-
-
-value_type(0) -> string;
-value_type(1) -> double.

@@ -9,7 +9,7 @@
 -compile({parse_transform, seqbind}).
 -import(xapian_common, [ 
     append_iolist/2,
-    append_uint/2,
+    append_slot/2,
     append_int/2,
     append_uint8/2,
     append_boolean/2,
@@ -57,17 +57,6 @@ preprocess_hof(Name2Prefix, Name2Slot, Slot2TypeArray) ->
         %% Skip all other parts
         (Rec) -> Rec
         end.
-
-
-fix_float(Rec, undefined) -> 
-    Rec;
-
-fix_float(Rec=#x_value{slot = Slot, value = Value}, Slot2TypeArray) 
-    when is_number(Value) ->
-    Rec;
-
-fix_float(Rec, _Slot2TypeArray) ->
-    Rec.
 
 
 %% @doc Build a binary from a list of parts.
@@ -172,7 +161,7 @@ append_term_wdf(Type, Value, WDF, Ignore, Bin@) ->
 
 append_value(Action, Slot, Value, Ignore, Bin@) ->
     Bin@ = append_type(value_type(Action), Bin@),
-    Bin@ = append_uint(Slot, Bin@),
+    Bin@ = append_slot(Slot, Bin@),
     Bin@ = append_value(Value, Bin@),
     Bin@ = append_boolean(Ignore, Bin@),
     Bin@.
