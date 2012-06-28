@@ -921,6 +921,7 @@ cases_gen() ->
     , fun special_fields_query_page_case/1
 
     , fun enquire_case/1
+    , fun enquire_sort_order_case/1
     , fun resource_cleanup_on_process_down_case/1
     , fun enquire_to_mset_case/1
     , fun qlc_mset_case/1
@@ -1030,6 +1031,21 @@ enquire_case(Server) ->
         ResourceId = ?SRV:enquire(Server, Query),
         io:format(user, "~n~p~n", [ResourceId]),
         ?SRV:release_resource(Server, ResourceId)
+        end,
+    {"Simple enquire resource", Case}.
+
+
+enquire_sort_order_case(Server) ->
+    Case = fun() ->
+        %% Sort by value in the 'title' slot
+        Order = #x_sort_order{type=value, value=title},
+        Query = "erlang handbook",
+        EnqDescriptor = #x_enquire{order=Order, value=Query},
+        ResourceId = ?SRV:enquire(Server, EnqDescriptor),
+        %% Were two documents selected?
+        io:format(user, "~n~p~n", [ResourceId]),
+        ?SRV:release_resource(Server, ResourceId)
+        %% TODO: check documents order
         end,
     {"Simple enquire resource", Case}.
 
