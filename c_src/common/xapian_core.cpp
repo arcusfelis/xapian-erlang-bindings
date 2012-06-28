@@ -2435,7 +2435,7 @@ Driver::msetInfo(PR)
     uint32_t   mset_num = params;
     Xapian::MSet& mset = *m_mset_store.get(mset_num);
     while (uint8_t command = params)
-    switch(command)
+    switch (command)
     {
         case MI_MATCHES_LOWER_BOUND:
             result << static_cast<uint32_t>(mset.get_matches_lower_bound());
@@ -2529,14 +2529,16 @@ Driver::databaseInfo(PR)
         case DBI_TERM_FREQ:
         {
             const std::string& tname = params;
-            result << static_cast<uint32_t>(m_db.get_termfreq(tname));
+            if (result.maybe(m_db.term_exists(tname)))
+                result << static_cast<uint32_t>(m_db.get_termfreq(tname));
             break;
         }
 
         case DBI_COLLECTION_FREQ:
         {
             const std::string& tname = params;
-            result << static_cast<uint32_t>(m_db.get_collection_freq(tname));
+            if (result.maybe(m_db.term_exists(tname)))
+                result << static_cast<uint32_t>(m_db.get_collection_freq(tname));
             break;
         }
 
@@ -2572,14 +2574,23 @@ Driver::databaseInfo(PR)
         case DBI_WDF_UPPER_BOUND:
         {
             const std::string& tname = params;
-            result << static_cast<uint32_t>(m_db.get_wdf_upper_bound(tname));
+            if (result.maybe(m_db.term_exists(tname)))
+                result << static_cast<uint32_t>(m_db.get_wdf_upper_bound(tname));
             break;
         }
 
         case DBI_DOCLENGTH:
         {
             const Xapian::docid docid = params;
-            result << static_cast<uint32_t>(m_db.get_doclength(docid));
+            try
+            {
+                Xapian::termcount len = m_db.get_doclength(docid);
+                result.maybe(true);
+                result << static_cast<uint32_t>(len);
+            } catch (Xapian::DocNotFoundError e) 
+            {
+                result.maybe(false);
+            }
             break;
         }
 

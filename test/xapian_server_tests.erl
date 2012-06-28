@@ -11,7 +11,6 @@
 %% Tests
 %% ------------------------------------------------------------------
 
--ifdef(TEST).
 -include_lib("proper/include/proper.hrl").
 -include_lib("eunit/include/eunit.hrl").
 
@@ -367,7 +366,8 @@ value_count_match_spy_gen() ->
         MSetParams = #x_match_set{
             enquire = EnquireResourceId, 
             spies = [SpySlot1]},
-        MSetResourceId = ?SRV:match_set(Server, MSetParams),
+%       MSetResourceId = 
+        ?SRV:match_set(Server, MSetParams),
         Meta = xapian_term_record:record(spy_term, 
                     record_info(fields, spy_term)),
 
@@ -415,7 +415,7 @@ value_count_match_spy_gen() ->
 
 add_color_document(Server, Color) ->
     Document = [ #x_value{slot = color, value = Color} ],
-    DocId = ?SRV:add_document(Server, Document).
+    ?SRV:add_document(Server, Document).
 
 
 term_advanced_actions_gen() ->
@@ -435,7 +435,7 @@ term_advanced_actions_gen() ->
             Table = xapian_term_qlc:document_term_table(
                 Server, DocRes, Meta, [ignore_empty]),
             ?SRV:release_resource(Server, DocRes),
-            qlc:e(qlc:q([X || X = #term{value = Value} <- Table]))
+            qlc:e(qlc:q([X || X = #term{value = V} <- Table, V =:= Value]))
             end,
 
         FF = fun() -> FindTermFn("term") end,
@@ -550,7 +550,6 @@ stemmer_test() ->
         %% Test a term generator
         DocId = ?SRV:add_document(Server, Document),
         ?assert(is_integer(DocId)),
-        Last = ?SRV:last_document_id(Server),
 
         %% Test a query parser
         Offset = 0,
@@ -587,6 +586,12 @@ stemmer_test() ->
         [R0, R1, R2, R3, R4, R5, R6, R7, R8, R9] = 
         lists:map(F, Qs),
         ?assert(is_list(R0) andalso length(R0) =:= 1),
+        ?assertEqual(R1, R0),
+        ?assertEqual(R2, R0),
+        ?assertEqual(R3, []),
+        ?assertEqual(R4, []),
+        ?assertEqual(R5, []),
+        ?assertEqual(R6, R0),
         ?assertEqual(R7, []),
         ?assertEqual(R8, R0),
         ?assertEqual(R9, R0)
@@ -607,7 +612,6 @@ query_parser_test() ->
         %% Test a term generator
         DocId = ?SRV:add_document(Server, Document),
         ?assert(is_integer(DocId)),
-        Last = ?SRV:last_document_id(Server),
 
         %% Test a query parser
         Offset = 0,
@@ -625,14 +629,16 @@ query_parser_test() ->
         P4 = #x_query_parser{name=standard},
 
         Q1 = #x_query_string{parser=P1, value="dog"},
-        Q2 = #x_query_string{parser=P1, value="dog fox"},
+        Q2 = #x_query_string{parser=P2, value="dog fox"},
 
         %% Empty parsers
         Q3 = #x_query_string{parser=standard, value="dog"},
         Q4 = #x_query_string{parser=P4, value="dog"},
 
-        R1 = F(Q1),
-        R2 = F(Q2)
+        F(Q1),
+        F(Q2),
+        F(Q3),
+        F(Q4)
     after
         ?SRV:close(Server)
     end.
@@ -649,20 +655,20 @@ transaction_gen() ->
     Params = [write, create, overwrite],
     {ok, Server1} = ?SRV:open(Path1, Params),
     {ok, Server2} = ?SRV:open(Path2, Params),
-    Fun = fun([S1, S2]) ->
+    Fun = fun([_S1, _S2]) ->
         test_result
         end,
-    BadFun = fun([S1, S2]) ->
-        test_result = 1
+    BadFun = fun([_S1, _S2]) ->
+        erlang:exit(badcat)
         end,
     %% Check fallback
-    BadFun2 = fun([S1, S2]) ->
+    BadFun2 = fun([S1, _S2]) ->
         %% Try to kill S1.
         %% Server1 will be killed because of supervision.
         erlang:exit(S1, hello)
         end,
     %% Check fallback when the transaction process is still alive
-    BadFun3 = fun([S1, S2]) ->
+    BadFun3 = fun([S1, _S2]) ->
         erlang:exit(S1, hello),
         %% Sleep for 1 second.
         %% Because this process is active, then the monitor process will 
@@ -723,7 +729,7 @@ transaction_readonly_error_gen() ->
     Path = testdb_path(transaction1),
     Params = [],
     {ok, Server} = ?SRV:open(Path, Params),
-    Fun = fun([S]) ->
+    Fun = fun([_S]) ->
         test_result
         end,
     Result = ?SRV:transaction([Server], Fun, infinity),
@@ -1201,7 +1207,16 @@ database_info_case(Server) ->
                      [{{term_exists, <<"prolog">>}, false}]),
 
         ?assert(?SRV:database_info(Server, {term_exists, <<"erlang">>})),
-        ?assertNot(?SRV:database_info(Server, {term_exists, <<"prolog">>}))
+        ?assertNot(?SRV:database_info(Server, {term_exists, <<"prolog">>})),
+
+        ?assertEqual(undefined, ?SRV:database_info(Server, 
+                                           {collection_freq, <<"prolog">>})),
+
+        ?assert(is_integer(?SRV:database_info(Server, 
+                                              {document_length, 1}))),
+        ?assertEqual(undefined, ?SRV:database_info(Server, 
+                                           {document_length, 1000}))
+        
         end,
     {"Check database_info function.", Case}.
 
@@ -1232,7 +1247,7 @@ extra_weight_gen() ->
 
 %% `Title' and `Body' are queries.
 extra_weight_query(Factor, Title, Body) ->
-    Scale = #x_query_scale_weight{factor = 2.5, value = Title},
+    Scale = #x_query_scale_weight{factor = Factor, value = Title},
     #x_query{value = [Scale, Body]}.
 
 
@@ -1302,7 +1317,8 @@ multi_db_gen() ->
     LookupRecords4 = multidb_record_by_id(Server, Query, 2),
     LookupRecords5 = multidb_record_by_id(Server, Query, 5),
 
-    [?_assertEqual(Ids, [1,1])
+    [?_assertEqual([DocId1, DocId2], [1,1])
+    ,?_assertEqual(Ids, [1,1])
     ,?_assertEqual(DbNames, [multi1, multi2])
     ,?_assertEqual(MultiIds, [1,2])
     ,?_assertEqual(DbNums, [1,2])
@@ -1348,8 +1364,8 @@ prop_multi_db() ->
     Paths = [Path1, Path2, Path3],
     try
         [?SRV:add_document(S, Document) 
-            || X <- lists:seq(1, 1000), 
-               S <- Servers ]
+            || _N <- lists:seq(1, 1000), 
+                S <- Servers ]
     after
         [ ?SRV:close(S) || S <- Servers ]
     end,
@@ -1381,7 +1397,6 @@ prop_echo() ->
         end).
 
 
--opaque x_query_parser() :: xapian_type:x_query_parser().
 
 prop_query_parser() ->
     Path   = testdb_path(prop_parser),
@@ -1463,33 +1478,36 @@ are_valid_prefixes([_,_|_] = Prefixes) ->
     GroupsAndKeys = group_with(Prefixes, KeyMaker),
     Groups = delete_keys(GroupsAndKeys),
     %% true, when each Prefix is used only with one type of the term.
-    lists:any(fun is_only_with_one_type/1, Groups)
+    lists:all(fun is_only_with_one_type/1, Groups)
         andalso is_same_exclusive_value(Prefixes);
 
 are_valid_prefixes(_NotEnoughPrefixes) -> 
     true.
 
 
-are_valid_prefixes_test_(Prefixes) -> 
+are_valid_prefixes_test_() -> 
     F  = fun are_valid_prefixes/1,
-    P1 = fun(Bool) -> #x_prefix_name{name = author, prefix = $A, is_boolean = Bool} end,
-    P2 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $A, is_boolean = Bool} end,
-    P3 = fun(Bool) -> #x_prefix_name{name = author, prefix = $A, is_boolean = true, 
-                                     is_exclusive = Bool} end,
-    P4 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $A, is_boolean = true, 
-                                     is_exclusive = Bool} end,
-    P5 = fun(Bool) -> #x_prefix_name{name = user,   prefix = $B, is_boolean = true, 
-                                     is_exclusive = Bool} end,
-    [ ?_assertEqual(F([ P1(false) ]),            true)
-    , ?_assertEqual(F([ P2(true)  ]),            true)
-    , ?_assertEqual(F([ P2(true),  P1(true)  ]), true)
-    , ?_assertEqual(F([ P1(false), P2(false) ]), true)
-    , ?_assertEqual(F([ P1(false), P2(true)  ]), false)
+    User   = #x_prefix_name{name = user, prefix = $A, is_boolean = true},
+    Author = User#x_prefix_name{name = author},
+    P1 = fun(X) -> Author#x_prefix_name{is_boolean = X} end,
+    P2 = fun(X) ->   User#x_prefix_name{is_boolean = X} end,
+    P3 = fun(X) -> Author#x_prefix_name{is_exclusive = X} end,
+    P4 = fun(X) ->   User#x_prefix_name{is_exclusive = X} end,
 
-    , ?_assertEqual(F([ P3(true),  P4(true)  ]), true)
-    , ?_assertEqual(F([ P3(false), P4(false) ]), true)
-    , ?_assertEqual(F([ P3(true),  P4(false) ]), false)
-    , ?_assertEqual(F([ P3(true),  P5(false) ]), false)
+    [{"One value list produces always true."
+    , [ ?_assertEqual(F([ P1(false) ]),            true)
+      , ?_assertEqual(F([ P2(true)  ]),            true)]}
+    , {"With different names (author and user)"
+    , [ ?_assertEqual(F([ P2(true),  P1(true)  ]), true)
+      , ?_assertEqual(F([ P1(false), P2(false) ]), true)
+      , ?_assertEqual(F([ P1(false), P2(true)  ]), true)]}
+    , {"With same name (author)"
+      , ?_assertEqual(F([ P1(false), P3(true)  ]), false)}
+
+    , {"Boolean and exclusive."
+    , [ ?_assertEqual(F([ P3(true),  P4(true)  ]), true)
+      , ?_assertEqual(F([ P3(false), P4(false) ]), true)
+      , ?_assertEqual(F([ P3(true),  P4(false) ]), false)]}
     ].
 
 
@@ -1501,14 +1519,12 @@ is_only_with_one_type(Prefixes) ->
 
 %% For booleans:
 is_same_exclusive_value(Prefixes) ->
-    IsTrue  = at_position_hof(#x_prefix_name.is_boolean, true),
-    IsFalse = at_position_hof(#x_prefix_name.is_boolean, false),
+    IsTrue  = at_position_hof(#x_prefix_name.is_exclusive, true),
+    IsFalse = at_position_hof(#x_prefix_name.is_exclusive, false),
     %% Are they not booleans?
-    lists:any(fun is_normal_prefix/1, Prefixes) orelse
-    %% They are booleans.
-        lists:all(fun is_boolean_prefix/1, Prefixes) orelse   
-            lists:all(IsTrue, Prefixes) orelse
-                lists:all(IsFalse, Prefixes).
+    lists:all(fun is_normal_prefix/1, Prefixes) orelse
+        lists:all(IsTrue, Prefixes) orelse
+            lists:all(IsFalse, Prefixes).
 
 
 at_position_hof(Pos, Val) ->
@@ -1649,5 +1665,4 @@ run_property_testing_gen() ->
     erlang:group_leader(EunitLeader, self()),
     ?_assertEqual([], Res). 
 
--endif.
 

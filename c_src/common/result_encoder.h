@@ -97,6 +97,8 @@ class ResultEncoder
     operator<<(double value);
     /*! \} */
 
+    bool maybe(bool is_exists);
+
     /**
      * It is used by `<<` operators.
      * Appends a block of data of size @a term_len to the result.

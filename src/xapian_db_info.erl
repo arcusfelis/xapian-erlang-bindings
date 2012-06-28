@@ -9,12 +9,12 @@
     append_slot/2,
     append_document_id/2,
     read_document_count/1,
-    read_weight/1,
     read_string/1,
     read_boolean/1,
     read_document_id/1,
     read_document_length/1,
-    read_term_count/1
+    read_term_count/1,
+    read_maybe/2
 ]).
 
 -import(xapian_const, [db_info_param_id/1]).
@@ -79,10 +79,10 @@ decode_param(term_exists, Bin) ->
     read_boolean(Bin);
 
 decode_param(term_freq, Bin) ->
-    read_document_count(Bin);
+    read_maybe(fun xapian_common:read_document_count/1, Bin);
 
 decode_param(collection_freq, Bin) ->
-    read_term_count(Bin);
+    read_maybe(fun xapian_common:read_term_count/1, Bin);
 
 decode_param(value_freq, Bin) ->
     read_document_count(Bin);
@@ -100,10 +100,12 @@ decode_param(document_length_upper_bound, Bin) ->
     read_term_count(Bin);
 
 decode_param(wdf_upper_bound, Bin) ->
-    read_term_count(Bin);
+    read_maybe(fun xapian_common:read_term_count/1, Bin);
 
 decode_param(document_length, Bin) ->
-    read_term_count(Bin);
+    %% We did not use `read_document_length' here, 
+    %% because it is for double, while uint is wanted.
+    read_maybe(fun xapian_common:read_term_count/1, Bin);
 
 decode_param(uuid, Bin) ->
     read_string(Bin);

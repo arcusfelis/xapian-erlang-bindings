@@ -32,7 +32,8 @@
          read_rank/1,
          read_weight/1,
          read_percent/1,
-         read_db_id/1
+         read_db_id/1,
+         read_maybe/2
         ]).
 
 %% Advanced encoding functions
@@ -50,6 +51,15 @@
          index_of/2,
          slot_id/2, 
          fix_value/3]).
+
+
+
+read_maybe(Fn, Bin) ->
+    {IsDefined, Bin2} = read_uint8(Bin),
+    case IsDefined of
+        0 -> {undefined, Bin2}; 
+        1 -> Fn(Bin2)
+    end.
 
 
 %% Order of functions:

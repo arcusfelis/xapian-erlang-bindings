@@ -303,4 +303,11 @@ size_t ResultEncoder::finalSize() const {
     return m_current_len;
 }
 
+
+bool ResultEncoder::maybe(bool is_exists)
+{
+    PUT_VALUE(is_exists);
+    return is_exists;
+}
+
 XAPIAN_ERLANG_NS_END

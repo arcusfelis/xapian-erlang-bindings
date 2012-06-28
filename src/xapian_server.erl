@@ -509,6 +509,15 @@ database_info(Server) ->
 %% * `{document_length, DocId}';
 %% * `{metadata, Key}'
 %%      Get the user-specified metadata associated with a given key.
+%%
+%% If `DocId' or `Term' does not exist, `undefined' value will be return.
+%%
+%% For example,
+%%
+%% ```
+%% database_info(Server, [{term_exists, "erlang"}, {term_freq, "erlang"}]).
+%% [{{term_exists, "erlang"}, false}, {{term_freq, "erlang"}, undefined}]
+%% '''
 database_info(Server, Params) ->
     call(Server, {database_info, Params}).
 
