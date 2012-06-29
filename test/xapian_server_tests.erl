@@ -748,23 +748,46 @@ transaction_timeout_gen() ->
 
 transaction_readonly_error_gen() ->
     % Open test
-    Path = testdb_path(transaction1),
-    Params = [],
-    {ok, Server} = ?SRV:open(Path, Params),
-    Fun = fun([_S]) ->
+    Path1 = testdb_path(transaction1),
+    Path2 = testdb_path(transaction4),
+    Params1 = [],
+    Params2 = [write, create, overwrite],
+    {ok, Server1} = ?SRV:open(Path1, Params1),
+    {ok, Server2} = ?SRV:open(Path2, Params2),
+    Fun = fun([_S1, _S2]) ->
         test_result
         end,
-    Result = ?SRV:transaction([Server], Fun, infinity),
-    ?SRV:close(Server),
+
+    Result1 = ?SRV:transaction([Server1, Server2], Fun, infinity),
+    Result2 = ?SRV:transaction([Server2, Server1], Fun, infinity),
+
+    ?SRV:close(Server1),
+    ?SRV:close(Server2),
+
     #x_transaction_result{
-        is_committed=Committed,
-        is_consistent=Consistent,
-        reason=Reason
-    } = Result,
+        is_committed=Committed1,
+        is_consistent=Consistent1,
+        reason=Reason1
+    } = Result1,
+
+    #x_transaction_result{
+        is_committed=Committed2,
+        is_consistent=Consistent2,
+        reason=Reason2
+    } = Result2,
+
     {"Cannot start transaction for readonly server.",
-        [ ?_assertEqual(Committed, false)
-        , ?_assertEqual(Consistent, true)
-        , ?_assertEqual(Reason, readonly_db)
+        [ {"read_only @ write",
+          [ ?_assertEqual(Committed1, false)
+          , ?_assertEqual(Consistent1, true)
+          , ?_assertEqual(Reason1, readonly_db)
+          ]}
+
+        , {"write @ read_only",
+          [ ?_assertEqual(Committed2, false)
+          , ?_assertEqual(Consistent2, true)
+          , ?_assertEqual(Reason2, readonly_db)
+          ]}
         ]}.
     
 

@@ -124,7 +124,7 @@ cannot_start_transaction(Ref, Servers, TransServers) ->
     Splitter = fun
         ({_Server, TransServer}) -> is_pid(TransServer)
         end,
-    {Valid, Invalid} = lists:splitwith(Splitter, Zipped),
+    {Valid, Invalid} = lists:partition(Splitter, Zipped),
 
     %% The Invalid list has the same format as the Statuses list.
     %% Cancel the transaction on Valid servers.
