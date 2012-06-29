@@ -1325,6 +1325,40 @@ extra_weight_gen() ->
     [?_assertEqual(Ids, [DocId])].
 
 
+large_db_and_qlc_test() ->
+    Path = testdb_path(large_db_and_qlc),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:open(Path, Params),
+    Terms = ["xapian", "erlang"],
+
+    Document = [#x_term{value = X} || X <- Terms],
+    ExpectedDocIds = lists:seq(1, 1000),
+    DocIds = [begin
+        ?SRV:add_document(Server, Document)
+        end || _ <- ExpectedDocIds],
+    ?assertEqual(DocIds, ExpectedDocIds),
+
+    Query = "erlang",
+    {Cursor, Destructor} = all_record_cursor(Server, Query),
+    try
+        cursor_walk(1, 1001, Cursor)
+    after
+        Destructor()
+    end.
+
+
+%% Id =:= Max
+cursor_walk(Id, Id, Cursor) ->
+    Result = qlc:next_answers(Cursor, 1),
+    ?assertEqual(Result, []),
+    [];
+
+cursor_walk(Id, Max, Cursor) ->
+    Result = qlc:next_answers(Cursor, 1),
+    ?assertEqual(Result, [Id]),
+    cursor_walk(Id+1, Max, Cursor).
+
+
 %% `Title' and `Body' are queries.
 extra_weight_query(Factor, Title, Body) ->
     Scale = #x_query_scale_weight{factor = Factor, value = Title},
@@ -1347,6 +1381,20 @@ all_record_ids(Server, Query) ->
     ?SRV:release_resource(Server, EnquireResourceId),
     ?SRV:release_resource(Server, MSetResourceId),
     Ids.
+
+
+all_record_cursor(Server, Query) ->
+    EnquireResourceId = ?SRV:enquire(Server, Query),
+    MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
+    Meta = xapian_record:record(document, record_info(fields, document)),
+    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+    Cursor = qlc:cursor(qlc:q([Id || #document{docid=Id} <- Table])),
+    {Cursor, fun() ->
+        qlc:delete_cursor(Cursor),
+        ?SRV:release_resource(Server, EnquireResourceId),
+        ?SRV:release_resource(Server, MSetResourceId),
+        ok
+        end}.
 
 
 all_multidb_records(Server, Query) ->
@@ -1515,6 +1563,55 @@ prop_query_parser() ->
 
 
 
+%% Standard QueryParser must be cloned, not just assigned.
+clone_query_parser_test() ->
+    Path   = testdb_path(clone_prop_parser),
+    Params = [write, create, overwrite],
+
+    {ok, Server} = ?SRV:open(Path, Params),
+    %% Can't use add_prefix() and add_boolean_prefix() on the same field name.
+    Author  = #x_prefix_name{name = author, prefix = $A, is_boolean = true},
+    User    = #x_prefix_name{name = author, prefix = $U, is_boolean = false},
+    Parser1 = #x_query_parser{prefixes = [Author]},
+    Parser2 = #x_query_parser{prefixes = [User]},
+    Query1 = #x_query_string{parser=Parser1, value = "sphinx"},
+    Query2 = #x_query_string{parser=Parser2, value = "sphinx"},
+    Enq1 = ?SRV:enquire(Server, Query1),
+    ?SRV:release_resource(Server, Enq1),
+    %% Here can be an exception
+    Enq2 = ?SRV:enquire(Server, Query2),
+    ?SRV:release_resource(Server, Enq2).
+
+
+query_parser_and_exclusive_boolean_test() ->
+    Path   = testdb_path(ex_prop_parser),
+    Params = [write, create, overwrite],
+
+    {ok, Server} = ?SRV:open(Path, Params),
+    User    = #x_prefix_name{prefix = $U, is_boolean = true,
+                             name = user, is_exclusive = true},
+    Author  = User#x_prefix_name{name = author, is_exclusive = false},
+    Parser  = #x_query_parser{prefixes = [Author, User]},
+    Query   = #x_query_string{parser=Parser, value = "sphinx"},
+    Enq     = ?SRV:enquire(Server, Query),
+    ?SRV:release_resource(Server, Enq).
+
+
+%% Same name, different is_exclusive == Error
+query_parser_and_exclusive_boolean_error_test() ->
+    Path   = testdb_path(ex_prop_parser_err),
+    Params = [write, create, overwrite],
+
+    {ok, Server} = ?SRV:open(Path, Params),
+    User    = #x_prefix_name{name = author, is_boolean = true,
+                             prefix = $U, is_exclusive = true},
+    Author  = User#x_prefix_name{prefix = $A, is_exclusive = false},
+    Parser  = #x_query_parser{prefixes = [Author, User]},
+    Query   = #x_query_string{parser=Parser, value = "sphinx"},
+    ?assertError(#x_error{type = <<"InvalidOperationError">>}, 
+                 ?SRV:enquire(Server, Query)).
+
+
 %% @doc Return a proper generator for the x_query_parser() type with 
 %%      fixed values.
 valid_query_parser(Gen) ->
@@ -1557,40 +1654,49 @@ is_valid_prefix_short_name(Prefix) ->
 %% <<"Can't use add_prefix() and add_boolean_prefix() on the same field name, 
 %%   or add_boolean_prefix() with different values of the 'exclusive' parameter">>
 are_valid_prefixes([_,_|_] = Prefixes) -> 
-    KeyMaker = fun(#x_prefix_name{name = Prefix}) -> Prefix end,
+    %% GROUP BY name
+    KeyMaker = fun(#x_prefix_name{name = Name}) -> Name end,
     GroupsAndKeys = group_with(Prefixes, KeyMaker),
     Groups = delete_keys(GroupsAndKeys),
     %% true, when each Prefix is used only with one type of the term.
     lists:all(fun is_only_with_one_type/1, Groups)
-        andalso is_same_exclusive_value(Prefixes);
+        andalso lists:all(fun is_same_exclusive_value/1, Groups);
 
 are_valid_prefixes(_NotEnoughPrefixes) -> 
     true.
 
 
 are_valid_prefixes_test_() -> 
-    F  = fun are_valid_prefixes/1,
-    User   = #x_prefix_name{name = user, prefix = $A, is_boolean = true},
-    Author = User#x_prefix_name{name = author},
-    P1 = fun(X) -> Author#x_prefix_name{is_boolean = X} end,
-    P2 = fun(X) ->   User#x_prefix_name{is_boolean = X} end,
-    P3 = fun(X) -> Author#x_prefix_name{is_exclusive = X} end,
-    P4 = fun(X) ->   User#x_prefix_name{is_exclusive = X} end,
+    F = fun are_valid_prefixes/1,
+    U = #x_prefix_name{name = user, prefix = $A, 
+                       is_boolean = true, is_exclusive = false},
+    A = U#x_prefix_name{name = author},
 
     [{"One value list produces always true."
-    , [ ?_assertEqual(F([ P1(false) ]),            true)
-      , ?_assertEqual(F([ P2(true)  ]),            true)]}
+    , [ ?_assert(F([ U#x_prefix_name{}  ]))
+      , ?_assert(F([ A#x_prefix_name{} ]))
+      , ?_assert(F([ U#x_prefix_name{is_boolean = false}  ]))
+      , ?_assert(F([ A#x_prefix_name{is_boolean = false} ]))]}
     , {"With different names (author and user)"
-    , [ ?_assertEqual(F([ P2(true),  P1(true)  ]), true)
-      , ?_assertEqual(F([ P1(false), P2(false) ]), true)
-      , ?_assertEqual(F([ P1(false), P2(true)  ]), true)]}
+    , [ ?_assert(F([ U#x_prefix_name{}, A#x_prefix_name{} ]))
+      , ?_assert(F([ U#x_prefix_name{is_boolean = false}
+                   , A#x_prefix_name{is_boolean = false} ]))
+      , ?_assert(F([ U#x_prefix_name{}
+                   , A#x_prefix_name{is_boolean = false} ]))]}
     , {"With same name (author)"
-      , ?_assertEqual(F([ P1(false), P3(true)  ]), false)}
+      , ?_assertNot(F([ A#x_prefix_name{}, 
+                        A#x_prefix_name{is_boolean = false}]))}
 
     , {"Boolean and exclusive."
-    , [ ?_assertEqual(F([ P3(true),  P4(true)  ]), true)
-      , ?_assertEqual(F([ P3(false), P4(false) ]), true)
-      , ?_assertEqual(F([ P3(true),  P4(false) ]), false)]}
+    , [ ?_assert(F([ U#x_prefix_name{}, A#x_prefix_name{}  ]))
+      , ?_assert(F([ U#x_prefix_name{is_exclusive = true}, 
+                     A#x_prefix_name{is_exclusive = true} ]))
+      , ?_assert(F([ U#x_prefix_name{is_exclusive = true}, 
+                     A#x_prefix_name{} ]))
+      , {"Same name, different is_exclusive == Error"
+        , ?_assertNot(F([ A#x_prefix_name{}, 
+                          A#x_prefix_name{is_exclusive = true} ]))}
+      ]}
     ].
 
 
@@ -1600,7 +1706,7 @@ is_only_with_one_type(Prefixes) ->
         lists:all(fun is_normal_prefix/1, Prefixes).
 
 
-%% For booleans:
+%% For booleans with same name.
 is_same_exclusive_value(Prefixes) ->
     IsTrue  = at_position_hof(#x_prefix_name.is_exclusive, true),
     IsFalse = at_position_hof(#x_prefix_name.is_exclusive, false),

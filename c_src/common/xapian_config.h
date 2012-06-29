@@ -1,5 +1,6 @@
 
-#define XAPIAN_ERLANG_NS_BEGIN namespace XapianErlang { 
+#define XAPIAN_ERLANG_NS XapianErlang 
+#define XAPIAN_ERLANG_NS_BEGIN namespace XAPIAN_ERLANG_NS { 
 #define XAPIAN_ERLANG_NS_END   }
 #define PR ParamDecoder& params, ResultEncoder& result 
 

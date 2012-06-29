@@ -27,6 +27,7 @@
 // Main Driver Class
 // -------------------------------------------------------------------
 
+
 #include "xapian_core.h"
 
 XAPIAN_ERLANG_NS_BEGIN
@@ -88,8 +89,10 @@ Driver::Driver(MemoryManager& mm, ResourceGenerator& generator)
     m_stores.add(ResourceType::DOCUMENT,       &m_document_store);
 
 
-    m_default_parser.set_database(m_db);
-    m_standard_parser.set_database(m_db);
+    m_default_parser_factory.set_database(m_db);
+    m_standard_parser_factory.set_database(m_db);
+    m_default_parser_factory.set_database(m_db);
+    m_standard_parser_factory.set_database(m_db);
     m_stores.set_database(m_db);
 }
 
@@ -103,6 +106,7 @@ Driver::setDefaultStemmer(const Xapian::Stem& stemmer)
 {
     m_default_stemmer = stemmer;
     m_default_parser.set_stemmer(m_default_stemmer);
+    m_default_parser_factory.set_stemmer(m_default_stemmer);
 }
 
 
@@ -120,8 +124,10 @@ Driver::setDefaultPrefixes(ParamDecoder& params)
     const uint32_t count   = params;
     for (uint32_t i = 0; i < count; i++)
     {
-        addPrefix(params, m_default_parser);
+        addPrefix(params, m_default_parser_factory);
     }
+    // Update the mirror
+    m_default_parser = m_default_parser_factory;
 }
 
 
@@ -783,6 +789,21 @@ Driver::addPrefix(ParamDecoder& params, Xapian::QueryParser& qp)
 }
 
 
+void 
+Driver::addPrefix(ParamDecoder& params, QueryParserFactory& qpf)
+{
+    const std::string&      field          = params;
+    const std::string&      prefix         = params;
+    const bool              is_boolean     = params;
+    const bool              is_exclusive   = params;
+
+    if (is_boolean)
+        qpf.add_boolean_prefix(field, prefix, is_exclusive);
+    else
+        qpf.add_prefix(field, prefix);
+}
+
+
 Xapian::Query 
 Driver::buildQuery(ParamDecoder& params)
 {
@@ -992,7 +1013,7 @@ Driver::fillEnquireOrder(Xapian::Enquire& enquire,
 
 
 /** 
- * Returns a clone of a prototype
+ * Returns a cloned parser.
  */
 Xapian::QueryParser 
 Driver::selectParser(ParamDecoder& params)
@@ -1001,10 +1022,10 @@ Driver::selectParser(ParamDecoder& params)
     switch (type)
     {
     case QP_TYPE_DEFAULT:
-        return m_default_parser;
+        return m_default_parser_factory;
 
     case QP_TYPE_EMPTY:
-        return m_standard_parser;
+        return m_standard_parser_factory;
 
     default:
         throw BadCommandDriverError(type);
@@ -1022,7 +1043,7 @@ Driver::readParser(ParamDecoder& params)
     return m_default_parser;
  
   // Clone parser
-  Xapian::QueryParser qp = m_default_parser;
+  Xapian::QueryParser qp = m_default_parser_factory;
   do
   {
     switch (command)

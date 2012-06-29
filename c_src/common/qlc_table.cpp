@@ -60,7 +60,7 @@ MSetQlcTable::getPage(
 
     Xapian::MSetIterator iter = m_mset[skip];
     Xapian::MSetIterator last = (count < size) 
-                              ? m_mset[skip+left+1] 
+                              ? m_mset[skip+left] 
                               : m_mset.end();
 
     ParamDecoder params = m_controller;

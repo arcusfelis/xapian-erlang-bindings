@@ -2,6 +2,7 @@
 #define XAPIAN_CORE_H
 
 #include "result_encoder.h"
+#include "query_parser_factory.h"
 #include "qlc_table.h"
 #include "object_register.h"
 #include "user_resources.h"
@@ -30,6 +31,8 @@ class Driver
 
     Xapian::QueryParser m_default_parser;
     Xapian::QueryParser m_standard_parser;
+    QueryParserFactory m_default_parser_factory;
+    QueryParserFactory m_standard_parser_factory;
     ObjectRegister<Xapian::Document>            m_document_store;
     ObjectRegister<Xapian::Enquire>             m_enquire_store;
     ObjectRegister<Xapian::MSet>                m_mset_store;
@@ -460,6 +463,7 @@ class Driver
     selectParser(ParamDecoder&);
 
     void addPrefix(ParamDecoder&, Xapian::QueryParser& qp);
+    void addPrefix(ParamDecoder&, QueryParserFactory& qpf);
 
 
 
