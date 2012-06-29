@@ -106,6 +106,17 @@ try_start_application() ->
     end.
 
 
+anonym_pool_test_() ->
+    try_start_application(),
+    %% The database path is "priv/Name".
+    Name = 'anonym_pool',
+    create_database(Name),
+    %% Create an anonymous pool
+    {ok, Pool} = ?POOL:open([], testdb_path(Name), []),
+    ?POOL:close(Pool),
+    [ ?_assertNot(is_process_alive(Pool)) ].
+
+
 pool_test_() ->
     try_start_application(),
     {foreach,
@@ -118,14 +129,8 @@ pool_test_() ->
 
 pool_setup() ->
     Names = [pool1, pool2, pool3],
-    %% Create DBs
-    Modes = [write, create, overwrite],
-    Dbs =
-    [begin
-        {ok, Pid} = xapian_server:open(testdb_path(Name), Modes),
-        Pid
-     end || Name <- Names],
-    [ok = xapian_server:close(Db) || Db <- Dbs],
+    %% Create DBs 
+    [create_database(Name) || Name <- Names],
     
     %% Create pools of readers
     Workers = 
@@ -135,9 +140,11 @@ pool_setup() ->
      end || Name <- Names],
     #test_pool{names=Names, pool_pids=Workers}.
 
+
 pool_clean(#test_pool{names=Names}) ->
     [ok = ?POOL:close(Name) || Name <- Names],
     ok.
+
 
 access_by_pid_case(#test_pool{pool_pids=Pools}) ->
     Fun = fun([W1, W2, W3] = Workers) ->
@@ -147,7 +154,14 @@ access_by_pid_case(#test_pool{pool_pids=Pools}) ->
     [ ?_assertEqual(Result, true)
     ].
 
+
 access_by_name_case(#test_pool{names=Pools}) ->
     [].
+
+
+create_database(Name) ->
+    Modes = [write, create, overwrite],
+    {ok, Server} = xapian_server:open(testdb_path(Name), Modes),
+    xapian_server:close(Server).
 
 -endif.

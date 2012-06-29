@@ -1,7 +1,6 @@
 %% It contains helpers for extracting.
 -module(xapian_term_record).
 -export([record/2, 
-        encode/1, 
         encode/2, 
         decode/2, 
         decode_list/2, 
@@ -13,7 +12,6 @@
 -record(rec, {name, fields}).
 -import(xapian_common, [ 
     append_uint8/2,
-    append_iolist/2,
     read_document_count/1,
     read_term_count/1,
     read_string/1,
@@ -45,10 +43,6 @@ key_position(#rec{fields=TupleFields}) ->
 
 
 %% Creates tuples {Name, Field1, ....}
-encode(Meta) ->
-    #rec{fields=TupleFields} = Meta,
-    enc(TupleFields, <<>>).
-
 encode(Meta, Bin) ->
     #rec{fields=TupleFields} = Meta,
     enc(TupleFields, Bin).

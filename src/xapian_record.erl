@@ -1,7 +1,6 @@
 %% It contains helpers for extracting information from a document.
 -module(xapian_record).
 -export([record/2, 
-         encode/3, 
          encode/4, 
          decode/3, 
          decode_list/3, 
@@ -50,15 +49,11 @@ key_position(#rec{fields=TupleFields}, Field) ->
     I -> I + 1
     end.
 
-
 tuple(#rec{name=TupleName, fields=TupleFields}) ->
     list_to_tuple([TupleName | TupleFields]).
 
 
-%% Creates tuples {Name, Field1, ....}
-encode(Meta, Name2Slot, Value2TypeArray) when not is_binary(Value2TypeArray) ->
-    encode(Meta, Name2Slot, Value2TypeArray, <<>>).
-
+%% Append information about fields to `Bin'.
 encode(Meta, Name2Slot, Value2TypeArray, Bin) ->
     #rec{name=_TupleName, fields=TupleFields} = Meta,
     enc(TupleFields, Name2Slot, Value2TypeArray, 
@@ -218,8 +213,26 @@ db_id_to_name(Id, I2N) ->
     get_tuple_value(Id, I2N, Id).
 
 
-get_tuple_value(Key, Tuple, Def) when Key > 0 ->
-    case erlang:element(Key, Tuple) of
+get_tuple_value(KeyPos, Tuple, Def) when KeyPos > 0 ->
+    case erlang:element(KeyPos, Tuple) of
         undefined -> Def;
         Val -> Val
     end.
+
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-define(POOL, ?MODULE).
+
+
+tuple_test_() ->
+    [ ?_assertEqual(tuple(#rec{name=book, fields=[author, docid]}),
+                    {book, author, docid})
+    ].
+
+get_tuple_value_test_() ->
+    [ ?_assertEqual(get_tuple_value(#rec.name, #rec{name=book}, default), book)
+    , ?_assertEqual(get_tuple_value(#rec.name, #rec{}, default), default)
+    ].
+
+-endif.

@@ -63,7 +63,21 @@ wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers,
         %% One of the real servers dead.
         %% Fallback others.
         {'DOWN', Ref, process, Pid, Reason} ->
+            %% Kill the transaction process.
+            erlang:exit(TransPid, 
+                        {transaction_error, {server_down, Reason}}),
+
+            %% Take away the monitor of the transaction process.
+            receive
+                {'DOWN', TransRef, process, TransPid, _OtherReason} -> ok
+            end,
+
+            %% TransPid is dead. TransServers are still alive.
+
+            %% If the server is not valid, then is is an error.
+            %% The valid server was started, but does not reply yet.
             true = lists:member(Pid, Servers),
+            %% Cancel the transaction on other valid servers.
             Servers2 = Servers -- [Pid],
             [ cancel_transaction(Server, Ref) || Server <- Servers2 ],
             Statuses = collect_status_info(Ref, Servers2, [{Pid, unknown}]),
@@ -80,6 +94,13 @@ wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers,
             [ catch xapian_server:close(Server) || Server <- TransServers ],
             Statuses = collect_status_info(Ref, Servers, []),
             Committed = lists:all(fun is_committed/1, Statuses),
+
+            %% Take away the monitor of the transaction process.
+            receive
+                {'DOWN', TransRef, process, TransPid, Reason} -> 
+                    Reason = normal %% assert
+            end,
+
             #x_transaction_result{
                 is_committed = Committed,
                 is_consistent = Committed 
@@ -88,7 +109,11 @@ wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers,
                 statuses = Statuses
             }
     after Timeout ->
-        erlang:error(timeout)
+        %% Kill the transaction process.
+        erlang:exit(TransPid, {transaction_error, timeout}),
+        %% Handle the exit of the transaction process.
+        wait_transaction_result({TransPid, TransRef}, Ref, 
+                                Servers, TransServers, Timeout)
     end.
 
 

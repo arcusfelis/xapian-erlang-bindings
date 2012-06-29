@@ -687,7 +687,6 @@ transaction_gen() ->
     {ok, Server3} = ?SRV:open(Path1, Params),
     erlang:unlink(Server2),
 
-    %% 
     timer:sleep(1000),
     Result4 = ?SRV:transaction([Server2, Server3], BadFun3),
 
@@ -721,6 +720,29 @@ transaction_gen() ->
         , ?_assertEqual(erlang:is_process_alive(Server1), false)
         , ?_assertEqual(erlang:is_process_alive(Server2), false)
         , ?_assertEqual(erlang:is_process_alive(Server3), false)
+        ]}.
+
+
+transaction_timeout_gen() ->
+    % Open test
+    Path1 = testdb_path(tt1),
+    Path2 = testdb_path(tt2),
+    Params = [write, create, overwrite],
+    {ok, Server1} = ?SRV:open(Path1, Params),
+    {ok, Server2} = ?SRV:open(Path2, Params),
+    Fun = fun([_S1, _S2]) ->
+            timer:sleep(infinity)
+        end,
+    Result1 = ?SRV:transaction([Server1, Server2], Fun, 100),
+    ?SRV:close(Server1),
+    ?SRV:close(Server2),
+    #x_transaction_result{
+        is_committed=Committed1,
+        is_consistent=Consistent1
+    } = Result1,
+    {"The transaction is killed by timeout.",
+        [ ?_assertEqual(Committed1, false)
+        , ?_assertEqual(Consistent1, true)
         ]}.
 
 
@@ -927,6 +949,7 @@ cases_gen() ->
     , fun qlc_mset_case/1
 
     , fun create_user_resource_case/1
+    , fun release_resource_case/1
 
     %% Advanced enquires
     , fun advanced_enquire_case/1
@@ -1044,14 +1067,7 @@ enquire_sort_order_case(Server) ->
         %% telecom OR game
         Query = #x_query{op = 'OR', value = ["telecom", "game"]},
         EnquireDescriptor = #x_enquire{order=Order, value=Query},
-        EnquireResourceId = ?SRV:enquire(Server, EnquireDescriptor),
-        MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
-
-        try
-        %% QLC magic
-        Meta = xapian_record:record(document, record_info(fields, document)),
-        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
-        AllIds = qlc:e(qlc:q([X || #document{docid=X} <- Table])),
+        AllIds = all_record_ids(Server, EnquireDescriptor),
 
         %% Were two documents selected?
         ?assertMatch([_, _], AllIds),
@@ -1059,10 +1075,6 @@ enquire_sort_order_case(Server) ->
         %% Check documents order
         %% Code = 2, Software = 1
         ?assertMatch([2, 1], AllIds)
-        after
-            ?SRV:release_resource(Server, EnquireResourceId),
-            ?SRV:release_resource(Server, MSetResourceId)
-        end % of try
         end,
     {"Simple enquire resource", Case}.
 
@@ -1224,6 +1236,18 @@ match_set_info_case(Server) ->
     {"Check mset_info function.", Case}.
 
 
+release_resource_case(Server) ->
+    Case = fun() ->
+        EnquireResourceId = ?SRV:enquire(Server, "erlang"),
+        ?SRV:release_resource(Server, EnquireResourceId),
+
+        %% Try call it twice
+        ?assertError(elem_not_found,
+            ?SRV:release_resource(Server, EnquireResourceId))
+        end,
+    {"Check xapian_server:release_resource", Case}.
+
+
 database_info_case(Server) ->
     Case = fun() ->
         Info = 
@@ -1296,7 +1320,10 @@ all_record_ids(Server, Query) ->
     MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
     Meta = xapian_record:record(document, record_info(fields, document)),
     Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
-    qlc:e(qlc:q([Id || #document{docid=Id} <- Table])).
+    Ids = qlc:e(qlc:q([Id || #document{docid=Id} <- Table])),
+    ?SRV:release_resource(Server, EnquireResourceId),
+    ?SRV:release_resource(Server, MSetResourceId),
+    Ids.
 
 
 all_multidb_records(Server, Query) ->
