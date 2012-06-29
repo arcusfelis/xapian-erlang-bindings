@@ -41,6 +41,9 @@ class PrefixInternal
     }
 };
 
+/**
+ * It is here, because QueryParser cannot be cloned.
+ */
 class QueryParserFactory
 {
     Xapian::Database m_db;
