@@ -956,12 +956,14 @@ query_page_setup() ->
         [ #x_data{value = "Non-indexed data here"} 
         , #x_text{value = "erlang/OTP"} 
         , #x_text{value = "concurrency"} 
+        , #x_term{value = "telecom"} 
         , #x_value{slot = title, value = "Software for a Concurrent World"} 
         , #x_value{slot = author, value = "Joe Armstrong"} 
         ],
     Document2 = Base ++
         [ #x_stemmer{language = <<"english">>}
         , #x_text{value = "C++"} 
+        , #x_term{value = "game"} 
         , #x_value{slot = title, value = "Code Complete: "
             "A Practical Handbook of Software Construction"} 
         , #x_value{slot = author, value = "Steve McConnell"} 
@@ -1039,13 +1041,28 @@ enquire_sort_order_case(Server) ->
     Case = fun() ->
         %% Sort by value in the 'title' slot
         Order = #x_sort_order{type=value, value=title},
-        Query = "erlang handbook",
-        EnqDescriptor = #x_enquire{order=Order, value=Query},
-        ResourceId = ?SRV:enquire(Server, EnqDescriptor),
+        %% telecom OR game
+        Query = #x_query{op = 'OR', value = ["telecom", "game"]},
+        EnquireDescriptor = #x_enquire{order=Order, value=Query},
+        EnquireResourceId = ?SRV:enquire(Server, EnquireDescriptor),
+        MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
+
+        try
+        %% QLC magic
+        Meta = xapian_record:record(document, record_info(fields, document)),
+        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+        AllIds = qlc:e(qlc:q([X || #document{docid=X} <- Table])),
+
         %% Were two documents selected?
-        io:format(user, "~n~p~n", [ResourceId]),
-        ?SRV:release_resource(Server, ResourceId)
-        %% TODO: check documents order
+        ?assertMatch([_, _], AllIds),
+
+        %% Check documents order
+        %% Code = 2, Software = 1
+        ?assertMatch([2, 1], AllIds)
+        after
+            ?SRV:release_resource(Server, EnquireResourceId),
+            ?SRV:release_resource(Server, MSetResourceId)
+        end % of try
         end,
     {"Simple enquire resource", Case}.
 

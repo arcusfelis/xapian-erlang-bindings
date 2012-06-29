@@ -65,6 +65,7 @@
 
 %% Values can be used for sorting or for filtering.
 %% Values are not stemmed.
+%% Values are not indexed.
 -record(x_value, {
     %% The number or the name of the slot.
     %% 

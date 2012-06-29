@@ -66,6 +66,7 @@ encode(#x_query_scale_weight{value=SubQuery, op=Op, factor=Fac}, N2S, S2T, Bin@)
     Bin@ = encode(SubQuery, N2S, S2T, Bin@),
     Bin@;
 
+%% Otherwise, term
 encode(Term, N2S, S2T, Bin) ->
     encode(#x_query_term{name=Term}, N2S, S2T, Bin).
 
