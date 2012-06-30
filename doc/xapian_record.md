@@ -12,7 +12,7 @@
 ##Function Index##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#append_key_field-2">append_key_field/2</a></td><td></td></tr><tr><td valign="top"><a href="#decode-3">decode/3</a></td><td></td></tr><tr><td valign="top"><a href="#decode_list-3">decode_list/3</a></td><td></td></tr><tr><td valign="top"><a href="#decode_list2-3">decode_list2/3</a></td><td></td></tr><tr><td valign="top"><a href="#encode-3">encode/3</a></td><td></td></tr><tr><td valign="top"><a href="#encode-4">encode/4</a></td><td></td></tr><tr><td valign="top"><a href="#key_position-2">key_position/2</a></td><td></td></tr><tr><td valign="top"><a href="#record-2">record/2</a></td><td>You can use special names for fields:.</td></tr><tr><td valign="top"><a href="#tuple-1">tuple/1</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#append_key_field-2">append_key_field/2</a></td><td></td></tr><tr><td valign="top"><a href="#decode-3">decode/3</a></td><td></td></tr><tr><td valign="top"><a href="#decode_list-3">decode_list/3</a></td><td></td></tr><tr><td valign="top"><a href="#decode_list2-3">decode_list2/3</a></td><td></td></tr><tr><td valign="top"><a href="#encode-4">encode/4</a></td><td></td></tr><tr><td valign="top"><a href="#key_position-2">key_position/2</a></td><td></td></tr><tr><td valign="top"><a href="#record-2">record/2</a></td><td>You can use special names for fields:.</td></tr><tr><td valign="top"><a href="#tuple-1">tuple/1</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -56,15 +56,6 @@
 
 
 `decode_list2(Meta, I2N, Bin) -> any()`
-
-<a name="encode-3"></a>
-
-###encode/3##
-
-
-
-
-`encode(Meta, Name2Slot, Value2TypeArray) -> any()`
 
 <a name="encode-4"></a>
 

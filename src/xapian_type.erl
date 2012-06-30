@@ -135,7 +135,7 @@
     | less.
 
 
-%% @doc Either the English name for the language or the two letter ISO639 code.
+%% Either the English name for the language or the two letter ISO639 code.
 %% http://xapian.org/docs/apidoc/html/classXapian_1_1Stem.html
 -type x_language_code() :: 
     none % - don't stem terms

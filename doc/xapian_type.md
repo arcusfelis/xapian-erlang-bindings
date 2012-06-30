@@ -30,6 +30,14 @@
 
 
 
+###<a name="type-x_document_constructor">x_document_constructor()</a>##
+
+
+
+__abstract datatype__: `x_document_constructor()`
+
+
+
 ###<a name="type-x_document_id">x_document_id()</a>##
 
 
@@ -62,11 +70,35 @@
 
 
 
+###<a name="type-x_language_code">x_language_code()</a>##
+
+
+
+<pre>x_language_code() = none | da | danish | nl | dutch | en | english | fi | finnish | fr | french | de | german | german2 | hu | hungarian | it | italian | nb | nn | no | norwegian | pt | portuguese | ro | romanian | ru | russian | es | spanish | sv | swedish | tr | turkish | lovins | porter | kraaij_pohlmann</pre>
+
+
+
 ###<a name="type-x_meta">x_meta()</a>##
 
 
 
 <pre>x_meta() = [atom()]</pre>
+
+
+
+###<a name="type-x_non_empty_string">x_non_empty_string()</a>##
+
+
+
+<pre>x_non_empty_string() = nonempty_string()</pre>
+
+
+
+###<a name="type-x_operator">x_operator()</a>##
+
+
+
+<pre>x_operator() = 'AND' | 'OR' | 'AND NOT' | 'XOR' | 'AND MAYBE' | 'FILTER' | 'NEAR' | 'PHRASE' | 'VALUE RANGE' | 'SCALE WEIGHT' | 'ELITE SET' | 'VALUE GE' | 'VALUE LE' | 'SYNONYM' | greater | lower | less</pre>
 
 
 
@@ -78,11 +110,35 @@
 
 
 
+###<a name="type-x_parser_feature">x_parser_feature()</a>##
+
+
+
+<pre>x_parser_feature() = 'BOOLEAN' | 'PHRASE' | 'LOVEHATE' | 'BOOLEAN ANY CASE' | 'WILDCARD' | 'PURE NOT' | 'PARTIAL' | 'SPELLING CORRECTION' | 'SYNONYM' | 'AUTO SYNONYMS' | 'AUTO MULTIWORD SYNONYMS' | 'DEFAULT' | 'SYNONYMS' | boolean | phrase | lovehate | boolean_any_case | wildcard | pure_not | partial | spelling_correction | synonym | synonyms | auto_synonyms | default</pre>
+
+
+
 ###<a name="type-x_position">x_position()</a>##
 
 
 
 <pre>x_position() = non_neg_integer()</pre>
+
+
+
+###<a name="type-x_prefix_name">x_prefix_name()</a>##
+
+
+
+<pre>x_prefix_name() = #x_prefix_name{}</pre>
+
+
+
+###<a name="type-x_query_parser">x_query_parser()</a>##
+
+
+
+<pre>x_query_parser() = #x_query_parser{}</pre>
 
 
 
@@ -134,11 +190,19 @@
 
 
 
+###<a name="type-x_stemmer">x_stemmer()</a>##
+
+
+
+<pre>x_stemmer() = #x_stemmer{}</pre>
+
+
+
 ###<a name="type-x_string">x_string()</a>##
 
 
 
-<pre>x_string() = iolist()</pre>
+<pre>x_string() = string()</pre>
 
 
 

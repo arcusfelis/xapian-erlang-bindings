@@ -42,19 +42,19 @@ __abstract datatype__: `void()`
 
 
 
+###<a name="type-x_document_constructor">x_document_constructor()</a>##
+
+
+
+__abstract datatype__: `x_document_constructor()`
+
+
+
 ###<a name="type-x_document_id">x_document_id()</a>##
 
 
 
 __abstract datatype__: `x_document_id()`
-
-
-
-###<a name="type-x_document_index_part">x_document_index_part()</a>##
-
-
-
-__abstract datatype__: `x_document_index_part()`
 
 
 
@@ -124,7 +124,7 @@ __abstract datatype__: `x_unique_document_id()`
 ##Function Index##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr><tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td></td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document.</td></tr><tr><td valign="top"><a href="#document_info-3">document_info/3</a></td><td>Read document info, without putting it into database.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr><tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
 defined by <code>RecordMetaDefinition</code>.</td></tr><tr><td valign="top"><a href="#release_resource-2">release_resource/2</a></td><td>Release a resource.</td></tr><tr><td valign="top"><a href="#replace_document-3">replace_document/3</a></td><td></td></tr><tr><td valign="top"><a href="#set_metadata-3">set_metadata/3</a></td><td></td></tr><tr><td valign="top"><a href="#slot_to_type-1">slot_to_type/1</a></td><td></td></tr><tr><td valign="top"><a href="#subdb_names-1">subdb_names/1</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-2">transaction/2</a></td><td>Run a transaction with 5-second timeout.</td></tr><tr><td valign="top"><a href="#transaction-3">transaction/3</a></td><td>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.</td></tr><tr><td valign="top"><a href="#update_document-3">update_document/3</a></td><td>Extend (edit) the document with data.</td></tr><tr><td valign="top"><a href="#update_or_create_document-3">update_or_create_document/3</a></td><td></td></tr></table>
 
 
@@ -139,7 +139,7 @@ defined by <code>RecordMetaDefinition</code>.</td></tr><tr><td valign="top"><a h
 
 
 
-<pre>add_document(Server::<a href="#type-x_server">x_server()</a>, Document::[<a href="#type-x_document_index_part">x_document_index_part()</a>]) -> <a href="#type-x_document_id">x_document_id()</a></pre>
+<pre>add_document(Server::<a href="#type-x_server">x_server()</a>, Document::<a href="#type-x_document_constructor">x_document_constructor()</a>) -> <a href="#type-x_document_id">x_document_id()</a></pre>
 <br></br>
 
 
@@ -183,6 +183,8 @@ Returns the list of all properties.<a name="database_info-2"></a>
 
 
 
+
+
 Returns the list of selected properties and wanted values.
 Properties:
 * `has_positions`;
@@ -202,8 +204,19 @@ Get a UUID for the database;
 * `{value_upper_bound, Value}`;
 * `{wdf_upper_bound, Term}`;
 * `{document_length, DocId}`;
-* `{metadata, Key}`
-Get the user-specified metadata associated with a given key.<a name="delete_document-2"></a>
+* `{metadata, Key}`       
+Get the user-specified metadata associated with a given key.
+
+
+
+If `DocId` or `Term` does not exist, `undefined` value will be return.
+
+
+
+For example,
+
+<pre>  database_info(Server, [{term_exists, "erlang"}, {term_freq, "erlang"}]).
+  [{{term_exists, "erlang"}, false}, {{term_freq, "erlang"}, undefined}]</pre><a name="delete_document-2"></a>
 
 ###delete_document/2##
 
@@ -221,13 +234,26 @@ Get the user-specified metadata associated with a given key.<a name="delete_docu
 
 
 
-<pre>document(Server::<a href="#type-x_server">x_server()</a>, DocId::<a href="#type-x_unique_document_id">x_unique_document_id()</a>) -> <a href="#type-x_resource">x_resource()</a></pre>
+<pre>document(Server::<a href="#type-x_server">x_server()</a>, DocumentConstructor::<a href="#type-x_unique_document_id">x_unique_document_id()</a> | <a href="#type-x_document_constructor">x_document_constructor()</a>) -> <a href="#type-x_resource">x_resource()</a></pre>
 <br></br>
 
 
 
 
-Return a document.<a name="enquire-2"></a>
+Return a document.<a name="document_info-3"></a>
+
+###document_info/3##
+
+
+
+
+<pre>document_info(Server::<a href="#type-x_server">x_server()</a>, DocumentConstructor::<a href="#type-x_document_constructor">x_document_constructor()</a>, RecordMetaDefinition::<a href="#type-x_meta">x_meta()</a>) -> <a href="#type-x_record">x_record()</a></pre>
+<br></br>
+
+
+
+
+Read document info, without putting it into database.<a name="enquire-2"></a>
 
 ###enquire/2##
 
@@ -307,6 +333,8 @@ that means all items will be selected;
 `mset_info(Server, MSetResource) -> any()`
 
 
+
+Equivalent to [`mset_info(Server, MSetResource,xapian_mset_info:properties())`](#mset_info-3).
 
 Returns the list of all properties.<a name="mset_info-3"></a>
 
@@ -455,7 +483,7 @@ Release a resource.<a name="replace_document-3"></a>
 
 
 
-<pre>replace_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::[<a href="#type-x_document_index_part">x_document_index_part()</a>]) -> <a href="#type-x_document_id">x_document_id()</a></pre>
+<pre>replace_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::<a href="#type-x_document_constructor">x_document_constructor()</a>) -> <a href="#type-x_document_id">x_document_id()</a></pre>
 <br></br>
 
 
@@ -543,7 +571,7 @@ will be killed using `cancel_transaction` with reason `crashed_server`.<a name="
 
 
 
-<pre>update_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::[<a href="#type-x_document_index_part">x_document_index_part()</a>]) -> <a href="#type-x_document_id">x_document_id()</a></pre>
+<pre>update_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::<a href="#type-x_document_constructor">x_document_constructor()</a>) -> <a href="#type-x_document_id">x_document_id()</a></pre>
 <br></br>
 
 
@@ -556,7 +584,7 @@ Extend (edit) the document with data.<a name="update_or_create_document-3"></a>
 
 
 
-<pre>update_or_create_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::[<a href="#type-x_document_index_part">x_document_index_part()</a>]) -> <a href="#type-x_document_id">x_document_id()</a></pre>
+<pre>update_or_create_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::<a href="#type-x_document_constructor">x_document_constructor()</a>) -> <a href="#type-x_document_id">x_document_id()</a></pre>
 <br></br>
 
 
