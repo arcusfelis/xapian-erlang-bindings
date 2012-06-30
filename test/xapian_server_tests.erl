@@ -1241,7 +1241,10 @@ match_set_info_case(Server) ->
 
             %% All atom props
             PropKeys = xapian_mset_info:properties(),
-            ?SRV:mset_info(Server, MSetResourceId, PropKeys),
+            AllItems1 = ?SRV:mset_info(Server, MSetResourceId, PropKeys),
+            AllItems2 = ?SRV:mset_info(Server, MSetResourceId),
+            ?assertEqual(AllItems1, AllItems2),
+
             io:format(user, "~nMSet Info: ~p~n", [Info]),
 
             %% All pair props
@@ -1278,7 +1281,9 @@ database_info_case(Server) ->
         io:format(user, "~nDB Info: ~p~n", [Info]),
 
         %% Atoms
-        ?SRV:database_info(Server, xapian_db_info:properties()),
+        AllItems1 = ?SRV:database_info(Server, xapian_db_info:properties()),
+        AllItems2 = ?SRV:database_info(Server),
+        ?assertEqual(AllItems1, AllItems2),
 
         %% Pairs
         ?assertEqual(?SRV:database_info(Server, [{term_exists, <<"erlang">>}]),
@@ -1288,6 +1293,12 @@ database_info_case(Server) ->
 
         ?assert(?SRV:database_info(Server, {term_exists, <<"erlang">>})),
         ?assertNot(?SRV:database_info(Server, {term_exists, <<"prolog">>})),
+
+        ?assertEqual(1, ?SRV:database_info(Server, 
+                                           {term_freq, <<"erlang">>})),
+
+        ?assertEqual(undefined, ?SRV:database_info(Server, 
+                                           {term_freq, <<"prolog">>})),
 
         ?assertEqual(undefined, ?SRV:database_info(Server, 
                                            {collection_freq, <<"prolog">>})),
@@ -1462,6 +1473,26 @@ multi_db_gen() ->
     ].
 
 
+multi_docid_gen() ->
+    Path1 = #x_database{name=multi_docid1, path=testdb_path(multi1)},
+    Path2 = #x_database{name=multi_docid2, path=testdb_path(multi2)},
+    Params = [write, create, overwrite],
+    {ok, Server1} = ?SRV:open(Path1, Params),
+    {ok, Server2} = ?SRV:open(Path2, Params),
+    ?SRV:close(Server1),
+    ?SRV:close(Server2),
+
+    %% Merged server
+    {ok, Server} = ?SRV:open([Path1, Path2], []),
+
+    %% xapian_server:multi_docid
+    [ ?_assertEqual(1, ?SRV:multi_docid(Server, 1, multi_docid1))
+    , ?_assertEqual(2, ?SRV:multi_docid(Server, 1, multi_docid2))
+    , ?_assertEqual(3, ?SRV:multi_docid(Server, 2, multi_docid1))
+    , ?_assertEqual(4, ?SRV:multi_docid(Server, 2, multi_docid2))
+    ].
+
+
 elements(Pos, Records) ->
     [erlang:element(Pos, Rec) || Rec <- Records].
 
@@ -1517,6 +1548,29 @@ prop_multi_db() ->
                     db_name=multi_sub_db_id_to_name(Db), 
                     db_number=multi_sub_db_name_to_id(Db)},
         equals([Doc], multidb_record_by_id(Server, Query, MultiDocId))
+        end).
+
+
+prop_large_db_and_qlc_index() ->
+    Path = testdb_path(large_db_and_qlc_index),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:open(Path, Params),
+    Terms = ["xapian", "erlang"],
+
+    Document = [#x_term{value = X} || X <- Terms],
+    ExpectedDocIds = lists:seq(1, 1000),
+    DocIds = [ ?SRV:add_document(Server, Document) || _ <- ExpectedDocIds ],
+    ?assertEqual(DocIds, ExpectedDocIds),
+
+    Meta = xapian_record:record(document, record_info(fields, document)),
+    ?FORALL({DocId, Term}, 
+            {range(1,1000), oneof(Terms)},
+        begin
+        EnquireResourceId = ?SRV:enquire(Server, Term),
+        MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
+        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+        Ids = qlc:e(qlc:q([Id || #document{docid=Id} <- Table, Id =:= DocId])),
+        equals([DocId], Ids)
         end).
 
 
