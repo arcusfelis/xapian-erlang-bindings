@@ -227,7 +227,11 @@
 %%
 %% `Params' is a list of:
 %%
-%% * Modes: read, write, overwrite, create, open;
+%% * Modes: read, write, overwrite, create, open:
+%%      The `read' mode is only for reading. 
+%%      The `write' mode is for reading and for writing.
+%%      Write mode can be combined with:
+%%          `open' (default), `create', `overwrite'.
 %% * Names for values and for prefixes:
 %%      `#x_value_name{slot = 1, name = slotname}'
 %%      `#x_prefix_name{name = author, prefix = <<$A>>}';
@@ -235,11 +239,9 @@
 %%      default query parser:
 %%      `#x_stemmer{language="english"}';
 %% * An interface to work: `port' (or `driver' by default).
-%%
-%% The `read' mode is only for reading. 
-%% The `write' mode is for reading and for writing.
-%% Write mode can be combined with:
-%% `open' (default), `create', `overwrite'.
+%% * `{name, Atom}' allows to register the server under the local name `Atom';
+%% * `{name, {local, Atom}}' does the same;
+%% * `{name, {global, Atom}}' registers the process under the global name.
 -spec open(db_path(), [term()]) -> {ok, x_server()}.
 
 open(Path, Params) ->

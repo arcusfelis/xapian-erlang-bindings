@@ -146,6 +146,31 @@ last_document_id_gen() ->
     end.
 
 
+open_and_register_local_name_test() ->
+    Name = xapian_server_test_local_name,
+    %% Register the empty server under the local name
+    {ok, Server} = ?SRV:open([], [{name, Name}]),
+    ?assertEqual(whereis(Name), Server), 
+    ?SRV:close(Server),
+    ?assertNot(is_process_alive(Server)).
+
+
+open_and_register_local_name2_test() ->
+    Name = xapian_server_test_local_name2,
+    %% Register the empty server under the local name
+    {ok, Server} = ?SRV:open([], [{name, {local, Name}}]),
+    ?assertEqual(whereis(Name), Server), 
+    ?SRV:close(Server).
+
+
+open_and_register_global_name_test() ->
+    Name = xapian_server_test_global_name,
+    %% Register the empty server under the global name
+    {ok, Server} = ?SRV:open([], [{name, {global, Name}}]),
+    ?assertEqual(global:whereis_name(Name), Server), 
+    ?SRV:close(Server).
+
+
 update_document_test() ->
     Path = testdb_path(update_document),
     Params = [write, create, overwrite],
@@ -360,7 +385,11 @@ value_count_match_spy_gen() ->
         Colors = ["Red", "Blue", "green", "white", "black", "green"],
         [add_color_document(Server, Color) || Color <- Colors],
 
+        %% Call with a slot name
         SpySlot1 = xapian_match_spy:value_count(Server, color),
+        %% Call with a slot number
+        xapian_match_spy:value_count(Server, 1),
+
         Query = "",
         EnquireResourceId = ?SRV:enquire(Server, Query),
         MSetParams = #x_match_set{
