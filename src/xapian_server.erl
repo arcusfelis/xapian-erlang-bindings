@@ -310,7 +310,7 @@ enquire(Server, Query) ->
     call(Server, {enquire, Query}).
 
 
-%% @doc Return a document.
+%% @doc Return a document as a resource.
 -spec document(x_server(), x_unique_document_id() 
                | x_document_constructor()) -> x_resource().
 document(Server, DocumentConstructor) when is_list(DocumentConstructor) ->
