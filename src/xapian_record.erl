@@ -23,6 +23,7 @@
     read_percent/1,
     read_uint8/1,
     read_unknown_type_value/1,
+    slot_type/2,
     index_of/2]).
 
 -import(xapian_const, [source_type_id/1, document_field_id/1]).
@@ -154,19 +155,24 @@ enc([H  | T], N2S, V2T, Bin)
     enc(T, N2S, V2T, append_type(H, Bin));
 
 enc([Name | T], N2S, V2T, Bin) ->
-    Slot = orddict:fetch(Name, N2S),
-    Type = case V2T of
-            undefined -> value;
-            _ -> 
-                case array:get(Slot, V2T) of
-                    undefined -> value;
-                    float -> float_value
-                end
-            end,
-    enc(T, N2S, V2T, append_value(Slot, append_type(Type, Bin)));
+    SlotNum = orddict:fetch(Name, N2S),
+    CmdType = slot_to_command_type(SlotNum, V2T),
+    enc(T, N2S, V2T, append_value(SlotNum, append_type(CmdType, Bin)));
 
 enc([], _N2S, _V2T, Bin) -> 
     append_type(stop, Bin).
+
+
+slot_to_command_type(SlotNum, V2T) ->
+    slot_type_to_command_type(slot_type(SlotNum, V2T)).
+
+
+%% @doc Returns a name of a command for encoder.
+%% A command is a type of the record, not a type of the value.
+%% Types of the record are data, docid, value.
+%% Types of the value are string, float.
+slot_type_to_command_type(string) -> value;
+slot_type_to_command_type(float)  -> float_value.
 
 
 %% Type of the field

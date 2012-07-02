@@ -1938,3 +1938,68 @@ run_property_testing_gen() ->
     ?_assertEqual([], Res). 
 
 
+get_state_fields_gen() ->
+    Params = 
+        [ #x_value_name{slot = 1, name = slot1, type = float}
+        , #x_value_name{slot = 2, name = slot2, type = string}
+        ],
+    {ok, Server} = ?SRV:open([], Params),
+
+    try
+    N2S = ?SRV:name_to_slot(Server),
+    Num1_1 = xapian_common:slot_id(slot1, N2S),
+    Num1_2 = xapian_common:slot_id(1, N2S),
+    Num2_1 = xapian_common:slot_id(slot2, N2S),
+    Num2_2 = xapian_common:slot_id(2, N2S),
+
+    Slot2SlotTests = [{"Slot number is the same.",
+                     [ ?_assertEqual(Num1_2, 1)
+                     , ?_assertEqual(Num2_2, 2)]}],
+
+    Name2SlotTests = [{"Name to number conversation.",
+                     [ ?_assertEqual(Num1_1, 1)
+                     , ?_assertEqual(Num2_1, 2)]}],
+
+    S2T = ?SRV:slot_to_type(Server),
+
+    Type1 = xapian_common:slot_type(1, S2T),
+    Type2 = xapian_common:slot_type(2, S2T),
+
+    SlotTypeTests2 = [{"Name or number to type conversation.",
+                     [ ?_assertEqual(Type1, float)
+                     , ?_assertEqual(Type2, string)
+                     ]}],
+
+    Slot1_1 = ?SRV:name_to_slot(Server, slot1),
+    Slot1_2 = ?SRV:name_to_slot(Server, 1),
+
+    Slot2_1 = ?SRV:name_to_slot(Server, slot2),
+    Slot2_2 = ?SRV:name_to_slot(Server, 2),
+
+    Slot2SlotTests2 = [{"Slot number is the same.",
+                      [ ?_assertEqual(Slot1_2, 1)
+                      , ?_assertEqual(Slot2_2, 2)]}],
+
+    Name2SlotTests2 = [{"Name to number conversation.",
+                      [ ?_assertEqual(Slot1_1, 1)
+                      , ?_assertEqual(Slot2_1, 2)]}],
+
+    SlotType1_1 = ?SRV:slot_to_type(Server, slot1),
+    SlotType1_2 = ?SRV:slot_to_type(Server, 1),
+
+    SlotType2_1 = ?SRV:slot_to_type(Server, slot2),
+    SlotType2_2 = ?SRV:slot_to_type(Server, 2),
+
+    SlotTypeTests = [{"Name or number to type conversation.",
+                     [ ?_assertEqual(SlotType1_1, float)
+                     , ?_assertEqual(SlotType1_2, float)
+                     , ?_assertEqual(SlotType2_1, string)
+                     , ?_assertEqual(SlotType2_2, string)
+                     ]}],
+
+    Slot2SlotTests ++ Name2SlotTests ++
+    Slot2SlotTests2 ++ Name2SlotTests2 ++
+    SlotTypeTests ++ SlotTypeTests2
+    after
+        ?SRV:close(Server)
+    end.

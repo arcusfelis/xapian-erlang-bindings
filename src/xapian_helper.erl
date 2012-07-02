@@ -1,4 +1,4 @@
-%% @doc Usuful miniprograms.
+%% @doc Useful miniprograms.
 -module(xapian_helper).
 -export([stem/3]).
 

@@ -50,6 +50,7 @@
 -export([string_to_binary/1,
          index_of/2,
          slot_id/2, 
+         slot_type/2, 
          fix_value/3]).
 
 
@@ -236,11 +237,22 @@ read_doccount(Bin) ->
     read_uint(Bin).
 
 
+%% Convert slot name to number.
 slot_id(Name, N2S) when is_atom(Name) -> 
     orddict:fetch(Name, N2S);
 
 slot_id(Slot, _N2S) when is_integer(Slot) -> 
     Slot.
+
+
+slot_type(_Slot, undefined) -> 
+    string;
+
+slot_type(Slot, N2S) when is_integer(Slot) -> 
+    case array:get(Slot, N2S) of
+        undefined -> string;
+        Type -> Type
+    end.
 
 
 index_of(Item, List) -> index_of(Item, List, 1).

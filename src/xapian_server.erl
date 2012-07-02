@@ -44,6 +44,7 @@
 -export([name_to_slot/1, 
          name_to_slot/2,
          slot_to_type/1,
+         slot_to_type/2,
          subdb_names/1,
          multi_docid/3]).
 
@@ -66,6 +67,7 @@
 
 %% with_state internals
 -export([internal_name_to_slot/2,
+         internal_name_to_type/2,
          internal_name_to_slot_dict/1,
          internal_slot_to_type_array/1,
          internal_subdb_names/1,
@@ -552,6 +554,14 @@ slot_to_type(Server) ->
     call(Server, {with_state, fun ?SRV:internal_slot_to_type_array/1}).
 
 
+slot_to_type(State=#state{}, Slot) ->
+    {ok, Type} = internal_name_to_type(State, Slot),
+    Type;
+
+slot_to_type(Server, Slot) ->
+    call(Server, {with_state, fun ?SRV:internal_name_to_type/2, Slot}).
+
+
 subdb_names(#state{subdb_names = I2N}) ->
     I2N;
 
@@ -602,6 +612,26 @@ internal_multi_docid(State, {DocId, SubDbName}) when is_atom(SubDbName) ->
 
 internal_multi_docid(State, {DocId, SubDbNum}) ->
     {ok, multi_docid(State, DocId, SubDbNum)}.
+
+
+internal_name_to_type(#state{slot_to_type = S2T}, Slot) 
+    when is_integer(Slot) ->
+    try
+        {ok, xapian_common:slot_type(Slot, S2T)}
+    catch error:Reason ->
+        {error, Reason}
+    end;
+
+internal_name_to_type(#state{slot_to_type = S2T, 
+                             name_to_slot = N2S}, Name) 
+    when is_atom(Name) ->
+    try
+        Slot = xapian_common:slot_id(Name, N2S),
+        {ok, xapian_common:slot_type(Slot, S2T)}
+    catch error:Reason ->
+        {error, Reason}
+    end.
+
 
 
 %% ------------------------------------------------------------------
