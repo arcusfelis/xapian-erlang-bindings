@@ -5,6 +5,8 @@
          control/3,
          is_port_alive/1]).
 
+-export_type([x_port/0]).
+
 -define(DRIVER_NAME, "xapian_drv").
 -define(PORT_NAME,   "xapian_port").
 
@@ -13,6 +15,7 @@
         type :: atom()
 }).
 
+-type x_port() :: #port_rec{}.
 
 %% @doc Find and load dll or so file.
 load_driver() ->

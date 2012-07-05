@@ -24,7 +24,7 @@
 
 
 %% @doc Encode parts of the document to a binary.
--spec encode([xapian:x_document_index_part()], 
+-spec encode([xapian_type:x_document_index_part()], 
              orddict:orddict(), orddict:orddict(), array()) -> binary().
 
 encode(List, Name2Prefix, Name2Slot, Slot2TypeArray) ->

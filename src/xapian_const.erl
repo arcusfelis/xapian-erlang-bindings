@@ -341,7 +341,7 @@ enquire_command_id(cutoff)          -> 6;
 enquire_command_id(collapse_key)    -> 7.
 
 
--spec order_type_id(xapian:x_order_type()) -> non_neg_integer().
+-spec order_type_id(xapian_type:x_order_type()) -> non_neg_integer().
 order_type_id(key)              -> 1;
 order_type_id(value)            -> 2;
 order_type_id(key_relevance)    -> 3;

@@ -141,14 +141,9 @@ init_not_empty_table(Server, Info, Meta, UserParams) ->
 
 lookup_fun(Server, ResNum, Meta, KeyPos) ->
     fun(KeyPosI, Terms) when KeyPosI =:= KeyPos ->
-        case lists:all(fun is_valid_term_name/1, Terms) of
-        true ->
-            Bin = xapian_server:internal_qlc_lookup(Server, encoder(Terms), ResNum),
-            {Records, <<>>} = xapian_term_record:decode_list2(Meta, Bin),
-            Records;
-        false ->
-            erlang:error(bad_term_name)
-        end
+        Bin = xapian_server:internal_qlc_lookup(Server, encoder(Terms), ResNum),
+        {Records, <<>>} = xapian_term_record:decode_list2(Meta, Bin),
+        Records
         end.
 
 
@@ -187,7 +182,6 @@ encoder(Terms = [_|_]) ->
         xapian_common:append_terms(Terms, Bin)
         end.
 
-is_valid_term_name(_Term) -> true.
 
 append_spy_type(Type, Bin) ->
     xapian_common:append_uint8(spy_type_id(Type), Bin).

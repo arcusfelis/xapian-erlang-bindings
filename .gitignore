@@ -16,3 +16,4 @@ doc/doxygen/*
 priv/test_db/*
 priv/xapian_port*
 *.un~
+c_cov

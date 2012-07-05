@@ -105,7 +105,7 @@
 -record(state, {
     %% The record is defined inside `xapian_port' as `port_rec'.
     %% It contains matadata for controlling a linked-in port driver or a port.
-    port :: record(),
+    port :: x_port(),
 
     %% Information was retrieved from #x_prefix_name{}.
     name_to_prefix :: orddict:orddict(),
@@ -113,7 +113,7 @@
     %% A value slot is an unsigned integer in C++.
     %% They are mapped into atoms in Erlang (it is optional).
     %% Information was retrieved from #x_value_name{}.
-    name_to_slot :: ordict:orddict(),
+    name_to_slot :: orddict:orddict(),
 
     %% It is used for float values. Usually, type is `string', it is the 
     %% same as `undefined'.
@@ -123,11 +123,11 @@
     %% Used for creating resources.
     %% It contains mapping from an atom to information, about how to create 
     %% new resource on C++ side of the application.
-    name_to_resource :: ordict:orddict(),
+    name_to_resource :: orddict:orddict(),
 
     %% Each sub-database can have a name for identification.
     %% `undefined' names are not stored by this dict.
-    subdb_name_to_id :: ordict:orddict(),
+    subdb_name_to_id :: orddict:orddict(),
 
     %% If `base1', `base2' and `base3' is open, then contains  
     %% `{base1, base2, base3}'.
@@ -197,17 +197,18 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--opaque x_server() :: xapian_type:x_server().
--opaque x_transaction() :: xapian_type:x_transaction().
--opaque x_query() :: xapian_type:x_query().
--opaque x_resource() :: xapian_type:x_resource().
--opaque x_record() :: xapian_type:x_record().
--opaque x_meta() :: xapian_type:x_meta().
--opaque void() :: 'VoiD'.
--opaque x_document_id() :: xapian_type:x_document_id().
--opaque x_string() :: xapian_type:x_string().
--opaque x_unique_document_id() :: xapian_type:x_unique_document_id().
--opaque x_document_constructor() :: xapian_type:x_document_constructor().
+-type x_server() :: xapian_type:x_server().
+-type x_port() :: xapian_type:x_port().
+-type x_transaction() :: xapian_type:x_transaction().
+-type x_query() :: xapian_type:x_query().
+-type x_resource() :: xapian_type:x_resource().
+-type x_record() :: xapian_type:x_record().
+-type x_meta() :: xapian_type:x_meta().
+-type void() :: 'VoiD'.
+-type x_document_id() :: xapian_type:x_document_id().
+-type x_string() :: xapian_type:x_string().
+-type x_unique_document_id() :: xapian_type:x_unique_document_id().
+-type x_document_constructor() :: xapian_type:x_document_constructor().
 
 -type multi_db_path() :: [#x_database{}|#x_prog_database{}|#x_tcp_database{}].
 -type db_path() :: x_string() | multi_db_path().
@@ -1057,10 +1058,12 @@ handle_call({transaction, Ref}, From, State) ->
 
 
 %% @private
-handle_cast(_, State) ->
-    {noreply, State}.
+handle_cast(BadMess, State) ->
+    %% This function is unused.
+    {stop, {unexpected_mess, BadMess}, State}.
 
 
+%% @doc It is a helper, which is used with the monad error_m.
 do_reply(OldState, {error, _Reason} = Error) ->
     {reply, Error, OldState};
 
@@ -1068,8 +1071,8 @@ do_reply(_State, Other) ->
     Other.
 
 
+%% @doc It is a helper, which is used with the monad error_m.
 stop_if_error({error, _Reason} = Error) ->
-    io:format(user, "~p", [Error]),
     {stop, Error};
 
 stop_if_error(Other) ->
@@ -1387,18 +1390,14 @@ port_document(Port, DocId) ->
 port_match_set(Port, MSetResourceNum, From, MaxItems, CheckAtLeast, SpyNums) ->
     Bin@ = <<>>,
     Bin@ = append_uint(MSetResourceNum, Bin@),
-    Bin@ = append_uint(fix_uint(From), Bin@),
+    Bin@ = append_uint(From, Bin@),
     Bin@ = append_max_items(MaxItems, Bin@),
-    Bin@ = append_uint(fix_uint(CheckAtLeast), Bin@),
+    Bin@ = append_uint(CheckAtLeast, Bin@),
     Bin@ = append_match_spies(SpyNums, Bin@),
     decode_resource_result(control(Port, match_set, Bin@)).
 
 
-fix_uint(X) when is_integer(X), X >= 0 -> X;
-fix_uint(undefined) -> 0.
-
-
-append_match_spies(Spies, Bin) when is_binary(Bin) ->
+append_match_spies(Spies, Bin) when is_binary(Bin), is_list(Spies) ->
     append_uint(0, lists:foldl(fun xapian_common:append_uint/2, Bin, Spies)).
 
 

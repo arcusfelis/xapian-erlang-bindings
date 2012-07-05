@@ -11,6 +11,18 @@ append_stemmer(#x_stemmer{language=Language}, Bin) ->
     append_iolist(maybe_atom(Language), Bin).
 
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-define(HELP, ?MODULE).
+
+maybe_atom_test_() ->
+    [?_assertEqual(maybe_atom("list"), "list")
+    ,?_assertEqual(maybe_atom('atom'), "atom")
+    ].
+
+-endif.
+
+
 %% Prefix must be handled with `xapian_check:check_prefix/1'.
 %% See `XapianErlangDriver::addPrefix'
 append_prefix(#x_prefix_name{name=Name, prefix=Prefix, 
@@ -27,7 +39,6 @@ prefix_name_to_binary(A) when is_atom(A) ->
 
 prefix_name_to_binary(X) ->
     X.
-
 
 maybe_atom(X) when is_atom(X) -> atom_to_list(X);
 maybe_atom(X) -> X.

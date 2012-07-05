@@ -4,7 +4,7 @@
 -include_lib("stdlib/include/qlc.hrl").
 -include("xapian.hrl").
 
--opaque x_document_id() :: xapian:x_document_id().
+-type x_document_id() :: xapian_type:x_document_id().
 
 
 
@@ -23,13 +23,13 @@ table(Server, MSet, Meta) ->
     SubDbNames = xapian_server:subdb_names(Server),
     DocIdPos      = xapian_record:key_position(Meta, docid),
     MultiDocIdPos = xapian_record:key_position(Meta, multi_docid),
-    KeyPos = 
+    {KeyPos, KeyName} = 
     case size(SubDbNames) of
-         1 -> DocIdPos;
+         1 -> {DocIdPos, docid};
          _ -> 
             case MultiDocIdPos of
-                undefined   -> DocIdPos;
-                Pos         -> Pos
+                undefined   -> {DocIdPos, docid};
+                Pos         -> {Pos, multi_docid}
             end
     end,
     TraverseFun = traverse_fun(Server, ResNum, Meta, SubDbNames, From, Len, Size),
@@ -38,10 +38,10 @@ table(Server, MSet, Meta) ->
        (keypos) -> KeyPos;
        (is_sorted_key) -> false;
        (is_unique_objects) -> 
-            case KeyPos of 
+            case KeyName of 
                 docid       -> size(SubDbNames) =:= 1;
-                multi_docid -> true;
-                _           -> false
+                multi_docid -> true
+%              ;_           -> false
             end;
        (indices) -> [X || X <- [MultiDocIdPos, DocIdPos], X =/= undefined];
        (_) -> undefined
@@ -77,7 +77,7 @@ lookup_fun(Server, ResNum, Meta, SubDbNames) ->
 %% `KeyId' is an identifier type.
 %% `KeyId' contains values like `docid' or `multi_docid'.
 %% `KeyId' is used because we can use different fields as a key.
--spec encoder(atom(), [x_document_id()]) -> boolean().
+-spec encoder(atom(), [x_document_id()]) -> fun((binary()) -> binary()).
 encoder(KeyId, DocIds) ->
     fun(Bin) -> 
         xapian_common:append_docids(DocIds, 

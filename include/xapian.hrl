@@ -50,7 +50,7 @@
 %% @type x_term() = #x_term{
 %%      value = xapian_type:x_string(),
 %%      position = xapian_type:x_position() | [xapian_type:x_position()] | undefined,
-%%      frequency = xapian_type:x_term_count(),
+%%      frequency = xapian_type:x_wdf_difference(),
 %%      action = add | set | update | remove,
 %%      ignore = boolean()}.
 %%
@@ -58,7 +58,7 @@
 -record(x_term, {
     value = ?REQUIRED :: xapian_type:x_string(),
     position :: xapian_type:x_position() | [xapian_type:x_position()] | undefined,
-    frequency = 1 :: xapian_type:x_term_count(),
+    frequency = 1 :: xapian_type:x_wdf_difference(),
     action = set :: add | set | update | remove,
     ignore = true :: boolean()
 }).
@@ -104,8 +104,8 @@
     %% The text to index.
     value = ?REQUIRED :: xapian_type:x_string(),
 
-    %% The wdf increment.
-    frequency = 1 :: xapian_type:x_term_count(),
+    %% The wdf increment (or decriment, if it is below 0).
+    frequency = 1 :: xapian_type:x_wdf_difference(),
 
     %% The term prefix to use (default is no prefix). 
     prefix = <<>> :: xapian_type:x_string()

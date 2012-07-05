@@ -17,6 +17,7 @@
     x_inet_address/0,
     x_parser_feature/0,
     x_query_parser/0,
+    x_query/0,
     x_operator/0,
     x_server/0,
     x_transaction/0,
@@ -26,13 +27,15 @@
     x_prefix_name/0,
     x_stemmer/0,
     x_language_code/0,
-    x_document_constructor/0]).
+    x_document_constructor/0,
+    x_port/0,
+    x_wdf_difference/0]).
 
--opaque x_document_constructor() :: [x_document_index_part()].
+-type x_document_constructor() :: [x_document_index_part()].
 
 
--type x_string()        :: string().
--type x_non_empty_string() :: nonempty_string().
+-type x_string()        :: string() | binary().
+-type x_non_empty_string() :: nonempty_string() | <<_:8, _:_*8>>.
 -type x_slot_name()     :: atom().
 -type x_slot()          :: non_neg_integer().
 -type x_position()      :: non_neg_integer().
@@ -135,13 +138,17 @@
     | less.
 
 
+
 %% Either the English name for the language or the two letter ISO639 code.
 %% http://xapian.org/docs/apidoc/html/classXapian_1_1Stem.html
 -type x_language_code() :: 
     none % - don't stem terms
+    | <<>>
+  % | x_non_empty_string()
+  % | <<"english">> | "english" %% Binaries and unicode strings work too.
+    | en | english  %% Martin Porter's 2002 revision of his stemmer
     | da | danish 
     | nl | dutch 
-    | en | english  % Martin Porter's 2002 revision of his stemmer
     | fi | finnish
     | fr | french 
     | de | german 
@@ -159,3 +166,12 @@
     | porter % Porter's stemmer as described in his 1980 paper
 %   | english_lovins | english_porter % FIXME: unknown?
     | kraaij_pohlmann. % A different Dutch stemmer
+
+
+-type x_port() :: xapian_port:x_port().
+
+%% Quantity of occuriencies to increase or decrease (if it us negative).
+%% `{abs, 5}' means setting 5.
+%% `{cur, 5}' means adding 5.
+%% `{cur, -5}' means removing 5.
+-type x_wdf_difference() :: integer() | {abs, non_neg_integer()} | {cur, integer()}.

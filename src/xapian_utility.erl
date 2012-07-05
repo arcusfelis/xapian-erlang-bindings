@@ -42,7 +42,7 @@
     | {interval, xapian_type:x_timeout()}        %% in seconds
     | {reader_time, xapian_type:x_timeout()}     %% in seconds
     | {port, xapian_type:x_inet_port()}          %% required
-    | {address, xapian_type:x_init_address()}    %% required
+    | {address, xapian_type:x_inet_address()}    %% required
     | {master_name, xapian_type:x_string()}.
 
 -type tcp_server_param() :: 
@@ -53,7 +53,7 @@
     | {active_timeout, xapian_type:x_timeout()}
     | one_shot 
     | {port, xapian_type:x_inet_port()} %% required
-    | {address, xapian_type:x_init_address()}.
+    | {address, xapian_type:x_inet_address()}.
 
 
 %% -------------------------------------------------------------------
@@ -172,7 +172,7 @@ start(Args, Params) ->
         true ->
             gen_server:start_link(?MODULE, Args, []);
         false ->
-            gen_server:link(?MODULE, Args, [])
+            gen_server:start(?MODULE, Args, [])
     end.
 
 %% -------------------------------------------------------------------
