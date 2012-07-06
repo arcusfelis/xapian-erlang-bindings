@@ -61,17 +61,16 @@ encode(Meta, Name2Slot, Value2TypeArray, Bin) ->
         append_uint8(encoder_source_type_id(TupleFields), Bin)).
 
 
+encoder_source_type_id(TupleFields) ->
+    source_type_id(encoder_source_type(TupleFields)).
+
+
 %% Select from few encoders: some of them need Document, MsetIterator or both.
-encoder_source_type_id([_|_] = TupleFields) ->
+encoder_source_type([_|_] = TupleFields) ->
     case type(TupleFields) of
-        {true, false} ->
-            source_type_id(document);
-
-        {true, true} ->
-            source_type_id(both);
-
-        _Other ->
-            source_type_id(iterator)
+        {true, false}   -> document;
+        {true, true}    -> both;
+        _Other          -> iterator
     end.
 
 
@@ -128,10 +127,6 @@ type(List) ->
 type(_,  true, true) ->
     {true, true};
 
-type([H  | T],  _IsDoc, IsIter) 
-    when H =:= data ->
-    type(T, true, IsIter);
-
 type([H  | T],  IsDoc, _IsIter) 
     when H =:= weight; H =:= rank; H =:= percent; H =:= db_number; 
          H =:= db_name; H =:= multi_docid ->
@@ -141,7 +136,7 @@ type([H  | T],  IsDoc, _IsIter)
 type([docid | T], IsDoc, IsIter) ->
     type(T, IsDoc, IsIter);
 
-%% Value?
+%% Value? `data'?
 type([_H | T], _IsDoc, IsIter) ->
     type(T, true, IsIter);
 
@@ -239,6 +234,13 @@ tuple_test_() ->
 get_tuple_value_test_() ->
     [ ?_assertEqual(get_tuple_value(#rec.name, #rec{name=book}, default), book)
     , ?_assertEqual(get_tuple_value(#rec.name, #rec{}, default), default)
+    ].
+
+type_test_() ->
+    [ ?_assertEqual(encoder_source_type([docid]), iterator)
+    , ?_assertEqual(encoder_source_type([docid, data]), document)
+    , ?_assertEqual(encoder_source_type([docid, rank]), iterator)
+    , ?_assertEqual(encoder_source_type([docid, rank, data]), both)
     ].
 
 -endif.

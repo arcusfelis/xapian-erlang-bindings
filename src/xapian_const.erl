@@ -60,7 +60,8 @@ command_id(open_prog)                   -> 27;
 command_id(open_tcp)                    -> 28;
 command_id(close)                       -> 29;
 command_id(document_info)               -> 30;
-command_id(document_info_resource)      -> 31.
+command_id(document_info_resource)      -> 31;
+command_id(is_document_exist)           -> 32.
 
 
 %% Open modes of the DB

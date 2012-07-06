@@ -99,7 +99,8 @@ class Driver
         OPEN_TCP                    = 28,
         CLOSE                       = 29,
         DOCUMENT_INFO               = 30,
-        DOCUMENT_INFO_RESOURCE      = 31
+        DOCUMENT_INFO_RESOURCE      = 31,
+        IS_DOCUMENT_EXIST           = 32
     };
 
 
@@ -337,6 +338,7 @@ class Driver
     void addDocument(PR);
     void replaceDocument(PR);
     void updateDocument(PR, bool create);
+    void isDocumentExist(PR);
     void deleteDocument(ParamDecoder&);
     void setMetadata(ParamDecoder&);
 

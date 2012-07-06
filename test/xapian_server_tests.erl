@@ -179,23 +179,65 @@ update_document_test() ->
         DocId = ?SRV:add_document(Server, []),
 
         %% The document with DocId will be extended.
-        ?SRV:update_document(Server, DocId, [#x_term{value = "more"}]),
+        DocId1 = ?SRV:update_document(Server, DocId, [#x_term{value = "more"}]),
+        ?assertEqual(DocId, DocId1),
 
         %% Cannot add this term again, because the action is `add'.
         ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
             ?SRV:update_document(Server, DocId, 
                 [#x_term{action = add, value = "more", ignore = false}])),
 
+        %% One document with the term "more" was found.
+        %% Because we use a term as a key, few documents can be matched.
+        %% That is why, undefined is returned (and not a document id).
+        %% ignore = true catches errors.
+        ?assertEqual(undefined, 
+            ?SRV:update_or_create_document(Server, "more", 
+                [#x_term{action = add, value = "more", ignore = true}])),
+
         %% Cannot update the document that is not found.
+        ?assertNot(?SRV:is_document_exist(Server, "fail")),
         ?assertError(#x_error{type  = <<"BadArgumentDriverError">>}, 
             ?SRV:update_document(Server, "fail", [])),
 
         %% Now we can.
-        ?SRV:update_or_create_document(Server, "fail", [])
+        ?assertNot(?SRV:is_document_exist(Server, "fail")),
+        DocId2 = ?SRV:update_or_create_document(Server, "fail", []),
+        %% Document was created, but it us empty.
+        ?assert(?SRV:is_document_exist(Server, DocId2)),
+        ?assertNot(?SRV:is_document_exist(Server, "fail")),
+
+        %% Try the same using the document id as a key.
+        DocId3 = ?SRV:update_or_create_document(Server, DocId2, []),
+        ?assertEqual(DocId2, DocId3)
+
     after
         ?SRV:close(Server)
     end.
     
+
+is_document_exists_gen() ->
+    Path = testdb_path(is_document_exists),
+    Params = [write, create, overwrite],
+    Doc = 
+    [ #x_term{value = "monad"}
+    ],
+    {ok, Server} = ?SRV:open(Path, Params),
+    try
+        BeforeAddTerm = ?SRV:is_document_exist(Server, "monad"),
+        BeforeAddId   = ?SRV:is_document_exist(Server, 1),
+        ?SRV:add_document(Server, Doc),
+        AfterAddTerm = ?SRV:is_document_exist(Server, "monad"),
+        AfterAddId   = ?SRV:is_document_exist(Server, 1),
+        [ ?_assertNot(BeforeAddTerm)
+        , ?_assertNot(BeforeAddId)
+        , ?_assert(AfterAddTerm)
+        , ?_assert(AfterAddId)
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
 
 
 frequency_test() ->
@@ -253,6 +295,7 @@ term_qlc_gen() ->
         DocId = ?SRV:add_document(Server, Fields),
         Meta = xapian_term_record:record(term, record_info(fields, term)),
         Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
+
         Records = qlc:e(qlc:q([X || X <- Table])),
         Values = [Value || #term{value = Value} <- Records],
         Not1Wdf = [X || X = #term{wdf = Wdf} <- Records, Wdf =/= 1],
@@ -978,10 +1021,16 @@ read_bad_docid_test() ->
 %% ------------------------------------------------------------------
 
 
+%% See Driver::selectEncoderAndRetrieveDocument.
+%% book fields are in Document.
+%% book_ext fields are both in Document and in Iterator.
+%% book_iter fields are both in in Iterator.
+
 %% These records are used for tests.
 %% They describe values of documents.
 -record(book, {docid, author, title, data}).
 -record(book_ext, {docid, author, title, data,   rank, weight, percent}).
+-record(book_iter, {docid, rank, weight, percent}).
 
 
 %% These cases will be runned sequencly.
@@ -999,6 +1048,8 @@ cases_gen() ->
     , fun resource_cleanup_on_process_down_case/1
     , fun enquire_to_mset_case/1
     , fun qlc_mset_case/1
+    , fun qlc_mset_doc_case/1
+    , fun qlc_mset_iter_case/1
 
     , fun create_user_resource_case/1
     , fun release_resource_case/1
@@ -1215,6 +1266,104 @@ qlc_mset_case(Server) ->
     {"Check internal_qlc_init", Case}.
 
 
+qlc_mset_doc_case(Server) ->
+    Case = fun() ->
+        %% Query is a query to make for retrieving documents from Xapian.
+        %% Each document object will be mapped into a document record. 
+        %% A document record is a normal erlang record, 
+        %% it has structure, described by the user,
+        %% using  the `xapian_record:record' call.
+        Query = "erlang",
+        EnquireResourceId = ?SRV:enquire(Server, Query),
+        MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
+
+        %% Meta is a record, which contains some information about
+        %% structure of a document record.
+        %% The definition of Meta is incapsulated inside `xapian_record' module.
+        Meta = xapian_record:record(book, record_info(fields, book)),
+
+        %% Create QlcTable from MSet. 
+        %% After creation of QlcTable, MSet can be removed.
+        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+        ?SRV:release_resource(Server, MSetResourceId),
+
+        %% QueryAll is a list of all matched records.
+        QueryAll = qlc:q([X || X <- Table]),
+
+        %% Check `lookup' function. This function is used by `qlc' module.
+        %% It will be called to find a record by an index.
+        QueryFilter = qlc:q(
+            [X || X=#book{docid=DocId} <- Table, DocId =:= 1]),
+        QueryFilter2 = qlc:q(
+            [X || X=#book{docid=DocId} <- Table, DocId =:= 1 orelse DocId =:= 2]),
+        QueryFilter3 = qlc:q(
+            [X || X=#book{docid=DocId} <- Table, DocId =:= 2 orelse DocId =:= 1]),
+        Queries = [QueryAll, QueryFilter, QueryFilter2, QueryFilter3],
+
+        %% For each query...
+        [begin
+            %% ... evaluate (execute) ...
+            Records = qlc:e(Q),
+            %% ... and print out.
+            io:format(user, "~n ~p~n", [Records])
+            end || Q <- Queries
+        ],
+
+        %% This case will cause an error, because DocId > 0.
+        QueryBadFilter = qlc:q(
+            [X || X=#book{docid=DocId} <- Table, DocId =:= 0]),
+        ?assertError(bad_docid, qlc:e(QueryBadFilter))
+        end,
+    {"Check an iterator source.", Case}.
+
+
+qlc_mset_iter_case(Server) ->
+    Case = fun() ->
+        %% Query is a query to make for retrieving documents from Xapian.
+        %% Each document object will be mapped into a document record. 
+        %% A document record is a normal erlang record, 
+        %% it has structure, described by the user,
+        %% using  the `xapian_record:record' call.
+        Query = "erlang",
+        EnquireResourceId = ?SRV:enquire(Server, Query),
+        MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
+
+        %% Meta is a record, which contains some information about
+        %% structure of a document record.
+        %% The definition of Meta is incapsulated inside `xapian_record' module.
+        Meta = xapian_record:record(book_iter, record_info(fields, book_iter)),
+
+        %% Create QlcTable from MSet. 
+        %% After creation of QlcTable, MSet can be removed.
+        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+        ?SRV:release_resource(Server, MSetResourceId),
+
+        %% QueryAll is a list of all matched records.
+        QueryAll = qlc:q([X || X <- Table]),
+
+        %% Check `lookup' function. This function is used by `qlc' module.
+        %% It will be called to find a record by an index.
+        QueryFilter = qlc:q(
+            [X || X=#book_iter{docid=DocId} <- Table, DocId =:= 1]),
+        Queries = [QueryAll, QueryFilter],
+
+        %% For each query...
+        [begin
+            %% ... evaluate (execute) ...
+            Records = qlc:e(Q),
+            %% ... and print out.
+            io:format(user, "~n ~p~n", [Records])
+            end || Q <- Queries
+        ],
+
+        %% This case will cause an error, because DocId > 0.
+        QueryBadFilter = qlc:q(
+            [X || X=#book_iter{docid=DocId} <- Table, DocId =:= 0]),
+        ?assertError(bad_docid, qlc:e(QueryBadFilter))
+        end,
+    {"Check an iterator source.", Case}.
+
+
 create_user_resource_case(Server) ->
     Case = fun() ->
         %% User-defined resource is an object, which is created on C++ side.
@@ -1379,12 +1528,29 @@ large_db_and_qlc_test() ->
     ?assertEqual(DocIds, ExpectedDocIds),
 
     Query = "erlang",
-    {Cursor, Destructor} = all_record_cursor(Server, Query),
+    Cursor = all_record_cursor(Server, Query),
     try
         cursor_walk(1, 1001, Cursor)
     after
-        Destructor()
+        qlc:delete_cursor(Cursor)
     end.
+
+
+large_db_and_qlc_mset_with_joins_test() ->
+    Path = testdb_path(large_db_and_qlc_joins),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:open(Path, Params),
+
+    ExpectedDocIds = lists:seq(1, 1000),
+    DocIds = [begin
+            Document = [ #x_term{value = integer_to_list(Id)} ],
+            ?SRV:add_document(Server, Document)
+        end || Id <- ExpectedDocIds],
+    ?assertEqual(DocIds, ExpectedDocIds),
+
+    Query = "",
+    Table = mset_table(Server, Query, document),
+    qlc:q([Id || #document{docid=Id} <- Table]).
 
 
 %% Id =:= Max
@@ -1412,52 +1578,48 @@ extra_weight_query(Factor, Title, Body) ->
 
 -record(mdocument, {docid, db_name, multi_docid, db_number}).
 
-all_record_ids(Server, Query) ->
+
+mset_table(Server, Query, document) ->
+    Meta = xapian_record:record(document, record_info(fields, document)),
+    mset_table(Server, Query, Meta);
+
+mset_table(Server, Query, mdocument) ->
+    Meta = xapian_record:record(mdocument, record_info(fields, mdocument)),
+    mset_table(Server, Query, Meta);
+
+mset_table(Server, Query, Meta) ->
     EnquireResourceId = ?SRV:enquire(Server, Query),
     MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
-    Meta = xapian_record:record(document, record_info(fields, document)),
     Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
-    Ids = qlc:e(qlc:q([Id || #document{docid=Id} <- Table])),
+    %% Table has a pointer on resources.
     ?SRV:release_resource(Server, EnquireResourceId),
     ?SRV:release_resource(Server, MSetResourceId),
+    Table.
+
+
+all_record_ids(Server, Query) ->
+    Table = mset_table(Server, Query, document),
+    Ids = qlc:e(qlc:q([Id || #document{docid=Id} <- Table])),
     Ids.
 
 
 all_record_cursor(Server, Query) ->
-    EnquireResourceId = ?SRV:enquire(Server, Query),
-    MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
-    Meta = xapian_record:record(document, record_info(fields, document)),
-    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
-    Cursor = qlc:cursor(qlc:q([Id || #document{docid=Id} <- Table])),
-    {Cursor, fun() ->
-        qlc:delete_cursor(Cursor),
-        ?SRV:release_resource(Server, EnquireResourceId),
-        ?SRV:release_resource(Server, MSetResourceId),
-        ok
-        end}.
+    Table = mset_table(Server, Query, document),
+    qlc:cursor(qlc:q([Id || #document{docid=Id} <- Table])).
 
 
 all_multidb_records(Server, Query) ->
-    EnquireResourceId = ?SRV:enquire(Server, Query),
-    MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
-    Meta = xapian_record:record(mdocument, record_info(fields, mdocument)),
-    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+    Table = mset_table(Server, Query, mdocument),
     qlc:e(qlc:q([X || X <- Table])).
 
 
 record_by_id(Server, Query, Id) ->
-    EnquireResourceId = ?SRV:enquire(Server, Query),
-    MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
-    Meta = xapian_record:record(mdocument, record_info(fields, mdocument)),
-    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+    Table = mset_table(Server, Query, mdocument),
     qlc:e(qlc:q([X || X=#mdocument{docid=DocId} <- Table, Id =:= DocId])).
 
 
 multidb_record_by_id(Server, Query, Id) ->
-    EnquireResourceId = ?SRV:enquire(Server, Query),
-    MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
-    Meta = xapian_record:record(mdocument, record_info(fields, mdocument)),
-    Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+    Table = mset_table(Server, Query, mdocument),
     qlc:e(qlc:q([X || X=#mdocument{multi_docid=DocId} <- Table, Id =:= DocId])).
 
 
@@ -1598,8 +1760,13 @@ prop_large_db_and_qlc_index() ->
         EnquireResourceId = ?SRV:enquire(Server, Term),
         MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
         Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
-        Ids = qlc:e(qlc:q([Id || #document{docid=Id} <- Table, Id =:= DocId])),
-        equals([DocId], Ids)
+        try
+            Query = qlc:q([Id || #document{docid=Id} <- Table, Id =:= DocId]),
+            Ids = qlc:e(Query),
+            equals([DocId], Ids)
+        after
+            ?SRV:release_table(Server, Table)
+        end
         end).
 
 

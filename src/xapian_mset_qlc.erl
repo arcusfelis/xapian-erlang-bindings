@@ -16,7 +16,8 @@ table(Server, MSet, Meta) ->
         end,
     #internal_qlc_info{
         num_of_objects = Size,
-        resource_number = ResNum
+        resource_number = ResNum,
+        resource_ref = ResRef
     } = xapian_server:internal_qlc_init(Server, mset, MSet, EncoderFun),
     From = 0,
     Len = 20,
@@ -47,11 +48,13 @@ table(Server, MSet, Meta) ->
        (_) -> undefined
        end,
     LookupFun = lookup_fun(Server, ResNum, Meta, SubDbNames),
-    qlc:table(TraverseFun, 
+    Table = qlc:table(TraverseFun, 
         [{info_fun, InfoFun} 
         ,{lookup_fun, LookupFun}
         ,{key_equality,'=:='}
-        ]).
+        ]),
+    xapian_server:internal_register_qlc_table(Server, Table, ResRef),
+    Table.
 
 
 %% Returns HOF that is used by the Erlang QLC module.

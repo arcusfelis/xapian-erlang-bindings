@@ -119,7 +119,8 @@ empty_table() ->
 init_not_empty_table(Server, Info, Meta, UserParams) ->
     #internal_qlc_info{
         num_of_objects = Size,
-        resource_number = ResNum
+        resource_number = ResNum,
+        resource_ref = ResRef
     } = Info,
     KeyPos = xapian_term_record:key_position(Meta),
     From = proplists:get_value(from, UserParams, 0),
@@ -133,10 +134,11 @@ init_not_empty_table(Server, Info, Meta, UserParams) ->
        (_) -> undefined
        end,
     LookupFun = lookup_fun(Server, ResNum, Meta, KeyPos),
-    qlc:table(TraverseFun, 
+    Table = qlc:table(TraverseFun, 
             [{info_fun, InfoFun} 
             ,{lookup_fun, LookupFun}
-            ,{key_equality,'=:='}]).
+            ,{key_equality,'=:='}]),
+    xapian_server:internal_register_qlc_table(Server, Table, ResRef).
     
 
 lookup_fun(Server, ResNum, Meta, KeyPos) ->

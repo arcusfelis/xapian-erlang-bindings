@@ -10,6 +10,7 @@
          last_document_id/1,
          read_document/3,
          document_info/3,
+         is_document_exist/2,
          close/1]).
 
 %% For writable DB
@@ -31,7 +32,8 @@
          match_set/2]).
 
 %% Resources
--export([release_resource/2]).
+-export([release_resource/2,
+         release_table/2]).
 
 %% Information
 -export([mset_info/2,
@@ -56,6 +58,7 @@
 
 %% Intermodule export (non for a client!)
 -export([internal_qlc_init/4,
+         internal_register_qlc_table/3,
          internal_qlc_get_next_portion/4,
          internal_qlc_lookup/3,
 
@@ -368,6 +371,17 @@ release_resource(Server, ResourceRef) ->
     call(Server, {release_resource, ResourceRef}).
 
 
+%% @doc Clean resources allocated by the QLC table.
+release_table(Server, Table) ->
+    TableHash = erlang:phash2(Table),
+    gen_server:cast(Server, {qlc_release_table, TableHash}).
+
+
+internal_register_qlc_table(Server, Table, ResRef) ->
+    TableHash = erlang:phash2(Table),
+    gen_server:cast(Server, {qlc_register_table, TableHash, ResRef}).
+
+
 %% ------------------------------------------------------------------
 %% API Function Definitions for writable DB
 %% ------------------------------------------------------------------
@@ -394,6 +408,10 @@ update_document(Server, DocIdOrUniqueTerm, NewDocument) ->
     call(Server, {update_document, DocIdOrUniqueTerm, NewDocument, false}).
 
 
+%% @doc Update documents or create the new document.
+%%
+%% If `DocIdUniqueTerm' is a term and a document is not exist, new document will.
+%% A unique term WILL NOT added automaticly.
 -spec update_or_create_document(x_server(), x_unique_document_id(), 
                                 x_document_constructor()) -> x_document_id().
 
@@ -405,6 +423,13 @@ update_or_create_document(Server, DocIdOrUniqueTerm, NewDocument) ->
 
 delete_document(Server, DocIdOrUniqueTerm) ->
     call(Server, {delete_document, DocIdOrUniqueTerm}).
+
+
+-spec is_document_exist(x_server(), x_unique_document_id()) -> x_document_id().
+
+is_document_exist(Server, DocIdOrUniqueTerm) ->
+    call(Server, {is_document_exist, DocIdOrUniqueTerm}).
+
 
 
 -spec set_metadata(x_server(), x_string(), x_string()) -> ok.
@@ -733,9 +758,11 @@ init([Path, Params]) ->
     Name2PrefixDict = orddict:from_list(Name2Prefix),
     Name2SlotDict   = orddict:from_list(Name2Slot),
 
-    %% This stemmer will be used by default
-    DefaultStemmer = lists:keyfind(m_stemmer, 1, Params),
+    %% This stemmer will be used by default.
+    %% Find the `#x_stemmer{}' record as a parameter.
+    DefaultStemmer = lists:keyfind(x_stemmer, 1, Params),
 
+    %% Select an interface for communicate with the C-part.
     PortType = 
         case lists:member(port, Params) of
             true -> port;
@@ -822,6 +849,11 @@ handle_call({update_document, Id, Document, Create}, _From, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, State),
     Reply = port_update_document(Port, Id, EncodedDocument, Create),
+    {reply, Reply, State};
+
+handle_call({is_document_exist, Id}, _From, State) ->
+    #state{ port = Port } = State,
+    Reply = port_is_document_exist(Port, Id),
     {reply, Reply, State};
 
 handle_call({delete_document, Id}, _From, State) ->
@@ -1252,7 +1284,7 @@ set_default_stemmer(_Port, false) ->
     {ok, <<>>};
 
 set_default_stemmer(Port, DefaultStemmer) ->
-    Data = xapian_encode:append_prefix(DefaultStemmer, <<>>),
+    Data = xapian_encode:append_stemmer(DefaultStemmer, <<>>),
     control(Port, set_default_stemmer, Data).
 
 
@@ -1289,6 +1321,11 @@ port_replace_document(Port, Id, EncodedDocument) ->
 
 port_delete_document(Port, Id) ->
     control(Port, delete_document, append_unique_document_id(Id, <<>>)).
+
+
+port_is_document_exist(Port, Id) ->
+    decode_boolean_result(
+        control(Port, is_document_exist, append_unique_document_id(Id, <<>>))).
 
 
 port_set_metadata(Port, Key, Value) ->
@@ -1533,6 +1570,9 @@ decode_docid_result(Data) ->
 
 decode_resource_result(Data) -> 
     decode_result_with_hof(Data, fun xapian_common:read_uint/1).
+
+decode_boolean_result(Data) -> 
+    decode_result_with_hof(Data, fun xapian_common:read_boolean/1).
 
 
 

@@ -246,7 +246,7 @@ Driver::updateDocument(PR, bool create)
                     applyDocument(params, doc);
                     m_wdb.replace_document(docid, doc);
                 }
-                // new document was not added added
+                // new document was not added.
                 docid = 0;
             }
             else if (create)
@@ -297,6 +297,43 @@ Driver::deleteDocument(ParamDecoder& params)
             throw BadCommandDriverError(idType);
     }
 }
+
+
+void 
+Driver::isDocumentExist(PR)
+{
+    uint8_t is_exist;
+    switch(uint8_t idType = params)
+    {
+        case UNIQUE_DOCID:
+        {
+            const Xapian::docid docid = params;
+            try
+            { 
+                m_db.get_document(docid);
+                is_exist = true;
+            } catch (Xapian::DocNotFoundError e) 
+            {
+                is_exist = false;
+            }
+            break;
+        }
+
+        case UNIQUE_TERM:
+        {
+            // If there is the term in the database, then there is a document
+            // with this term.
+            const std::string& unique_term = params;
+            is_exist = m_db.term_exists(unique_term);
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(idType);
+    }
+    result << is_exist;
+}
+
 
 void
 Driver::query(PR)
@@ -354,12 +391,18 @@ Driver::retrieveDocuments(PCR,
 }
 
 
+/**
+ * Read sources of information and write information fields.
+ * Sources are selected from Erlang code.
+ */
 void
 Driver::selectEncoderAndRetrieveDocument(PR, Xapian::MSetIterator& iter)
 {
     ParamDecoder params_copy = params;
     switch (uint8_t decoder_type = params_copy)
     {
+        // Source is a document.
+        // Fields from the iterator are not used.
         case DEC_DOCUMENT:
         {
             Xapian::Document doc = iter.get_document();
@@ -367,10 +410,13 @@ Driver::selectEncoderAndRetrieveDocument(PR, Xapian::MSetIterator& iter)
             break;
         }
 
+        // Source is an iterator.
+        // Fields from the document are not used.
         case DEC_ITERATOR:
             retrieveDocument(params, result, iter);
             break;
 
+        // Fields both from the iterator and from the document are used.
         case DEC_BOTH:
         {
             Xapian::Document doc = iter.get_document();
@@ -1146,6 +1192,10 @@ Driver::handleCommand(PR,
         case UPDATE_OR_CREATE_DOCUMENT:
             updateDocument(params, result,
                 command == UPDATE_OR_CREATE_DOCUMENT);
+            break;
+
+        case IS_DOCUMENT_EXIST:
+            isDocumentExist(params, result);
             break;
 
         case DELETE_DOCUMENT:
