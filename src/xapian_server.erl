@@ -141,6 +141,8 @@
     %% name.
     subdb_names :: tuple(),
 
+    qlc_reference_and_table_hash,
+
     %% Pid of the real server (used by a transaction).
     %% If the process will be terminated, then new owner of the port will 
     %% be master.
@@ -366,6 +368,7 @@ match_set(Server, EnquireResource) ->
 
 
 %% @doc Release a resource.
+%% It will be called automaticly, if the client process is died.
 -spec release_resource(x_server(), x_resource()) -> void().
 release_resource(Server, ResourceRef) ->
     call(Server, {release_resource, ResourceRef}).
@@ -374,7 +377,7 @@ release_resource(Server, ResourceRef) ->
 %% @doc Clean resources allocated by the QLC table.
 release_table(Server, Table) ->
     TableHash = erlang:phash2(Table),
-    gen_server:cast(Server, {qlc_release_table, TableHash}).
+    call(Server, {qlc_release_table, TableHash}).
 
 
 internal_register_qlc_table(Server, Table, ResRef) ->
@@ -948,6 +951,11 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
 
         register_resource(State, mset, FromPid, MSetNum)]));
 
+%% It is synchronous, because it we put this code into `handle_cast', we cannot
+%% find the place where the client sends a message.
+%% If the error occures, we can throw an exception inside the client code.
+%%
+%% The return value is useless.
 handle_call({release_resource, Ref}, _From, State) ->
     #state{port = Port, register = Register } = State,
     do_reply(State, do([error_m ||
@@ -1090,9 +1098,11 @@ handle_call({transaction, Ref}, From, State) ->
 
 
 %% @private
-handle_cast(BadMess, State) ->
-    %% This function is unused.
-    {stop, {unexpected_mess, BadMess}, State}.
+%%
+%% Assosiate ResRef with TableHash.
+handle_cast({qlc_register_table, TableHash, ResRef}, State) ->
+    {noreply, State}.
+
 
 
 %% @doc It is a helper, which is used with the monad error_m.
