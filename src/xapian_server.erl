@@ -48,7 +48,8 @@
          slot_to_type/1,
          slot_to_type/2,
          subdb_names/1,
-         multi_docid/3]).
+         multi_docid/3,
+         qlc_table_to_reference/2]).
 
 
 
@@ -74,7 +75,8 @@
          internal_name_to_slot_dict/1,
          internal_slot_to_type_array/1,
          internal_subdb_names/1,
-         internal_multi_docid/2]).
+         internal_multi_docid/2,
+         internal_qlc_table_hash_to_reference/2]).
 
 
 -import(xapian_common, [ 
@@ -376,12 +378,12 @@ release_resource(Server, ResourceRef) ->
 
 %% @doc Clean resources allocated by the QLC table.
 release_table(Server, Table) ->
-    TableHash = erlang:phash2(Table),
+    TableHash = xapian_qlc_table_hash:hash(Table),
     call(Server, {qlc_release_table, TableHash}).
 
 
 internal_register_qlc_table(Server, ResRef, Table) ->
-    TableHash = erlang:phash2(Table),
+    TableHash = xapian_qlc_table_hash:hash(Table),
     gen_server:cast(Server, {qlc_register_table, ResRef, TableHash}).
 
 
@@ -567,6 +569,18 @@ name_to_slot(#state{name_to_slot = N2S}, Slot) when is_atom(Slot) ->
 
 name_to_slot(Server, Slot) when is_atom(Slot) ->
     call(Server, {with_state, fun ?SRV:internal_name_to_slot/2, Slot}).
+
+
+qlc_table_to_reference(#state{} = State, Table) ->
+    Hash = xapian_qlc_table_hash:hash(Table),
+    case internal_qlc_table_hash_to_reference(State, Hash) of
+        {ok, Ref} -> Ref;
+        {error, Reason} -> erlang:error(Reason)
+    end;
+
+qlc_table_to_reference(Server, Table) ->
+    Hash = xapian_qlc_table_hash:hash(Table),
+    call(Server, {with_state, fun ?SRV:internal_qlc_table_hash_to_reference/2, Hash}).
 
 
 name_to_slot(#state{name_to_slot = N2S}) ->
@@ -965,7 +979,7 @@ handle_call({release_resource, Ref}, _From, State) ->
     end;
 
 handle_call({qlc_release_table, Hash}, From, State) ->
-    case qlc_table_hash_to_reference(State, Hash) of
+    case internal_qlc_table_hash_to_reference(State, Hash) of
         {ok, Ref} ->
             handle_call({release_resource, Ref}, From, State);
         {error, _Reason} = Error ->
@@ -1568,7 +1582,7 @@ maybe_erase_qlc_table(TableRegister, _Ref, #resource{}) ->
     {ok, TableRegister}.
 
 
-qlc_table_hash_to_reference(State, Hash) ->
+internal_qlc_table_hash_to_reference(State, Hash) ->
     #state{qlc_reference_and_table_hash = TableRegister} = State,
     case xapian_qlc_table_hash:get(TableRegister, Hash) of
         {ok, {Ref, Hash}} ->

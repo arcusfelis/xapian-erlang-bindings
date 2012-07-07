@@ -1,5 +1,10 @@
 %% @doc This structure is for converting beetween qlc_reference and table_hash.
 -module(xapian_qlc_table_hash).
+
+%% Helpers.
+-export([hash/1]).
+
+%% Functions for working with store.
 -export([new/0,
          get/2,
          erase/2,
@@ -23,6 +28,11 @@
 
 -type hr_write_result() :: {ok, {hr_store(), qlc_reference(), table_hash()}} 
                         | {error, hr_error()}.
+
+
+-spec hash(term()) -> table_hash().
+hash(Table) ->
+    erlang:phash2(Table).
 
 
 -spec new() -> hr_store().

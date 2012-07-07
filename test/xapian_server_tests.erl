@@ -1053,6 +1053,8 @@ cases_gen() ->
 
     , fun create_user_resource_case/1
     , fun release_resource_case/1
+    , fun release_table_case/1
+    , fun release_table2_case/1
 
     %% Advanced enquires
     , fun advanced_enquire_case/1
@@ -1450,6 +1452,34 @@ release_resource_case(Server) ->
             ?SRV:release_resource(Server, EnquireResourceId))
         end,
     {"Check xapian_server:release_resource", Case}.
+
+
+release_table_case(Server) ->
+    Case = fun() ->
+        %% Create a Qlc Table for query "erlang".
+        Table = mset_table(Server, "erlang", document),
+        Ref = ?SRV:qlc_table_to_reference(Server, Table),
+        ?SRV:release_table(Server, Table),
+
+        %% Try call it twice
+        ?assertError(elem_not_found,
+            ?SRV:release_resource(Server, Ref))
+        end,
+    {"Try delete the reference after deleting the table.", Case}.
+
+
+release_table2_case(Server) ->
+    Case = fun() ->
+        %% Create a Qlc Table for query "erlang".
+        Table = mset_table(Server, "erlang", document),
+        Ref = ?SRV:qlc_table_to_reference(Server, Table),
+        ?SRV:release_resource(Server, Ref),
+
+        %% Try call it twice
+        ?assertError(elem_not_found,
+            ?SRV:release_table(Server, Table))
+        end,
+    {"Try delete the table after deleting the reference.", Case}.
 
 
 database_info_case(Server) ->
