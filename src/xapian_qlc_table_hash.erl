@@ -6,9 +6,9 @@
          put/3]).
 
 -record(qlc_table_hash_register, {
-        hash_to_ref = gb_trees:new() 
+        hash_to_ref = gb_trees:empty() 
             :: gb_trees:gb_tree(table_hash(), qlc_reference()),
-        ref_to_hash = gb_trees:new()
+        ref_to_hash = gb_trees:empty()
             :: gb_trees:gb_tree(qlc_reference(), table_hash())
 }).
 
@@ -45,7 +45,7 @@ put(Store, Ref, Hash)
 erase(Store, Key) ->
     #qlc_table_hash_register{hash_to_ref = H2R, ref_to_hash = R2H} = Store,
     case key_to_ref_and_hash(Store, Key) of
-    {ok, {Hash, Ref}} ->
+    {ok, {Ref, Hash}} ->
         NewR2H = gb_trees:delete(Ref, R2H),
         NewH2R = gb_trees:delete(Hash, H2R),
         NewStore = Store#qlc_table_hash_register{hash_to_ref = NewH2R, 

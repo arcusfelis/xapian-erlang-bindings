@@ -141,7 +141,7 @@
     %% name.
     subdb_names :: tuple(),
 
-    qlc_reference_and_table_hash,
+    qlc_reference_and_table_hash = xapian_qlc_table_hash:new(),
 
     %% Pid of the real server (used by a transaction).
     %% If the process will be terminated, then new owner of the port will 
@@ -380,9 +380,9 @@ release_table(Server, Table) ->
     call(Server, {qlc_release_table, TableHash}).
 
 
-internal_register_qlc_table(Server, Table, ResRef) ->
+internal_register_qlc_table(Server, ResRef, Table) ->
     TableHash = erlang:phash2(Table),
-    gen_server:cast(Server, {qlc_register_table, TableHash, ResRef}).
+    gen_server:cast(Server, {qlc_register_table, ResRef, TableHash}).
 
 
 %% ------------------------------------------------------------------
@@ -957,21 +957,20 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
 %%
 %% The return value is useless.
 handle_call({release_resource, Ref}, _From, State) ->
-    #state{port = Port, register = Register } = State,
-    do_reply(State, do([error_m ||
-    {NewRegister, Elem} <- 
-        xapian_register:erase(Register, Ref),
-    <<>> <- 
-        begin
-            #resource{type=ResourceType, number=ResourceNum} = Elem,
-            port_release_resource(Port, ResourceType, ResourceNum)
-        end,
-        begin
-            NewState = State#state{register = NewRegister},
-            {reply, {ok, ok}, NewState}
-        end
-    ]));
+    case run_release_resource(Ref, State) of
+        {ok, NewState} ->
+            {reply, {ok, ok}, NewState};
+        {error, _Reason} = Error ->
+            {reply, Error, State}
+    end;
 
+handle_call({qlc_release_table, Hash}, From, State) ->
+    case qlc_table_hash_to_reference(State, Hash) of
+        {ok, Ref} ->
+            handle_call({release_resource, Ref}, From, State);
+        {error, _Reason} = Error ->
+            {reply, Error, State}
+    end;
 
 %% Convert Res into QlcRes.
 %% ResRef is an iterable object.
@@ -1100,8 +1099,12 @@ handle_call({transaction, Ref}, From, State) ->
 %% @private
 %%
 %% Assosiate ResRef with TableHash.
-handle_cast({qlc_register_table, TableHash, ResRef}, State) ->
-    {noreply, State}.
+handle_cast({qlc_register_table, ResRef, TableHash}, State) ->
+    #state{qlc_reference_and_table_hash = TableRegister} = State,
+    NewTableRegister = 
+    xapian_qlc_table_hash:put(TableRegister, ResRef, TableHash),
+    NewState = State#state{qlc_reference_and_table_hash = NewTableRegister},
+    {noreply, NewState}.
 
 
 
@@ -1122,22 +1125,14 @@ stop_if_error(Other) ->
 
 
 %% @private
+%% Ref is created for each resource.
 handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
-    #state{ 
-        port = Port, 
-        register = Register } = State,
-    case xapian_register:erase(Register, Ref) of
-        {ok, {NewRegister, Elem}} ->
-            #resource{type=ResourceType, number=ResourceNum} = Elem,
-            %% TODO: handle a return value
-            port_release_resource(Port, ResourceType, ResourceNum),
-            NewState = State#state{register = NewRegister},
-            {noreply, NewState};
-
-        {error, _Reason} = _Error ->
-           {noreply, State}
+    case run_release_resource(Ref, State) of
+        {error, _Reason} ->
+            {noreply, State}; %% ignore an error
+        {ok, NewState} ->
+            {noreply, NewState}
     end.
-
 
 
 %% @private
@@ -1535,7 +1530,55 @@ port_database_info(Port, Params) ->
 %% -----------------------------------------------------------------
 %% Helpers
 %% -----------------------------------------------------------------
+            
+%% @doc Delete information about allocated resource, deallocate resource,
+%%      clean information about the qlc table.
+run_release_resource(Ref, State) ->
+    #state{port = Port, register = Register,
+           qlc_reference_and_table_hash = TableRegister} = State,
+    do([error_m ||
+    {NewRegister, Elem} <- 
+        xapian_register:erase(Register, Ref),
+    %% Delete qlc.
+    NewTableRegister <- 
+        maybe_erase_qlc_table(TableRegister, Ref, Elem),
+    <<>> <- 
+        begin
+            #resource{type=ResourceType, number=ResourceNum} = Elem,
+            port_release_resource(Port, ResourceType, ResourceNum)
+        end,
+    {ok, State#state{register = NewRegister,
+                     qlc_reference_and_table_hash = NewTableRegister}}
+    ]).
 
+
+%% @doc If the type of the resource is qlc, then delete information about
+%%      the qlc table from the state.
+maybe_erase_qlc_table(TableRegister, Ref, #resource{type=qlc}) ->
+    case xapian_qlc_table_hash:erase(TableRegister, Ref) of
+        {ok, {NewTableRegister, Ref, _Hash}} ->
+            %% Shrink the result.
+            {ok, NewTableRegister};
+        {error, _Reason} = Error ->
+            Error
+    end;
+
+%% Not Qlc.
+maybe_erase_qlc_table(TableRegister, _Ref, #resource{}) ->
+    {ok, TableRegister}.
+
+
+qlc_table_hash_to_reference(State, Hash) ->
+    #state{qlc_reference_and_table_hash = TableRegister} = State,
+    case xapian_qlc_table_hash:get(TableRegister, Hash) of
+        {ok, {Ref, Hash}} ->
+            {ok, Ref};
+        {error, _Reason} = Error ->
+            Error
+    end.
+        
+
+%% Result is from a port.
 decode_result_with_hof({ok, Bin}, Meta, Fn) ->
     case Fn(Meta, Bin) of
         {Recs, <<>>} -> {ok, Recs}

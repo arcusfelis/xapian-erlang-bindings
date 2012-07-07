@@ -138,7 +138,8 @@ init_not_empty_table(Server, Info, Meta, UserParams) ->
             [{info_fun, InfoFun} 
             ,{lookup_fun, LookupFun}
             ,{key_equality,'=:='}]),
-    xapian_server:internal_register_qlc_table(Server, Table, ResRef).
+    xapian_server:internal_register_qlc_table(Server, ResRef, Table),
+    Table.
     
 
 lookup_fun(Server, ResNum, Meta, KeyPos) ->
