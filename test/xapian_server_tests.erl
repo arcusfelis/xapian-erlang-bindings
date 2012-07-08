@@ -316,7 +316,6 @@ term_qlc_gen() ->
     end.
 
 
-
 short_term_qlc_gen() ->
     Path = testdb_path(short_term_qlc),
     Params = [write, create, overwrite],
@@ -373,6 +372,58 @@ term_ext_qlc_gen() ->
         ?SRV:close(Server)
     end.
 
+
+term_numbers(From, To) ->
+    [erlang:list_to_binary(erlang:integer_to_list(X)) 
+        || X <- lists:seq(From, To)].
+
+
+terms(TermNames) ->
+    [#x_term{value = Term} || Term <- TermNames].
+
+
+term_qlc_join_gen() ->
+    Path = testdb_path(term_qlc_join),
+    Params = [write, create, overwrite],
+    %% Create a document with terms
+    TermNames0to99    = term_numbers(0, 99),
+    TermNames100to199 = term_numbers(100, 199),
+    TermNames200to299 = term_numbers(200, 299),
+    TermNames300to399 = term_numbers(300, 399),
+
+    
+    {ok, Server} = ?SRV:open(Path, Params),
+    try
+        Doc1Terms = TermNames0to99 ++ TermNames100to199,
+        Doc2Terms = TermNames100to199 ++ TermNames200to299,
+        Doc3Terms = TermNames200to299 ++ TermNames300to399,
+        Doc1Id = ?SRV:add_document(Server, terms(Doc1Terms)),
+        Doc2Id = ?SRV:add_document(Server, terms(Doc2Terms)),
+        Doc3Id = ?SRV:add_document(Server, terms(Doc3Terms)),
+        Meta = xapian_term_record:record(term, record_info(fields, term)),
+        Table1 = xapian_term_qlc:document_term_table(Server, Doc1Id, Meta),
+        Table2 = xapian_term_qlc:document_term_table(Server, Doc2Id, Meta),
+        Table3 = xapian_term_qlc:document_term_table(Server, Doc3Id, Meta),
+        %% Search terms from 2 documents with the same names.
+        %% It is a natural join.
+        Q12 = qlc:q([Value1 || #term{value = Value1} <- Table1, 
+                               #term{value = Value2} <- Table2,
+                               Value1 =:= Value2]),
+        Q23 = qlc:q([Value1 || #term{value = Value1} <- Table2, 
+                               #term{value = Value2} <- Table3,
+                               Value1 =:= Value2]),
+        Q1223 = qlc:append(Q12, Q23),
+        QE12 = qlc:e(Q12),
+        QE23 = qlc:e(Q23),
+        QE1223 = qlc:e(Q1223),
+        {"Natural join of the terms from two document.",
+            [ ?_assertEqual(QE12, TermNames100to199)  
+            , ?_assertEqual(QE23, TermNames200to299) 
+            , ?_assertEqual(QE1223, TermNames100to199 ++ TermNames200to299) 
+            ]}
+    after
+        ?SRV:close(Server)
+    end.
 
 
 term_pos_qlc_gen() ->
@@ -1548,21 +1599,25 @@ large_db_and_qlc_test() ->
     Path = testdb_path(large_db_and_qlc),
     Params = [write, create, overwrite],
     {ok, Server} = ?SRV:open(Path, Params),
-    Terms = ["xapian", "erlang"],
-
-    Document = [#x_term{value = X} || X <- Terms],
-    ExpectedDocIds = lists:seq(1, 1000),
-    DocIds = [begin
-        ?SRV:add_document(Server, Document)
-        end || _ <- ExpectedDocIds],
-    ?assertEqual(DocIds, ExpectedDocIds),
-
-    Query = "erlang",
-    Cursor = all_record_cursor(Server, Query),
     try
-        cursor_walk(1, 1001, Cursor)
+        Terms = ["xapian", "erlang"],
+
+        Document = [#x_term{value = X} || X <- Terms],
+        ExpectedDocIds = lists:seq(1, 1000),
+        DocIds = [begin
+            ?SRV:add_document(Server, Document)
+            end || _ <- ExpectedDocIds],
+        ?assertEqual(DocIds, ExpectedDocIds),
+
+        Query = "erlang",
+        Cursor = all_record_cursor(Server, Query),
+        try
+            cursor_walk(1, 1001, Cursor)
+        after
+            qlc:delete_cursor(Cursor)
+        end
     after
-        qlc:delete_cursor(Cursor)
+        ?SRV:close(Server)
     end.
 
 
@@ -1580,7 +1635,16 @@ large_db_and_qlc_mset_with_joins_test() ->
 
     Query = "",
     Table = mset_table(Server, Query, document),
-    qlc:q([Id || #document{docid=Id} <- Table]).
+    QH1 = qlc:q([Id || #document{docid=Id} <- Table, Id =< 500]),
+    QH2 = qlc:q([Id || #document{docid=Id} <- Table, Id > 500]),
+    QH3 = qlc:append(QH1, QH2),
+    Cursor = qlc:cursor(QH3),
+    try
+        cursor_walk(1, 1001, Cursor)
+    after
+        qlc:delete_cursor(Cursor)
+    end.
+
 
 
 %% Id =:= Max
