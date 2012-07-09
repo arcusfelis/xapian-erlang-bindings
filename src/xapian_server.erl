@@ -16,7 +16,7 @@
 %% For writable DB
 -export([add_document/2,
          delete_document/2,
-         replace_document/3,
+         replace_or_create_document/3,
          update_or_create_document/3,
          update_document/3,
          transaction/3,
@@ -429,11 +429,11 @@ add_document(Server, Document) ->
 %% this document will be returned.
 %%
 %% REP_DOC_MARK
--spec replace_document(x_server(), x_unique_document_id(), 
+-spec replace_or_create_document(x_server(), x_unique_document_id(), 
     x_document_constructor()) -> x_document_id().
 
-replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
-    call(Server, {replace_document, DocIdOrUniqueTerm, NewDocument}).
+replace_or_create_document(Server, DocIdOrUniqueTerm, NewDocument) ->
+    call(Server, {replace_or_create_document, DocIdOrUniqueTerm, NewDocument}).
 
 
 %% @doc Extend (edit) the document with data.
@@ -891,10 +891,10 @@ handle_call({add_document, Document}, _From, State) ->
     Reply = port_add_document(Port, EncodedDocument),
     {reply, Reply, State};
 
-handle_call({replace_document, Id, Document}, _From, State) ->
+handle_call({replace_or_create_document, Id, Document}, _From, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, State),
-    Reply = port_replace_document(Port, Id, EncodedDocument),
+    Reply = port_replace_or_create_document(Port, Id, EncodedDocument),
     {reply, Reply, State};
 
 handle_call({update_document, Id, Document, Create}, _From, State) ->
@@ -1367,9 +1367,9 @@ port_update_document(Port, Id, EncodedDocument, Create) ->
             append_unique_document_id(Id, EncodedDocument))).
 
 
-port_replace_document(Port, Id, EncodedDocument) ->
+port_replace_or_create_document(Port, Id, EncodedDocument) ->
     decode_docid_result(
-        control(Port, replace_document, 
+        control(Port, replace_or_create_document, 
             append_unique_document_id(Id, EncodedDocument))).
 
 

@@ -51,7 +51,7 @@ command_id(create_resource)             -> 18;
 command_id(mset_info)                   -> 19;
 command_id(database_info)               -> 20;
 command_id(delete_document)             -> 21;
-command_id(replace_document)            -> 22;
+command_id(replace_or_create_document)  -> 22;
 command_id(set_metadata)                -> 23;
 command_id(update_document)             -> 24;
 command_id(update_or_create_document)   -> 25;
@@ -61,7 +61,8 @@ command_id(open_tcp)                    -> 28;
 command_id(close)                       -> 29;
 command_id(document_info)               -> 30;
 command_id(document_info_resource)      -> 31;
-command_id(is_document_exist)           -> 32.
+command_id(is_document_exist)           -> 32;
+command_id(replace_document)            -> 33.
 
 
 %% Open modes of the DB

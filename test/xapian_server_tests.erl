@@ -109,8 +109,8 @@ simple_gen() ->
     {ok, Server} = ?SRV:open(Path, Params),
     try
         DocId = ?SRV:add_document(Server, Document),
-        DocIdReplaced1 = ?SRV:replace_document(Server, DocId, Document),
-        DocIdReplaced2 = ?SRV:replace_document(Server, "Simple", Document),
+        DocIdReplaced1 = ?SRV:replace_or_create_document(Server, DocId, Document),
+        DocIdReplaced2 = ?SRV:replace_or_create_document(Server, "Simple", Document),
 
         ?SRV:delete_document(Server, DocId),
         ?SRV:delete_document(Server, "Simple"),
@@ -232,13 +232,13 @@ update_document_test() ->
 
     
 %% REP_DOC_MARK
-replace_document_test() ->
-    Path = testdb_path(replace_document),
+replace_or_create_document_test() ->
+    Path = testdb_path(replace_or_create_document),
     Params = [write, create, overwrite],
     {ok, Server} = ?SRV:open(Path, Params),
     try
         %% If there is no document, then the new one will be created.
-        DocId0 = ?SRV:replace_document(Server, "bad_term", []),
+        DocId0 = ?SRV:replace_or_create_document(Server, "bad_term", []),
         ?assertEqual(DocId0, 1),
         ?assertNot(?SRV:is_document_exist(Server, "bad_term")),
         ?assert(?SRV:is_document_exist(Server, DocId0)),
@@ -248,7 +248,7 @@ replace_document_test() ->
         ?assert(?SRV:is_document_exist(Server, "good_term")),
 
         %% Replace the whole document with the new one.
-        DocId2 = ?SRV:replace_document(Server, "good_term", 
+        DocId2 = ?SRV:replace_or_create_document(Server, "good_term", 
                                        [#x_term{value = "nice_term"}]),
         %% It returns a document id of replaced document (but it can be more 
         %% then once).
@@ -264,11 +264,11 @@ replace_document_test() ->
         %% Add another document with the same term.
         DocId3 = ?SRV:add_document(Server, [#x_term{value = "nice_term"}]),
 
-        %% Only one document will left after replace_document.
+        %% Only one document will left after replace_or_create_document.
         %% DocId2 and DocId3 are still here.
         ?assert(?SRV:is_document_exist(Server, DocId2)),
         ?assert(?SRV:is_document_exist(Server, DocId3)),
-        DocId4 = ?SRV:replace_document(Server, "nice_term", 
+        DocId4 = ?SRV:replace_or_create_document(Server, "nice_term", 
                                        [#x_term{value = "mass_term"}]),
         %% Only document with DocId2 is here, other document with the same term
         %% was deleted.
@@ -330,6 +330,7 @@ replace_document_test() ->
 %    after
 %        ?SRV:close(Server)
 %    end.
+
 
 
 is_document_exists_gen() ->

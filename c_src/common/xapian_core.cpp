@@ -163,6 +163,39 @@ Driver::addDocument(PR)
 
 // REP_DOC_MARK
 void
+Driver::replaceOrCreateDocument(PR)
+{
+    assertWriteable();
+
+    Xapian::Document doc;
+    Xapian::docid docid;
+
+    applyDocument(params, doc);
+    switch(uint8_t idType = params)
+    {
+        case UNIQUE_DOCID:
+        {
+            docid = params;
+            m_wdb.replace_document(docid, doc);
+            break;
+        }
+
+        case UNIQUE_TERM:
+        {
+            const std::string& unique_term = params;
+            docid = m_wdb.replace_document(unique_term, doc);
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(idType);
+    }
+        
+    result << static_cast<uint32_t>(docid);
+}
+
+
+void
 Driver::replaceDocument(PR)
 {
     assertWriteable();
@@ -1205,6 +1238,10 @@ Driver::handleCommand(PR,
 
         case REPLACE_DOCUMENT:
             replaceDocument(params, result);
+            break;
+
+        case REPLACE_OR_CREATE_DOCUMENT:
+            replaceOrCreateDocument(params, result);
             break;
 
         case TEST:

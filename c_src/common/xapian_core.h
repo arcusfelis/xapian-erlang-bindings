@@ -90,7 +90,7 @@ class Driver
         MSET_INFO                   = 19,
         DB_INFO                     = 20,
         DELETE_DOCUMENT             = 21,
-        REPLACE_DOCUMENT            = 22,
+        REPLACE_OR_CREATE_DOCUMENT  = 22,
         SET_METADATA                = 23,
         UPDATE_DOCUMENT             = 24,
         UPDATE_OR_CREATE_DOCUMENT   = 25,
@@ -100,7 +100,8 @@ class Driver
         CLOSE                       = 29,
         DOCUMENT_INFO               = 30,
         DOCUMENT_INFO_RESOURCE      = 31,
-        IS_DOCUMENT_EXIST           = 32
+        IS_DOCUMENT_EXIST           = 32,
+        REPLACE_DOCUMENT            = 33 
     };
 
 
@@ -337,6 +338,7 @@ class Driver
 
     void addDocument(PR);
     void replaceDocument(PR);
+    void replaceOrCreateDocument(PR);
     void updateDocument(PR, bool create);
     void isDocumentExist(PR);
     void deleteDocument(ParamDecoder&);
