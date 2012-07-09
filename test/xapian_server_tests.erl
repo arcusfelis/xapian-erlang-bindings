@@ -1094,6 +1094,7 @@ cases_gen() ->
     , fun double_terms_or_query_page_case/1
     , fun special_fields_query_page_case/1
 
+    , fun document_case/1
     , fun enquire_case/1
     , fun enquire_sort_order_case/1
     , fun resource_cleanup_on_process_down_case/1
@@ -1202,6 +1203,24 @@ special_fields_query_page_case(Server) ->
         io:format(user, "~n~p~n", [RecList])
         end,
     {"erlang (with rank, weight, percent)", Case}.
+
+
+document_case(Server) ->
+    DocRes1 = xapian_server:document(Server, "telecom"),
+    DocRes2 = xapian_server:document(Server, 1),
+    Meta = xapian_term_record:record(term, record_info(fields, term)),
+    AllDocumentTermsFn = 
+    fun(DocRes) ->
+        Table = xapian_term_qlc:document_term_table(
+            Server, DocRes, Meta, [ignore_empty]),
+        ?SRV:release_resource(Server, DocRes),
+        qlc:e(qlc:q([X || X <- Table]))
+        end,
+    Doc1Terms = AllDocumentTermsFn(DocRes1),
+    Doc2Terms = AllDocumentTermsFn(DocRes2),
+    [ {"Get a document resource by a term or by an id.",
+       [?_assertEqual(Doc1Terms, Doc2Terms)]}
+    ].
 
 
 %% Xapian uses `Xapian::Enquire' class as a hub for making queries.

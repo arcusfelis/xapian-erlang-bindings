@@ -321,12 +321,32 @@ enquire(Server, Query) ->
 
 
 %% @doc Return a document as a resource.
+%% The second document can be:
+%% * A document id or an unique term;
+%% * A document constructor.
+%%
+%% If the second argument is the empty list, then the `badarg' error will
+%% occure.
+%%
+%% It is an undefined behaviour.
+%% Two cases can be here:
+%%
+%% 1. You cannot use an empty term as an id (all documents will be selected).
+%%      Solution: Use other ways to traverse the documents.
+%% 2. Why do you need a document resource, defined with an empty constructor?
+%%      Solution: pass `[#x_text{value=""}]'.
 -spec document(x_server(), x_unique_document_id() 
                | x_document_constructor()) -> x_resource().
+document(_Server, []) ->
+    erlang:error(badarg);
+
+document(Server, [H|_] = UniqueTerm) when is_list(UniqueTerm), is_integer(H) ->
+    call(Server, {document, UniqueTerm});
+
 document(Server, DocumentConstructor) when is_list(DocumentConstructor) ->
     call(Server, {document_info_resource, DocumentConstructor});
 
-document(Server, DocId) ->
+document(Server, DocId) -> %% DocId can be an unique term.
     call(Server, {document, DocId}).
 
 
