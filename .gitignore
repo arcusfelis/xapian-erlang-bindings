@@ -7,6 +7,7 @@ deps/*
 *.so
 *.dll
 .eunit
+.emark
 doc/README.md
 doc/doxygen/*
 *.gcov
