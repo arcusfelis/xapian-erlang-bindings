@@ -418,6 +418,17 @@ add_document(Server, Document) ->
     call(Server, {add_document, Document}).
 
 
+%% @doc Replace all matched documents with the new version.
+%%
+%% This method replaces the document with the specified document ID. 
+%% If the passed document ID isn't currently used, the document will be added 
+%% with the passed document ID.
+%%
+%% If nothing matches, then nothing will be changed.
+%% If more then one documents matches, only one will left, the id of
+%% this document will be returned.
+%%
+%% REP_DOC_MARK
 -spec replace_document(x_server(), x_unique_document_id(), 
     x_document_constructor()) -> x_document_id().
 
@@ -426,6 +437,10 @@ replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
 
 
 %% @doc Extend (edit) the document with data.
+%%
+%%      If the document is not exist, the error 
+%%      `#x_error{type = <<"BadArgumentDriverError">>}' will occure. 
+%%      UPD_DOC_BAD_ID_MARK
 -spec update_document(x_server(), x_unique_document_id(), 
     x_document_constructor()) -> x_document_id().
 
