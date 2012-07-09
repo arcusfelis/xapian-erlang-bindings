@@ -16,9 +16,10 @@
 %% For writable DB
 -export([add_document/2,
          delete_document/2,
+         replace_document/3,
          replace_or_create_document/3,
-         update_or_create_document/3,
          update_document/3,
+         update_or_create_document/3,
          transaction/3,
          transaction/2,
          set_metadata/3]).
@@ -420,15 +421,34 @@ add_document(Server, Document) ->
 
 %% @doc Replace all matched documents with the new version.
 %%
-%% This method replaces the document with the specified document ID. 
-%% If the passed document ID isn't currently used, the document will be added 
-%% with the passed document ID.
-%%
 %% If nothing matches, then nothing will be changed.
 %% If more then one documents matches, only one will left, the id of
 %% this document will be returned.
 %%
+%% <note>This function and `Xapian::WritableDatabase::replace_document' 
+%% have the different behaviour.</note>
+%%
 %% REP_DOC_MARK
+-spec replace_document(x_server(), x_unique_document_id(), 
+    x_document_constructor()) -> x_document_id().
+
+replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
+    call(Server, {replace_document, DocIdOrUniqueTerm, NewDocument}).
+
+
+%% @doc Replace all matched documents with the new version.
+%%
+%% This method replaces the document with the specified document ID. 
+%% If the passed document ID isn't currently used, the document will be added 
+%% with the passed document ID.
+%%
+%% If more then one documents matches, only one will left, the id of
+%% this document will be returned.
+%%
+%% <note>This function and `Xapian::WritableDatabase::replace_document' 
+%% have the same behaviour.</note>
+%%
+%% REP_CRT_DOC_MARK
 -spec replace_or_create_document(x_server(), x_unique_document_id(), 
     x_document_constructor()) -> x_document_id().
 
@@ -895,6 +915,12 @@ handle_call({replace_or_create_document, Id, Document}, _From, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, State),
     Reply = port_replace_or_create_document(Port, Id, EncodedDocument),
+    {reply, Reply, State};
+
+handle_call({replace_document, Id, Document}, _From, State) ->
+    #state{ port = Port } = State,
+    EncodedDocument = document_encode(Document, State),
+    Reply = port_replace_document(Port, Id, EncodedDocument),
     {reply, Reply, State};
 
 handle_call({update_document, Id, Document, Create}, _From, State) ->
@@ -1370,6 +1396,12 @@ port_update_document(Port, Id, EncodedDocument, Create) ->
 port_replace_or_create_document(Port, Id, EncodedDocument) ->
     decode_docid_result(
         control(Port, replace_or_create_document, 
+            append_unique_document_id(Id, EncodedDocument))).
+
+
+port_replace_document(Port, Id, EncodedDocument) ->
+    decode_docid_result(
+        control(Port, replace_document, 
             append_unique_document_id(Id, EncodedDocument))).
 
 

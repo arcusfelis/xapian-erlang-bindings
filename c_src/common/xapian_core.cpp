@@ -161,7 +161,7 @@ Driver::addDocument(PR)
 }
 
 
-// REP_DOC_MARK
+// REP_CRT_DOC_MARK
 void
 Driver::replaceOrCreateDocument(PR)
 {
@@ -195,6 +195,7 @@ Driver::replaceOrCreateDocument(PR)
 }
 
 
+// REP_DOC_MARK
 void
 Driver::replaceDocument(PR)
 {
@@ -209,14 +210,22 @@ Driver::replaceDocument(PR)
         case UNIQUE_DOCID:
         {
             docid = params;
-            m_wdb.replace_document(docid, doc);
+            try {
+                m_wdb.get_document(docid);
+                m_wdb.replace_document(docid, doc);
+            } catch (Xapian::DocNotFoundError e) {
+                docid = 0;
+            }
             break;
         }
 
         case UNIQUE_TERM:
         {
             const std::string& unique_term = params;
-            docid = m_wdb.replace_document(unique_term, doc);
+            if (m_wdb.term_exists(unique_term))
+                docid = m_wdb.replace_document(unique_term, doc);
+            else
+                docid = 0;
             break;
         }
 

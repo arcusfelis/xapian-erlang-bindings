@@ -231,15 +231,25 @@ update_document_test() ->
     end.
 
     
-%% REP_DOC_MARK
+%% REP_CRT_DOC_MARK
 replace_or_create_document_test() ->
     Path = testdb_path(replace_or_create_document),
     Params = [write, create, overwrite],
     {ok, Server} = ?SRV:open(Path, Params),
     try
+        %% Try update using non-existed DocId.
+        ?assertNot(?SRV:is_document_exist(Server, 1)),
+        DocId = ?SRV:replace_or_create_document(Server, "bad_term", []),
+        ?assertEqual(DocId, 1),
+        ?assert(?SRV:is_document_exist(Server, 1)),
+        ?SRV:delete_document(Server, DocId),
+        ?assertNot(?SRV:is_document_exist(Server, 1)),
+
         %% If there is no document, then the new one will be created.
         DocId0 = ?SRV:replace_or_create_document(Server, "bad_term", []),
-        ?assertEqual(DocId0, 1),
+        %% Even when the first document is deleted, the new document will have
+        %% another document id.
+        ?assertEqual(DocId0, 2),
         ?assertNot(?SRV:is_document_exist(Server, "bad_term")),
         ?assert(?SRV:is_document_exist(Server, DocId0)),
 
@@ -282,54 +292,63 @@ replace_or_create_document_test() ->
     end.
 
 
-%replace_document_test() ->
-%    Path = testdb_path(replace_document),
-%    Params = [write, create, overwrite],
-%    {ok, Server} = ?SRV:open(Path, Params),
-%    try
-%        %% If there is no document, then there is no an error.
-%        DocId0 = ?SRV:replace_document(Server, "bad_term", []),
-%        ?assertEqual(DocId0, 1),
-%        %% Nothing was created.
-%        ?assertNot(?SRV:is_document_exist(Server, "bad_term")),
-%
-%        %% Create a new document.
-%        DocId = ?SRV:add_document(Server, [#x_term{value = "good_term"}]),
-%        ?assert(?SRV:is_document_exist(Server, "good_term")),
-%
-%        %% Replace the whole document with the new one.
-%        DocId2 = ?SRV:replace_document(Server, "good_term", 
-%                                       [#x_term{value = "nice_term"}]),
-%        %% It returns a document id of replaced document (but it can be more 
-%        %% then once).
-%        ?assertEqual(DocId, DocId2),
-%
-%        %% The old document was deleted,
-%        ?assertNot(?SRV:is_document_exist(Server, "good_term")),
-%        %% the new document was created.
-%        ?assert(?SRV:is_document_exist(Server, "nice_term")),
-%
-%        %% Test few documents with the same term.
-%        %%
-%        %% Add another document with the same term.
-%        DocId3 = ?SRV:add_document(Server, [#x_term{value = "nice_term"}]),
-%
-%        %% Only one document will left after replace_document.
-%        %% DocId2 and DocId3 are still here.
-%        ?assert(?SRV:is_document_exist(Server, DocId2)),
-%        ?assert(?SRV:is_document_exist(Server, DocId3)),
-%        DocId4 = ?SRV:replace_document(Server, "nice_term", 
-%                                       [#x_term{value = "mass_term"}]),
-%        %% Only document with DocId2 is here, other document with the same term
-%        %% was deleted.
-%        ?assertEqual(DocId4, DocId2),
-%        Ids = all_record_ids(Server, "mass_term"),
-%        ?assertEqual(Ids, [DocId4]),
-%        ?assertNot(?SRV:is_document_exist(Server, DocId3))
-%
-%    after
-%        ?SRV:close(Server)
-%    end.
+%% REP_DOC_MARK
+replace_document_test() ->
+    Path = testdb_path(replace_document),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:open(Path, Params),
+    try
+        %% Try update using non-existed DocId.
+        ?assertNot(?SRV:is_document_exist(Server, 1)),
+        DocId = ?SRV:replace_document(Server, "bad_term", []),
+        ?assertEqual(DocId, undefined),
+        ?assertNot(?SRV:is_document_exist(Server, 1)),
+
+        %% If there is no document, then there is no an error.
+        DocId0 = ?SRV:replace_document(Server, "bad_term", []),
+        ?assertEqual(DocId0, undefined),
+        %% Nothing was created.
+        ?assertNot(?SRV:is_document_exist(Server, "bad_term")),
+
+        %% Create a new document.
+        DocId1 = ?SRV:add_document(Server, [#x_term{value = "good_term"}]),
+        ?assert(?SRV:is_document_exist(Server, "good_term")),
+        ?assert(?SRV:is_document_exist(Server, DocId1)),
+        ?assertEqual(DocId1, 1),
+
+        %% Replace the whole document with the new one.
+        DocId2 = ?SRV:replace_document(Server, "good_term", 
+                                       [#x_term{value = "nice_term"}]),
+        %% It returns a document id of replaced document (but it can be more 
+        %% then once).
+        ?assertEqual(DocId1, DocId2),
+
+        %% The old document was deleted,
+        ?assertNot(?SRV:is_document_exist(Server, "good_term")),
+        %% the new document was created.
+        ?assert(?SRV:is_document_exist(Server, "nice_term")),
+
+        %% Test few documents with the same term.
+        %%
+        %% Add another document with the same term.
+        DocId3 = ?SRV:add_document(Server, [#x_term{value = "nice_term"}]),
+
+        %% Only one document will left after replace_document.
+        %% DocId2 and DocId3 are still here.
+        ?assert(?SRV:is_document_exist(Server, DocId2)),
+        ?assert(?SRV:is_document_exist(Server, DocId3)),
+        DocId4 = ?SRV:replace_document(Server, "nice_term", 
+                                       [#x_term{value = "mass_term"}]),
+        %% Only document with DocId2 is here, other document with the same term
+        %% was deleted.
+        ?assertEqual(DocId4, DocId2),
+        Ids = all_record_ids(Server, "mass_term"),
+        ?assertEqual(Ids, [DocId4]),
+        ?assertNot(?SRV:is_document_exist(Server, DocId3))
+
+    after
+        ?SRV:close(Server)
+    end.
 
 
 
