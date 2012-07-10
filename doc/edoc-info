@@ -4,6 +4,7 @@
           xapian_db_info,xapian_document,xapian_encode,xapian_enquire,
           xapian_error,xapian_helper,xapian_match_spy,xapian_mset_info,
           xapian_mset_qlc,xapian_pool,xapian_pool_sup,xapian_port,
-          xapian_query,xapian_record,xapian_register,xapian_resource,
-          xapian_server,xapian_sup,xapian_term_qlc,xapian_term_record,
-          xapian_transaction,xapian_type,xapian_utility]}.
+          xapian_qlc_table_hash,xapian_query,xapian_record,xapian_register,
+          xapian_resource,xapian_server,xapian_server_bench,xapian_sup,
+          xapian_term_qlc,xapian_term_record,xapian_transaction,xapian_type,
+          xapian_utility]}.

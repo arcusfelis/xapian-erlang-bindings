@@ -107,7 +107,7 @@
 
 
 
-<pre>order_type_id(X1::<a href="xapian.md#type-x_order_type">xapian:x_order_type()</a>) -> non_neg_integer()</pre>
+<pre>order_type_id(X1::<a href="xapian_type.md#type-x_order_type">xapian_type:x_order_type()</a>) -> non_neg_integer()</pre>
 <br></br>
 
 

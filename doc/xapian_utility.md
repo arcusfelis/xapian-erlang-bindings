@@ -22,7 +22,7 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
-<pre>replicate_client_param() = writable | link | one_shot | {interval, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | {reader_time, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | {port, <a href="xapian_type.md#type-x_inet_port">xapian_type:x_inet_port()</a>} | {address, <a href="xapian_type.md#type-x_init_address">xapian_type:x_init_address()</a>} | {master_name, <a href="xapian_type.md#type-x_string">xapian_type:x_string()</a>}</pre>
+<pre>replicate_client_param() = writable | link | one_shot | {interval, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | {reader_time, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | {port, <a href="xapian_type.md#type-x_inet_port">xapian_type:x_inet_port()</a>} | {address, <a href="xapian_type.md#type-x_inet_address">xapian_type:x_inet_address()</a>} | {master_name, <a href="xapian_type.md#type-x_string">xapian_type:x_string()</a>}</pre>
 
 
 
@@ -46,7 +46,7 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
-<pre>tcp_server_param() = writable | {timeout, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | link | {idle_timeout, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | {active_timeout, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | one_shot | {port, <a href="xapian_type.md#type-x_inet_port">xapian_type:x_inet_port()</a>} | {address, <a href="xapian_type.md#type-x_init_address">xapian_type:x_init_address()</a>}</pre>
+<pre>tcp_server_param() = writable | {timeout, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | link | {idle_timeout, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | {active_timeout, <a href="xapian_type.md#type-x_timeout">xapian_type:x_timeout()</a>} | one_shot | {port, <a href="xapian_type.md#type-x_inet_port">xapian_type:x_inet_port()</a>} | {address, <a href="xapian_type.md#type-x_inet_address">xapian_type:x_inet_address()</a>}</pre>
 <a name="index"></a>
 
 ##Function Index##

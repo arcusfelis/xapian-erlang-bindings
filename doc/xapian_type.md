@@ -34,7 +34,7 @@
 
 
 
-__abstract datatype__: `x_document_constructor()`
+<pre>x_document_constructor() = [<a href="#type-x_document_index_part">x_document_index_part()</a>]</pre>
 
 
 
@@ -74,7 +74,7 @@ __abstract datatype__: `x_document_constructor()`
 
 
 
-<pre>x_language_code() = none | da | danish | nl | dutch | en | english | fi | finnish | fr | french | de | german | german2 | hu | hungarian | it | italian | nb | nn | no | norwegian | pt | portuguese | ro | romanian | ru | russian | es | spanish | sv | swedish | tr | turkish | lovins | porter | kraaij_pohlmann</pre>
+<pre>x_language_code() = none | &lt;&lt;&gt;&gt; | en | english | da | danish | nl | dutch | fi | finnish | fr | french | de | german | german2 | hu | hungarian | it | italian | nb | nn | no | norwegian | pt | portuguese | ro | romanian | ru | russian | es | spanish | sv | swedish | tr | turkish | lovins | porter | kraaij_pohlmann</pre>
 
 
 
@@ -90,7 +90,7 @@ __abstract datatype__: `x_document_constructor()`
 
 
 
-<pre>x_non_empty_string() = nonempty_string()</pre>
+<pre>x_non_empty_string() = nonempty_string() | &lt;&lt;_:8, _:_*8&gt;&gt;</pre>
 
 
 
@@ -118,6 +118,14 @@ __abstract datatype__: `x_document_constructor()`
 
 
 
+###<a name="type-x_port">x_port()</a>##
+
+
+
+<pre>x_port() = <a href="xapian_port.md#type-x_port">xapian_port:x_port()</a></pre>
+
+
+
 ###<a name="type-x_position">x_position()</a>##
 
 
@@ -131,6 +139,14 @@ __abstract datatype__: `x_document_constructor()`
 
 
 <pre>x_prefix_name() = #x_prefix_name{}</pre>
+
+
+
+###<a name="type-x_query">x_query()</a>##
+
+
+
+<pre>x_query() = #x_query{} | #x_query_value{} | #x_query_value_range{} | #x_query_term{} | #x_query_string{} | #x_query_scale_weight{}</pre>
 
 
 
@@ -202,7 +218,7 @@ __abstract datatype__: `x_document_constructor()`
 
 
 
-<pre>x_string() = string()</pre>
+<pre>x_string() = string() | binary()</pre>
 
 
 
@@ -259,3 +275,11 @@ __abstract datatype__: `x_document_constructor()`
 
 
 <pre>x_value() = #x_value{}</pre>
+
+
+
+###<a name="type-x_wdf_difference">x_wdf_difference()</a>##
+
+
+
+<pre>x_wdf_difference() = integer() | {abs, non_neg_integer()} | {cur, integer()}</pre>

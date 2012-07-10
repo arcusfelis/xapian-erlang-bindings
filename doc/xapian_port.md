@@ -1,12 +1,26 @@
 
 
 #Module xapian_port#
+* [Data Types](#types)
 * [Function Index](#index)
 * [Function Details](#functions)
 
 
 
 
+
+<a name="types"></a>
+
+##Data Types##
+
+
+
+
+###<a name="type-x_port">x_port()</a>##
+
+
+
+<pre>x_port() = #port_rec{}</pre>
 <a name="index"></a>
 
 ##Function Index##

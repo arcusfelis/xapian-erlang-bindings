@@ -499,8 +499,8 @@ update_or_create_document(Server, DocIdOrUniqueTerm, NewDocument) ->
 %% <note>This function catches the 
 %% `#x_error{type = <<"DocNotFoundError">>}' error and returns `false', if 
 %% the document was not found.</note>
--spec delete_document(x_server(), x_unique_document_id()) -> IsDocumentExist
-        when is_boolean(IsDocumentExist).
+-spec delete_document(x_server(), x_unique_document_id()) -> IsDocumentExist 
+        when IsDocumentExist :: boolean().
 
 delete_document(Server, DocIdOrUniqueTerm) ->
     call(Server, {delete_document, DocIdOrUniqueTerm}).

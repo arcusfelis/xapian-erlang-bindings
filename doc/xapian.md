@@ -20,7 +20,7 @@
 
 
 
-<pre>x_term() = #x_term{value = <a href="xapian_type.md#type-x_string">xapian_type:x_string()</a>, position = <a href="xapian_type.md#type-x_position">xapian_type:x_position()</a> | [<a href="xapian_type.md#type-x_position">xapian_type:x_position()</a>] | undefined, frequency = <a href="xapian_type.md#type-x_term_count">xapian_type:x_term_count()</a>, action = add | set | update | remove, ignore = boolean()}</pre>
+<pre>x_term() = #x_term{value = <a href="xapian_type.md#type-x_string">xapian_type:x_string()</a>, position = <a href="xapian_type.md#type-x_position">xapian_type:x_position()</a> | [<a href="xapian_type.md#type-x_position">xapian_type:x_position()</a>] | undefined, frequency = <a href="xapian_type.md#type-x_wdf_difference">xapian_type:x_wdf_difference()</a>, action = add | set | update | remove, ignore = boolean()}</pre>
 
 
 [`https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_term`](https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_term)<a name="index"></a>
