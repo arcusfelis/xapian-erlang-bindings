@@ -479,7 +479,8 @@ update_or_create_document(Server, DocIdOrUniqueTerm, NewDocument) ->
     call(Server, {update_document, DocIdOrUniqueTerm, NewDocument, true}).
 
 
--spec delete_document(x_server(), x_unique_document_id()) -> ok.
+-spec delete_document(x_server(), x_unique_document_id()) -> IsDocumentExist
+        when is_boolean(IsDocumentExist).
 
 delete_document(Server, DocIdOrUniqueTerm) ->
     call(Server, {delete_document, DocIdOrUniqueTerm}).
@@ -591,6 +592,7 @@ database_info(Server) ->
 %%      Get a UUID for the database;
 %% * `{term_exists, Term}';
 %% * `{term_freq, Term}';
+%%      Get the number of documents in the database indexed by a given term;
 %% * `{collection_freq, WTF}';
 %% * `{value_freq, Value}';
 %% * `{value_lower_bound, Value}';
@@ -1406,7 +1408,8 @@ port_replace_document(Port, Id, EncodedDocument) ->
 
 
 port_delete_document(Port, Id) ->
-    control(Port, delete_document, append_unique_document_id(Id, <<>>)).
+    decode_boolean_result(
+        control(Port, delete_document, append_unique_document_id(Id, <<>>))).
 
 
 port_is_document_exist(Port, Id) ->

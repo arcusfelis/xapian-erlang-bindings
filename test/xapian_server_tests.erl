@@ -292,6 +292,32 @@ replace_or_create_document_test() ->
     end.
 
 
+delete_document_gen() ->
+    Path = testdb_path(delete_document),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:open(Path, Params),
+    try
+        %% Documents are not exist.
+        Exists1 = ?SRV:delete_document(Server, "test"),
+        Exists2 = ?SRV:delete_document(Server, 1),
+        DocId1 = ?SRV:add_document(Server, [#x_term{value = "term"}]),
+        DocId2 = ?SRV:add_document(Server, []),
+        Exists3 = ?SRV:delete_document(Server, "term"),
+        Exists4 = ?SRV:delete_document(Server, DocId2),
+        Exists5 = ?SRV:is_document_exist(Server, DocId1),
+        Exists6 = ?SRV:is_document_exist(Server, DocId2),
+        [ ?_assertNot(Exists1)
+        , ?_assertNot(Exists2)
+        , ?_assert(Exists3)
+        , ?_assert(Exists4)
+        , ?_assertNot(Exists5)
+        , ?_assertNot(Exists6)
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
+
 %% REP_DOC_MARK
 replace_document_test() ->
     Path = testdb_path(replace_document),
