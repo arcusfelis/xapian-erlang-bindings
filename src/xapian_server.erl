@@ -479,6 +479,26 @@ update_or_create_document(Server, DocIdOrUniqueTerm, NewDocument) ->
     call(Server, {update_document, DocIdOrUniqueTerm, NewDocument, true}).
 
 
+
+%% @doc Delete documents.
+%%
+%% If a document id was passed, then this function deletes the document.
+%%
+%% If a term was passed, then any documents indexed by the specified term 
+%% from the database will be deleted.
+%%
+%% A major use is for convenience when UIDs from another system are mapped to 
+%% terms in Xapian, although this method has other uses 
+%% (for example, you could add a "deletion date" term to documents at index 
+%%  time and use this method to delete all documents due for deletion on a 
+%%  particular date).
+%%
+%% Returns `true', if at least one document was deleted.
+%% Returns `false', if nothing was deleted.
+%%
+%% <note>This function catches the 
+%% `#x_error{type = <<"DocNotFoundError">>}' error and returns `false', if 
+%% the document was not found.</note>
 -spec delete_document(x_server(), x_unique_document_id()) -> IsDocumentExist
         when is_boolean(IsDocumentExist).
 
