@@ -315,9 +315,10 @@ Driver::updateDocument(PR, bool create)
 
 
 void 
-Driver::deleteDocument(ParamDecoder& params)
+Driver::deleteDocument(PR)
 {
     assertWriteable();
+    uint8_t is_exist;
 
     switch(uint8_t idType = params)
     {
@@ -325,20 +326,30 @@ Driver::deleteDocument(ParamDecoder& params)
         {
             const Xapian::docid
             docid = params;
-            m_wdb.delete_document(docid);
+            try
+            { 
+                m_wdb.delete_document(docid);
+                is_exist = true;
+            } catch (Xapian::DocNotFoundError e) 
+            { 
+                is_exist = false;
+            }
             break;
         }
 
         case UNIQUE_TERM:
         {
             const std::string& unique_term = params;
-            m_wdb.delete_document(unique_term);
+            is_exist = m_db.term_exists(unique_term);
+            if (is_exist)
+                m_wdb.delete_document(unique_term);
             break;
         }
 
         default:
             throw BadCommandDriverError(idType);
     }
+    result << is_exist;
 }
 
 
@@ -1242,7 +1253,7 @@ Driver::handleCommand(PR,
             break;
 
         case DELETE_DOCUMENT:
-            deleteDocument(params);
+            deleteDocument(params, result);
             break;
 
         case REPLACE_DOCUMENT:

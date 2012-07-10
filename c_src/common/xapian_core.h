@@ -341,7 +341,7 @@ class Driver
     void replaceOrCreateDocument(PR);
     void updateDocument(PR, bool create);
     void isDocumentExist(PR);
-    void deleteDocument(ParamDecoder&);
+    void deleteDocument(PR);
     void setMetadata(ParamDecoder&);
 
     /**
