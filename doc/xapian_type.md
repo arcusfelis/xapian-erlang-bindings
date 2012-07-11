@@ -22,6 +22,14 @@
 
 
 
+###<a name="type-x_database_name">x_database_name()</a>##
+
+
+
+<pre>x_database_name() = atom()</pre>
+
+
+
 ###<a name="type-x_delta">x_delta()</a>##
 
 

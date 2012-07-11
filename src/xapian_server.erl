@@ -168,6 +168,7 @@
 %% generator.add(new userResource(ResourceType::MATCH_SPY, 
 %%     std::string("value_count_match_spy"), &createValueCountMatchSpy));
 %% '''
+%%
 -record(resource_info, {
     %% `type' is `enquery' or `mset'. 
     %% See `xapian_const:resource_type_id/1' for all variants.
@@ -220,6 +221,7 @@
 
 -type multi_db_path() :: [#x_database{}|#x_prog_database{}|#x_tcp_database{}].
 -type db_path() :: x_string() | multi_db_path().
+-type x_database_name() :: xapian_type:x_document_constructor().
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -291,6 +293,7 @@ close(Server) ->
 %%      RecordMetaDefinition = 
 %%          xapian_record:record(record_name, record_info(fields, record_fields)).
 %%     '''
+%%
 read_document(Server, DocId, RecordMetaDefinition) ->
     call(Server, {read_document_by_id, DocId, RecordMetaDefinition}).
 
@@ -403,6 +406,8 @@ release_table(Server, Table) ->
     call(Server, {qlc_release_table, TableHash}).
 
 
+%% @see release_table/2
+%% @private
 internal_register_qlc_table(Server, ResRef, Table) ->
     TableHash = xapian_qlc_table_hash:hash(Table),
     gen_server:cast(Server, {qlc_register_table, ResRef, TableHash}).
@@ -412,6 +417,7 @@ internal_register_qlc_table(Server, ResRef, Table) ->
 %% API Function Definitions for writable DB
 %% ------------------------------------------------------------------
 
+%% @doc Write a new document, return its id.
 -spec add_document(x_server(), x_document_constructor()) -> 
     x_document_id().
 
@@ -506,13 +512,14 @@ delete_document(Server, DocIdOrUniqueTerm) ->
     call(Server, {delete_document, DocIdOrUniqueTerm}).
 
 
--spec is_document_exist(x_server(), x_unique_document_id()) -> x_document_id().
+%% @doc Return `true', if the document with a specified id exists.
+-spec is_document_exist(x_server(), x_unique_document_id()) -> boolean().
 
 is_document_exist(Server, DocIdOrUniqueTerm) ->
     call(Server, {is_document_exist, DocIdOrUniqueTerm}).
 
 
-
+%% @doc Save a key-value pair into the database dictionary.
 -spec set_metadata(x_server(), x_string(), x_string()) -> ok.
 
 set_metadata(Server, Key, Value) ->
@@ -630,6 +637,7 @@ database_info(Server) ->
 %% database_info(Server, [{term_exists, "erlang"}, {term_freq, "erlang"}]).
 %% [{{term_exists, "erlang"}, false}, {{term_freq, "erlang"}, undefined}]
 %% '''
+%%
 database_info(Server, Params) ->
     call(Server, {database_info, Params}).
 
@@ -689,6 +697,12 @@ subdb_names(Server) ->
     call(Server, {with_state, fun ?SRV:internal_subdb_names/1}).
 
 
+%% @doc Calculate a syntatic document ID from the real document ID and its DB name.
+-spec multi_docid(#state{} | x_server(), RealDocId, SubDbName) -> MultiDocId when
+        RealDocId  :: x_document_id(),
+        MultiDocId :: x_document_id(),
+        SubDbName  :: x_database_name().
+
 multi_docid(State=#state{subdb_name_to_id = N2I}, DocId, SubDbName) 
     when is_atom(SubDbName) ->
     SubDbId = orddict:fetch(SubDbName, N2I),
@@ -734,6 +748,7 @@ internal_multi_docid(State, {DocId, SubDbNum}) ->
     {ok, multi_docid(State, DocId, SubDbNum)}.
 
 
+%% @private
 internal_name_to_type(#state{slot_to_type = S2T}, Slot) 
     when is_integer(Slot) ->
     try
@@ -1672,6 +1687,7 @@ maybe_erase_qlc_table(TableRegister, _Ref, #resource{}) ->
     {ok, TableRegister}.
 
 
+%% @private
 internal_qlc_table_hash_to_reference(State, Hash) ->
     #state{qlc_reference_and_table_hash = TableRegister} = State,
     case xapian_qlc_table_hash:get(TableRegister, Hash) of

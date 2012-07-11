@@ -29,6 +29,7 @@
     x_language_code/0,
     x_document_constructor/0,
     x_port/0,
+    x_database_name/0,
     x_wdf_difference/0]).
 
 -type x_document_constructor() :: [x_document_index_part()].
@@ -51,6 +52,7 @@
     | relevance_key 
     | relevance_value
     | value_relevance.
+-type x_database_name() :: atom().
 
 -include_lib("xapian/include/xapian.hrl").
 
