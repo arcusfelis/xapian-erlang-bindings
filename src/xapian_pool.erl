@@ -5,6 +5,13 @@
 -define(WORKER, ?MODULE).
 -define(SUPERVISOR, xapian_pool_sup).
 
+-ifdef(TEST).
+-import(xapian_helper, [testdb_path/1]).
+-include_lib("eunit/include/eunit.hrl").
+-define(POOL, ?MODULE).
+-record(test_pool, {names, pool_pids}).
+-endif.
+
 %% ------------------------------------------------------------------
 %% Export
 %% ------------------------------------------------------------------
@@ -16,7 +23,6 @@
 
 %% Callbacks
 -export([start_link/1]).
-
 
 
 %% ------------------------------------------------------------------
@@ -80,7 +86,7 @@ checkout(PoolNames, Fun) ->
 %% Called by Poolboy
 start_link(Args) ->
     [Path, Params] = proplists:get_value(worker_params, Args),
-    ?SERVER:open(Path, Params).
+    ?SERVER:start_link(Path, Params).
 
 
 %% ------------------------------------------------------------------
@@ -88,15 +94,6 @@ start_link(Args) ->
 %% ------------------------------------------------------------------
 
 -ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--define(POOL, ?MODULE).
--record(test_pool, {names, pool_pids}).
-
-testdb_path(Name) -> 
-	TestDir = filename:join(code:priv_dir(xapian), test_db),
-	file:make_dir(TestDir),
-	filename:join(TestDir, Name).
-
 
 try_start_application() ->
     case application:start(xapian) of

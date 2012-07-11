@@ -7,6 +7,7 @@
 %% ------------------------------------------------------------------
 
 -export([open/2,
+         start_link/2,
          last_document_id/1,
          read_document/3,
          document_info/3,
@@ -64,6 +65,9 @@
          internal_qlc_get_next_portion/4,
          internal_qlc_lookup/3,
 
+         internal_transaction_lock_server/2,
+         internal_transaction_cancel/2,
+
          internal_create_resource/2,
          internal_create_resource/3,
          internal_test_run/3
@@ -79,6 +83,21 @@
          internal_multi_docid/2,
          internal_qlc_table_hash_to_reference/2]).
 
+%% ------------------------------------------------------------------
+%% gen_server Function Exports
+%% ------------------------------------------------------------------
+
+-export([init/1, 
+         handle_call/3, 
+         handle_cast/2, 
+         handle_info/2,
+         terminate/2, 
+         code_change/3]).
+
+
+%% ------------------------------------------------------------------
+%% Import types
+%% ------------------------------------------------------------------
 
 -import(xapian_common, [ 
     append_int8/2,
@@ -100,6 +119,11 @@
     resource_type_name/1,
     test_id/1]).
 
+
+%% ------------------------------------------------------------------
+%% Macro Definitions
+%% ------------------------------------------------------------------
+
 %% Used in handlers
 -define(SERVER, ?MODULE).
 
@@ -107,6 +131,10 @@
 -define(SRV, ?MODULE).
 -define(APP, xapian).
 
+
+%% ------------------------------------------------------------------
+%% Records' Definitions
+%% ------------------------------------------------------------------
 
 -record(state, {
     %% The record is defined inside `xapian_port' as `port_rec'.
@@ -190,21 +218,25 @@
 }).
 
 
+%% ------------------------------------------------------------------
+%% Import code
+%% ------------------------------------------------------------------
+
 -include_lib("xapian/include/xapian.hrl").
 -include("xapian.hrl").
+
+
+%% ------------------------------------------------------------------
+%% Declare parse transforms
+%% ------------------------------------------------------------------
 
 -compile({parse_transform, do}).
 -compile({parse_transform, seqbind}).
 
 
-
-
 %% ------------------------------------------------------------------
-%% gen_server Function Exports
+%% Import external types
 %% ------------------------------------------------------------------
-
--export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
 
 -type x_server() :: xapian_type:x_server().
 -type x_port() :: xapian_type:x_port().
@@ -218,10 +250,15 @@
 -type x_string() :: xapian_type:x_string().
 -type x_unique_document_id() :: xapian_type:x_unique_document_id().
 -type x_document_constructor() :: xapian_type:x_document_constructor().
+-type x_database_name() :: xapian_type:x_document_constructor().
+
+%% ------------------------------------------------------------------
+%% Internal types
+%% ------------------------------------------------------------------
 
 -type multi_db_path() :: [#x_database{}|#x_prog_database{}|#x_tcp_database{}].
 -type db_path() :: x_string() | multi_db_path().
--type x_database_name() :: xapian_type:x_document_constructor().
+
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -258,6 +295,12 @@
 -spec open(db_path(), [term()]) -> {ok, x_server()}.
 
 open(Path, Params) ->
+    xapian_server_sup:start_server(Path, Params).
+
+
+-spec start_link(db_path(), [term()]) -> {ok, x_server()}.
+
+start_link(Path, Params) ->
     Args = [Path, append_default_params(Params)],
     case proplists:get_value(name, Params) of
         undefined ->
@@ -568,9 +611,17 @@ transaction(Servers, F) ->
     #x_transaction_result{}.
 
 transaction(Servers, F, Timeout) ->
-    xapian_transaction:transaction(Servers, F, Timeout).
+    xapian_transaction:run_transaction(Servers, F, Timeout).
 
 
+%% @private
+internal_transaction_lock_server(Server, Ref) ->
+    gen_server:call(Server, {transaction, Ref}).
+
+
+%% @private
+internal_transaction_cancel(Server, Ref) ->
+    Server ! {cancel_transaction, Ref}.
 
 %% ------------------------------------------------------------------
 %% Information about database objects
@@ -1200,7 +1251,8 @@ handle_call({transaction, Ref}, From, State) ->
                     port_cancel_transaction(Port)
             end,
             %% Send a message to the transaction process.
-            FromPid ! {transaction_status, Ref, self(), Status},
+            xapian_transaction:report_transaction_status(
+                FromPid, Ref, self(), Status),
             {noreply, State};
 
         Error ->

@@ -12,6 +12,13 @@
 
 -include_lib("xapian/include/xapian.hrl").
 
+-ifdef(TEST).
+-import(xapian_helper, [testdb_path/1]).
+-include_lib("eunit/include/eunit.hrl").
+-define(SRV, xapian_server).
+-define(RES, ?MODULE).
+-endif.
+
 
 bool_weight(Server) ->
     xapian_server:internal_create_resource(Server, bool_weight).
@@ -53,15 +60,6 @@ trad_weight(Server, K) ->
 %% ------------------------------------------------------------------
 
 -ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--define(SRV, xapian_server).
--define(RES, ?MODULE).
-
-testdb_path(Name) -> 
-	TestDir = filename:join(code:priv_dir(xapian), test_db),
-	file:make_dir(TestDir),
-	filename:join(TestDir, Name).
-
 
 cases_test_() ->
     Cases = 
@@ -81,7 +79,7 @@ resource_setup() ->
     % Open test
     Path = testdb_path(resource_creation),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     Server.
     
 

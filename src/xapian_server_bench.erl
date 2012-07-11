@@ -1,6 +1,10 @@
 -module(xapian_server_bench).
 -export([simple_search/2]).
 
+-ifdef(BENCHMARK).
+-import(xapian_helper, [testdb_path/1]).
+-endif.
+
 -define(SRV, xapian_server).
 
 -include_lib("emark/include/emark.hrl").
@@ -32,13 +36,6 @@ simple_search(Server, Query) ->
 
 
 -ifdef(BENCHMARK).
-
-testdb_path(Name) -> 
-    io:format(user, "~nTest DB: ~s~n ", [Name]),
-	TestDir = filename:join(code:priv_dir(xapian), test_db),
-	file:make_dir(TestDir),
-	filename:join(TestDir, Name).
-
 
 add_empty_document_benchmark(N) ->
     Path = testdb_path(add_empty_doc_bm),

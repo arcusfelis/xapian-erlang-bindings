@@ -1,52 +1,61 @@
 -module(xapian_transaction).
--export([transaction/3]).
+-export([ run_transaction/3
+        , report_transaction_status/4
+        ]).
 -include_lib("xapian/include/xapian.hrl").
 -include("xapian.hrl").
 
+         
 
 %% ------------------------------------------------------------------
 %% Transaction internals
 %% ------------------------------------------------------------------
 
-transaction(Servers, F, Timeout) ->
+run_transaction(Servers, F, Timeout) ->
     Ref = make_ref(),
-    TransServers = 
-        [ gen_server:call(Server, {transaction, Ref}) 
+    ProxyServers = 
+        [ lock_server(Server, Ref) 
             || Server <- Servers ],
 
-    ServersReady = lists:all(fun is_pid/1, TransServers),
+    ServersReady = lists:all(fun is_pid/1, ProxyServers),
     case ServersReady of
     %% Cannot init the transaction on one or more servers.
     false ->
-        cannot_start_transaction(Ref, Servers, TransServers);
+        cannot_start_transaction(Ref, Servers, ProxyServers);
 
     %% All servers are ready.
     true ->
-        transaction_ready(Ref, Servers, TransServers, F, Timeout)
+        transaction_ready(Ref, Servers, ProxyServers, F, Timeout)
     end.
+
+
+
+report_transaction_status(ToPid, TransRef, FromPid, Status) -> 
+    ToPid ! {transaction_status, TransRef, FromPid, Status}.
 
 
 %% ------------------------------------------------------------------
 %% transaction Client Helpers
 %% ------------------------------------------------------------------
 
-transaction_ready(Ref, Servers, TransServers, F, Timeout) ->
+transaction_ready(Ref, Servers, ProxyServers, F, Timeout) ->
+    %% We are still in the client process.
     Home = self(),
     TransBody = fun() ->
-            Result = F(TransServers),
+            Result = F(ProxyServers),
             %% Send the result back.
             Home ! {result, Ref, Result}
         end,
     TransPidRef = erlang:spawn_monitor(TransBody),
     GroupMonPid = monitor_group(Home, Servers, Ref),
     Result = wait_transaction_result(TransPidRef, Ref, Servers, 
-                                     TransServers, Timeout),
+                                     ProxyServers, Timeout),
     stop_monitor(GroupMonPid),
     Result.
 
 
 %% @doc Collects `#x_transaction_result{}' record.
-wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers, 
+wait_transaction_result({TransPid, TransRef}, Ref, Servers, ProxyServers, 
                         Timeout) ->
     receive
         %% Error in the transaction body.
@@ -72,7 +81,7 @@ wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers,
                 {'DOWN', TransRef, process, TransPid, _OtherReason} -> ok
             end,
 
-            %% TransPid is dead. TransServers are still alive.
+            %% TransPid is dead. ProxyServers are still alive.
 
             %% If the server is not valid, then is is an error.
             %% The valid server was started, but does not reply yet.
@@ -91,7 +100,7 @@ wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers,
 
         %% Result is ready. Try commit all changes.
         {result, Ref, ResultI} -> 
-            [ catch xapian_server:close(Server) || Server <- TransServers ],
+            [ catch xapian_server:close(Server) || Server <- ProxyServers ],
             Statuses = collect_status_info(Ref, Servers, []),
             Committed = lists:all(fun is_committed/1, Statuses),
 
@@ -113,16 +122,16 @@ wait_transaction_result({TransPid, TransRef}, Ref, Servers, TransServers,
         erlang:exit(TransPid, {transaction_error, timeout}),
         %% Handle the exit of the transaction process.
         wait_transaction_result({TransPid, TransRef}, Ref, 
-                                Servers, TransServers, Timeout)
+                                Servers, ProxyServers, Timeout)
     end.
 
 
 %% @doc In most cases one of the servers is open only for reading, but other errors 
 %%      can be also happen.
-cannot_start_transaction(Ref, Servers, TransServers) ->
-    Zipped = lists:zip(Servers, TransServers),
+cannot_start_transaction(Ref, Servers, ProxyServers) ->
+    Zipped = lists:zip(Servers, ProxyServers),
     Splitter = fun
-        ({_Server, TransServer}) -> is_pid(TransServer)
+        ({_Server, ProxyServer}) -> is_pid(ProxyServer)
         end,
     {Valid, Invalid} = lists:partition(Splitter, Zipped),
 
@@ -132,7 +141,7 @@ cannot_start_transaction(Ref, Servers, TransServers) ->
         [ begin 
             cancel_transaction(Server, Ref), 
             Server %% Return the Pid of the real server
-            end || {Server, _TransServer} <- Valid ],
+            end || {Server, _ProxyServer} <- Valid ],
     Statuses = collect_status_info(Ref, ValidServers, Invalid),
     #x_transaction_result{
         is_committed = false,
@@ -170,9 +179,6 @@ collect_status_info(Ref, Servers, StatusList) ->
     end.
 
     
-cancel_transaction(Server, Ref) ->
-    Server ! {cancel_transaction, Ref}.
-
 
 %% -----------------------------------------------------------------
 %% Helpers for monitoring.
@@ -202,3 +208,15 @@ monitor_cycle(Reciever, Tag) ->
 
 stop_monitor(Monitor) ->
     erlang:exit(Monitor, normal).
+
+
+%% -----------------------------------------------------------------
+%% Import functions.
+%% -----------------------------------------------------------------
+
+cancel_transaction(Server, Ref) ->
+    xapian_server:internal_transaction_cancel(Server, Ref).
+
+
+lock_server(Server, Ref) ->
+    xapian_server:internal_transaction_lock_server(Server, Ref).

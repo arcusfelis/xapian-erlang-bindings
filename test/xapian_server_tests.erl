@@ -3,6 +3,7 @@
 -include_lib("xapian/include/xapian.hrl").
 -include_lib("xapian/src/xapian.hrl").
 -compile([export_all]).
+-import(xapian_helper, [testdb_path/1]).
 
 %% Used for testing, then can be moved to an another file
 -define(SRV, xapian_server).
@@ -23,14 +24,14 @@
     
 %% @doc Check basic memory operations (malloc, free).
 memory_test() ->
-    {ok, Server} = ?SRV:open([], []),
+    {ok, Server} = ?SRV:start_link([], []),
     ?SRV:internal_test_run(Server, memory, []),
     ?SRV:close(Server),
     ok.
     
 
 echo_test() ->
-    {ok, Server} = ?SRV:open([], []),
+    {ok, Server} = ?SRV:start_link([], []),
     ?assertEqual(?SRV:internal_test_run(Server, echo, <<0,5>>), <<0,5>>),
     Bin = list_to_binary(lists:duplicate(1100, 1)),
     ?assertEqual(?SRV:internal_test_run(Server, echo, Bin), Bin),
@@ -41,7 +42,7 @@ echo_test() ->
     
 %% @doc This test checks the work of `ResultEncoder'.
 result_encoder_test() ->
-    {ok, Server} = ?SRV:open([], []),
+    {ok, Server} = ?SRV:start_link([], []),
     Reply = ?SRV:internal_test_run(Server, result_encoder, [1, 1000]),
     Reply = ?SRV:internal_test_run(Server, result_encoder, [1, 1000]),
     Reply = ?SRV:internal_test_run(Server, result_encoder, [1, 1000]),
@@ -52,7 +53,7 @@ result_encoder_test() ->
 
 %% @doc Check an exception.
 exception_test() ->
-    {ok, Server} = ?SRV:open([], []),
+    {ok, Server} = ?SRV:start_link([], []),
     % ?assertException(ClassPattern, TermPattern, Expr)
     ?assertException(error, 
         #x_error{type = <<"MemoryAllocationDriverError">>}, 
@@ -64,12 +65,6 @@ exception_test() ->
 %% ------------------------------------------------------------------
 %% Call test generators
 %% ------------------------------------------------------------------
-
-testdb_path(Name) -> 
-    io:format(user, "~nTest DB: ~s~n ", [Name]),
-	TestDir = filename:join(code:priv_dir(xapian), test_db),
-	file:make_dir(TestDir),
-	filename:join(TestDir, Name).
 
 
 wrapper(Name) ->
@@ -106,7 +101,7 @@ simple_gen() ->
         , #x_text{value = <<"Paragraph 2">>} 
         , #x_text{value = <<"Michael">>, prefix = author} 
         ],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         DocId = ?SRV:add_document(Server, Document),
         DocIdReplaced1 = ?SRV:replace_or_create_document(Server, DocId, Document),
@@ -129,7 +124,7 @@ last_document_id_gen() ->
     Path = testdb_path(last_docid),
     Params = [write, create, overwrite],
     Document = [],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         %% The DB is empty.
         NoId = ?SRV:last_document_id(Server),
@@ -149,7 +144,7 @@ last_document_id_gen() ->
 open_and_register_local_name_test() ->
     Name = xapian_server_test_local_name,
     %% Register the empty server under the local name
-    {ok, Server} = ?SRV:open([], [{name, Name}]),
+    {ok, Server} = ?SRV:start_link([], [{name, Name}]),
     ?assertEqual(whereis(Name), Server), 
     ?SRV:close(Server),
     ?assertNot(is_process_alive(Server)).
@@ -158,7 +153,7 @@ open_and_register_local_name_test() ->
 open_and_register_local_name2_test() ->
     Name = xapian_server_test_local_name2,
     %% Register the empty server under the local name
-    {ok, Server} = ?SRV:open([], [{name, {local, Name}}]),
+    {ok, Server} = ?SRV:start_link([], [{name, {local, Name}}]),
     ?assertEqual(whereis(Name), Server), 
     ?SRV:close(Server).
 
@@ -166,7 +161,7 @@ open_and_register_local_name2_test() ->
 open_and_register_global_name_test() ->
     Name = xapian_server_test_global_name,
     %% Register the empty server under the global name
-    {ok, Server} = ?SRV:open([], [{name, {global, Name}}]),
+    {ok, Server} = ?SRV:start_link([], [{name, {global, Name}}]),
     ?assertEqual(global:whereis_name(Name), Server), 
     ?SRV:close(Server).
 
@@ -174,7 +169,7 @@ open_and_register_global_name_test() ->
 update_document_test() ->
     Path = testdb_path(update_document),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         DocId = ?SRV:add_document(Server, []),
 
@@ -235,7 +230,7 @@ update_document_test() ->
 replace_or_create_document_test() ->
     Path = testdb_path(replace_or_create_document),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         %% Try update using non-existed DocId.
         ?assertNot(?SRV:is_document_exist(Server, 1)),
@@ -295,7 +290,7 @@ replace_or_create_document_test() ->
 delete_document_gen() ->
     Path = testdb_path(delete_document),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         %% Documents are not exist.
         Exists1 = ?SRV:delete_document(Server, "test"),
@@ -322,7 +317,7 @@ delete_document_gen() ->
 replace_document_test() ->
     Path = testdb_path(replace_document),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         %% Try update using non-existed DocId.
         ?assertNot(?SRV:is_document_exist(Server, 1)),
@@ -384,7 +379,7 @@ is_document_exists_gen() ->
     Doc = 
     [ #x_term{value = "monad"}
     ],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         BeforeAddTerm = ?SRV:is_document_exist(Server, "monad"),
         BeforeAddId   = ?SRV:is_document_exist(Server, 1),
@@ -410,7 +405,7 @@ frequency_test() ->
     , #x_term{value = "term", frequency = {abs, 5}}
     , #x_term{value = "term", frequency = {cur, -1}}
     ],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         ?SRV:add_document(Server, Doc)
     after
@@ -426,7 +421,7 @@ term_actions_test() ->
     , #x_term{action = update,  value = "term"}
     , #x_term{action = set,     value = "term"}
     ],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         ?SRV:add_document(Server, Doc)
     after
@@ -452,7 +447,7 @@ term_qlc_gen() ->
 
     Fields = [#x_term{value = Term} || Term <- TermNames], 
 
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         DocId = ?SRV:add_document(Server, Fields),
         Meta = xapian_term_record:record(term, record_info(fields, term)),
@@ -488,7 +483,7 @@ short_term_qlc_gen() ->
 
     Fields = [#x_term{value = Term} || Term <- TermNames], 
     
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         DocId = ?SRV:add_document(Server, Fields),
         Meta = xapian_term_record:record(short_term, 
@@ -513,7 +508,7 @@ term_ext_qlc_gen() ->
 
     Fields = [#x_term{value = Term} || Term <- TermNames], 
 
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         DocId = ?SRV:add_document(Server, Fields),
         Meta = xapian_term_record:record(term_ext, 
@@ -554,7 +549,7 @@ term_qlc_join_gen() ->
     TermNames300to399 = term_numbers(300, 399),
 
     
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         Doc1Terms = TermNames0to99 ++ TermNames100to199,
         Doc2Terms = TermNames100to199 ++ TermNames200to299,
@@ -598,7 +593,7 @@ term_pos_qlc_gen() ->
     , #x_term{value = "term3", position = [1]}
     , #x_term{value = "term3", position = [2,3]}
     ], 
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         DocId = ?SRV:add_document(Server, Fields),
         Meta = xapian_term_record:record(term_pos, 
@@ -635,7 +630,7 @@ value_count_match_spy_gen() ->
     Path = testdb_path(value_count_mspy),
     Params = [write, create, overwrite, 
         #x_value_name{slot = 1, name = color}],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         %% There are 2 "green" documents.
         Colors = ["Red", "Blue", "green", "white", "black", "green"],
@@ -706,7 +701,7 @@ add_color_document(Server, Color) ->
 term_advanced_actions_gen() ->
     Path = testdb_path(adv_actions),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         DocId = ?SRV:add_document(Server, []),
         U = fun(Doc) ->
@@ -807,10 +802,10 @@ reopen_test() ->
     % Open test
     Path = testdb_path(reopen),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     ?SRV:close(Server),
 
-    {ok, ReadOnlyServer} = ?SRV:open(Path, []),
+    {ok, ReadOnlyServer} = ?SRV:start_link(Path, []),
     ?SRV:close(ReadOnlyServer).
 
 
@@ -830,7 +825,7 @@ stemmer_test() ->
         , #x_text{value = "And other string is here."} 
         , #x_text{value = <<"Michael">>, prefix = author} 
         ],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         %% Test a term generator
         DocId = ?SRV:add_document(Server, Document),
@@ -892,7 +887,7 @@ query_parser_test() ->
         [ #x_data{value = "My test data as iolist (NOT INDEXED)"} 
         , #x_text{value = "The quick brown fox jumps over the lazy dog."} 
         ],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         %% Test a term generator
         DocId = ?SRV:add_document(Server, Document),
@@ -938,8 +933,8 @@ transaction_gen() ->
     Path1 = testdb_path(transaction1),
     Path2 = testdb_path(transaction2),
     Params = [write, create, overwrite],
-    {ok, Server1} = ?SRV:open(Path1, Params),
-    {ok, Server2} = ?SRV:open(Path2, Params),
+    {ok, Server1} = ?SRV:start_link(Path1, Params),
+    {ok, Server2} = ?SRV:start_link(Path2, Params),
     Fun = fun([_S1, _S2]) ->
         test_result
         end,
@@ -969,7 +964,7 @@ transaction_gen() ->
     Result3 = ?SRV:transaction([Server1, Server2], BadFun2),
 
     %% Server1 was killed. Server2 will replace it.
-    {ok, Server3} = ?SRV:open(Path1, Params),
+    {ok, Server3} = ?SRV:start_link(Path1, Params),
     erlang:unlink(Server2),
 
     timer:sleep(1000),
@@ -1013,8 +1008,8 @@ transaction_timeout_gen() ->
     Path1 = testdb_path(tt1),
     Path2 = testdb_path(tt2),
     Params = [write, create, overwrite],
-    {ok, Server1} = ?SRV:open(Path1, Params),
-    {ok, Server2} = ?SRV:open(Path2, Params),
+    {ok, Server1} = ?SRV:start_link(Path1, Params),
+    {ok, Server2} = ?SRV:start_link(Path2, Params),
     Fun = fun([_S1, _S2]) ->
             timer:sleep(infinity)
         end,
@@ -1037,8 +1032,8 @@ transaction_readonly_error_gen() ->
     Path2 = testdb_path(transaction4),
     Params1 = [],
     Params2 = [write, create, overwrite],
-    {ok, Server1} = ?SRV:open(Path1, Params1),
-    {ok, Server2} = ?SRV:open(Path2, Params2),
+    {ok, Server1} = ?SRV:start_link(Path1, Params1),
+    {ok, Server2} = ?SRV:start_link(Path2, Params2),
     Fun = fun([_S1, _S2]) ->
         test_result
         end,
@@ -1101,7 +1096,7 @@ read_document_test() ->
         , #x_data{value = "My test data as iolist"} 
         , #x_value{slot = slot1, value = "Slot #0"} 
         ],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
     DocId = ?SRV:add_document(Server, Document),
     Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
@@ -1124,7 +1119,7 @@ document_info_test() ->
         , #x_data{value = "My test data as iolist"} 
         , #x_value{slot = slot1, value = "Slot #0"} 
         ],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
     Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
     Rec = ?SRV:document_info(Server, Document, Meta),
@@ -1155,7 +1150,7 @@ read_float_value_gen() ->
     Document3 =
         [ #x_data{value = "My test data as iolist"} 
         ],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         DocId1 = ?SRV:add_document(Server, Document1),
         DocId2 = ?SRV:add_document(Server, Document2),
@@ -1205,7 +1200,7 @@ read_float_value_gen() ->
 short_record_test() ->
     Path = testdb_path(short_rec_test),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     Document = [#x_data{value = "ok"}],
     DocId = ?SRV:add_document(Server, Document),
     Meta = xapian_record:record(short_rec_test, record_info(fields, short_rec_test)),
@@ -1219,7 +1214,7 @@ read_bad_docid_test() ->
     % Open test
     Path = testdb_path(read_document),
     Params = [#x_value_name{slot = 1, name = slot1}],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     Meta = xapian_record:record(rec_test, record_info(fields, rec_test)),
     DocId = 2,
     % ?assertException(ClassPattern, TermPattern, Expr)
@@ -1292,7 +1287,7 @@ query_page_setup() ->
     ValueNames = [ #x_value_name{slot = 1, name = author}
                  , #x_value_name{slot = 2, name = title}],
     Params = [write, create, overwrite] ++ ValueNames,
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     Base = [#x_stemmer{language = <<"english">>}],
     Document1 = Base ++
         [ #x_data{value = "Non-indexed data here"} 
@@ -1755,7 +1750,7 @@ database_info_case(Server) ->
 metadata_gen() ->
     Path = testdb_path(metadata),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     ?SRV:set_metadata(Server, "key", "value"),
     Info = 
     ?SRV:database_info(Server, [{metadata, "key"}]),
@@ -1767,7 +1762,7 @@ metadata_gen() ->
 extra_weight_gen() ->
     Path = testdb_path(extra_weight),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     Terms = ["Sxapian", "weight"],
     Document = [#x_term{value = X} || X <- Terms],
     DocId = ?SRV:add_document(Server, Document),
@@ -1779,7 +1774,7 @@ extra_weight_gen() ->
 large_db_and_qlc_test() ->
     Path = testdb_path(large_db_and_qlc),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     try
         Terms = ["xapian", "erlang"],
 
@@ -1805,7 +1800,7 @@ large_db_and_qlc_test() ->
 large_db_and_qlc_mset_with_joins_test() ->
     Path = testdb_path(large_db_and_qlc_joins),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
 
     ExpectedDocIds = lists:seq(1, 1000),
     DocIds = [begin
@@ -1904,15 +1899,15 @@ multi_db_gen() ->
     Path2 = #x_database{name=multi2, path=testdb_path(multi2)},
     Params = [write, create, overwrite],
     Document = [#x_term{value = "test"}],
-    {ok, Server1} = ?SRV:open(Path1, Params),
-    {ok, Server2} = ?SRV:open(Path2, Params),
+    {ok, Server1} = ?SRV:start_link(Path1, Params),
+    {ok, Server2} = ?SRV:start_link(Path2, Params),
     DocId1 = ?SRV:add_document(Server1, Document),
     DocId2 = ?SRV:add_document(Server2, Document),
     ?SRV:close(Server1),
     ?SRV:close(Server2),
 
     %% Merged server
-    {ok, Server} = ?SRV:open([Path1, Path2], []),
+    {ok, Server} = ?SRV:start_link([Path1, Path2], []),
     Query    = "test",
     Ids      = all_record_ids(Server, Query),
     Records  = all_multidb_records(Server, Query),
@@ -1943,13 +1938,13 @@ multi_docid_gen() ->
     Path1 = #x_database{name=multi_docid1, path=testdb_path(multi1)},
     Path2 = #x_database{name=multi_docid2, path=testdb_path(multi2)},
     Params = [write, create, overwrite],
-    {ok, Server1} = ?SRV:open(Path1, Params),
-    {ok, Server2} = ?SRV:open(Path2, Params),
+    {ok, Server1} = ?SRV:start_link(Path1, Params),
+    {ok, Server2} = ?SRV:start_link(Path2, Params),
     ?SRV:close(Server1),
     ?SRV:close(Server2),
 
     %% Merged server
-    {ok, Server} = ?SRV:open([Path1, Path2], []),
+    {ok, Server} = ?SRV:start_link([Path1, Path2], []),
 
     %% xapian_server:multi_docid
     [ ?_assertEqual(1, ?SRV:multi_docid(Server, 1, multi_docid1))
@@ -1969,7 +1964,7 @@ remote_db_test() ->
     xapian_utility:tcp_server(DBList, Params),
     timer:sleep(200),
     DBConfig = #x_tcp_database{port = 6666, host = "127.0.0.1"},
-    {ok, Server} = ?SRV:open(DBConfig, [write]),
+    {ok, Server} = ?SRV:start_link(DBConfig, [write]),
     ?SRV:close(Server).
 
 
@@ -1985,9 +1980,9 @@ prop_multi_db() ->
     Path3 = #x_database{name=multi3, path=testdb_path(multi_docid3)},
     Params = [write, create, overwrite],
     Document = [#x_term{value = "test"}],
-    {ok, Server1} = ?SRV:open(Path1, Params),
-    {ok, Server2} = ?SRV:open(Path2, Params),
-    {ok, Server3} = ?SRV:open(Path3, Params),
+    {ok, Server1} = ?SRV:start_link(Path1, Params),
+    {ok, Server2} = ?SRV:start_link(Path2, Params),
+    {ok, Server3} = ?SRV:start_link(Path3, Params),
     Servers = [Server1, Server2, Server3],
     Paths = [Path1, Path2, Path3],
     try
@@ -1999,7 +1994,7 @@ prop_multi_db() ->
     end,
 
     %% Merged server
-    {ok, Server} = ?SRV:open(Paths, []),
+    {ok, Server} = ?SRV:start_link(Paths, []),
     Query = "test",
     multidb_record_by_id(Server, Query, 1),
     multidb_record_by_id(Server, Query, 2),
@@ -2020,7 +2015,7 @@ prop_multi_db() ->
 prop_large_db_and_qlc_index() ->
     Path = testdb_path(large_db_and_qlc_index),
     Params = [write, create, overwrite],
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     Terms = ["xapian", "erlang"],
 
     Document = [#x_term{value = X} || X <- Terms],
@@ -2046,7 +2041,7 @@ prop_large_db_and_qlc_index() ->
 
 
 prop_echo() ->
-    {ok, Server} = ?SRV:open([], []),
+    {ok, Server} = ?SRV:start_link([], []),
     ?FORALL(Bin, binary(),
         begin
         equals(Bin, ?SRV:internal_test_run(Server, echo, Bin))
@@ -2061,7 +2056,7 @@ prop_query_parser() ->
     Text   = "a b c",
     Terms  = string:tokens(Text, " "),
 
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
 
     %% Test a term generator
     %% TODO: There are different results with and without stemmer.
@@ -2093,7 +2088,7 @@ clone_query_parser_test() ->
     Path   = testdb_path(clone_prop_parser),
     Params = [write, create, overwrite],
 
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     %% Can't use add_prefix() and add_boolean_prefix() on the same field name.
     Author  = #x_prefix_name{name = author, prefix = $A, is_boolean = true},
     User    = #x_prefix_name{name = author, prefix = $U, is_boolean = false},
@@ -2112,7 +2107,7 @@ query_parser_and_exclusive_boolean_test() ->
     Path   = testdb_path(ex_prop_parser),
     Params = [write, create, overwrite],
 
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     User    = #x_prefix_name{prefix = $U, is_boolean = true,
                              name = user, is_exclusive = true},
     Author  = User#x_prefix_name{name = author, is_exclusive = false},
@@ -2127,7 +2122,7 @@ query_parser_and_exclusive_boolean_error_test() ->
     Path   = testdb_path(ex_prop_parser_err),
     Params = [write, create, overwrite],
 
-    {ok, Server} = ?SRV:open(Path, Params),
+    {ok, Server} = ?SRV:start_link(Path, Params),
     User    = #x_prefix_name{name = author, is_boolean = true,
                              prefix = $U, is_exclusive = true},
     Author  = User#x_prefix_name{prefix = $A, is_exclusive = false},
@@ -2385,7 +2380,7 @@ get_state_fields_gen() ->
         [ #x_value_name{slot = 1, name = slot1, type = float}
         , #x_value_name{slot = 2, name = slot2, type = string}
         ],
-    {ok, Server} = ?SRV:open([], Params),
+    {ok, Server} = ?SRV:start_link([], Params),
 
     try
     N2S = ?SRV:name_to_slot(Server),

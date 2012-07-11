@@ -1,6 +1,8 @@
-%% @doc Useful miniprograms.
+%% @doc Useful miniprograms, experimental code, helpers for using from tests
+%%      and from console.
 -module(xapian_helper).
 -export([stem/3, stem_qlc/3]).
+-export([testdb_path/1]).
 
 -include_lib("xapian/include/xapian.hrl").
 -include_lib("stdlib/include/qlc.hrl").
@@ -25,12 +27,19 @@ stem_qlc(Server, Lang, Str) ->
     qlc:keysort(#term.positions, UnsortedQH, []).
 
 
+testdb_path(Name) -> 
+    io:format(user, "~nTest DB: ~s~n ", [Name]),
+	TestDir = filename:join(code:priv_dir(xapian), test_db),
+	file:make_dir(TestDir),
+	filename:join(TestDir, Name).
+
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -define(HELP, ?MODULE).
 
 stem_test_() ->
-    {ok, Server} = xapian_server:open([], []),
+    {ok, Server} = xapian_server:start_link([], []),
     [?_assertEqual(?HELP:stem(Server, "none", "erlang and xapian"),
                   [ #x_term{frequency = 1, position = [1], value = <<"erlang">>}
                   , #x_term{frequency = 1, position = [2], value = <<"and">>}

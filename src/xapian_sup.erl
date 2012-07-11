@@ -17,4 +17,5 @@ start_link() ->
 
 init([]) ->
     PoolSup = ?CHILD(xapian_pool_sup, supervisor),
-    {ok, {{one_for_one, 10, 10}, [PoolSup]}}.
+    SrvSup  = ?CHILD(xapian_server_sup, supervisor),
+    {ok, {{one_for_one, 10, 10}, [PoolSup, SrvSup]}}.
