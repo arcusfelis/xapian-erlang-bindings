@@ -251,6 +251,7 @@
 -type x_unique_document_id() :: xapian_type:x_unique_document_id().
 -type x_document_constructor() :: xapian_type:x_document_constructor().
 -type x_database_name() :: xapian_type:x_document_constructor().
+-type x_slot_value() :: xapian_type:x_slot_value().
 
 %% ------------------------------------------------------------------
 %% Internal types
@@ -634,6 +635,42 @@ mset_info(Server, MSetResource) ->
     call(Server, {mset_info, MSetResource, Params}).
 
 
+-type string_term() :: x_string().
+-type weight() :: float().
+-type doc_count() :: non_neg_integer().
+-type term_count() :: non_neg_integer().
+-type doc_length() :: float().
+
+-type mset_info_parameter() ::
+        matches_lower_bound
+      | matches_estimated
+      | matches_upper_bound
+      | uncollapsed_matches_lower_bound
+      | uncollapsed_matches_estimated
+      | uncollapsed_matches_upper_bound
+      | size
+      | max_possible
+      | max_attained
+      | {term_weight, string_term()}
+      | {term_freq, string_term()}.
+
+
+-type mset_info_result_pair() ::
+    mset_info_result_pair(doc_count(), weight(), string_term()).
+
+-type mset_info_result_pair(C, W, T) ::
+        {matches_lower_bound, C}
+      | {matches_estimated, C}
+      | {matches_upper_bound, C}
+      | {uncollapsed_matches_lower_bound, C}
+      | {uncollapsed_matches_estimated, C}
+      | {uncollapsed_matches_upper_bound, C}
+      | {size, C}
+      | {max_possible, W}
+      | {max_attained, W}
+      | {{term_weight, T}, W | undefined}
+      | {{term_freq, T},   C | undefined}.
+
 %% @doc Returns the list of selected properties and wanted values.
 %% Properties:
 %% * `matches_lower_bound';
@@ -647,6 +684,18 @@ mset_info(Server, MSetResource) ->
 %% * `max_attained';
 %% * `{term_weight, Term}';
 %% * `{term_freq, Term}'.
+-spec mset_info(x_server(), x_resource(), Params) -> Result
+    when
+        Params :: [Param],
+        Param :: mset_info_parameter(),
+        Result :: [ResultPair],
+        ResultPair :: mset_info_result_pair();
+
+               (x_server(), x_resource(), Param) -> ResultValue
+    when
+        Param :: mset_info_parameter(),
+        ResultValue :: doc_count() | weight() | undefined. 
+
 mset_info(Server, MSetResource, Params) ->
     call(Server, {mset_info, MSetResource, Params}).
 
@@ -657,26 +706,65 @@ database_info(Server) ->
     call(Server, {database_info, Params}).
 
 
+-type database_info_result_pair() ::
+      database_info_result_pair(x_string(), 
+                                x_document_id(), 
+                                doc_count(), 
+                                doc_length(), 
+                                string_term(), 
+                                x_slot_value()).
+
+-type database_info_result_pair(Str, DocId, DocCount, DocLength, Term, Value) ::
+        {has_positions, boolean()}
+      | {document_count, non_neg_integer()}
+      | {last_document_id, DocCount}
+      | {average_length, DocLength}
+      | {document_length_lower_bound, DocLength}
+      | {document_length_upper_bound, DocLength}
+      | {uuid, Str}
+      | {{term_exists, Term}, boolean()}
+      | {{term_freq, Term}, DocCount}
+      | {{collection_freq, Term}, TermCount}
+      | {{value_freq, Value}, DocCount}
+      | {{value_lower_bound, Value}, Str}
+      | {{value_upper_bound, Value}, Str}
+      | {{wdf_upper_bound, Term}, TermCount}
+      | {{document_length, DocId}, DocLength}
+      | {{metadata, Str}, Str | undefined}.
+
 %% @doc Returns the list of selected properties and wanted values.
 %% Properties:
-%% * `has_positions'; 
-%% * `document_count'; 
+%% * `has_positions'
+%%      Does this database have any positional information?;
+%% * `document_count'
+%%      Get the number of documents in the database;
 %% * `last_document_id'
+%%      Get the highest document id which has been used in the database. 
 %%      {@link last_document_id/1}; 
-%% * `average_length';
-%% * `document_length_lower_bound';
-%% * `document_length_upper_bound'; 
+%% * `average_length'
+%%      Get the average length of the documents in the database;
+%% * `document_length_lower_bound'
+%%      Get a lower bound on the length of a document in this DB;
+%% * `document_length_upper_bound'
+%%      Get an upper bound on the length of a document in this DB;
 %% * `uuid'
 %%      Get a UUID for the database;
-%% * `{term_exists, Term}';
-%% * `{term_freq, Term}';
+%% * `{term_exists, Term}'
+%%      Check if a given term exists in the database;
+%% * `{term_freq, Term}'
 %%      Get the number of documents in the database indexed by a given term;
-%% * `{collection_freq, WTF}';
-%% * `{value_freq, Value}';
-%% * `{value_lower_bound, Value}';
-%% * `{value_upper_bound, Value}';
-%% * `{wdf_upper_bound, Term}'; 
-%% * `{document_length, DocId}';
+%% * `{collection_freq, Term}'
+%%      Return the total number of occurrences of the given term;
+%% * `{value_freq, Value}'
+%%      Return the frequency of a given value slot;
+%% * `{value_lower_bound, Value}'
+%%      Get a lower bound on the values stored in the given value slot;
+%% * `{value_upper_bound, Value}'
+%%      Get an upper bound on the values stored in the given value slot;
+%% * `{wdf_upper_bound, Term}'
+%%      Get an upper bound on the wdf of the term;
+%% * `{document_length, DocId}'
+%%      Get the length of a document;
 %% * `{metadata, Key}'
 %%      Get the user-specified metadata associated with a given key.
 %%
@@ -689,6 +777,38 @@ database_info(Server) ->
 %% [{{term_exists, "erlang"}, false}, {{term_freq, "erlang"}, undefined}]
 %% '''
 %%
+-spec database_info(x_server(), Params) -> Result when
+    Params :: [Param],
+    Param :: database_info_param(),
+    Result :: [ResultPair],
+    ResultPair :: database_info_result_pair();
+
+                   (x_server(), Param) -> ResultValue when
+    Param :: database_info_param(),
+    ResultValue :: boolean() | doc_count() | doc_length() | x_document_id() |
+                   term_count() | x_string() | undefined.
+
+-type database_info_param() ::
+    database_info_param(x_string(), x_slot_value(), x_document_id(), x_string()).
+
+-type database_info_param(Term, Value, DocId, Key) ::
+        has_positions 
+      | document_count
+      | last_document_id
+      | average_length
+      | document_length_lower_bound
+      | document_length_upper_bound
+      | uuid
+      | {term_exists, Term}
+      | {term_freq, Term}
+      | {collection_freq, Term}
+      | {value_freq, Value}
+      | {value_lower_bound, Value}
+      | {value_upper_bound, Value}
+      | {wdf_upper_bound, Term}
+      | {document_length, DocId}
+      | {metadata, Key}.
+
 database_info(Server, Params) ->
     call(Server, {database_info, Params}).
 

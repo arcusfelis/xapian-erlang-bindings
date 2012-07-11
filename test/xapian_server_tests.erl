@@ -1753,9 +1753,13 @@ metadata_gen() ->
     {ok, Server} = ?SRV:start_link(Path, Params),
     ?SRV:set_metadata(Server, "key", "value"),
     Info = 
-    ?SRV:database_info(Server, [{metadata, "key"}]),
+    ?SRV:database_info(Server, {metadata, "key"}),
+    Info2 = 
+    ?SRV:database_info(Server, {metadata, "bad_key"}),
     ?SRV:close(Server),
-    [?_assertEqual(Info, [{{metadata, "key"}, <<"value">>}])].
+    [?_assertEqual(Info, <<"value">>)
+    ,?_assertEqual(Info2, <<"">>)
+    ].
 
 
 %% http://trac.xapian.org/wiki/FAQ/ExtraWeight

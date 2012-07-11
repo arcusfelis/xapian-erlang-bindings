@@ -11,6 +11,11 @@
 ]).
 
 -import(xapian_const, [mset_info_param_id/1]).
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 encode(Params, Bin) when is_list(Params) ->
     append_uint8(mset_info_param_id(stop),
         lists:foldl(fun append_mset_info_param/2, Bin, Params));
@@ -49,12 +54,27 @@ decode_mset_info_param2({Param, _Term}, Bin) when is_atom(Param) ->
     decode_param(Param, Bin).
 
 
+%% @doc Return the ordered list of properties.
 %% These properties can be accessed without an additional parameter.
 properties() ->
-    [matches_lower_bound, matches_estimated, matches_upper_bound,
-     uncollapsed_matches_lower_bound, uncollapsed_matches_estimated,
-     uncollapsed_matches_upper_bound, size, max_possible, max_attained].
+    [ matches_estimated
+    , matches_lower_bound
+    , matches_upper_bound
+    , max_attained
+    , max_possible
+    , size
+    , uncollapsed_matches_estimated
+    , uncollapsed_matches_lower_bound
+    , uncollapsed_matches_upper_bound
+    ].
 
+
+-ifdef(TEST).
+
+properties_test_() ->
+    [?_assertEqual(properties(), lists:sort(properties()))].
+
+-endif.
 
 decode_param(matches_lower_bound, Bin) ->
     read_document_count(Bin);

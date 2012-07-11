@@ -18,6 +18,11 @@
 ]).
 
 -import(xapian_const, [db_info_param_id/1]).
+
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
     
 encode(Params, Bin) when is_list(Params) ->
     append_uint8(db_info_param_id(stop),
@@ -59,8 +64,21 @@ decode_db_info_param2({Param, _Term}, Bin) when is_atom(Param) ->
 
 %% These properties can be accessed without an additional parameter.
 properties() ->
-    [has_positions, document_count, last_document_id, average_length,
-     document_length_lower_bound, document_length_upper_bound, uuid].
+    [ average_length
+    , document_count
+    , document_length_lower_bound
+    , document_length_upper_bound
+    , has_positions
+    , last_document_id
+    , uuid].
+
+
+-ifdef(TEST).
+
+properties_test_() ->
+    [?_assertEqual(properties(), lists:sort(properties()))].
+
+-endif.
 
 
 decode_param(has_positions, Bin) ->
