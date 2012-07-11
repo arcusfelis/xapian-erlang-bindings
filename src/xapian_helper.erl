@@ -27,11 +27,22 @@ stem_qlc(Server, Lang, Str) ->
     qlc:keysort(#term.positions, UnsortedQH, []).
 
 
+testdb_path(Name) when is_atom(Name) -> 
+    %% Hello, dialyzer! 
+    %% Atoms are fine, but D says about an error :(
+    %% That is why this clause is here.
+    testdb_path(atom_to_list(Name));
+
 testdb_path(Name) -> 
     io:format(user, "~nTest DB: ~s~n ", [Name]),
-	TestDir = filename:join(code:priv_dir(xapian), test_db),
-	file:make_dir(TestDir),
-	filename:join(TestDir, Name).
+    case code:priv_dir(xapian) of
+    {error, Reason} ->
+            erlang:error(Reason);
+    PrivDir ->
+        TestDir = filename:join(PrivDir, "test_db"),
+        file:make_dir(TestDir),
+        filename:join(TestDir, Name)
+    end.
 
 
 -ifdef(TEST).

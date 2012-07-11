@@ -10,11 +10,13 @@
          erase/2,
          put/3]).
 
+-type gb_tree2(X, X) :: gb_tree().
+
 -record(qlc_table_hash_register, {
         hash_to_ref = gb_trees:empty() 
-            :: gb_trees:gb_tree(table_hash(), qlc_reference()),
+            :: gb_tree2(table_hash(), qlc_reference()),
         ref_to_hash = gb_trees:empty()
-            :: gb_trees:gb_tree(qlc_reference(), table_hash())
+            :: gb_tree2(qlc_reference(), table_hash())
 }).
 
 -type qlc_reference() :: reference().

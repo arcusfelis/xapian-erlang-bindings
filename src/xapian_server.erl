@@ -656,9 +656,9 @@ mset_info(Server, MSetResource) ->
 
 
 -type mset_info_result_pair() ::
-    mset_info_result_pair(doc_count(), weight(), string_term()).
+    mset_info_result_pair_(doc_count(), weight(), string_term()).
 
--type mset_info_result_pair(C, W, T) ::
+-type mset_info_result_pair_(C, W, T) ::
         {matches_lower_bound, C}
       | {matches_estimated, C}
       | {matches_upper_bound, C}
@@ -707,14 +707,14 @@ database_info(Server) ->
 
 
 -type database_info_result_pair() ::
-      database_info_result_pair(x_string(), 
-                                x_document_id(), 
-                                doc_count(), 
-                                doc_length(), 
-                                string_term(), 
-                                x_slot_value()).
+      database_info_result_pair_(x_string(), 
+                                 x_document_id(), 
+                                 doc_count(), 
+                                 doc_length(), 
+                                 string_term(), 
+                                 x_slot_value()).
 
--type database_info_result_pair(Str, DocId, DocCount, DocLength, Term, Value) ::
+-type database_info_result_pair_(Str, DocId, DocCount, DocLength, Term, Value) ::
         {has_positions, boolean()}
       | {document_count, non_neg_integer()}
       | {last_document_id, DocCount}
@@ -731,6 +731,29 @@ database_info(Server) ->
       | {{wdf_upper_bound, Term}, TermCount}
       | {{document_length, DocId}, DocLength}
       | {{metadata, Str}, Str | undefined}.
+
+
+-type database_info_param() ::
+    database_info_param_(x_string(), x_slot_value(), x_document_id(), x_string()).
+
+-type database_info_param_(Term, Value, DocId, Key) ::
+        has_positions 
+      | document_count
+      | last_document_id
+      | average_length
+      | document_length_lower_bound
+      | document_length_upper_bound
+      | uuid
+      | {term_exists, Term}
+      | {term_freq, Term}
+      | {collection_freq, Term}
+      | {value_freq, Value}
+      | {value_lower_bound, Value}
+      | {value_upper_bound, Value}
+      | {wdf_upper_bound, Term}
+      | {document_length, DocId}
+      | {metadata, Key}.
+
 
 %% @doc Returns the list of selected properties and wanted values.
 %% Properties:
@@ -787,27 +810,6 @@ database_info(Server) ->
     Param :: database_info_param(),
     ResultValue :: boolean() | doc_count() | doc_length() | x_document_id() |
                    term_count() | x_string() | undefined.
-
--type database_info_param() ::
-    database_info_param(x_string(), x_slot_value(), x_document_id(), x_string()).
-
--type database_info_param(Term, Value, DocId, Key) ::
-        has_positions 
-      | document_count
-      | last_document_id
-      | average_length
-      | document_length_lower_bound
-      | document_length_upper_bound
-      | uuid
-      | {term_exists, Term}
-      | {term_freq, Term}
-      | {collection_freq, Term}
-      | {value_freq, Value}
-      | {value_lower_bound, Value}
-      | {value_upper_bound, Value}
-      | {wdf_upper_bound, Term}
-      | {document_length, DocId}
-      | {metadata, Key}.
 
 database_info(Server, Params) ->
     call(Server, {database_info, Params}).

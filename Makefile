@@ -29,7 +29,7 @@ check_plt:
 dialyzer:
 	dialyzer -n -nn -pa ../xapian/ebin -pa deps/seqbind/ebin/ \
 					-pa deps/erlando/ebin/ -pa deps/parse_trans/ebin/ \
-					--src src/ deps/erlando/src/ deps/poolboy/src/
+					--src src/ deps/erlando/src/ deps/poolboy/src/ test/
 
 
 force-compile:

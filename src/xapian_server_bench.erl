@@ -3,11 +3,11 @@
 
 -ifdef(BENCHMARK).
 -import(xapian_helper, [testdb_path/1]).
+-include_lib("emark/include/emark.hrl").
 -endif.
 
 -define(SRV, xapian_server).
 
--include_lib("emark/include/emark.hrl").
 -include_lib("xapian/include/xapian.hrl").
 -include_lib("stdlib/include/qlc.hrl").
 
