@@ -6,14 +6,15 @@
 * [Function Details](#functions)
 
 
-Useful miniprograms.
+Useful miniprograms, experimental code, helpers for using from tests
+and from console.
 
 <a name="index"></a>
 
 ##Function Index##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#stem-3">stem/3</a></td><td></td></tr><tr><td valign="top"><a href="#stem_qlc-3">stem_qlc/3</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#stem-3">stem/3</a></td><td></td></tr><tr><td valign="top"><a href="#stem_qlc-3">stem_qlc/3</a></td><td></td></tr><tr><td valign="top"><a href="#testdb_path-1">testdb_path/1</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -39,4 +40,13 @@ Useful miniprograms.
 
 
 `stem_qlc(Server, Lang, Str) -> any()`
+
+<a name="testdb_path-1"></a>
+
+###testdb_path/1##
+
+
+
+
+`testdb_path(Name) -> any()`
 
