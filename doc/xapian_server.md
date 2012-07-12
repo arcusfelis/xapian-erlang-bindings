@@ -22,23 +22,15 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
-<pre>database_info_param(Term, Value, DocId, Key) = has_positions | document_count | last_document_id | average_length | document_length_lower_bound | document_length_upper_bound | uuid | {term_exists, Term} | {term_freq, Term} | {collection_freq, Term} | {value_freq, Value} | {value_lower_bound, Value} | {value_upper_bound, Value} | {wdf_upper_bound, Term} | {document_length, DocId} | {metadata, Key}</pre>
+<pre>database_info_param() = <a href="#type-database_info_param_">database_info_param_</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_slot_value">x_slot_value()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-x_string">x_string()</a>)</pre>
 
 
 
-###<a name="type-database_info_param">database_info_param()</a>##
+###<a name="type-database_info_param_">database_info_param_()</a>##
 
 
 
-<pre>database_info_param() = <a href="#type-database_info_param">database_info_param</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_slot_value">x_slot_value()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-x_string">x_string()</a>)</pre>
-
-
-
-###<a name="type-database_info_result_pair">database_info_result_pair()</a>##
-
-
-
-<pre>database_info_result_pair(Str, DocId, DocCount, DocLength, Term, Value) = {has_positions, boolean()} | {document_count, non_neg_integer()} | {last_document_id, DocCount} | {average_length, DocLength} | {document_length_lower_bound, DocLength} | {document_length_upper_bound, DocLength} | {uuid, Str} | {{term_exists, Term}, boolean()} | {{term_freq, Term}, DocCount} | {{collection_freq, Term}, TermCount} | {{value_freq, Value}, DocCount} | {{value_lower_bound, Value}, Str} | {{value_upper_bound, Value}, Str} | {{wdf_upper_bound, Term}, TermCount} | {{document_length, DocId}, DocLength} | {{metadata, Str}, Str | undefined}</pre>
+<pre>database_info_param_(Term, Value, DocId, Key) = has_positions | document_count | last_document_id | average_length | document_length_lower_bound | document_length_upper_bound | uuid | {term_exists, Term} | {term_freq, Term} | {collection_freq, Term} | {value_freq, Value} | {value_lower_bound, Value} | {value_upper_bound, Value} | {wdf_upper_bound, Term} | {document_length, DocId} | {metadata, Key}</pre>
 
 
 
@@ -46,7 +38,15 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
-<pre>database_info_result_pair() = <a href="#type-database_info_result_pair">database_info_result_pair</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-doc_count">doc_count()</a>, <a href="#type-doc_length">doc_length()</a>, <a href="#type-string_term">string_term()</a>, <a href="#type-x_slot_value">x_slot_value()</a>)</pre>
+<pre>database_info_result_pair() = <a href="#type-database_info_result_pair_">database_info_result_pair_</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-doc_count">doc_count()</a>, <a href="#type-doc_length">doc_length()</a>, <a href="#type-string_term">string_term()</a>, <a href="#type-x_slot_value">x_slot_value()</a>)</pre>
+
+
+
+###<a name="type-database_info_result_pair_">database_info_result_pair_()</a>##
+
+
+
+<pre>database_info_result_pair_(Str, DocId, DocCount, DocLength, Term, Value) = {has_positions, boolean()} | {document_count, non_neg_integer()} | {last_document_id, DocCount} | {average_length, DocLength} | {document_length_lower_bound, DocLength} | {document_length_upper_bound, DocLength} | {uuid, Str} | {{term_exists, Term}, boolean()} | {{term_freq, Term}, DocCount} | {{collection_freq, Term}, TermCount} | {{value_freq, Value}, DocCount} | {{value_lower_bound, Value}, Str} | {{value_upper_bound, Value}, Str} | {{wdf_upper_bound, Term}, TermCount} | {{document_length, DocId}, DocLength} | {{metadata, Str}, Str | undefined}</pre>
 
 
 
@@ -86,15 +86,15 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
-<pre>mset_info_result_pair(C, W, T) = {matches_lower_bound, C} | {matches_estimated, C} | {matches_upper_bound, C} | {uncollapsed_matches_lower_bound, C} | {uncollapsed_matches_estimated, C} | {uncollapsed_matches_upper_bound, C} | {size, C} | {max_possible, W} | {max_attained, W} | {{term_weight, T}, W | undefined} | {{term_freq, T}, C | undefined}</pre>
+<pre>mset_info_result_pair() = <a href="#type-mset_info_result_pair_">mset_info_result_pair_</a>(<a href="#type-doc_count">doc_count()</a>, <a href="#type-weight">weight()</a>, <a href="#type-string_term">string_term()</a>)</pre>
 
 
 
-###<a name="type-mset_info_result_pair">mset_info_result_pair()</a>##
+###<a name="type-mset_info_result_pair_">mset_info_result_pair_()</a>##
 
 
 
-<pre>mset_info_result_pair() = <a href="#type-mset_info_result_pair">mset_info_result_pair</a>(<a href="#type-doc_count">doc_count()</a>, <a href="#type-weight">weight()</a>, <a href="#type-string_term">string_term()</a>)</pre>
+<pre>mset_info_result_pair_(C, W, T) = {matches_lower_bound, C} | {matches_estimated, C} | {matches_upper_bound, C} | {uncollapsed_matches_lower_bound, C} | {uncollapsed_matches_estimated, C} | {uncollapsed_matches_upper_bound, C} | {size, C} | {max_possible, W} | {max_attained, W} | {{term_weight, T}, W | undefined} | {{term_freq, T}, C | undefined}</pre>
 
 
 
