@@ -38,15 +38,39 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
-<pre>database_info_result_pair() = <a href="#type-database_info_result_pair_">database_info_result_pair_</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-doc_count">doc_count()</a>, <a href="#type-doc_length">doc_length()</a>, <a href="#type-string_term">string_term()</a>, <a href="#type-x_slot_value">x_slot_value()</a>)</pre>
+<pre>database_info_result_pair() = <a href="#type-database_info_result_pair1">database_info_result_pair1()</a> | <a href="#type-database_info_result_pair2">database_info_result_pair2()</a></pre>
 
 
 
-###<a name="type-database_info_result_pair_">database_info_result_pair_()</a>##
+###<a name="type-database_info_result_pair1">database_info_result_pair1()</a>##
 
 
 
-<pre>database_info_result_pair_(Str, DocId, DocCount, DocLength, Term, Value) = {has_positions, boolean()} | {document_count, non_neg_integer()} | {last_document_id, DocCount} | {average_length, DocLength} | {document_length_lower_bound, DocLength} | {document_length_upper_bound, DocLength} | {uuid, Str} | {{term_exists, Term}, boolean()} | {{term_freq, Term}, DocCount} | {{collection_freq, Term}, TermCount} | {{value_freq, Value}, DocCount} | {{value_lower_bound, Value}, Str} | {{value_upper_bound, Value}, Str} | {{wdf_upper_bound, Term}, TermCount} | {{document_length, DocId}, DocLength} | {{metadata, Str}, Str | undefined}</pre>
+<pre>database_info_result_pair1() = <a href="#type-database_info_result_pair_1">database_info_result_pair_1</a>(<a href="#type-doc_count">doc_count()</a>, <a href="#type-doc_length">doc_length()</a>)</pre>
+
+
+
+###<a name="type-database_info_result_pair2">database_info_result_pair2()</a>##
+
+
+
+<pre>database_info_result_pair2() = <a href="#type-database_info_result_pair_2">database_info_result_pair_2</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-x_slot_value">x_slot_value()</a>, <a href="#type-string_term">string_term()</a>, <a href="#type-term_count">term_count()</a>, <a href="#type-doc_count">doc_count()</a>, <a href="#type-doc_length">doc_length()</a>)</pre>
+
+
+
+###<a name="type-database_info_result_pair_1">database_info_result_pair_1()</a>##
+
+
+
+<pre>database_info_result_pair_1(C, L) = {has_positions, boolean()} | {document_count, C} | {last_document_id, C} | {average_length, L} | {document_length_lower_bound, L} | {document_length_upper_bound, L}</pre>
+
+
+
+###<a name="type-database_info_result_pair_2">database_info_result_pair_2()</a>##
+
+
+
+<pre>database_info_result_pair_2(S, I, V, T, TC, DC, L) = {uuid, S} | {{term_exists, T}, boolean()} | {{term_freq, T}, DC} | {{collection_freq, T}, TC} | {{value_freq, V}, DC} | {{value_lower_bound, V}, S} | {{value_upper_bound, V}, S} | {{wdf_upper_bound, T}, TC} | {{document_length, I}, L} | {{metadata, S}, S | undefined}</pre>
 
 
 
@@ -86,15 +110,39 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
-<pre>mset_info_result_pair() = <a href="#type-mset_info_result_pair_">mset_info_result_pair_</a>(<a href="#type-doc_count">doc_count()</a>, <a href="#type-weight">weight()</a>, <a href="#type-string_term">string_term()</a>)</pre>
+<pre>mset_info_result_pair() = <a href="#type-mset_info_result_pair1">mset_info_result_pair1()</a> | <a href="#type-mset_info_result_pair2">mset_info_result_pair2()</a></pre>
 
 
 
-###<a name="type-mset_info_result_pair_">mset_info_result_pair_()</a>##
+###<a name="type-mset_info_result_pair1">mset_info_result_pair1()</a>##
 
 
 
-<pre>mset_info_result_pair_(C, W, T) = {matches_lower_bound, C} | {matches_estimated, C} | {matches_upper_bound, C} | {uncollapsed_matches_lower_bound, C} | {uncollapsed_matches_estimated, C} | {uncollapsed_matches_upper_bound, C} | {size, C} | {max_possible, W} | {max_attained, W} | {{term_weight, T}, W | undefined} | {{term_freq, T}, C | undefined}</pre>
+<pre>mset_info_result_pair1() = <a href="#type-mset_info_result_pair_1">mset_info_result_pair_1</a>(<a href="#type-doc_count">doc_count()</a>, <a href="#type-weight">weight()</a>)</pre>
+
+
+
+###<a name="type-mset_info_result_pair2">mset_info_result_pair2()</a>##
+
+
+
+<pre>mset_info_result_pair2() = <a href="#type-mset_info_result_pair_2">mset_info_result_pair_2</a>(<a href="#type-doc_count">doc_count()</a>, <a href="#type-weight">weight()</a>, <a href="#type-string_term">string_term()</a>)</pre>
+
+
+
+###<a name="type-mset_info_result_pair_1">mset_info_result_pair_1()</a>##
+
+
+
+<pre>mset_info_result_pair_1(C, W) = {matches_lower_bound, C} | {matches_estimated, C} | {matches_upper_bound, C} | {uncollapsed_matches_lower_bound, C} | {uncollapsed_matches_estimated, C} | {uncollapsed_matches_upper_bound, C} | {size, C} | {max_possible, W} | {max_attained, W}</pre>
+
+
+
+###<a name="type-mset_info_result_pair_2">mset_info_result_pair_2()</a>##
+
+
+
+<pre>mset_info_result_pair_2(C, W, T) = {{term_weight, T}, W | undefined} | {{term_freq, T}, C | undefined}</pre>
 
 
 
@@ -114,11 +162,11 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
-###<a name="type-void">void()</a>##
+###<a name="type-term_count">term_count()</a>##
 
 
 
-<pre>void() = 'VoiD'</pre>
+<pre>term_count() = non_neg_integer()</pre>
 
 
 
@@ -210,6 +258,14 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
+###<a name="type-x_table">x_table()</a>##
+
+
+
+<pre>x_table() = <a href="xapian_type.md#type-x_table">xapian_type:x_table()</a></pre>
+
+
+
 ###<a name="type-x_transaction">x_transaction()</a>##
 
 
@@ -228,7 +284,7 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 ##Function Index##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td>Write a new document, return its id.</td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td>Delete documents.</td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document as a resource.</td></tr><tr><td valign="top"><a href="#document_info-3">document_info/3</a></td><td>Read document info, without putting it into database.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#is_document_exist-2">is_document_exist/2</a></td><td>Return <code>true</code>, if the document with a specified id exists.</td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr><tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td>Calculate a syntatic document ID from the real document ID and its DB name.</td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#qlc_table_to_reference-2">qlc_table_to_reference/2</a></td><td></td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td>Write a new document, return its id.</td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td>Returns the orddict of all properties.</td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td>Delete documents.</td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document as a resource.</td></tr><tr><td valign="top"><a href="#document_info-3">document_info/3</a></td><td>Read document info, without putting it into database.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#is_document_exist-2">is_document_exist/2</a></td><td>Return <code>true</code>, if the document with a specified id exists.</td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr><tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td>Calculate a syntatic document ID from the real document ID and its DB name.</td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#qlc_table_to_reference-2">qlc_table_to_reference/2</a></td><td></td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
 defined by <code>RecordMetaDefinition</code>.</td></tr><tr><td valign="top"><a href="#release_resource-2">release_resource/2</a></td><td>Release a resource.</td></tr><tr><td valign="top"><a href="#release_table-2">release_table/2</a></td><td>Clean resources allocated by the QLC table.</td></tr><tr><td valign="top"><a href="#replace_document-3">replace_document/3</a></td><td>Replace all matched documents with the new version.</td></tr><tr><td valign="top"><a href="#replace_or_create_document-3">replace_or_create_document/3</a></td><td>Replace all matched documents with the new version.</td></tr><tr><td valign="top"><a href="#set_metadata-3">set_metadata/3</a></td><td>Save a key-value pair into the database dictionary.</td></tr><tr><td valign="top"><a href="#slot_to_type-1">slot_to_type/1</a></td><td></td></tr><tr><td valign="top"><a href="#slot_to_type-2">slot_to_type/2</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td></td></tr><tr><td valign="top"><a href="#subdb_names-1">subdb_names/1</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-2">transaction/2</a></td><td>Run a transaction with 5-second timeout.</td></tr><tr><td valign="top"><a href="#transaction-3">transaction/3</a></td><td>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.</td></tr><tr><td valign="top"><a href="#update_document-3">update_document/3</a></td><td>Extend (edit) the document with data.</td></tr><tr><td valign="top"><a href="#update_or_create_document-3">update_or_create_document/3</a></td><td>Update documents or create the new document.</td></tr></table>
 
 
@@ -274,11 +330,13 @@ The caller will be blocked while all changes will not flushed.<a name="database_
 
 
 
-`database_info(Server) -> any()`
+<pre>database_info(Server::<a href="#type-x_server">x_server()</a>) -> [<a href="#type-database_info_result_pair1">database_info_result_pair1()</a>]</pre>
+<br></br>
 
 
 
-Returns the list of all properties.<a name="database_info-2"></a>
+
+Returns the orddict of all properties.<a name="database_info-2"></a>
 
 ###database_info/2##
 
@@ -516,7 +574,9 @@ that means all items will be selected;
 
 
 
-`mset_info(Server, MSetResource) -> any()`
+<pre>mset_info(Server::<a href="#type-x_server">x_server()</a>, MSetResource::<a href="#type-x_resource">x_resource()</a>) -> <a href="#type-mset_info_result_pair1">mset_info_result_pair1()</a></pre>
+<br></br>
+
 
 
 
@@ -670,7 +730,7 @@ defined by `RecordMetaDefinition`.
 
 
 
-<pre>release_resource(Server::<a href="#type-x_server">x_server()</a>, ResourceRef::<a href="#type-x_resource">x_resource()</a>) -> <a href="#type-void">void()</a></pre>
+<pre>release_resource(Server::<a href="#type-x_server">x_server()</a>, ResourceRef::<a href="#type-x_resource">x_resource()</a>) -> ok</pre>
 <br></br>
 
 
@@ -684,7 +744,9 @@ It will be called automaticly, if the client process is died.<a name="release_ta
 
 
 
-`release_table(Server, Table) -> any()`
+<pre>release_table(Server::<a href="#type-x_server">x_server()</a>, Table::<a href="#type-x_table">x_table()</a>) -> ok</pre>
+<br></br>
+
 
 
 

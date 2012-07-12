@@ -20,6 +20,7 @@
     x_query/0,
     x_operator/0,
     x_server/0,
+    x_table/0,
     x_transaction/0,
     x_resource/0,
     x_meta/0,
@@ -73,6 +74,7 @@
 
 -type x_server() :: pid().
 -type x_transaction() :: fun(([x_server()]) -> term()).
+-type x_table() :: qlc:query_handle().
 
 -type x_query() :: #x_query{} 
     | #x_query_value{} 

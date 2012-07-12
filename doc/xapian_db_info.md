@@ -1,11 +1,12 @@
 
 
 #Module xapian_db_info#
+* [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)
 
 
-
+Encodes and decodes information about the database.
 
 <a name="index"></a>
 

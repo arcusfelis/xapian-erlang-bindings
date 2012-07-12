@@ -1,3 +1,4 @@
+%%% @doc Encodes and decodes information about the database.
 -module(xapian_db_info).
 -export([encode/2,
          decode/2,

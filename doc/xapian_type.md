@@ -230,6 +230,14 @@
 
 
 
+###<a name="type-x_table">x_table()</a>##
+
+
+
+<pre>x_table() = <a href="qlc.md#type-query_handle">qlc:query_handle()</a></pre>
+
+
+
 ###<a name="type-x_term">x_term()</a>##
 
 

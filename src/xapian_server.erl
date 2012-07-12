@@ -239,13 +239,13 @@
 %% ------------------------------------------------------------------
 
 -type x_server() :: xapian_type:x_server().
+-type x_table() :: xapian_type:x_table().
 -type x_port() :: xapian_type:x_port().
 -type x_transaction() :: xapian_type:x_transaction().
 -type x_query() :: xapian_type:x_query().
 -type x_resource() :: xapian_type:x_resource().
 -type x_record() :: xapian_type:x_record().
 -type x_meta() :: xapian_type:x_meta().
--type void() :: 'VoiD'.
 -type x_document_id() :: xapian_type:x_document_id().
 -type x_string() :: xapian_type:x_string().
 -type x_unique_document_id() :: xapian_type:x_unique_document_id().
@@ -439,12 +439,13 @@ match_set(Server, EnquireResource) ->
 
 %% @doc Release a resource.
 %% It will be called automaticly, if the client process is died.
--spec release_resource(x_server(), x_resource()) -> void().
+-spec release_resource(x_server(), x_resource()) -> ok.
 release_resource(Server, ResourceRef) ->
     call(Server, {release_resource, ResourceRef}).
 
 
 %% @doc Clean resources allocated by the QLC table.
+-spec release_table(x_server(), x_table()) -> ok.
 release_table(Server, Table) ->
     TableHash = xapian_qlc_table_hash:hash(Table),
     call(Server, {qlc_release_table, TableHash}).
@@ -630,6 +631,8 @@ internal_transaction_cancel(Server, Ref) ->
 
 %% @doc Returns the list of all properties.
 %% @equiv mset_info(Server, MSetResource, xapian_mset_info:properties())
+-spec mset_info(x_server(), x_resource()) -> mset_info_result_pair1().
+
 mset_info(Server, MSetResource) ->
     Params = xapian_mset_info:properties(),
     call(Server, {mset_info, MSetResource, Params}).
@@ -655,10 +658,14 @@ mset_info(Server, MSetResource) ->
       | {term_freq, string_term()}.
 
 
--type mset_info_result_pair() ::
-    mset_info_result_pair_(doc_count(), weight(), string_term()).
+-type mset_info_result_pair() :: mset_info_result_pair1() | 
+                                 mset_info_result_pair2().
 
--type mset_info_result_pair_(C, W, T) ::
+-type mset_info_result_pair1() ::
+    mset_info_result_pair_1(doc_count(), weight()).
+
+
+-type mset_info_result_pair_1(C, W) ::
         {matches_lower_bound, C}
       | {matches_estimated, C}
       | {matches_upper_bound, C}
@@ -667,9 +674,16 @@ mset_info(Server, MSetResource) ->
       | {uncollapsed_matches_upper_bound, C}
       | {size, C}
       | {max_possible, W}
-      | {max_attained, W}
-      | {{term_weight, T}, W | undefined}
-      | {{term_freq, T},   C | undefined}.
+      | {max_attained, W}.
+
+
+-type mset_info_result_pair2() ::
+    mset_info_result_pair_2(doc_count(), weight(), string_term()).
+
+
+-type mset_info_result_pair_2(C, W, T) ::
+       {{term_weight, T}, W | undefined} | 
+       {{term_freq, T},   C | undefined}.
 
 %% @doc Returns the list of selected properties and wanted values.
 %% Properties:
@@ -700,37 +714,42 @@ mset_info(Server, MSetResource, Params) ->
     call(Server, {mset_info, MSetResource, Params}).
 
 
-%% @doc Returns the list of all properties.
-database_info(Server) ->
-    Params = xapian_db_info:properties(),
-    call(Server, {database_info, Params}).
-
-
 -type database_info_result_pair() ::
-      database_info_result_pair_(x_string(), 
-                                 x_document_id(), 
-                                 doc_count(), 
-                                 doc_length(), 
-                                 string_term(), 
-                                 x_slot_value()).
+    database_info_result_pair1() | database_info_result_pair2().
 
--type database_info_result_pair_(Str, DocId, DocCount, DocLength, Term, Value) ::
+
+-type database_info_result_pair1() ::
+      database_info_result_pair_1(doc_count(), doc_length()).
+
+-type database_info_result_pair_1(C, L) ::
         {has_positions, boolean()}
-      | {document_count, non_neg_integer()}
-      | {last_document_id, DocCount}
-      | {average_length, DocLength}
-      | {document_length_lower_bound, DocLength}
-      | {document_length_upper_bound, DocLength}
-      | {uuid, Str}
-      | {{term_exists, Term}, boolean()}
-      | {{term_freq, Term}, DocCount}
-      | {{collection_freq, Term}, TermCount}
-      | {{value_freq, Value}, DocCount}
-      | {{value_lower_bound, Value}, Str}
-      | {{value_upper_bound, Value}, Str}
-      | {{wdf_upper_bound, Term}, TermCount}
-      | {{document_length, DocId}, DocLength}
-      | {{metadata, Str}, Str | undefined}.
+      | {document_count, C}
+      | {last_document_id, C}
+      | {average_length, L}
+      | {document_length_lower_bound, L}
+      | {document_length_upper_bound, L}.
+
+
+-type database_info_result_pair2() ::
+      database_info_result_pair_2(x_string(), 
+                                  x_document_id(), 
+                                  x_slot_value(),
+                                  string_term(), 
+                                  term_count(), 
+                                  doc_count(), 
+                                  doc_length()).
+
+-type database_info_result_pair_2(S, I, V, T, TC, DC, L) ::
+        {uuid, S}
+      | {{term_exists, T}, boolean()}
+      | {{term_freq, T}, DC}
+      | {{collection_freq, T}, TC}
+      | {{value_freq, V}, DC}
+      | {{value_lower_bound, V}, S}
+      | {{value_upper_bound, V}, S}
+      | {{wdf_upper_bound, T}, TC}
+      | {{document_length, I}, L}
+      | {{metadata, S}, S | undefined}.
 
 
 -type database_info_param() ::
@@ -753,6 +772,14 @@ database_info(Server) ->
       | {wdf_upper_bound, Term}
       | {document_length, DocId}
       | {metadata, Key}.
+
+
+%% @doc Returns the orddict of all properties.
+-spec database_info(x_server()) -> [database_info_result_pair1()].
+
+database_info(Server) ->
+    Params = xapian_db_info:properties(),
+    call(Server, {database_info, Params}).
 
 
 %% @doc Returns the list of selected properties and wanted values.
@@ -996,6 +1023,8 @@ internal_create_resource(Server, ResourceTypeName) ->
 %% ------------------------------------------------------------------
 %% gen_server Client Helpers
 %% ------------------------------------------------------------------
+
+-spec call(x_server(), term()) -> term().
 
 call(Server, Params) ->
     client_error_handler(gen_server:call(Server, Params)).

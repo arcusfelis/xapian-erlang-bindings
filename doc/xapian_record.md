@@ -1,11 +1,12 @@
 
 
 #Module xapian_record#
+* [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)
 
 
-
+It contains helpers for extracting information from a document.
 
 <a name="index"></a>
 

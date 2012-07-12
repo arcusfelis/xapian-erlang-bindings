@@ -1,4 +1,4 @@
-%% It contains helpers for extracting information from a document.
+%%% @doc It contains helpers for extracting information from a document.
 -module(xapian_record).
 -export([record/2, 
          encode/4, 
@@ -214,7 +214,10 @@ db_id_to_name(Id, I2N) ->
     get_tuple_value(Id, I2N, Id).
 
 
-get_tuple_value(KeyPos, Tuple, Def) when KeyPos > 0 ->
+-spec get_tuple_value(non_neg_integer(), tuple(), term()) -> term().
+
+get_tuple_value(KeyPos, Tuple, Def) 
+    when KeyPos > 0, is_integer(KeyPos) ->
     case erlang:element(KeyPos, Tuple) of
         undefined -> Def;
         Val -> Val
