@@ -538,13 +538,23 @@ term_ext_qlc_gen() ->
         C1E3 = qlc:next_answers(C1, 1),
         C2E2 = qlc:next_answers(C2, 1),
         C2E3 = qlc:next_answers(C2, 1),
+        C2E4 = qlc:next_answers(C2, 1),
+        C1E4 = qlc:next_answers(C1, 1),
+        C2E5 = qlc:next_answers(C2, 25),
+        C1E5 = qlc:next_answers(C1, 25),
+        C1E6 = qlc:next_answers(C1, 25),
+        C2E6 = qlc:next_answers(C2, 25),
 
         [ ?_assertEqual(Not0Pos, [])
         , ?_assertEqual(NotEmptyPos, [])
         , {"Shared term QLC table.",
             [ ?_assertEqual(C1E1, C2E1)
             , ?_assertEqual(C1E2, C2E2)
-            , ?_assertEqual(C1E3, C2E3)]}
+            , ?_assertEqual(C1E3, C2E3)
+            , ?_assertEqual(C1E4, C2E4)
+            , ?_assertEqual(C1E5, C2E5)
+            , ?_assertEqual(C1E6, C2E6)
+            ]}
         ]
     after
         ?SRV:close(Server)
@@ -1987,7 +1997,7 @@ remote_db_test() ->
     Params = [writable, link, {port, 6666}],
     DBList = [testdb_path(tcp_remote)],
     xapian_utility:tcp_server(DBList, Params),
-    timer:sleep(200),
+    timer:sleep(1000),
     DBConfig = #x_tcp_database{port = 6666, host = "127.0.0.1"},
     {ok, Server} = ?SRV:start_link(DBConfig, [write]),
     ?SRV:close(Server).

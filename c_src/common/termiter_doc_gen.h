@@ -29,8 +29,14 @@ class DocumentTermIteratorGenerator : public TermIteratorGenerator
 
     Xapian::termcount size()
     {
-        begin();
-        return m_doc.termlist_count();
+        // FIXME: it is a great hack (yet another).
+        // see http://trac.xapian.org/ticket/423
+
+        // It does the same, but it has a bug.
+        //return m_doc.termlist_count();
+        Xapian::termcount i = 0;
+        for (Xapian::TermIterator e = end(), b = begin(); b != e; b++, i++);
+        return i;
     }
 };
 
