@@ -6,6 +6,9 @@
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
 
+/**
+ * Generate @a TermIterator from `Xapian::Document`.
+ */
 class DocumentTermIteratorGenerator : public TermIteratorGenerator
 {
     Xapian::Document m_doc;

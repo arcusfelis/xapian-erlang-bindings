@@ -3,10 +3,11 @@
 -export_type([
     x_string/0, 
     x_non_empty_string/0,
-    x_slot_name/0, 
     x_slot/0, 
-    x_position/0,
+    x_slot_name/0, 
+    x_slot_type/0, 
     x_slot_value/0,
+    x_position/0,
     x_term_count/0,
     x_document_index_part/0,
     x_document_id/0,
@@ -39,6 +40,7 @@
 -type x_string()        :: string() | binary().
 -type x_non_empty_string() :: nonempty_string() | <<_:8, _:_*8>>.
 -type x_slot_name()     :: atom().
+-type x_slot_type()     :: float | string.
 -type x_slot()          :: non_neg_integer().
 -type x_position()      :: non_neg_integer().
 -type x_term_count()    :: non_neg_integer().

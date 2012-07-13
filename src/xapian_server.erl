@@ -252,6 +252,7 @@
 -type x_document_constructor() :: xapian_type:x_document_constructor().
 -type x_database_name() :: xapian_type:x_document_constructor().
 -type x_slot_value() :: xapian_type:x_slot_value().
+-type x_slot_type() :: xapian_type:x_slot_type().
 
 %% ------------------------------------------------------------------
 %% Internal types
@@ -629,15 +630,6 @@ internal_transaction_cancel(Server, Ref) ->
 %% Information about database objects
 %% ------------------------------------------------------------------
 
-%% @doc Returns the list of all properties.
-%% @equiv mset_info(Server, MSetResource, xapian_mset_info:properties())
--spec mset_info(x_server(), x_resource()) -> mset_info_result_pair1().
-
-mset_info(Server, MSetResource) ->
-    Params = xapian_mset_info:properties(),
-    call(Server, {mset_info, MSetResource, Params}).
-
-
 -type string_term() :: x_string().
 -type weight() :: float().
 -type doc_count() :: non_neg_integer().
@@ -684,6 +676,16 @@ mset_info(Server, MSetResource) ->
 -type mset_info_result_pair_2(C, W, T) ::
        {{term_weight, T}, W | undefined} | 
        {{term_freq, T},   C | undefined}.
+
+
+%% @doc Returns the list of all properties.
+%% @equiv mset_info(Server, MSetResource, xapian_mset_info:properties())
+-spec mset_info(x_server(), x_resource()) -> mset_info_result_pair1().
+
+mset_info(Server, MSetResource) ->
+    Params = xapian_mset_info:properties(),
+    call(Server, {mset_info, MSetResource, Params}).
+
 
 %% @doc Returns the list of selected properties and wanted values.
 %% Properties:
@@ -852,6 +854,17 @@ database_info(Server, Params) ->
 %% Information about the state of the process
 %% ------------------------------------------------------------------
 
+%% @doc Returns orddict.
+-spec name_to_slot(#state{} | x_server()) -> 
+    [{xapian_type:x_slot_name(), xapian_type:x_slot()}].
+
+name_to_slot(#state{name_to_slot = N2S}) ->
+    N2S;
+
+name_to_slot(Server) ->
+    call(Server, {with_state, fun ?SRV:internal_name_to_slot_dict/1}).
+
+
 %% @doc Convert a value slot name to its slot number.
 -spec name_to_slot(#state{} | x_server(), x_slot_value()) -> xapian_type:x_slot().
 
@@ -883,19 +896,17 @@ qlc_table_to_reference(Server, Table) ->
     call(Server, {with_state, fun ?SRV:internal_qlc_table_hash_to_reference/2, Hash}).
 
 
-name_to_slot(#state{name_to_slot = N2S}) ->
-    N2S;
-
-name_to_slot(Server) ->
-    call(Server, {with_state, fun ?SRV:internal_name_to_slot_dict/1}).
-
-
+%% @doc Returns an array for conversation from `x_slot()' to its type.
+%%      If an element of the array is `undefined', then its type is `string'.
 slot_to_type(#state{slot_to_type = V2T}) ->
     V2T;
 
 slot_to_type(Server) ->
     call(Server, {with_state, fun ?SRV:internal_slot_to_type_array/1}).
 
+
+%% @doc Convert a slot number or a slot name to its type (`float' or `string').
+-spec slot_to_type(#state{} | x_server(), x_slot_value()) -> x_slot_type().
 
 slot_to_type(State=#state{}, Slot) ->
     {ok, Type} = internal_name_to_type(State, Slot),
@@ -904,6 +915,11 @@ slot_to_type(State=#state{}, Slot) ->
 slot_to_type(Server, Slot) ->
     call(Server, {with_state, fun ?SRV:internal_name_to_type/2, Slot}).
 
+
+%% @doc Return an tuple of the database names.
+%% For example, 2 sub-databases were opened under names `db1_name' and 
+%% `db2z_name', then `{db1_name, db2_name}' will be returned.
+-spec subdb_names(#state{} | x_server()) -> tuple().
 
 subdb_names(#state{subdb_names = I2N}) ->
     I2N;
@@ -1034,7 +1050,7 @@ internal_create_resource(Server, ResourceTypeName, ParamCreatorFun) ->
 internal_create_resource(Server, ResourceTypeName) ->
     call(Server, {create_resource, ResourceTypeName, undefined}).
 
-
+ 
 %% ------------------------------------------------------------------
 %% gen_server Client Helpers
 %% ------------------------------------------------------------------

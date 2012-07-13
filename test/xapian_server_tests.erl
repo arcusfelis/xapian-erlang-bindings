@@ -522,8 +522,29 @@ term_ext_qlc_gen() ->
         NotEmptyPos = 
         [X || X = #term_ext{positions = Poss} <- Records, Poss =/= []],
 
+
+        %% Shared table: changes in 1 query handler don't modify the second one.
+        %%
+        %% SUDDENLY! PAIN!
+        %% In the next string the error can occur.
+        %% http://trac.xapian.org/ticket/423
+        QH1 = qlc:q([V || #term_ext{value=V} <- Table]),
+        QH2 = qlc:q([V || #term_ext{value=V} <- Table]),
+        C1  = qlc:cursor(QH1),
+        C2  = qlc:cursor(QH2),
+        C1E1 = qlc:next_answers(C1, 1),
+        C2E1 = qlc:next_answers(C2, 1),
+        C1E2 = qlc:next_answers(C1, 1),
+        C1E3 = qlc:next_answers(C1, 1),
+        C2E2 = qlc:next_answers(C2, 1),
+        C2E3 = qlc:next_answers(C2, 1),
+
         [ ?_assertEqual(Not0Pos, [])
         , ?_assertEqual(NotEmptyPos, [])
+        , {"Shared term QLC table.",
+            [ ?_assertEqual(C1E1, C2E1)
+            , ?_assertEqual(C1E2, C2E2)
+            , ?_assertEqual(C1E3, C2E3)]}
         ]
     after
         ?SRV:close(Server)
