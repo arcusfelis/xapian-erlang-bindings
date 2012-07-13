@@ -321,8 +321,8 @@ last_document_id(Server) ->
 
 
 %% @doc Close the database and kill a control process (aka Server).
-%%      Database will be automaticly close, if a supervised server 
-%%      process will dead.
+%%      Database will be automaticly close, when a supervised server 
+%%      process is dead.
 %%
 %%      This function is used for flushing changes of the writable database.
 %%      The caller will be blocked while all changes will not flushed.
@@ -824,7 +824,7 @@ database_info(Server) ->
 %% * `{metadata, Key}'
 %%      Get the user-specified metadata associated with a given key.
 %%
-%% If `DocId' or `Term' does not exist, `undefined' value will be return.
+%% If `DocId' or `Term' does not exist, `undefined' value is returned.
 %%
 %% For example,
 %%
@@ -852,6 +852,9 @@ database_info(Server, Params) ->
 %% Information about the state of the process
 %% ------------------------------------------------------------------
 
+%% @doc Convert a value slot name to its slot number.
+-spec name_to_slot(#state{} | x_server(), x_slot_value()) -> xapian_type:x_slot().
+
 name_to_slot(_ServerOrState, Slot) when is_integer(Slot) ->
     Slot;
 
@@ -861,6 +864,12 @@ name_to_slot(#state{name_to_slot = N2S}, Slot) when is_atom(Slot) ->
 name_to_slot(Server, Slot) when is_atom(Slot) ->
     call(Server, {with_state, fun ?SRV:internal_name_to_slot/2, Slot}).
 
+
+%% @doc Convert a QLC handler, allocated with help of 
+%%      any of `xapian_*_qlc:table/?' functions, to its resource.
+%% @end
+%% @see release_table/2
+-spec qlc_table_to_reference(#state{}, x_table()) -> x_resource().
 
 qlc_table_to_reference(#state{} = State, Table) ->
     Hash = xapian_qlc_table_hash:hash(Table),

@@ -300,7 +300,8 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 ##Function Index##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td>Write a new document, return its id.</td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td>Returns the orddict of all properties.</td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td>Delete documents.</td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document as a resource.</td></tr><tr><td valign="top"><a href="#document_info-3">document_info/3</a></td><td>Read document info, without putting it into database.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#is_document_exist-2">is_document_exist/2</a></td><td>Return <code>true</code>, if the document with a specified id exists.</td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr><tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td>Calculate a syntatic document ID from the real document ID and its DB name.</td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td></td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#qlc_table_to_reference-2">qlc_table_to_reference/2</a></td><td></td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td>Write a new document, return its id.</td></tr><tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr><tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td>Returns the orddict of all properties.</td></tr><tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td>Delete documents.</td></tr><tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document as a resource.</td></tr><tr><td valign="top"><a href="#document_info-3">document_info/3</a></td><td>Read document info, without putting it into database.</td></tr><tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr><tr><td valign="top"><a href="#is_document_exist-2">is_document_exist/2</a></td><td>Return <code>true</code>, if the document with a specified id exists.</td></tr><tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr><tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr><tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td>Returns the list of all properties.</td></tr><tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td>Returns the list of selected properties and wanted values.</td></tr><tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td>Calculate a syntatic document ID from the real document ID and its DB name.</td></tr><tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td></td></tr><tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td>Convert a value slot name to its slot number.</td></tr><tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr><tr><td valign="top"><a href="#qlc_table_to_reference-2">qlc_table_to_reference/2</a></td><td>Convert a QLC handler, allocated with help of
+any of <code>xapian_*_qlc:table/?</code> functions, to its resource.</td></tr><tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr><tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
 defined by <code>RecordMetaDefinition</code>.</td></tr><tr><td valign="top"><a href="#release_resource-2">release_resource/2</a></td><td>Release a resource.</td></tr><tr><td valign="top"><a href="#release_table-2">release_table/2</a></td><td>Clean resources allocated by the QLC table.</td></tr><tr><td valign="top"><a href="#replace_document-3">replace_document/3</a></td><td>Replace all matched documents with the new version.</td></tr><tr><td valign="top"><a href="#replace_or_create_document-3">replace_or_create_document/3</a></td><td>Replace all matched documents with the new version.</td></tr><tr><td valign="top"><a href="#set_metadata-3">set_metadata/3</a></td><td>Save a key-value pair into the database dictionary.</td></tr><tr><td valign="top"><a href="#slot_to_type-1">slot_to_type/1</a></td><td></td></tr><tr><td valign="top"><a href="#slot_to_type-2">slot_to_type/2</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td></td></tr><tr><td valign="top"><a href="#subdb_names-1">subdb_names/1</a></td><td></td></tr><tr><td valign="top"><a href="#transaction-2">transaction/2</a></td><td>Run a transaction with 5-second timeout.</td></tr><tr><td valign="top"><a href="#transaction-3">transaction/3</a></td><td>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.</td></tr><tr><td valign="top"><a href="#update_document-3">update_document/3</a></td><td>Extend (edit) the document with data.</td></tr><tr><td valign="top"><a href="#update_or_create_document-3">update_or_create_document/3</a></td><td>Update documents or create the new document.</td></tr></table>
 
 
@@ -335,8 +336,8 @@ Write a new document, return its id.<a name="close-1"></a>
 
 
 Close the database and kill a control process (aka Server).       
-Database will be automaticly close, if a supervised server       
-process will dead.
+Database will be automaticly close, when a supervised server       
+process is dead.
 
 This function is used for flushing changes of the writable database.
 The caller will be blocked while all changes will not flushed.<a name="database_info-1"></a>
@@ -404,7 +405,7 @@ Get the user-specified metadata associated with a given key.
 
 
 
-If `DocId` or `Term` does not exist, `undefined` value will be return.
+If `DocId` or `Term` does not exist, `undefined` value is returned.
 
 
 
@@ -650,9 +651,13 @@ Calculate a syntatic document ID from the real document ID and its DB name.<a na
 
 
 
-`name_to_slot(ServerOrState, Slot) -> any()`
+<pre>name_to_slot(ServerOrState::#state{} | <a href="#type-x_server">x_server()</a>, Slot::<a href="#type-x_slot_value">x_slot_value()</a>) -> <a href="xapian_type.md#type-x_slot">xapian_type:x_slot()</a></pre>
+<br></br>
 
-<a name="open-2"></a>
+
+
+
+Convert a value slot name to its slot number.<a name="open-2"></a>
 
 ###open/2##
 
@@ -706,9 +711,16 @@ default query parser:
 
 
 
-`qlc_table_to_reference(State, Table) -> any()`
+<pre>qlc_table_to_reference(State::#state{}, Table::<a href="#type-x_table">x_table()</a>) -> <a href="#type-x_resource">x_resource()</a></pre>
+<br></br>
 
-<a name="query_page-5"></a>
+
+
+
+Convert a QLC handler, allocated with help of
+any of `xapian_*_qlc:table/?` functions, to its resource.
+
+__See also:__ [release_table/2](#release_table-2).<a name="query_page-5"></a>
 
 ###query_page/5##
 
