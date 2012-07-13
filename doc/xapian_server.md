@@ -22,15 +22,31 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 
 
 
-<pre>database_info_param() = <a href="#type-database_info_param_">database_info_param_</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_slot_value">x_slot_value()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-x_string">x_string()</a>)</pre>
+<pre>database_info_param() = <a href="#type-database_info_param1">database_info_param1()</a> | <a href="#type-database_info_param2">database_info_param2()</a></pre>
 
 
 
-###<a name="type-database_info_param_">database_info_param_()</a>##
+###<a name="type-database_info_param1">database_info_param1()</a>##
 
 
 
-<pre>database_info_param_(Term, Value, DocId, Key) = has_positions | document_count | last_document_id | average_length | document_length_lower_bound | document_length_upper_bound | uuid | {term_exists, Term} | {term_freq, Term} | {collection_freq, Term} | {value_freq, Value} | {value_lower_bound, Value} | {value_upper_bound, Value} | {wdf_upper_bound, Term} | {document_length, DocId} | {metadata, Key}</pre>
+<pre>database_info_param1() = has_positions | document_count | last_document_id | average_length | document_length_lower_bound | document_length_upper_bound | uuid</pre>
+
+
+
+###<a name="type-database_info_param2">database_info_param2()</a>##
+
+
+
+<pre>database_info_param2() = <a href="#type-database_info_param_2">database_info_param_2</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_slot_value">x_slot_value()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-x_string">x_string()</a>)</pre>
+
+
+
+###<a name="type-database_info_param_2">database_info_param_2()</a>##
+
+
+
+<pre>database_info_param_2(Term, Value, DocId, Key) = {term_exists, Term} | {term_freq, Term} | {collection_freq, Term} | {value_freq, Value} | {value_lower_bound, Value} | {value_upper_bound, Value} | {wdf_upper_bound, Term} | {document_length, DocId} | {metadata, Key}</pre>
 
 
 

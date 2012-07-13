@@ -753,17 +753,23 @@ mset_info(Server, MSetResource, Params) ->
 
 
 -type database_info_param() ::
-    database_info_param_(x_string(), x_slot_value(), x_document_id(), x_string()).
+    database_info_param1() | database_info_param2().
 
--type database_info_param_(Term, Value, DocId, Key) ::
+-type database_info_param1() ::
         has_positions 
       | document_count
       | last_document_id
       | average_length
       | document_length_lower_bound
       | document_length_upper_bound
-      | uuid
-      | {term_exists, Term}
+      | uuid.
+
+-type database_info_param2() ::
+      database_info_param_2(x_string(), x_slot_value(), 
+                            x_document_id(), x_string()).
+
+-type database_info_param_2(Term, Value, DocId, Key) ::
+        {term_exists, Term}
       | {term_freq, Term}
       | {collection_freq, Term}
       | {value_freq, Value}
