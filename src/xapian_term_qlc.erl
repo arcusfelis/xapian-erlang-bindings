@@ -17,31 +17,37 @@
 %% Fields of the record are limited:
 %%  * value
 %%  * freq
+%%
+%%  Records are sorted by `value' in ascending alphabetical order.
 value_count_match_spy_table(Server, SpyRes, Meta) ->
     value_count_match_spy_table(Server, SpyRes, Meta, []).
 
 
 value_count_match_spy_table(Server, SpyRes, Meta, UserParams) ->
-    EncoderFun = fun(match_spy, DrvState, Bin@) ->
+    EncoderFun = fun(match_spy, _DrvState, Bin@) ->
         Bin@ = append_spy_type(values, Bin@),
         xapian_term_record:encode(Meta, Bin@)
         end,
-    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta, UserParams).
+    UserParams2 = [{is_sorted_value, true} | UserParams],
+    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta, UserParams2).
 
 
+%%  Records are sorted by `freq' in descending order.
 top_value_count_match_spy_table(Server, SpyRes, Limit, Meta) ->
     top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, []).
 
 
 top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams) ->
-    EncoderFun = fun(match_spy, DrvState, Bin@) ->
+    EncoderFun = fun(match_spy, _DrvState, Bin@) ->
         Bin@ = append_spy_type(top_values, Bin@),
         Bin@ = xapian_common:append_uint(Limit, Bin@),
         xapian_term_record:encode(Meta, Bin@)
         end,
-    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta, UserParams).
+    UserParams2 = [{is_sorted_value, false} | UserParams],
+    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta, UserParams2).
 
 
+%%  Records are sorted by `value' in ascending alphabetical order.
 document_term_table(Server, DocRes, Meta) ->
     document_term_table(Server, DocRes, Meta, []).
 
@@ -52,8 +58,10 @@ document_term_table(Server, DocRes, Meta, UserParams)
     EncoderFun = fun(document, Bin) ->
         xapian_term_record:encode(Meta, Bin)
         end,
-    table_int(Server, terms, EncoderFun, DocRes, Meta, UserParams);
+    UserParams2 = [{is_sorted_value, true} | UserParams],
+    table_int(Server, terms, EncoderFun, DocRes, Meta, UserParams2);
 
+%% Extract the document and run again.
 document_term_table(Server, DocId, Meta, UserParams) ->
     DocRes = xapian_server:document(Server, DocId),
     try
@@ -72,6 +80,7 @@ document_term_table(Server, DocId, Meta, UserParams) ->
 table_int(Server, QlcType, EncFun, IterRes, Meta, UserParams) 
     when is_reference(IterRes) ->
     IgnoreEmpty = lists:member(ignore_empty, UserParams),
+    IsSortedValue = lists:member(is_sorted_value, UserParams),
     
     InitializationResult = 
     try
@@ -88,7 +97,8 @@ table_int(Server, QlcType, EncFun, IterRes, Meta, UserParams)
             if 
             Size >= From ->
                 %% If it is not an error.
-                init_not_empty_table(Server, InitializationResult, Meta, UserParams);
+                init_not_empty_table(Server, InitializationResult, Meta,
+                                     UserParams, IsSortedValue);
 
 
 %% Error handling
@@ -116,12 +126,13 @@ empty_table() ->
     qlc:table(TraverseFun, [{info_fun, InfoFun}]).
 
 
-init_not_empty_table(Server, Info, Meta, UserParams) ->
+init_not_empty_table(Server, Info, Meta, UserParams, SortedValue) ->
     #internal_qlc_info{
         num_of_objects = Size,
         resource_number = ResNum,
         resource_ref = ResRef
     } = Info,
+    %% Field `value' is a key.
     KeyPos = xapian_term_record:key_position(Meta),
     From = proplists:get_value(from, UserParams, 0),
     Len = proplists:get_value(page_size, UserParams, 20),
@@ -129,7 +140,7 @@ init_not_empty_table(Server, Info, Meta, UserParams) ->
     InfoFun = 
     fun(num_of_objects) -> Size;
        (keypos) -> KeyPos;
-       (is_sorted_key) -> false;
+       (is_sorted_key) -> KeyPos =/= undefined andalso SortedValue;
        (is_unique_objects) -> true;
        (_) -> undefined
        end,
