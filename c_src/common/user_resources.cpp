@@ -41,7 +41,7 @@ createValueCountMatchSpy(ResourceManager& /*manager*/, ParamDecoder& params)
 {
     uint32_t slot = params; 
     SpyController* controller = 
-    new ValueCountSpyController(
+    new ValueCountSpyController(slot, 
         new Xapian::ValueCountMatchSpy(slot));
     return controller;
 }

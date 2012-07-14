@@ -101,7 +101,8 @@ class Driver
         DOCUMENT_INFO               = 30,
         DOCUMENT_INFO_RESOURCE      = 31,
         IS_DOCUMENT_EXIST           = 32,
-        REPLACE_DOCUMENT            = 33 
+        REPLACE_DOCUMENT            = 33,
+        VALUE_MATCH_SPY_TO_SLOT     = 34
     };
 
 
@@ -270,7 +271,8 @@ class Driver
         TERM_WDF                            = 2,
         TERM_FREQ                           = 3,
         TERM_POSITIONS                      = 4,
-        TERM_POS_COUNT                      = 5
+        TERM_POS_COUNT                      = 5,
+        TERM_FLOAT_VALUE                    = 6
     };
 
     enum decoderTypeFunIds {
@@ -358,6 +360,8 @@ class Driver
      * Write a resource.
      */
     void document(PR);
+
+    void valueMatchSpyToSlot(PR);
 
     /**
      * Erase the stored object.

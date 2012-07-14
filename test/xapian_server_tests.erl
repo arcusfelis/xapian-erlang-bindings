@@ -722,11 +722,75 @@ value_count_match_spy_gen() ->
         ?SRV:close(Server)
     end.
     
+      
+value_spy_to_type_or_slot_test() ->
+    Path = testdb_path(value_spy_to_type_or_slot),
+    Params = [write, create, overwrite, 
+        #x_value_name{slot = 1, name = color, type = float}],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        %% Call with a slot name
+        MatchSpy = xapian_match_spy:value_count(Server, color),
+        ?assertEqual(?SRV:value_spy_to_slot(Server, MatchSpy), 1),
+        ?assertEqual(?SRV:value_spy_to_type(Server, MatchSpy), float)
+
+    after
+        ?SRV:close(Server)
+    end.
     
+      
 
 add_color_document(Server, Color) ->
     Document = [ #x_value{slot = color, value = Color} ],
     ?SRV:add_document(Server, Document).
+
+
+float_value_count_match_spy_gen() ->
+    Path = testdb_path(value_count_mspy),
+    Params = [write, create, overwrite, 
+        #x_value_name{slot = 1, name = page_count, type = float}],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        Doc1 = [ #x_value{slot = page_count, value = 10} ],
+        Doc2 = [ #x_value{slot = page_count, value = 100} ],
+        Doc3 = [ #x_value{slot = page_count, value = 200} ],
+        Doc4 = [ #x_value{slot = page_count, value = 20} ],
+        Docs = [ Doc1, Doc2, Doc3, Doc4 ],
+
+%       DocIds = 
+        [ ?SRV:add_document(Server, Doc) || Doc <- Docs ],
+
+        %% Call with a slot name
+        SpySlot1 = xapian_match_spy:value_count(Server, page_count),
+
+        Query = "",
+        EnquireResourceId = ?SRV:enquire(Server, Query),
+        MSetParams = #x_match_set{
+            enquire = EnquireResourceId, 
+            spies = [SpySlot1]},
+        %% Fill values
+%       MSetResourceId = 
+        ?SRV:match_set(Server, MSetParams),
+        Meta = xapian_term_record:record(spy_term, 
+                    record_info(fields, spy_term)),
+
+        %% These elements sorted by value.
+        Table = xapian_term_qlc:value_count_match_spy_table(
+            Server, SpySlot1, Meta),
+
+        Values =
+        qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table])),
+        FilteredValues = 
+        qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table, Value =:= 10])),
+
+        [ {"Float values inside MatchSpy.",
+           ?_assertEqual(Values, [10.0, 20.0, 100.0, 200.0])}
+        , {"Lookup float values.",
+           ?_assertEqual(FilteredValues, [10.0])}
+        ]
+    after
+        ?SRV:close(Server)
+    end.
 
 
 term_advanced_actions_gen() ->

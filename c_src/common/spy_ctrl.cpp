@@ -99,9 +99,16 @@ void SpyController::finalize()
     mp_internal->finalize();
 }
 
+
 bool SpyController::is_finalized()
 {
     return mp_internal->is_finalized();
+}
+
+
+Xapian::valueno SpyController:: getSlot()
+{  
+    throw BadArgumentDriverError();
 }
 
 XAPIAN_ERLANG_NS_END

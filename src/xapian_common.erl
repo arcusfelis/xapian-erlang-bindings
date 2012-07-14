@@ -43,15 +43,22 @@
          append_slot/2,
          append_slot/3,
          append_value/2,
-         append_terms/2
+         append_terms/2,
+         append_floats/2
         ]).
 
 %% Other functions
 -export([string_to_binary/1,
          index_of/2,
+         index_one_of/2,
          slot_id/2, 
          slot_type/2, 
          fix_value/3]).
+
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
 
 
 
@@ -262,6 +269,36 @@ index_of(Item, [Item|_], Index) -> Index;
 index_of(Item, [_|Tl], Index) -> index_of(Item, Tl, Index+1).
 
 
+-spec index_one_of([term()], [term()]) -> non_neg_integer() | not_found.
+
+index_one_of(Items, List) -> index_one_of(Items, List, 1).
+
+index_one_of(_, [], _)  -> not_found;
+index_one_of(Items, [H|T], Index) -> 
+    case lists:member(H, Items) of
+        true -> Index;
+        false -> index_one_of(Items, T, Index+1)
+    end.
+
+
+-ifdef(TEST).
+
+index_of_test_() ->
+    [ ?_assertEqual(index_of(1, [1,2,3]), 1)
+    , ?_assertEqual(index_of(c, [a,b,c]), 3)
+    , ?_assertEqual(index_of(x, [a,b,c]), not_found)
+    ].
+
+index_one_of_test_() ->
+    [ ?_assertEqual(index_one_of([1], [1,2,3]), 1)
+    , ?_assertEqual(index_one_of([2, 1], [1,2,3]), 1)
+    , ?_assertEqual(index_one_of([3, 2], [1,2,3]), 2)
+    , ?_assertEqual(index_one_of([c], [a,b,c]), 3)
+    , ?_assertEqual(index_one_of([x], [a,b,c]), not_found)
+    ].
+
+-endif.
+
 
 read_position_list(Bin@) ->
     {Count, Bin@} = read_uint(Bin@),
@@ -287,6 +324,11 @@ append_terms(Terms, Bin@) ->
     Bin@ = append_iolist("", Bin@),
     Bin@.
 
+
+append_floats(Nums, Bin@) ->
+    Bin@ = append_uint(length(Nums), Bin@),
+    Bin@ = lists:foldl(fun append_double/2, Bin@, Nums),
+    Bin@.
 
 
 %% see XapianErlang::Driver::decodeValue

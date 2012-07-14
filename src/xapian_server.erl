@@ -51,8 +51,10 @@
          slot_to_type/2,
          subdb_names/1,
          multi_docid/3,
-         qlc_table_to_reference/2]).
-
+         qlc_table_to_reference/2,
+         value_spy_to_slot/2,
+         value_spy_to_type/2
+        ]).
 
 
 %% ------------------------------------------------------------------
@@ -81,7 +83,11 @@
          internal_slot_to_type_array/1,
          internal_subdb_names/1,
          internal_multi_docid/2,
-         internal_qlc_table_hash_to_reference/2]).
+         internal_qlc_table_hash_to_reference/2,
+         internal_value_spy_to_type/2,
+         internal_value_spy_to_slot/2
+        ]).
+
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -882,18 +888,30 @@ name_to_slot(Server, Slot) when is_atom(Slot) ->
 %%      any of `xapian_*_qlc:table/?' functions, to its resource.
 %% @end
 %% @see release_table/2
--spec qlc_table_to_reference(#state{}, x_table()) -> x_resource().
+-spec qlc_table_to_reference(#state{} | x_server(), x_table()) -> x_resource().
 
-qlc_table_to_reference(#state{} = State, Table) ->
+qlc_table_to_reference(ServerOrState, Table) ->
     Hash = xapian_qlc_table_hash:hash(Table),
-    case internal_qlc_table_hash_to_reference(State, Hash) of
-        {ok, Ref} -> Ref;
+    with(ServerOrState, fun ?SRV:internal_qlc_table_hash_to_reference/2, Hash).
+
+
+value_spy_to_slot(ServerOrState, MatchSpy) ->
+    with(ServerOrState, fun ?SRV:internal_value_spy_to_slot/2, MatchSpy).
+
+
+value_spy_to_type(ServerOrState, MatchSpy) ->
+    with(ServerOrState, fun ?SRV:internal_value_spy_to_type/2, MatchSpy).
+
+
+
+with(#state{} = State, Fun, Params) ->
+    case Fun(State, Params) of
+        {ok, Result} -> Result;
         {error, Reason} -> erlang:error(Reason)
     end;
 
-qlc_table_to_reference(Server, Table) ->
-    Hash = xapian_qlc_table_hash:hash(Table),
-    call(Server, {with_state, fun ?SRV:internal_qlc_table_hash_to_reference/2, Hash}).
+with(Server, Fun, Params) ->
+    call(Server, {with_state, Fun, Params}).
 
 
 %% @doc Returns an array for conversation from `x_slot()' to its type.
@@ -1650,6 +1668,11 @@ set_default_prefixes(Port, DefaultPrefixes) ->
     control(Port, set_default_prefixes, Data).
 
 
+port_spy_to_slot(Port, SpyNum) when is_integer(SpyNum) ->
+    decode_slot_result(control(Port, value_spy_to_slot, 
+                               append_uint(SpyNum, <<>>))).
+
+
 port_add_document(Port, EncodedDocument) ->
     decode_docid_result(control(Port, add_document, EncodedDocument)).
 
@@ -1932,6 +1955,27 @@ internal_qlc_table_hash_to_reference(State, Hash) ->
     end.
         
 
+-spec internal_value_spy_to_type(#state{}, x_resource()) -> 
+        {ok, atom()} | {error, term()}.
+
+internal_value_spy_to_type(State, SpyRes) ->
+    do([error_m ||
+        Slot <- internal_value_spy_to_slot(State, SpyRes),
+        internal_name_to_type(State, Slot)
+       ]).
+
+
+-spec internal_value_spy_to_slot(#state{}, x_resource()) -> 
+    {ok, xapian_type:x_slot()} | {error, term()}.
+
+internal_value_spy_to_slot(State, SpyRes) ->
+    #state{port = Port, register = Register } = State,
+    do([error_m ||
+        SpyNum <- ref_to_num(Register, SpyRes, match_spy),
+        port_spy_to_slot(Port, SpyNum)
+       ]).
+
+
 %% Result is from a port.
 decode_result_with_hof({ok, Bin}, Meta, Fn) ->
     case Fn(Meta, Bin) of
@@ -1976,6 +2020,9 @@ decode_docid_result(Data) ->
     decode_result_with_hof(Data, fun xapian_common:read_document_id/1).
 
 decode_resource_result(Data) -> 
+    decode_result_with_hof(Data, fun xapian_common:read_uint/1).
+
+decode_slot_result(Data) -> 
     decode_result_with_hof(Data, fun xapian_common:read_uint/1).
 
 decode_boolean_result(Data) -> 

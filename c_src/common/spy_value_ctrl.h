@@ -3,17 +3,15 @@
 
 #include <stdint.h>
 #include "spy_ctrl.h"
-
-namespace Xapian
-{
-class ValueCountMatchSpy;
-}
+#include <xapian.h>
 
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
 
 class ValueCountSpyController : public SpyController
 {
+    Xapian::valueno m_slot;
+
     enum ObjectType
     {
         VALUES           = 0,
@@ -22,10 +20,13 @@ class ValueCountSpyController : public SpyController
 
     public:
     /// Passed spy will be deallocated by system
-    ValueCountSpyController(Xapian::ValueCountMatchSpy* spy);
+    ValueCountSpyController(Xapian::valueno slot, 
+                            Xapian::ValueCountMatchSpy* spy);
 
     TermIteratorGenerator*
     getIteratorGenerator(ParamDecoder& params);
+
+    Xapian::valueno getSlot() { return m_slot; }
 };
 
 XAPIAN_ERLANG_NS_END

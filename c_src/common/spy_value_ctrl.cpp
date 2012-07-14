@@ -14,8 +14,9 @@ XAPIAN_ERLANG_NS_BEGIN
 // -------------------------------------------------------------------
 
 ValueCountSpyController::ValueCountSpyController(
+    Xapian::valueno slot,
     Xapian::ValueCountMatchSpy* spy) 
-        : SpyController(spy) {}
+        : SpyController(spy), m_slot(slot) {}
 
 
 TermIteratorGenerator*

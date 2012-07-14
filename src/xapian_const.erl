@@ -62,7 +62,8 @@ command_id(close)                       -> 29;
 command_id(document_info)               -> 30;
 command_id(document_info_resource)      -> 31;
 command_id(is_document_exist)           -> 32;
-command_id(replace_document)            -> 33.
+command_id(replace_document)            -> 33;
+command_id(value_spy_to_slot)           -> 34.
 
 
 %% Open modes of the DB
@@ -366,12 +367,13 @@ docid_order_type_id(dont_care)  -> 3.
 spy_type_id(values)     -> 0;
 spy_type_id(top_values) -> 1.
    
-term_field_id(stop)       -> 0;
-term_field_id(value)      -> 1;
-term_field_id(wdf)        -> 2;
-term_field_id(freq)       -> 3;
-term_field_id(positions)  -> 4;
-term_field_id(position_count) -> 5.
+term_field_id(stop)            -> 0;
+term_field_id(value)           -> 1;
+term_field_id(wdf)             -> 2;
+term_field_id(freq)            -> 3;
+term_field_id(positions)       -> 4;
+term_field_id(position_count)  -> 5;
+term_field_id(float_value)     -> 6.
 
    
 %% used with a record

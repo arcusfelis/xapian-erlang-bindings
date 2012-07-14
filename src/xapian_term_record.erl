@@ -1,12 +1,15 @@
 %% It contains helpers for extracting.
 -module(xapian_term_record).
 -export([record/2, 
+        encoder/2,
         encode/2, 
         decode/2, 
         decode_list/2, 
         decode_list2/2,
         decode_list3/2]).
--export([key_position/1]).
+-export([key_position/1,
+         field_position_to_name/2,
+         fix_spy_meta/3]).
 
 -compile({parse_transform, seqbind}).
 -record(rec, {name, fields}).
@@ -15,15 +18,56 @@
     read_document_count/1,
     read_term_count/1,
     read_string/1,
+    read_double/1,
     read_position_list/1,
     read_uint8/1,
-    index_of/2]).
+    index_one_of/2]).
 
 -import(xapian_const, [term_field_id/1]).
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
 
 %% ------------------------------------------------------------------
 %% API
 %% ------------------------------------------------------------------
+
+
+%% Lookup encoder appends terms for searching.
+%% See `Driver::qlcTermIteratorLookup'.
+encoder(Values = [_|_], value) ->
+    fun(Bin@) -> 
+            Bin@ = append_type(value, Bin@),
+            xapian_common:append_terms(Values, Bin@)
+        end;
+
+encoder(Values = [_|_], float_value) ->
+    fun(Bin@) -> 
+            Bin@ = append_type(float_value, Bin@),
+            xapian_common:append_floats(Values, Bin@)
+        end.
+
+
+%% @doc If the type of the value is `float', then replace `value' field's name
+%% on `float_value'.
+fix_spy_meta(Server, SpyRes, Meta) ->
+    #rec{fields=TupleFields} = Meta,
+    HasValueField = lists:member(value, TupleFields),
+    case HasValueField of
+        true ->
+            SpyValueType = xapian_server:value_spy_to_type(Server, SpyRes),
+            case SpyValueType of
+                string -> Meta;
+                float  -> Meta#rec{fields = [value_to_float_value(X) 
+                                                || X <- TupleFields]}
+            end;
+        false -> Meta
+    end.
+
+
+value_to_float_value(value) -> float_value;
+value_to_float_value(Field) -> Field.
+
 
 %% @doc You can use special names for fields:
 %% 
@@ -36,10 +80,39 @@ record(TupleName, TupleFields) ->
 
 
 key_position(#rec{fields=TupleFields}) ->
-    case index_of(value, TupleFields) of
+    case index_one_of([value, float_value], TupleFields) of
     not_found -> undefined;
-    I -> I + 1
+    I -> I + 1 %% First field is a tuple name, add it (qlc uses a tuple index).
     end.
+
+
+%% `KeyPos' is a num, such as `{1, 2, 3, 4}' for fields of record 
+%% `{TupleName, F1, F2, F3}' when `TupleFields' are `[F1, F2, F3]'.
+field_position_to_name(#rec{fields=TupleFields}, KeyPos) 
+    when is_integer(KeyPos) ->
+    PosWithoutRecordName = KeyPos-1, 
+    elem_at(TupleFields, PosWithoutRecordName);
+
+field_position_to_name(#rec{}, undefined) ->
+    undefined.
+
+
+elem_at([_|T], N) when N > 1 -> 
+    elem_at(T, N-1);
+
+elem_at([H|_], 1) -> 
+    H.
+
+
+-ifdef(TEST).
+
+elem_at_test_() ->
+    [ ?_assertEqual(elem_at([a,b,c], 1), a)
+    , ?_assertEqual(elem_at([a,b,c], 2), b)
+    , ?_assertEqual(elem_at([a,b,c], 3), c)
+    ].
+
+-endif.
 
 
 %% Creates tuples {Name, Field1, ....}
@@ -122,10 +195,11 @@ append_type(Type, Bin) ->
 dec([H|T], Bin, Acc) ->
     {Val, NewBin} =
         case H of
-            freq      -> read_document_count(Bin);    
-            wdf       -> read_term_count(Bin); 
-            value     -> read_string(Bin);
-            positions -> read_position_list(Bin);
+            freq        -> read_document_count(Bin);    
+            wdf         -> read_term_count(Bin); 
+            value       -> read_string(Bin);
+            float_value -> read_double(Bin);
+            positions   -> read_position_list(Bin);
             position_count -> read_term_count(Bin)
         end,
     dec(T, NewBin, [Val|Acc]);

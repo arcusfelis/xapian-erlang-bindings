@@ -550,6 +550,16 @@ Driver::document(PR)
     result << num;
 }
 
+// Return the slot on which data is collected into ValueCountMatchSpy.
+void
+Driver::valueMatchSpyToSlot(PR)
+{
+    uint32_t   resource_num = params;
+    SpyController&
+    spy = *m_match_spy_store.get(resource_num);
+    const Xapian::valueno   slot = spy.getSlot();
+    result << slot;
+}
 
 void 
 Driver::releaseResource(ParamDecoder& params)
@@ -1311,6 +1321,10 @@ Driver::handleCommand(PR,
 
         case DOCUMENT:
             document(params, result);
+            break;
+
+        case VALUE_MATCH_SPY_TO_SLOT:
+            valueMatchSpyToSlot(params, result);
             break;
 
         case RELEASE_RESOURCE:
@@ -2292,6 +2306,14 @@ Driver::retrieveTerm(PCR, const Xapian::TermIterator& iter)
                 break;
             }
 
+            case TERM_FLOAT_VALUE:
+            {
+                const std::string& value = *iter;
+                const double float_value = Xapian::sortable_unserialise(value);
+                result << float_value;
+                break;
+            }
+
             case TERM_WDF:
             {
                 result << static_cast<uint32_t>(iter.get_wdf());
@@ -2777,14 +2799,39 @@ Driver::qlcTermIteratorLookup(
     const uint8_t more = 1, stop = 0;
     std::set<std::string> terms;
 
-    while(true)
+    const uint8_t encoder_type = driver_params;
+
+    switch (encoder_type)
     {
-        const std::string& term = driver_params;
-        // first term is not empty
-        assert(!terms.empty() || !term.empty());
-        if (term.empty()) break;
-        terms.insert(term);
-        assert(!terms.empty());
+        case TERM_VALUE:
+        {
+            while(true)
+            {
+                const std::string& term = driver_params;
+                // first term is not empty
+                assert(!terms.empty() || !term.empty());
+                if (term.empty()) break;
+                terms.insert(term);
+                assert(!terms.empty());
+            }
+            break;
+        }
+
+        case TERM_FLOAT_VALUE:
+        {
+            for (uint32_t length = driver_params; length; length--)
+            {
+                const double& float_term = driver_params;
+                const std::string& term = Xapian::sortable_serialise(float_term);
+
+                terms.insert(term);
+                assert(!terms.empty());
+            }
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(encoder_type);
     }
 
     assert(!terms.empty());

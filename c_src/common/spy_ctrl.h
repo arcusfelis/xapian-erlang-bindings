@@ -2,11 +2,7 @@
 #define XAPIAN_SPY_CTRL_H
 
 #include <stdint.h>
-
-namespace Xapian
-{
-class MatchSpy;
-}
+#include <xapian.h>
 
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
@@ -91,6 +87,12 @@ class SpyController
      * Returns true, if the MatchSpy was already filled.
      */
     bool is_finalized();
+
+    /**
+     * ValueCountMatchSpy uses this function.
+     * Other subclasses might change the default behaviour.
+     */
+    virtual Xapian::valueno getSlot();
 };
 
 XAPIAN_ERLANG_NS_END

@@ -24,12 +24,13 @@ value_count_match_spy_table(Server, SpyRes, Meta) ->
 
 
 value_count_match_spy_table(Server, SpyRes, Meta, UserParams) ->
+    Meta1 = xapian_term_record:fix_spy_meta(Server, SpyRes, Meta),
     EncoderFun = fun(match_spy, _DrvState, Bin@) ->
         Bin@ = append_spy_type(values, Bin@),
-        xapian_term_record:encode(Meta, Bin@)
+        xapian_term_record:encode(Meta1, Bin@)
         end,
     UserParams2 = [{is_sorted_value, true} | UserParams],
-    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta, UserParams2).
+    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta1, UserParams2).
 
 
 %%  Records are sorted by `freq' in descending order.
@@ -38,13 +39,14 @@ top_value_count_match_spy_table(Server, SpyRes, Limit, Meta) ->
 
 
 top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams) ->
+    Meta1 = xapian_term_record:fix_spy_meta(Server, SpyRes, Meta),
     EncoderFun = fun(match_spy, _DrvState, Bin@) ->
         Bin@ = append_spy_type(top_values, Bin@),
         Bin@ = xapian_common:append_uint(Limit, Bin@),
-        xapian_term_record:encode(Meta, Bin@)
+        xapian_term_record:encode(Meta1, Bin@)
         end,
     UserParams2 = [{is_sorted_value, false} | UserParams],
-    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta, UserParams2).
+    table_int(Server, spy_terms, EncoderFun, SpyRes, Meta1, UserParams2).
 
 
 %%  Records are sorted by `value' in ascending alphabetical order.
@@ -134,6 +136,7 @@ init_not_empty_table(Server, Info, Meta, UserParams, SortedValue) ->
     } = Info,
     %% Field `value' is a key.
     KeyPos = xapian_term_record:key_position(Meta),
+    KeyName = xapian_term_record:field_position_to_name(Meta, KeyPos),
     From = proplists:get_value(from, UserParams, 0),
     Len = proplists:get_value(page_size, UserParams, 20),
     TraverseFun = traverse_fun(Server, ResNum, Meta, From, Len, Size),
@@ -144,7 +147,7 @@ init_not_empty_table(Server, Info, Meta, UserParams, SortedValue) ->
        (is_unique_objects) -> true;
        (_) -> undefined
        end,
-    LookupFun = lookup_fun(Server, ResNum, Meta, KeyPos),
+    LookupFun = lookup_fun(Server, ResNum, Meta, KeyPos, KeyName),
     Table = qlc:table(TraverseFun, 
             [{info_fun, InfoFun} 
             ,{lookup_fun, LookupFun}
@@ -153,9 +156,10 @@ init_not_empty_table(Server, Info, Meta, UserParams, SortedValue) ->
     Table.
     
 
-lookup_fun(Server, ResNum, Meta, KeyPos) ->
+lookup_fun(Server, ResNum, Meta, KeyPos, KeyName) ->
     fun(KeyPosI, Terms) when KeyPosI =:= KeyPos ->
-        Bin = xapian_server:internal_qlc_lookup(Server, encoder(Terms), ResNum),
+        Encoder = xapian_term_record:encoder(Terms, KeyName),
+        Bin = xapian_server:internal_qlc_lookup(Server, Encoder, ResNum),
         {Records, <<>>} = xapian_term_record:decode_list2(Meta, Bin),
         Records
         end.
@@ -188,13 +192,6 @@ fix_unknown_num_of_object(Info=#internal_qlc_info{num_of_objects = 0}) ->
 
 fix_unknown_num_of_object(Info) ->
     Info.
-
-
-%% Lookup encoder appends terms for searching.
-encoder(Terms = [_|_]) ->
-    fun(Bin) -> 
-        xapian_common:append_terms(Terms, Bin)
-        end.
 
 
 append_spy_type(Type, Bin) ->
