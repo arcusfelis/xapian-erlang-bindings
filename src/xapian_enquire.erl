@@ -61,7 +61,8 @@ append_query(Query,  N2S, Slot2TypeArray, Bin@) ->
 append_order(relevance, _N2S, _Register, Bin@) ->
     Bin@;
 
-append_order(#x_sort_order{type=relevance}, _N2S, _Register, Bin@) ->
+append_order(#x_sort_order{type=relevance, is_reversed=false}, 
+             _N2S, _Register, Bin@) ->
     Bin@;
 
 append_order(#x_sort_order{type=Type, value=Value, is_reversed=Reverse}, 
