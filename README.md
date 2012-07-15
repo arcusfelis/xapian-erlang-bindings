@@ -85,11 +85,11 @@ rr(code:lib_dir(xapian, include) ++ "/xapian.hrl").
 It loads information about records into console.
 
 
-A pool is supervised by `xapian\_sup`. That is why, call of 
-`xapian\_pool:open` function do *not* link the parent process with the new 
+A pool is supervised by `xapian_sup`. That is why, call of 
+`xapian_pool:open` function do *not* link the parent process with the new 
 process. 
 
-As with `xapian\_drv:transaction`, you can checkout few pools.
+As with `xapian_drv:transaction`, you can checkout few pools.
 
 ```erlang
 xapian_pool:checkout([pool1, poo2], fun([Server1, Server2]) -> actions_here end).
@@ -116,17 +116,17 @@ You can use this code for opening two databases from "DB1" and "DB2" directories
 
 Only read-only databases can be used.
 
-There are two fields meaning a document's id: `docid` and `multi\_docid`.
+There are two fields meaning a document's id: `docid` and `multi_docid`.
 They are equal if only one database is used.
 
 Otherwise, first field contains a document id (can be repeated) and 
-`multi\_docid` is a unique idintifier, which is calculated from 
-`docid` and `db\_number`.
+`multi_docid` is a unique idintifier, which is calculated from 
+`docid` and `db_number`.
 
-`db\_number` is a number of the document's database encounted from 1.
+`db_number` is a number of the document's database encounted from 1.
 
-`db\_name` field contains pseudonyms of the databases.
-Information from `name` field of `#x\_database{}` record will be used for 
+`db_name` field contains pseudonyms of the databases.
+Information from `name` field of `#x_database{}` record will be used for 
 this. This field is `undefined` by default.
 
 ```erlang
@@ -265,7 +265,7 @@ Stand-alone Stemmer
  #x_term{value = <<"octo">>, position = [2], frequency = 1}]
 ```
 
-`"Z"` is a prefix. It means stemmed term.
+`"Z"` is a prefix. It means, that this term is stemmed.
 
 
 Code examples

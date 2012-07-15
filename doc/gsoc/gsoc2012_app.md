@@ -188,7 +188,7 @@ I will use atoms as pseudonyms for slots and for prefixes.
 __What is new or different about your approach which hasn't 
 been done or wasn't possible before?__
 
-Other bindings use SWIG. My approach is to use only _erl\_driver_ interface.
+Other bindings use SWIG. My approach is to use only _erl_driver_ interface.
 It provides wide opportunities for customization. But it also requires more 
 work and knowledges.
 
@@ -203,7 +203,7 @@ cnode, driver, linked-in driver and NIFs.
 I will use a linked-in driver to minimize latency. This interface can be 
 replaced by a driver easily.
 
-I will use a _gen\_server_ for encapsulation, because it is a time tested 
+I will use a _gen_server_ for encapsulation, because it is a time tested 
 way to access to a shared object. 
 
 
@@ -241,9 +241,9 @@ May 21th - July 9th
 _The coding period consists of 7 weeks until the mid-term (July 9th)._
 
 * __1 week:__ Writing index code: Simple indexes.
-    Adding an example module: xapian\_simple\_index. 
+    Adding an example module: xapian_simple_index. 
 * __2 week:__ Writing code for making queries: Simple queries. 
-    Adding an example module: xapian\_simple\_search.
+    Adding an example module: xapian_simple_search.
 * __3 week:__ Writing index code: Indexes with parameters.
     Adding few examples for advanced cases for demonstration of using term as 
     unique id, for storing values in slots.
