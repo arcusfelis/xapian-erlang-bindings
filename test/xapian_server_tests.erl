@@ -1525,7 +1525,14 @@ enquire_sort_order_case(Server) ->
 
         %% Check documents order
         %% Code = 2, Software = 1
-        ?assertMatch([2, 1], AllIds)
+        ?assertMatch([2, 1], AllIds),
+
+        %% The same case, but it is sorted in the reversed order
+        RevOrder = #x_sort_order{type=value, value=title, is_reversed = true},
+        RevEnquireDescriptor = #x_enquire{order=RevOrder, value=Query},
+        RevAllIds = all_record_ids(Server, RevEnquireDescriptor),
+
+        ?assertEqual(lists:reverse(RevAllIds), AllIds)
         end,
     {"Simple enquire resource", Case}.
 
