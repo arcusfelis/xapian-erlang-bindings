@@ -322,6 +322,7 @@ replace_document_test() ->
         %% Try update using non-existed DocId.
         ?assertNot(?SRV:is_document_exist(Server, 1)),
         DocId = ?SRV:replace_document(Server, "bad_term", []),
+        %% Nothing was updated.
         ?assertEqual(DocId, undefined),
         ?assertNot(?SRV:is_document_exist(Server, 1)),
 
@@ -371,6 +372,23 @@ replace_document_test() ->
         ?SRV:close(Server)
     end.
 
+
+%% REP_DOC_MARK
+replace_document_by_id_test() ->
+    Path = testdb_path(replace_document_by_id),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        %% Create a new document.
+        DocId1 = ?SRV:add_document(Server, [#x_term{value = "new"}]),
+        DocId2 = ?SRV:replace_document(Server, DocId1, 
+                                       [#x_term{value = "other"}]),
+        ?assertEqual(DocId1, DocId2),
+        Ids = all_record_ids(Server, "other"),
+        ?assertEqual(Ids, [DocId2])
+    after
+        ?SRV:close(Server)
+    end.
 
 
 is_document_exists_gen() ->
@@ -768,7 +786,7 @@ float_value_count_match_spy_gen() ->
         MSetParams = #x_match_set{
             enquire = EnquireResourceId, 
             spies = [SpySlot1]},
-        %% Fill values
+        %% Collect statistic 
 %       MSetResourceId = 
         ?SRV:match_set(Server, MSetParams),
         Meta = xapian_term_record:record(spy_term, 
@@ -782,9 +800,14 @@ float_value_count_match_spy_gen() ->
         qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table])),
         FilteredValues = 
         qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table, Value =:= 10])),
+        JoinValues = 
+        qlc:e(qlc:q([V1 || #spy_term{value = V1} <- Table, 
+                           #spy_term{value = V2} <- Table, V1 =:= V2])),
 
         [ {"Float values inside MatchSpy.",
            ?_assertEqual(Values, [10.0, 20.0, 100.0, 200.0])}
+        , {"Join float values.",
+           ?_assertEqual(JoinValues, [10.0, 20.0, 100.0, 200.0])}
         , {"Lookup float values.",
            ?_assertEqual(FilteredValues, [10.0])}
         ]
@@ -793,6 +816,7 @@ float_value_count_match_spy_gen() ->
     end.
 
 
+%% Terms can be deleted, added or replaced using `#x_term{}'.
 term_advanced_actions_gen() ->
     Path = testdb_path(adv_actions),
     Params = [write, create, overwrite],

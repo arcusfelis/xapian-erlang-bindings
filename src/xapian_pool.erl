@@ -64,6 +64,7 @@ open(PoolParams, Path, Params) ->
     xapian_pool_sup:start_pool(ExtPoolParams).
 
 
+%% @doc Destroy the pool asynchronously.
 -spec close(atom() | pid()) -> term().
 
 close(PoolName) ->
@@ -110,8 +111,18 @@ anonym_pool_test_() ->
     create_database(Name),
     %% Create an anonymous pool
     {ok, Pool} = ?POOL:open([], testdb_path(Name), []),
+    IsAlive = is_process_alive(Pool),
     ?POOL:close(Pool),
-    [ ?_assertNot(is_process_alive(Pool)) ].
+    MonRef = erlang:monitor(process, Pool),
+    IsAliveAfterClose =
+    receive
+        %% Error in the transaction body.
+        {'DOWN', MonRef, process, Pool, _Reason} ->
+            false
+    after 500 ->
+            true
+    end,
+    [ ?_assert(IsAlive), ?_assertNot(IsAliveAfterClose) ].
 
 
 pool_test_() ->
