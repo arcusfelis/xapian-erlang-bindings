@@ -7,6 +7,8 @@
 #include "object_register.h"
 #include "user_resources.h"
 #include "spy_ctrl.h"
+#include "enquire_ctrl.h"
+#include "key_maker_ctrl.h"
 #include <xapian.h>
 #include <string>
 #include <stdint.h>
@@ -34,11 +36,11 @@ class Driver
     QueryParserFactory m_default_parser_factory;
     QueryParserFactory m_standard_parser_factory;
     ObjectRegister<Xapian::Document>            m_document_store;
-    ObjectRegister<Xapian::Enquire>             m_enquire_store;
+    ObjectRegister<EnquireController>           m_enquire_store;
+    ObjectRegister<KeyMakerController>          m_key_maker_store;
     ObjectRegister<Xapian::MSet>                m_mset_store;
     ObjectRegister<QlcTable>                    m_qlc_store;
     ObjectRegister<const Xapian::Weight>        m_weight_store;
-    ObjectRegister<Xapian::KeyMaker>            m_key_maker_store;
     ObjectRegister<const Xapian::Query>         m_query_store;
     ObjectRegister<const Xapian::MatchDecider>  m_match_decider_store;
     ObjectRegister<const Xapian::Stem>          m_stem_store;
@@ -214,23 +216,23 @@ class Driver
 
     /// see `xapian_enquire:encode'
     enum enquireCommand {
-        EC_STOP             = 0,
-        EC_QUERY            = 1,
-        EC_QUERY_LEN        = 2,
-        EC_ORDER            = 3,
-        EC_DOCID_ORDER      = 4,
-        EC_WEIGHTING_SCHEME = 5,
-        EC_CUTOFF           = 6,
-        EC_COLLAPSE_KEY     = 7
+        EC_STOP                     = 0,
+        EC_QUERY                    = 1,
+        EC_QUERY_LEN                = 2,
+        EC_ORDER                    = 3,
+        EC_DOCID_ORDER              = 4,
+        EC_WEIGHTING_SCHEME         = 5,
+        EC_CUTOFF                   = 6,
+        EC_COLLAPSE_KEY             = 7
     };
 
     enum enquireOrderTypes {
-        OT_KEY              = 1,
-        OT_VALUE            = 2,
-        OT_KEY_RELEVANCE    = 3,
-        OT_RELEVANCE_KEY    = 4,
-        OT_RELEVANCE_VALUE  = 5,
-        OT_VALUE_RELEVANCE  = 6
+        OT_KEY                = 1,
+        OT_VALUE              = 2,
+        OT_KEY_RELEVANCE      = 3,
+        OT_RELEVANCE_KEY      = 4,
+        OT_RELEVANCE_VALUE    = 5,
+        OT_VALUE_RELEVANCE    = 6
     };
 
     enum msetInfoParams {
@@ -445,9 +447,9 @@ class Driver
     Xapian::Query 
     buildQuery(ParamDecoder&);
 
-    void fillEnquire(ParamDecoder&, Xapian::Enquire& enquire);
+    void fillEnquire(ParamDecoder&, EnquireController& enquire_ctrl);
 
-    void fillEnquireOrder(Xapian::Enquire& enquire, 
+    void fillEnquireOrder(EnquireController& enquire_ctrl, 
         const uint8_t type, const uint32_t value, const bool reverse);
 
     /**

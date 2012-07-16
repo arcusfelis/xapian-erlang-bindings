@@ -9,13 +9,13 @@ XAPIAN_ERLANG_NS_BEGIN
 class SpyControllerInternal
 {
     public:
-    uint32_t _refs;
+    uint32_t m_reference_count;
     Xapian::MatchSpy* mp_spy;
     bool m_is_finalized;
 
     SpyControllerInternal(Xapian::MatchSpy* spy) : mp_spy(spy)
     {
-        _refs = 1;
+        m_reference_count = 1;
         m_is_finalized = false;
     }
 
@@ -49,7 +49,7 @@ class SpyControllerInternal
 void 
 SpyController::decref()
 {
-    if (--mp_internal->_refs == 0)
+    if (--mp_internal->m_reference_count == 0)
         delete mp_internal;
 }
 
@@ -63,14 +63,14 @@ SpyController::SpyController(Xapian::MatchSpy* spy)
 SpyController::SpyController(const SpyController& src)
 {
     mp_internal = src.mp_internal;
-    mp_internal->_refs++;
+    mp_internal->m_reference_count++;
 }
 
 
 SpyController::SpyController(SpyControllerInternal* src)
 {
     mp_internal = src;
-    mp_internal->_refs++;
+    mp_internal->m_reference_count++;
 }
 
 

@@ -47,6 +47,18 @@ class BadCommandDriverError: public DriverRuntimeError
 };
 
 
+class NotImplementedCommandDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    NotImplementedCommandDriverError(int command_id);
+
+    static const std::string 
+    buildString(int command_id);
+};
+
+
 class BadArgumentDriverError: public DriverRuntimeError
 {
     static const char TYPE[];

@@ -17,7 +17,6 @@
 #include "qlc_table.h"
 #include "object_register.h"
 #include "user_resources.h"
-#include "spy_ctrl.h"
 #include "termiter_doc_gen.h"
 
 #include <assert.h>
@@ -488,11 +487,13 @@ void
 Driver::enquire(PR)
 {
     // Use an Enquire object on the database to run the query.
-    Xapian::Enquire* p_enquire = new Xapian::Enquire(m_db);
-    fillEnquire(params, *p_enquire);
+    Xapian::Enquire enquire(m_db);
+    EnquireController* p_enquire_ctrl = new EnquireController(enquire);
+
+    fillEnquire(params, *p_enquire_ctrl);
 
     // m_enquire_store will call the delete operator.
-    uint32_t num = m_enquire_store.put(p_enquire);
+    uint32_t num = m_enquire_store.put(p_enquire_ctrl);
     result << num;
 }
 
@@ -576,7 +577,8 @@ void
 Driver::matchSet(PR)
 {
     uint32_t   enquire_num = params;
-    Xapian::Enquire& enquire = *m_enquire_store.get(enquire_num);
+    Xapian::Enquire& enquire = m_enquire_store.get(enquire_num)
+        ->getEnquire();
 
     Xapian::doccount    first, maxitems, checkatleast;
     first = params;
@@ -1013,9 +1015,10 @@ Driver::buildQuery(ParamDecoder& params)
 
 
 void 
-Driver::fillEnquire(ParamDecoder& params, Xapian::Enquire& enquire)
+Driver::fillEnquire(ParamDecoder& params, EnquireController& enquire_ctrl)
 {
     Xapian::termcount   qlen = 0;
+    Xapian::Enquire     enquire = enquire_ctrl.getEnquire();
 
     while (uint8_t command = params)
     switch (command)
@@ -1039,7 +1042,7 @@ Driver::fillEnquire(ParamDecoder& params, Xapian::Enquire& enquire)
         uint8_t type   = params;
         bool reverse   = params;
         uint32_t value = params;
-        fillEnquireOrder(enquire, type, value, reverse);
+        fillEnquireOrder(enquire_ctrl, type, value, reverse);
         break;
         }
 
@@ -1088,21 +1091,39 @@ Driver::fillEnquire(ParamDecoder& params, Xapian::Enquire& enquire)
 
 
 void
-Driver::fillEnquireOrder(Xapian::Enquire& enquire, 
+Driver::fillEnquireOrder(EnquireController& enquire_ctrl, 
     const uint8_t type, const uint32_t value, const bool reverse)
 {
+    Xapian::Enquire     enquire = enquire_ctrl.getEnquire();
+
     switch(type)
     {
     case OT_KEY:
-      //Xapian::KeyMaker *      
-      //enquire.set_sort_by_key(sorter, reverse);
-      //break;
+        {
+        KeyMakerController& kmc = *m_key_maker_store.get(value);
+        Xapian::KeyMaker* sorter = kmc.getKeyMaker();
+        enquire_ctrl.addKeyMakerController(kmc);
+        enquire.set_sort_by_key(sorter, reverse);
+        break;
+        }
+
     case OT_KEY_RELEVANCE:
-      //enquire.set_sort_by_key_then_relevance(sorter, reverse);
-      //break;
+        {
+        KeyMakerController& kmc = *m_key_maker_store.get(value);
+        Xapian::KeyMaker* sorter = kmc.getKeyMaker();
+        enquire_ctrl.addKeyMakerController(kmc);
+        enquire.set_sort_by_key_then_relevance(sorter, reverse);
+        break;
+        }
+
     case OT_RELEVANCE_KEY:
-      //enquire.set_sort_by_relevance_then_key(sorter, reverse);
-      //break;
+        {
+        KeyMakerController& kmc = *m_key_maker_store.get(value);
+        Xapian::KeyMaker* sorter = kmc.getKeyMaker();
+        enquire_ctrl.addKeyMakerController(kmc);
+        enquire.set_sort_by_relevance_then_key(sorter, reverse);
+        break;
+        }
 
     case OT_VALUE:
         enquire.set_sort_by_value(value, reverse);

@@ -59,6 +59,21 @@ BadCommandDriverError::buildString(int command_id)
 
 
 // -------------------------------------------------------------------
+// NotImplementedCommandDriverError
+// -------------------------------------------------------------------
+NotImplementedCommandDriverError::NotImplementedCommandDriverError(int command_id) : 
+    DriverRuntimeError(TYPE, buildString(command_id)) {}
+
+const std::string 
+NotImplementedCommandDriverError::buildString(int command_id)
+{
+    std::stringstream ss;
+    ss << "The command with id = " << command_id << " is not implemented.";
+    return ss.str();
+}
+
+
+// -------------------------------------------------------------------
 // BadArgDriverError
 // -------------------------------------------------------------------
 BadArgumentDriverError::BadArgumentDriverError() : 
@@ -121,6 +136,7 @@ MatchSpyFinalizedDriverError::MatchSpyFinalizedDriverError() :
 
 REG_TYPE(MemoryAllocationDriverError)
 REG_TYPE(BadCommandDriverError)
+REG_TYPE(NotImplementedCommandDriverError)
 REG_TYPE(BadArgumentDriverError)
 REG_TYPE(EmptySetDriverError)
 REG_TYPE(OverflowDriverError)

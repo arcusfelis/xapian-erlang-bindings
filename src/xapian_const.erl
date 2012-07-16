@@ -334,23 +334,23 @@ mset_info_param_id(term_freq)                       -> 11.
 %% Enquire
 %% ------------------------------------------------------------
 
-enquire_command_id(stop)            -> 0;
-enquire_command_id(x_query)         -> 1;
-enquire_command_id(query_len)       -> 2;
-enquire_command_id(order)           -> 3;
-enquire_command_id(docid_order)     -> 4;
-enquire_command_id(weighting_scheme)-> 5;
-enquire_command_id(cutoff)          -> 6;
-enquire_command_id(collapse_key)    -> 7.
+enquire_command_id(stop)                     -> 0;
+enquire_command_id(x_query)                  -> 1;
+enquire_command_id(query_len)                -> 2;
+enquire_command_id(order)                    -> 3;
+enquire_command_id(docid_order)              -> 4;
+enquire_command_id(weighting_scheme)         -> 5;
+enquire_command_id(cutoff)                   -> 6;
+enquire_command_id(collapse_key)             -> 7.
 
 
 -spec order_type_id(xapian_type:x_order_type()) -> non_neg_integer().
-order_type_id(key)              -> 1;
-order_type_id(value)            -> 2;
-order_type_id(key_relevance)    -> 3;
-order_type_id(relevance_key)    -> 4;
-order_type_id(relevance_value)  -> 5;
-order_type_id(value_relevance)  -> 6.
+order_type_id(key)                -> 1;
+order_type_id(value)              -> 2;
+order_type_id(key_relevance)      -> 3;
+order_type_id(relevance_key)      -> 4;
+order_type_id(relevance_value)    -> 5;
+order_type_id(value_relevance)    -> 6.
 
 
 docid_order_type_id(default)    -> 1;

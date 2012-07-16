@@ -1373,7 +1373,6 @@ cases_gen() ->
     , fun document_case/1
     , fun enquire_case/1
     , fun enquire_sort_order_case/1
-    , fun enquire_reversed_relevance_sort_order_case/1
     , fun resource_cleanup_on_process_down_case/1
     , fun enquire_to_mset_case/1
     , fun qlc_mset_case/1
@@ -1538,28 +1537,14 @@ enquire_sort_order_case(Server) ->
     {"Enquire with sorting", Case}.
 
 
-enquire_reversed_relevance_sort_order_case(Server) ->
-    Case = fun() ->
-        %% Sorted by relevance
-        %% telecom OR game
-        Query = #x_query{op = 'OR', value = ["telecom", "game"]},
-        AllIds = all_record_ids(Server, Query),
-
-        %% Were two documents selected?
-        ?assertMatch([_, _], AllIds),
-
-        %% Check documents order
-        %% Code = 2, Software = 1
-        ?assertMatch([2, 1], AllIds),
-
-        %% The same case, but it is sorted in the reversed order
-        RevOrder = #x_sort_order{is_reversed = true},
-        RevEnquireDescriptor = #x_enquire{order=RevOrder, value=Query},
-        RevAllIds = all_record_ids(Server, RevEnquireDescriptor),
-
-        ?assertEqual(lists:reverse(RevAllIds), AllIds)
-        end,
-    {"Enquire and sort in the reversed order", Case}.
+show(Server, EnquireDescriptor) ->
+        Meta = xapian_record:record(book_iter, record_info(fields, book_iter)),
+        EnquireResourceId = ?SRV:enquire(Server, EnquireDescriptor),
+        MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
+        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+        %% QueryAll is a list of all matched records.
+        QueryAll = qlc:e(qlc:q([X || X <- Table])),
+        io:format(user, "~p~n", [QueryAll]).
 
 
 %% If the client is dead, then its resources will be released.

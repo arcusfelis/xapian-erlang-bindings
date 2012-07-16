@@ -65,9 +65,13 @@ append_order(#x_sort_order{type=relevance, is_reversed=false},
              _N2S, _Register, Bin@) ->
     Bin@;
 
+append_order(#x_sort_order{type=relevance, is_reversed=true}, 
+             _N2S, _Register, _Bin) ->
+    erlang:error(badarg);
+
 append_order(#x_sort_order{type=Type, value=Value, is_reversed=Reverse}, 
     N2S, Register, Bin@) ->
-    Bin@ = append_command(query_len, Bin@),
+    Bin@ = append_command(order, Bin@),
     Bin@ = append_uint8(order_type_id(Type), Bin@),
     Bin@ = append_boolean(Reverse, Bin@),
     Bin@ = append_value(Value, N2S, Register, Bin@),

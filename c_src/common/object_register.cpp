@@ -4,13 +4,16 @@
 #include "termiter_doc_gen.h"
 #include "user_resources.h"
 #include "object_register.h"
+#include "enquire_ctrl.h"
+#include "key_maker_ctrl.h"
 #include <xapian.h>
 
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
 
 template class ObjectRegister<Xapian::Document>;
-template class ObjectRegister<Xapian::Enquire>;
+template class ObjectRegister<KeyMakerController>;
+template class ObjectRegister<EnquireController>;
 template class ObjectRegister<Xapian::MSet>;
 template class ObjectRegister<QlcTable>;
 template class ObjectRegister<const Xapian::Weight>;

@@ -323,9 +323,35 @@ x_enquire.docid_order
 
 Secondary document order.
 
-* desc
-* `asc` and `default` are equal.
-* `dont_care is `undefined` are equal.
+* `desc` - descending document order;
+* `asc` and `default` are equal and mean ascending document order;
+* `dont_care and `undefined` are equal.
+
+Set the direction in which documents are ordered by document id 
+in the returned MSet.
+
+This order only has an effect on documents which would otherwise have 
+equal rank. For a weighted probabilistic match with no sort value, this 
+means documents with equal weight. For a boolean match, with no sort 
+value, this means all documents. 
+And if a sort value is used, this means documents with equal sort value 
+(and also equal weight if ordering on relevance after the sort).
+
+Note: If you add documents in strict date order, then a boolean search - 
+i.e. 
+
+```erlang
+try
+    WS = xapian_resource:bool_weight(Server),
+    #x_enquire{weighting_scheme = WS, docid_order = desc}
+    ...
+after
+    xapian_server:release_resource(WS)
+end
+```
+
+ is a very efficient way to perform "sort by date, newest first".
+
 
 
 x_enquire.weighting_scheme
