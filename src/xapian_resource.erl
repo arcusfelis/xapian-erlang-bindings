@@ -1,10 +1,18 @@
 -module(xapian_resource).
+
+
+%% Weight
 -export([
     bool_weight/1, 
     bm25_weight/2, 
     bm25_weight/6, 
     trad_weight/1, 
     trad_weight/2]).
+
+%% KeyMaker
+-export([
+    multi_value_key_maker/2]).
+
 
 -import(xapian_common, [append_double/2]).
 
@@ -18,6 +26,9 @@
 -define(SRV, xapian_server).
 -define(RES, ?MODULE).
 -endif.
+
+-type x_server()        :: xapian_type:x_server().
+-type x_resource()      :: xapian_type:x_resource().
 
 
 bool_weight(Server) ->
@@ -51,6 +62,18 @@ trad_weight(Server, K) ->
             {ok, append_double(K, <<>>)}
         end,
     xapian_server:internal_create_resource(Server, trad_weight, GenFn).
+
+
+-spec multi_value_key_maker(x_server(), Slots) -> x_resource() when
+    Slots :: [xapian_type:x_slot_value()].
+
+multi_value_key_maker(Server, Slots) ->
+    GenFn = 
+        fun(State) ->
+            N2S = xapian_server:name_to_slot(State),
+            {ok, xapian_common:append_slots(N2S, Slots, <<>>)}
+        end,
+    xapian_server:internal_create_resource(Server, multi_value_key_maker, GenFn).
 
 
 

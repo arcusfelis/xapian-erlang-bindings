@@ -1373,6 +1373,7 @@ cases_gen() ->
     , fun document_case/1
     , fun enquire_case/1
     , fun enquire_sort_order_case/1
+    , fun enquire_key_maker_case/1
     , fun resource_cleanup_on_process_down_case/1
     , fun enquire_to_mset_case/1
     , fun qlc_mset_case/1
@@ -1537,14 +1538,22 @@ enquire_sort_order_case(Server) ->
     {"Enquire with sorting", Case}.
 
 
-show(Server, EnquireDescriptor) ->
-        Meta = xapian_record:record(book_iter, record_info(fields, book_iter)),
-        EnquireResourceId = ?SRV:enquire(Server, EnquireDescriptor),
-        MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
-        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
-        %% QueryAll is a list of all matched records.
-        QueryAll = qlc:e(qlc:q([X || X <- Table])),
-        io:format(user, "~p~n", [QueryAll]).
+%% TODO: more strict testing
+enquire_key_maker_case(Server) ->
+    Case = fun() ->
+        KeyMaker = xapian_resource:multi_value_key_maker(Server, [author, title]),
+        Order = #x_sort_order{type=key, value=KeyMaker},
+        %% telecom OR game
+        Query = #x_query{op = 'OR', value = ["telecom", "game"]},
+        EnquireDescriptor = #x_enquire{order=Order, value=Query},
+        AllIds = all_record_ids(Server, EnquireDescriptor),
+        xapian_server:release_resource(Server, KeyMaker),
+
+        %% Check documents order
+        %% Code = 2, Software = 1
+        ?assertMatch([1, 2], AllIds)
+        end,
+    {"Enquire with sorting", Case}.
 
 
 %% If the client is dead, then its resources will be released.

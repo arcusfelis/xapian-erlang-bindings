@@ -1,5 +1,6 @@
 #include "user_resources.h"
 #include "spy_value_ctrl.h"
+#include "key_maker_ctrl.h"
 #include "xapian.h"
 
 /**
@@ -47,9 +48,21 @@ createValueCountMatchSpy(ResourceManager& /*manager*/, ParamDecoder& params)
 }
 
 
+ResourceObjectP
+createMultiValueKeyMaker(ResourceManager& /*manager*/, ParamDecoder& params)
+{
+    Xapian::MultiValueKeyMaker* km = new Xapian::MultiValueKeyMaker();
+    uint32_t slot;
+    while ( (slot = params) != Xapian::BAD_VALUENO )
+        km->add_value(slot);
+    return new KeyMakerController(km);
+}
+
+
 void
 registerUserCallbacks(ResourceGenerator& generator)
 {
+    // Collect matadata about functions
     generator.add(new UserResource(ResourceType::WEIGHT, 
         std::string("bool_weight"), &createBoolWeight));
 
@@ -61,6 +74,13 @@ registerUserCallbacks(ResourceGenerator& generator)
 
     generator.add(new UserResource(ResourceType::MATCH_SPY, 
         std::string("value_count_match_spy"), &createValueCountMatchSpy));
+
+    generator.add(new UserResource(ResourceType::MATCH_SPY, 
+        std::string("value_count_match_spy"), &createValueCountMatchSpy));
+
+    generator.add(new UserResource(ResourceType::KEY_MAKER, 
+        std::string("multi_value_key_maker"), &createMultiValueKeyMaker));
 }
+
 
 XAPIAN_ERLANG_NS_END

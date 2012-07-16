@@ -49,7 +49,7 @@
 -type x_timeout()       :: non_neg_integer().
 -type x_order_type() ::
     key 
-    | relevance 
+%%  | relevance : no need for this
     | value 
     | key_relevance 
     | relevance_key 

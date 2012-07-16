@@ -42,6 +42,7 @@
          append_unique_document_id/2,
          append_slot/2,
          append_slot/3,
+         append_slots/3,
          append_value/2,
          append_terms/2,
          append_floats/2
@@ -188,6 +189,18 @@ append_slot(Slot, N2S, Bin) ->
 
 append_slot(Slot, Bin) ->
     append_uint(Slot, Bin).
+
+append_slots(N2S, Slots, Bin) ->
+    Values = [ slot_id(Slot, N2S) || Slot <- Slots ],
+    SlotsBin = 
+    <<  <<Value:32/native-unsigned-integer>>  || Value <- Values >>,
+    BadValue = bad_value(),
+    <<Bin/binary, SlotsBin/binary, BadValue/binary>>.
+
+
+bad_value() ->      
+    <<(bnot 0):32>>.
+
 
 
 append_double(Value, Bin) ->

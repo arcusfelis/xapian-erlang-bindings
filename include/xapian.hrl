@@ -267,7 +267,7 @@
 
 
 -record(x_sort_order, {
-    type = relevance :: xapian_type:x_order_type(),
+    type = ?REQUIRED :: xapian_type:x_order_type(),
     value :: xapian_type:x_slot_value() | xapian_type:x_resource(), %% KeyMaker resource
     is_reversed = false :: boolean()
 }).

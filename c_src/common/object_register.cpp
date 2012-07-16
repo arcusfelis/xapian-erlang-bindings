@@ -17,7 +17,6 @@ template class ObjectRegister<EnquireController>;
 template class ObjectRegister<Xapian::MSet>;
 template class ObjectRegister<QlcTable>;
 template class ObjectRegister<const Xapian::Weight>;
-template class ObjectRegister<Xapian::KeyMaker>;
 template class ObjectRegister<const Xapian::Query>;
 template class ObjectRegister<const Xapian::MatchDecider>;
 template class ObjectRegister<const Xapian::Stem>;

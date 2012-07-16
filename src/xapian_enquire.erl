@@ -79,7 +79,9 @@ append_order(#x_sort_order{type=Type, value=Value, is_reversed=Reverse},
 
 
 append_value(ResourceId, _N2S, Register, Bin) when is_reference(ResourceId) ->
-    append_uint(xapian_register:fetch(Register, ResourceId), Bin);
+    #resource{type=key_maker, number=ResNum} =
+        xapian_register:fetch(Register, ResourceId),
+    append_uint(ResNum, Bin);
 
 append_value(Value, N2S, _Register, Bin) ->
     append_slot(Value, N2S, Bin).
