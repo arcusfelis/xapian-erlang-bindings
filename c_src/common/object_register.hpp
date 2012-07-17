@@ -38,8 +38,8 @@ ObjectRegister<Child>::remove(Counter num)
     if (i == m_elements.end())
         throw ElementNotFoundDriverError(num);
 
-    m_elements.erase(i);
     delete i->second;
+    m_elements.erase(i);
 }
 
 

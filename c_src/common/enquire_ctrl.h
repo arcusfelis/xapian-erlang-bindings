@@ -28,8 +28,6 @@ class EnquireController
     /// Copy is allowed
     EnquireController(const EnquireController& src);
 
-    EnquireController(EnquireControllerInternal* src);
-
     ~EnquireController();
 
     Xapian::Enquire& getEnquire();

@@ -52,18 +52,11 @@ class SpyController
 {
     SpyControllerInternal* mp_internal;
 
-    /**
-     * Decrease the couter inside @ref mp_internal.
-     */
-    void decref();
-
     public:
     SpyController(Xapian::MatchSpy* spy);
 
     /// Copy is allowed
     SpyController(const SpyController& src);
-
-    SpyController(SpyControllerInternal* src);
 
     virtual ~SpyController();
 

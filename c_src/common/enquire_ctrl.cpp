@@ -38,6 +38,8 @@ class EnquireControllerInternal
     {
         m_reference_count++;
     }
+
+    ~EnquireControllerInternal(){}
 };
 
 
@@ -54,13 +56,6 @@ EnquireController::EnquireController(Xapian::Enquire& enquire)
 EnquireController::EnquireController(const EnquireController& src)
 {
     mp_internal = src.mp_internal;
-    mp_internal->incref();
-}
-
-
-EnquireController::EnquireController(EnquireControllerInternal* src)
-{
-    mp_internal = src;
     mp_internal->incref();
 }
 

@@ -26,8 +26,6 @@ class KeyMakerController
     /// Copy is allowed
     KeyMakerController(const KeyMakerController& src);
 
-    KeyMakerController(KeyMakerControllerInternal* src);
-
     ~KeyMakerController();
 
     Xapian::KeyMaker* getKeyMaker();

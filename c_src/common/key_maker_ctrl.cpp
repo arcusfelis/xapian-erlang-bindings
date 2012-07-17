@@ -56,13 +56,6 @@ KeyMakerController::KeyMakerController(const KeyMakerController& src)
 }
 
 
-KeyMakerController::KeyMakerController(KeyMakerControllerInternal* src)
-{
-    mp_internal = src;
-    mp_internal->incref();
-}
-
-
 KeyMakerController::~KeyMakerController()
 {
     mp_internal->decref();

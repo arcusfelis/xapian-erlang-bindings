@@ -39,19 +39,24 @@ class SpyControllerInternal
     {
         return m_is_finalized;
     }
+
+    void decref()
+    {
+        m_reference_count--;
+        if (m_reference_count == 0)
+            delete this;
+    }
+
+    void incref()
+    {
+        m_reference_count++;
+    }
 };
 
 
 // -------------------------------------------------------------------
 // SpyController
 // -------------------------------------------------------------------
-
-void 
-SpyController::decref()
-{
-    if (--mp_internal->m_reference_count == 0)
-        delete mp_internal;
-}
 
 
 SpyController::SpyController(Xapian::MatchSpy* spy)
@@ -63,20 +68,13 @@ SpyController::SpyController(Xapian::MatchSpy* spy)
 SpyController::SpyController(const SpyController& src)
 {
     mp_internal = src.mp_internal;
-    mp_internal->m_reference_count++;
-}
-
-
-SpyController::SpyController(SpyControllerInternal* src)
-{
-    mp_internal = src;
-    mp_internal->m_reference_count++;
+    mp_internal->incref();
 }
 
 
 SpyController::~SpyController()
 {
-    decref();
+    mp_internal->decref();
 }
 
 
