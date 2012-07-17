@@ -21,7 +21,6 @@ class EnquireController
     /**
      * Decrease the couter inside @ref mp_internal.
      */
-    void decref();
 
     public:
     EnquireController(Xapian::Enquire& km);

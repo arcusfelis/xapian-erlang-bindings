@@ -24,20 +24,24 @@ class KeyMakerControllerInternal
     {
         return mp_km;
     }
+
+    void decref()
+    {
+        m_reference_count--;
+        if (m_reference_count == 0)
+            delete this;
+    }
+
+    void incref()
+    {
+        m_reference_count++;
+    }
 };
 
 
 // -------------------------------------------------------------------
 // KeyMakerController
 // -------------------------------------------------------------------
-
-void 
-KeyMakerController::decref()
-{
-    if (--mp_internal->m_reference_count == 0)
-        delete mp_internal;
-}
-
 
 KeyMakerController::KeyMakerController(Xapian::KeyMaker* km)
 {
@@ -48,20 +52,20 @@ KeyMakerController::KeyMakerController(Xapian::KeyMaker* km)
 KeyMakerController::KeyMakerController(const KeyMakerController& src)
 {
     mp_internal = src.mp_internal;
-    mp_internal->m_reference_count++;
+    mp_internal->incref();
 }
 
 
 KeyMakerController::KeyMakerController(KeyMakerControllerInternal* src)
 {
     mp_internal = src;
-    mp_internal->m_reference_count++;
+    mp_internal->incref();
 }
 
 
 KeyMakerController::~KeyMakerController()
 {
-    decref();
+    mp_internal->decref();
 }
 
 

@@ -20,11 +20,6 @@ class KeyMakerController
 {
     KeyMakerControllerInternal* mp_internal;
 
-    /**
-     * Decrease the couter inside @ref mp_internal.
-     */
-    void decref();
-
     public:
     KeyMakerController(Xapian::KeyMaker* km);
 

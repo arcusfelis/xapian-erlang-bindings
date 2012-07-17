@@ -2292,8 +2292,12 @@ is_valid_query_parser(#x_query_parser{prefixes=Prefixes}) ->
 
 
 check_prefixes(Prefixes) when is_list(Prefixes) ->
-    lists:all(fun check_prefix/1, Prefixes) 
+    are_well_formed_prefixes(Prefixes)
         andalso are_valid_prefixes(Prefixes).
+
+
+are_well_formed_prefixes(Prefixes) ->
+    lists:all(fun check_prefix/1, Prefixes).
 
 
 check_prefix(#x_prefix_name{name = Name, prefix = Prefix}) ->
@@ -2324,7 +2328,7 @@ is_valid_prefix_short_name(Prefix) ->
 %%   or add_boolean_prefix() with different values of the 'exclusive' parameter">>
 are_valid_prefixes([_,_|_] = Prefixes) -> 
     %% GROUP BY name
-    KeyMaker = fun(#x_prefix_name{name = Name}) -> Name end,
+    KeyMaker = fun(#x_prefix_name{name = Name}) -> to_unicode_binary(Name) end,
     GroupsAndKeys = group_with(Prefixes, KeyMaker),
     Groups = delete_keys(GroupsAndKeys),
     %% true, when each Prefix is used only with one type of the term.
@@ -2333,6 +2337,53 @@ are_valid_prefixes([_,_|_] = Prefixes) ->
 
 are_valid_prefixes(_NotEnoughPrefixes) -> 
     true.
+
+
+to_unicode_binary(A) when is_atom(A) ->
+    to_unicode_binary(atom_to_list(A));
+
+to_unicode_binary(S) ->
+    unicode:characters_to_binary(S).
+
+
+is_valid_operation(Server, Query) ->
+    try
+        ?SRV:enquire(Server, Query),
+        true
+    catch error:#x_error{type = <<"InvalidOperationError">>} ->
+        false
+    end.
+
+
+are_really_valid_prefixes(Server, Prefixes) ->
+    try
+        Parser = #x_query_parser{prefixes = Prefixes},
+        Query = #x_query_string{value = "don't care", parser = Parser},
+        ?SRV:enquire(Server, Query),
+        true
+    catch error:#x_error{type = <<"InvalidOperationError">>} ->
+        false
+    end.
+
+
+are_really_valid_prefixes_gen() ->
+    U = #x_prefix_name{name = user, prefix = $A, 
+                       is_boolean = true, is_exclusive = false},
+    A = U#x_prefix_name{name = author},
+
+    Ps1 = [ A#x_prefix_name{}, 
+            A#x_prefix_name{is_boolean = false}],
+    Ps2 = [ A#x_prefix_name{}, 
+            A#x_prefix_name{is_exclusive = true} ],
+    Path = testdb_path(are_really_valid_prefixes),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    IsPs1Valid = are_really_valid_prefixes(Server, Ps1),
+    IsPs2Valid = are_really_valid_prefixes(Server, Ps2),
+    ?SRV:close(Server),
+    [ ?_assertNot(IsPs1Valid) 
+    , ?_assertNot(IsPs2Valid) 
+    ].
 
 
 are_valid_prefixes_test_() -> 
@@ -2365,6 +2416,10 @@ are_valid_prefixes_test_() ->
       , {"Same name, different is_exclusive == Error"
         , ?_assertNot(F([ A#x_prefix_name{}, 
                           A#x_prefix_name{is_exclusive = true} ]))}
+
+      , {"Other",
+         ?_assertNot(F([ #x_prefix_name{name=a,    prefix="z", is_boolean=false},
+                         #x_prefix_name{name=[$a], prefix="z", is_boolean=true} ]))}
       ]}
     ].
 

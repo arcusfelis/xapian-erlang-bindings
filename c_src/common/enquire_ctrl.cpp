@@ -7,11 +7,11 @@ XAPIAN_ERLANG_NS_BEGIN
 
 class EnquireControllerInternal
 {
-    public:
     uint32_t m_reference_count;
     Xapian::Enquire m_enquire;
     std::vector<KeyMakerController> m_key_maker_controllers;
 
+    public:
     EnquireControllerInternal(Xapian::Enquire& enquire) : m_enquire(enquire)
     {
         m_reference_count = 1;
@@ -22,9 +22,21 @@ class EnquireControllerInternal
         return m_enquire;
     }
 
-    void addKeyMakerController(KeyMakerController mkc)
+    void addKeyMakerController(const KeyMakerController& mkc)
     {
         m_key_maker_controllers.push_back(mkc);
+    }
+
+    void decref()
+    {
+        m_reference_count--;
+        if (m_reference_count == 0)
+            delete this;
+    }
+
+    void incref()
+    {
+        m_reference_count++;
     }
 };
 
@@ -32,14 +44,6 @@ class EnquireControllerInternal
 // -------------------------------------------------------------------
 // EnquireController
 // -------------------------------------------------------------------
-
-void 
-EnquireController::decref()
-{
-    if (--mp_internal->m_reference_count == 0)
-        delete mp_internal;
-}
-
 
 EnquireController::EnquireController(Xapian::Enquire& enquire)
 {
@@ -50,20 +54,20 @@ EnquireController::EnquireController(Xapian::Enquire& enquire)
 EnquireController::EnquireController(const EnquireController& src)
 {
     mp_internal = src.mp_internal;
-    mp_internal->m_reference_count++;
+    mp_internal->incref();
 }
 
 
 EnquireController::EnquireController(EnquireControllerInternal* src)
 {
     mp_internal = src;
-    mp_internal->m_reference_count++;
+    mp_internal->incref();
 }
 
 
 EnquireController::~EnquireController()
 {
-    decref();
+    mp_internal->decref();
 }
 
 
