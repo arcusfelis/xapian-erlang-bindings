@@ -248,7 +248,7 @@
 -type x_table() :: xapian_type:x_table().
 -type x_port() :: xapian_type:x_port().
 -type x_transaction() :: xapian_type:x_transaction().
--type x_query() :: xapian_type:x_query().
+-type x_sub_query() :: xapian_type:x_sub_query().
 -type x_resource() :: xapian_type:x_resource().
 -type x_record() :: xapian_type:x_record().
 -type x_meta() :: xapian_type:x_meta().
@@ -359,7 +359,7 @@ document_info(Server, DocumentConstructor, RecordMetaDefinition) ->
 
 %% @doc Return a list of records.
 -spec query_page(x_server(), non_neg_integer(), non_neg_integer(), 
-        x_query(), x_meta()) -> [x_record()].
+        x_sub_query(), x_meta()) -> [x_record()].
 query_page(Server, Offset, PageSize, Query, RecordMetaDefinition) ->
     call(Server, {query_page, Offset, PageSize, Query, RecordMetaDefinition}).
 
@@ -370,7 +370,7 @@ query_page(Server, Offset, PageSize, Query, RecordMetaDefinition) ->
 %% -------------------------------------------------------------------
 
 %% @doc Return an enquire.
--spec enquire(x_server(), x_query()) -> x_resource().
+-spec enquire(x_server(), x_sub_query()) -> x_resource().
 enquire(Server, Query) ->
     call(Server, {enquire, Query}).
 

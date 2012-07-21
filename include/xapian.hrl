@@ -182,7 +182,7 @@
 -record(x_query, {
     op='AND' :: xapian_type:x_operator(),
     %% List of other queries or terms (term is a string).
-    value :: [xapian_type:x_query() | xapian_type:x_string()],
+    value :: [xapian_type:x_sub_query() | xapian_type:x_string()],
     %% For `'NEAR'` and `'PHRASE'`, a window size can be specified in parameter.
     %% For `'ELITE_SET'`, the elite set size can be specified in parameter. 
     parameter=0 :: non_neg_integer()
@@ -219,7 +219,8 @@
 
 -record(x_query_term, {
     name :: xapian_type:x_string(),
-    wqf = 1,
+    %% Within Query Frequency is a measure of how common a term is in the query. 
+    wqf = 1 :: non_neg_integer(),
     position = 0 :: xapian_type:x_position()
 }).
 
@@ -229,7 +230,7 @@
     name = default :: default | standard,
     stemmer :: xapian_type:x_stemmer() | undefined,
     stemming_strategy = default :: none | some | all | default,
-    max_wildcard_expansion = unlimited :: non_neg_integer(),
+    max_wildcard_expansion = unlimited :: non_neg_integer() | unlimited,
     default_op = 'OR' :: xapian_type:x_operator(),
     prefixes = [] :: [xapian_type:x_prefix_name()]
 }).
@@ -261,27 +262,28 @@
 -record(x_query_scale_weight, {
     op = 'SCALE WEIGHT' :: xapian_type:x_operator(),
     %% Sub-query
-    value = ?REQUIRED :: xapian_type:x_query(), 
+    value = ?REQUIRED :: xapian_type:x_sub_query(), 
     factor = ?REQUIRED :: float()
 }). 
 
 
 -record(x_sort_order, {
     type = ?REQUIRED :: xapian_type:x_order_type(),
-    value :: xapian_type:x_slot_value() | xapian_type:x_resource(), %% KeyMaker resource
+    value :: xapian_type:x_slot_value() 
+           | xapian_type:x_resource(), %% KeyMaker resource
     is_reversed = false :: boolean()
 }).
 
 
 %% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_enquire]
 -record(x_enquire, {
-    value = xapian_type:x_query(),
+    value = xapian_type:x_sub_query(),
     query_len = 0 :: non_neg_integer(),
     order = relevance :: #x_sort_order{} | relevance,
     docid_order = asc :: asc | desc | undefined | default | dont_care,
     weighting_scheme :: undefined | xapian_type:x_resource(),
-    percent_cutoff = 0,
-    weight_cutoff = 0,
+    percent_cutoff = 0 :: 0 .. 100,
+    weight_cutoff = 0 :: float(),
     collapse_key :: undefined | xapian_type:x_slot_value(),
     collapse_max = 1 :: non_neg_integer()
 }).

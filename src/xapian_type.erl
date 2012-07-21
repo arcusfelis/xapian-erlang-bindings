@@ -18,7 +18,7 @@
     x_inet_address/0,
     x_parser_feature/0,
     x_query_parser/0,
-    x_query/0,
+    x_sub_query/0,
     x_operator/0,
     x_server/0,
     x_table/0,
@@ -78,7 +78,7 @@
 -type x_transaction() :: fun(([x_server()]) -> term()).
 -type x_table() :: qlc:query_handle().
 
--type x_query() :: #x_query{} 
+-type x_sub_query() :: #x_query{} 
     | #x_query_value{} 
     | #x_query_value_range{} 
     | #x_query_term{}
