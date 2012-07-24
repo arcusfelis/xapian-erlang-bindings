@@ -24,7 +24,8 @@
          spy_type_id/1,
          term_field_id/1,
          document_field_id/1,
-         parser_type_id/1]).
+         parser_type_id/1,
+         resource_info_match_spy_field_id/1]).
 
 
 %% Command ids
@@ -63,7 +64,8 @@ command_id(document_info)               -> 30;
 command_id(document_info_resource)      -> 31;
 command_id(is_document_exist)           -> 32;
 command_id(replace_document)            -> 33;
-command_id(value_spy_to_slot)           -> 34.
+command_id(value_spy_to_slot)           -> 34;
+command_id(resource_info)               -> 35.
 
 
 %% Open modes of the DB
@@ -388,3 +390,8 @@ document_field_id(percent)     -> 7;
 document_field_id(multi_docid) -> 8;
 document_field_id(db_number)   -> 9;
 document_field_id(db_name)     -> document_field_id(db_number).
+
+
+resource_info_match_spy_field_id(document_count) -> 1;
+resource_info_match_spy_field_id(slot)           -> 2;
+resource_info_match_spy_field_id(_)              -> undefined.

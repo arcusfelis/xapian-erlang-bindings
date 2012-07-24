@@ -104,7 +104,8 @@ class Driver
         DOCUMENT_INFO_RESOURCE      = 31,
         IS_DOCUMENT_EXIST           = 32,
         REPLACE_DOCUMENT            = 33,
-        VALUE_MATCH_SPY_TO_SLOT     = 34
+        VALUE_MATCH_SPY_TO_SLOT     = 34,
+        RESOURCE_INFO               = 35
     };
 
 
@@ -129,6 +130,11 @@ class Driver
         WRITE_CREATE                = 2,
         WRITE_CREATE_OR_OVERWRITE   = 3,
         WRITE_OPEN                  = 4
+    };
+
+    enum resourceInfoMatchSpyField {
+        RIMS_DOCUMENT_COUNT = 1,
+        RIMS_SLOT           = 2
     };
 
     /// Types of fields.
@@ -346,6 +352,8 @@ class Driver
     void updateDocument(PR, bool create);
     void isDocumentExist(PR);
     void deleteDocument(PR);
+    void resourceInfo(PR);
+    void resourceInfoMatchSpy(uint32_t resource_num, PR);
     void setMetadata(ParamDecoder&);
 
     /**

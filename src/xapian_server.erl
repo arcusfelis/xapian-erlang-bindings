@@ -41,7 +41,8 @@
 -export([mset_info/2,
          mset_info/3,
          database_info/1,
-         database_info/2]).
+         database_info/2,
+         resource_info/3]).
 
 
 %% More information
@@ -106,6 +107,7 @@
 %% ------------------------------------------------------------------
 
 -import(xapian_common, [ 
+    append_binary/2,
     append_int8/2,
     append_uint8/2,
     append_uint16/2,
@@ -855,6 +857,19 @@ database_info(Server) ->
 database_info(Server, Params) ->
     call(Server, {database_info, Params}).
 
+-spec resource_info(Server, Resource, Params) -> Result when
+    Server :: x_server(),
+    Resource :: x_resource(),
+    Params :: [CommonParam | ValueCountMatchSpyParam],
+    CommonParam :: type | number,
+    ValueCountMatchSpyParam :: document_count,
+    Result :: term().
+%% TODO: correct Result
+
+resource_info(Server, Resource, Params) ->
+    call(Server, {resource_info, Resource, Params}).
+
+
 
 %% ------------------------------------------------------------------
 %% Information about the state of the process
@@ -1421,6 +1436,17 @@ handle_call({database_info, Params}, _From, State) ->
     {reply, Reply, State};
 
 
+handle_call({resource_info, ResRef, Params}, _From, State) ->
+    #state{port = Port, register = Register } = State,
+    do_reply(State, do([error_m ||
+        %% Get an iterable resource by the reference
+        ResDesc
+            <- xapian_register:get(Register, ResRef),
+        begin
+            Reply = port_resource_info(Port, ResDesc, Params),
+            {reply, Reply, State}
+        end]));
+
 handle_call({transaction, Ref}, From, State) ->
     #state{ port = Port } = State,
     {FromPid, _FromRef} = From,
@@ -1903,6 +1929,26 @@ port_database_info(Port, Params) ->
     decode_database_info_result(control(Port, database_info, Bin@), Params).
 
 
+port_resource_info(Port, ResDesc = #resource{}, Params) ->
+    EncodedFieldsBin = xapian_resource_info:encode(ResDesc, Params, <<>>),
+    case EncodedFieldsBin of
+        <<>> ->
+            %% All fields already known
+            {Value, <<>>} = xapian_resource_info:decode(ResDesc, Params, <<>>),
+            {ok, Value};
+        _ ->
+            TypeId = resource_type_id(ResDesc#resource.type),
+            ResNum = ResDesc#resource.number,
+            Bin@ = <<>>,
+            Bin@ = append_uint8(TypeId, Bin@),
+            Bin@ = append_uint(ResNum, Bin@),
+            Bin@ = append_binary(EncodedFieldsBin, Bin@),
+            Bin@ = append_uint8(0, Bin@), %% Stopper for a decoder
+            Result = control(Port, resource_info, Bin@),
+            decode_resource_info_result(Result, ResDesc, Params)
+    end.
+
+
 %% -----------------------------------------------------------------
 %% Helpers
 %% -----------------------------------------------------------------
@@ -2015,6 +2061,9 @@ decode_mset_info_result(Data, Params) ->
 
 decode_database_info_result(Data, Params) ->
     decode_result_with_hof(Data, Params, fun xapian_db_info:decode/2).
+
+decode_resource_info_result(Data, ResDesc, Params) ->
+    decode_result_with_hof(Data, ResDesc, Params, fun xapian_resource_info:decode/3).
 
 decode_docid_result(Data) -> 
     decode_result_with_hof(Data, fun xapian_common:read_document_id/1).

@@ -1384,6 +1384,10 @@ Driver::handleCommand(PR,
             databaseInfo(params, result);
             break;
 
+        case RESOURCE_INFO:
+            resourceInfo(params, result);
+            break;
+
         case SET_METADATA:
             setMetadata(params);
             break;
@@ -2784,6 +2788,48 @@ Driver::databaseInfo(PR)
     }
 }
 
+void
+Driver::resourceInfo(PR)
+{
+    uint8_t   resource_type = params;
+    uint32_t   resource_num = params;
+    switch (resource_type)
+    {
+        case ResourceType::MATCH_SPY:
+            resourceInfoMatchSpy(resource_num, params, result);
+            break;
+
+        default:
+            throw BadCommandDriverError(resource_type);
+    }
+}
+
+void
+Driver::resourceInfoMatchSpy(uint32_t resource_num, PR)
+{
+    SpyController&
+    spy = *m_match_spy_store.get(resource_num);
+    while (uint8_t field = params)
+    switch (field)
+    {
+        case RIMS_DOCUMENT_COUNT:
+        {
+            uint32_t document_count = spy.getTotal();
+            result << document_count;
+            break;
+        }
+
+        case RIMS_SLOT:
+        {
+            uint32_t slot = spy.getSlot();
+            result << slot;
+            break;
+        }
+
+        default:
+            throw BadCommandDriverError(field);
+    }
+}
 
 void 
 Driver::setMetadata(ParamDecoder& params)

@@ -472,7 +472,7 @@ term_qlc_gen() ->
         Meta = xapian_term_record:record(term, record_info(fields, term)),
         Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
 
-        Records = qlc:e(qlc:q([X || X <- Table])),
+        Records = qlc:e(Table),
         Values = [Value || #term{value = Value} <- Records],
         Not1Wdf = [X || X = #term{wdf = Wdf} <- Records, Wdf =/= 1],
 
@@ -533,7 +533,7 @@ term_ext_qlc_gen() ->
         Meta = xapian_term_record:record(term_ext, 
                     record_info(fields, term_ext)),
         Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
-        Records = qlc:e(qlc:q([X || X <- Table])),
+        Records = qlc:e(Table),
 
         Not0Pos = 
         [X || X = #term_ext{position_count = Count} <- Records, Count =/= 0],
@@ -727,6 +727,16 @@ value_count_match_spy_gen() ->
         qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
             Value =:= "white" orelse Value =:= "green"])),
 
+        %% resource_info
+        SpySlot1ResNum  = ?SRV:resource_info(Server, SpySlot1, number),
+        SpySlot1ResType = ?SRV:resource_info(Server, SpySlot1, type),
+        SpySlot1ResTypeAndNum = ?SRV:resource_info(Server, SpySlot1, 
+                                                   [type, number]),
+        SpySlot1DocCount = ?SRV:resource_info(Server, SpySlot1, document_count),
+        SpySlot1Info = ?SRV:resource_info(Server, SpySlot1, 
+                                          [type, document_count, number]),
+
+
         [ ?_assertEqual(Values, 
             [<<"Blue">>, <<"Red">>, <<"black">>, <<"green">>, <<"white">>])
         , ?_assertEqual(RedValues, [<<"Red">>])
@@ -736,6 +746,16 @@ value_count_match_spy_gen() ->
             , ?_assertEqual(TopFreqOrderValues, [<<"green">>, <<"white">>])
             ]}
         , ?_assertEqual(RedValues, [<<"Red">>])
+        , {"xapian_server:resource_info/3",
+           [ ?_assert(is_integer(SpySlot1ResNum))
+           , ?_assertEqual(SpySlot1ResType, match_spy)
+           , ?_assertEqual(SpySlot1ResTypeAndNum, [{type, SpySlot1ResType}
+                                                  ,{number, SpySlot1ResNum}])
+           , ?_assert(is_integer(SpySlot1DocCount))
+           , ?_assertEqual(SpySlot1Info, [{type, SpySlot1ResType}
+                                         ,{document_count, SpySlot1DocCount}
+                                         ,{number, SpySlot1ResNum}])
+           ]}
         ]
     after
         ?SRV:close(Server)
@@ -1492,7 +1512,7 @@ document_case(Server) ->
         Table = xapian_term_qlc:document_term_table(
             Server, DocRes, Meta, [ignore_empty]),
         ?SRV:release_resource(Server, DocRes),
-        qlc:e(qlc:q([X || X <- Table]))
+        qlc:e(Table)
         end,
     Doc1Terms = AllDocumentTermsFn(DocRes1),
     Doc2Terms = AllDocumentTermsFn(DocRes2),
@@ -1613,7 +1633,7 @@ qlc_mset_case(Server) ->
         ?SRV:release_resource(Server, MSetResourceId),
 
         %% QueryAll is a list of all matched records.
-        QueryAll = qlc:q([X || X <- Table]),
+        QueryAll = Table,
 
         %% Check `lookup' function. This function is used by `qlc' module.
         %% It will be called to find a record by an index.
@@ -1660,7 +1680,7 @@ qlc_mset_doc_case(Server) ->
         ?SRV:release_resource(Server, MSetResourceId),
 
         %% QueryAll is a list of all matched records.
-        QueryAll = qlc:q([X || X <- Table]),
+        QueryAll = Table,
 
         %% Check `lookup' function. This function is used by `qlc' module.
         %% It will be called to find a record by an index.
@@ -1711,7 +1731,7 @@ qlc_mset_iter_case(Server) ->
         ?SRV:release_resource(Server, MSetResourceId),
 
         %% QueryAll is a list of all matched records.
-        QueryAll = qlc:q([X || X <- Table]),
+        QueryAll = Table,
 
         %% Check `lookup' function. This function is used by `qlc' module.
         %% It will be called to find a record by an index.
@@ -2027,7 +2047,7 @@ all_record_cursor(Server, Query) ->
 
 all_multidb_records(Server, Query) ->
     Table = mset_table(Server, Query, mdocument),
-    qlc:e(qlc:q([X || X <- Table])).
+    qlc:e(Table).
 
 
 record_by_id(Server, Query, Id) ->

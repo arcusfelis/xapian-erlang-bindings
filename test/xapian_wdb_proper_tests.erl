@@ -25,39 +25,46 @@
 -export([untag_ok/1]).
 
 
--record(state, {server, document_ids = []}).
+-record(state, {path, server, document_ids = []}).
 
-initial_state() -> #state{}.
+initial_state() -> 
+    #state{}.
 
-
-command(#state{server = undefined}) ->
-    Path = testdb_path(wdb_proper),  
+command(#state{server = undefined, path = undefined}) ->
+    Path = testdb_path("wdb_proper" ++ integer_to_list(random:uniform(100000))),
     Params = [write, create, overwrite],         
     {call, ?SRV, start_link, [Path, Params]};
 
-command(#state{server = Srv, document_ids = []}) ->
-    {call, ?SRV, add_document, [Srv, []]};
+command(#state{server = undefined, path = Path}) ->
+    Params = [write],         
+    {call, ?SRV, start_link, [Path, Params]};
 
-command(#state{server = Srv} = S) ->
-    AddDoc  = {call, ?SRV, add_document, [Srv, []]},
-    RemDoc  = {call, ?SRV, delete_document, [Srv, document_id(S)]},
-    CloseDb = {call, ?SRV, close, [Srv]},
-    Freqs = 
-    [
-        {100, AddDoc},
-        {10,  RemDoc},
-        {1,   CloseDb}
+command(#state{server = Server} = S) ->
+    AddDoc    = {call, ?SRV, add_document, [Server, []]},
+    CloseDb   = {call, ?SRV, close, [Server]},
+    LastDocId = {call, ?SRV, last_document_id, [Server]},
+    Freqs = commands_for_non_empty_db(S) ++
+    [ {100, AddDoc}
+    , {40,  LastDocId}
+    , {20,  CloseDb}
     ],
     frequency(Freqs).
+
+
+commands_for_non_empty_db(#state{document_ids = []}) ->
+    [];
+commands_for_non_empty_db(#state{server = Server} = S) ->
+    RemDoc = {call, ?SRV, delete_document, [Server, document_id(S)]},
+    [{10,  RemDoc}].
 
 
 document_id(#state{document_ids = Ids}) ->
     oneof(Ids).
 
 
-next_state(S, V, {call, _, start_link, _}) ->
-    Srv = {call, ?MODULE, untag_ok, [V]},
-    S#state{server = Srv};
+next_state(S, V, {call, _, start_link, [Path, _Params]}) ->
+    Server = {call, ?MODULE, untag_ok, [V]},
+    S#state{server = Server, path = Path};
 
 next_state(S, _V, {call, _, close, _}) ->
     S#state{server = undefined};
@@ -65,8 +72,11 @@ next_state(S, _V, {call, _, close, _}) ->
 next_state(S, V, {call, _, add_document, _}) ->
     S#state{document_ids = [V | S#state.document_ids]};
 
-next_state(S, _V, {call, _, delete_document, [_Srv, Id]}) ->
-    S#state{document_ids = S#state.document_ids -- [Id]}.
+next_state(S, _V, {call, _, delete_document, [_Server, Id]}) ->
+    S#state{document_ids = S#state.document_ids -- [Id]};
+
+next_state(S, _V, _C) ->
+    S.
 
 
 precondition(_S, _C) ->
@@ -76,8 +86,20 @@ precondition(_S, _C) ->
 postcondition(S, {call, _, add_document, _}, R) ->
     ?SRV:is_document_exist(S#state.server, R);
 
-postcondition(S, {call, _, delete_document, [_Srv, Id]}, _R) ->
+postcondition(S, {call, _, delete_document, [_Server, Id]}, _R) ->
     not ?SRV:is_document_exist(S#state.server, Id);
+
+%% Prop: If DB is not empty, then:
+%%      add_document(Server, Doc) =:= last_document_id();
+%%      otherwise last_document_id() =:= undefined.
+postcondition(S, {call, _, last_document_id, [_Server]}, R) ->
+    #state{document_ids = Ids} = S,
+    Expected = 
+        case Ids of
+            [H|_]  -> H; 
+            []     -> undefined
+        end,
+    Expected =:= R;
 
 postcondition(_S, _C, _R) ->
     true.
@@ -86,13 +108,24 @@ postcondition(_S, _C, _R) ->
 prop_main() ->
     ?FORALL(Cmds, more_commands(200, commands(?MODULE)),
        ?TRAPEXIT(
-           begin
-           {History,State,Result} = run_commands(?MODULE, Cmds),
-           catch ?SRV:close(State#state.server),
-           ?WHENFAIL(io:format("History: ~p\nState: ~p\nResult: ~p\n",
+            begin
+            {History,State,Result} = run_commands(?MODULE, Cmds),
+            catch ?SRV:close(State#state.server),
+            [remove_directory_with_files(DirName) 
+                || DirName <- State#state.path, 
+                   DirName =/= undefined, filelib:is_dir(DirName)],
+            ?WHENFAIL(io:format("History: ~p\nState: ~p\nResult: ~p\n",
                                [History, State, Result]),
                      aggregate(command_names(Cmds), Result =:= ok))
-           end)).
+            end)).
+
+
+%% Don't work with sub-folders.
+remove_directory_with_files(DirName) ->
+    SubFileNamesPattern = filename:join(DirName, "*"),
+    SubFileNames = filelib:wildcard(SubFileNamesPattern),
+    [ok = file:delele(FileName) || FileName <- SubFileNames],
+    ok = file:del_dir(DirName).
 
 
 proper_test_() ->
@@ -107,4 +140,5 @@ proper_test_() ->
 %% Helpers
 %% ------------------------------------------------------------------
 
-untag_ok({ok, X}) -> X.
+untag_ok({ok, X})   -> X;
+untag_ok(undefined) -> undefined.

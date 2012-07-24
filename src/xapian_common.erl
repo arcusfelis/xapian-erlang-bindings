@@ -18,7 +18,8 @@
          append_uint8/2,
          append_uint16/2,
          append_double/2,
-         append_boolean/2
+         append_boolean/2,
+         append_binary/2
         ]).
 
 %% Advanced decoding functions
@@ -223,6 +224,11 @@ save_read_double(Bin) ->
         <<_Skip:BitCount, Bin2/binary>> = Bin,  
         {undefined, Bin2}
     end.
+
+
+%% @doc Concat 2 binaries in the reverse order.
+append_binary(Value, Bin) ->
+    <<Bin/binary, Value/binary>>.
 
 
 %% Append bool

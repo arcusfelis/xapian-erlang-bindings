@@ -86,6 +86,7 @@ class SpyController
      * Other subclasses might change the default behaviour.
      */
     virtual Xapian::valueno getSlot();
+    virtual Xapian::doccount getTotal();
 };
 
 XAPIAN_ERLANG_NS_END

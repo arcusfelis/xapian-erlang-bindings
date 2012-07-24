@@ -40,4 +40,13 @@ ValueCountSpyController::getIteratorGenerator(ParamDecoder& params)
     }
 }
 
+
+Xapian::doccount
+ValueCountSpyController::getTotal() 
+{ 
+    Xapian::ValueCountMatchSpy& spy = 
+    static_cast<Xapian::ValueCountMatchSpy&>( *getSpy() );
+    return spy.get_total(); 
+}
+
 XAPIAN_ERLANG_NS_END

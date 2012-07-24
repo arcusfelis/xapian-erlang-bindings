@@ -104,7 +104,13 @@ bool SpyController::is_finalized()
 }
 
 
-Xapian::valueno SpyController:: getSlot()
+Xapian::valueno SpyController::getSlot()
+{  
+    throw BadArgumentDriverError();
+}
+
+
+Xapian::doccount SpyController::getTotal()
 {  
     throw BadArgumentDriverError();
 }

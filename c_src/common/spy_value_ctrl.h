@@ -27,6 +27,7 @@ class ValueCountSpyController : public SpyController
     getIteratorGenerator(ParamDecoder& params);
 
     Xapian::valueno getSlot() { return m_slot; }
+    Xapian::doccount getTotal();
 };
 
 XAPIAN_ERLANG_NS_END
