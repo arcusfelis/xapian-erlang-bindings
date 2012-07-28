@@ -43,7 +43,7 @@
 
 %% x_data.value will not indexed.
 -record(x_data, {
-    value = ?REQUIRED :: xapian_type:x_string()
+    value = ?REQUIRED :: iolist()
 }).
 
 

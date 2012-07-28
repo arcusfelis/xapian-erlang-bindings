@@ -6,7 +6,7 @@
 
 -import(xapian_common, [
     append_uint8/2,
-    append_iolist/2,
+    append_string/2,
     append_slot/2,
     append_document_id/2,
     read_document_count/1,
@@ -134,13 +134,13 @@ decode_param(metadata, Bin) ->
 
 
 encode_param(term_exists, Value, Bin) ->
-    append_iolist(Value, Bin);
+    append_string(Value, Bin);
 
 encode_param(term_freq, Value, Bin) ->
-    append_iolist(Value, Bin);
+    append_string(Value, Bin);
 
 encode_param(collection_freq, Value, Bin) ->
-    append_iolist(Value, Bin);
+    append_string(Value, Bin);
 
 encode_param(value_freq, Value, Bin) ->
     append_slot(Value, Bin);
@@ -152,11 +152,11 @@ encode_param(value_upper_bound, Value, Bin) ->
     append_slot(Value, Bin);
 
 encode_param(wdf_upper_bound, Value, Bin) ->
-    append_iolist(Value, Bin);
+    append_string(Value, Bin);
 
 encode_param(document_length, Value, Bin) ->
     append_document_id(Value, Bin);
 
 encode_param(metadata, Value, Bin) ->
-    append_iolist(Value, Bin).
+    append_string(Value, Bin).
 

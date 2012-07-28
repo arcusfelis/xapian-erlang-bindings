@@ -112,7 +112,7 @@
     append_uint8/2,
     append_uint16/2,
     append_uint/2,
-    append_iolist/2,
+    append_string/2,
     append_document_id/2,
     append_unique_document_id/2,
     read_uint/1,
@@ -1593,15 +1593,15 @@ control(Port, Operation, Data) ->
 open_database(Port, Mode, Path) ->
     Bin@ = <<>>,
     Bin@ = append_uint8(open_mode_id(Mode), Bin@),
-    Bin@ = append_iolist(Path, Bin@),
+    Bin@ = append_string(Path, Bin@),
     control(Port, open, Bin@).
 
 
 open_prog_database(Port, Mode, Prog, Args, Timeout) ->
     Bin@ = <<>>,
     Bin@ = append_uint8(open_mode_id(Mode), Bin@),
-    Bin@ = append_iolist(Prog, Bin@),
-    Bin@ = append_iolist(Args, Bin@),
+    Bin@ = append_string(Prog, Bin@),
+    Bin@ = append_string(Args, Bin@),
     Bin@ = append_uint(Timeout, Bin@),
     control(Port, open_prog, Bin@).
 
@@ -1609,7 +1609,7 @@ open_prog_database(Port, Mode, Prog, Args, Timeout) ->
 open_tcp_database(Port, Mode, TcpHost, TcpPort, Timeout, ConnectTimeout) ->
     Bin@ = <<>>,
     Bin@ = append_uint8(open_mode_id(Mode), Bin@),
-    Bin@ = append_iolist(TcpHost, Bin@),
+    Bin@ = append_string(TcpHost, Bin@),
     Bin@ = append_uint16(TcpPort, Bin@),
     Bin@ = append_uint(Timeout, Bin@),
     Bin@ = append_uint(ConnectTimeout, Bin@),
@@ -1737,8 +1737,8 @@ port_is_document_exist(Port, Id) ->
 
 port_set_metadata(Port, Key, Value) ->
     Bin@ = <<>>,
-    Bin@ = append_iolist(Key, Bin@),
-    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_string(Key, Bin@),
+    Bin@ = append_string(Value, Bin@),
     control(Port, set_metadata, Bin@).
 
 

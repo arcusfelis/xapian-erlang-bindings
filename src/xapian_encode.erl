@@ -4,11 +4,11 @@
 -include_lib("xapian/include/xapian.hrl").
 -compile({parse_transform, seqbind}).
 -import(xapian_common, [ 
-    append_iolist/2,
+    append_string/2,
     append_boolean/2]).
 
 append_stemmer(#x_stemmer{language=Language}, Bin) ->
-    append_iolist(maybe_atom(Language), Bin).
+    append_string(maybe_atom(Language), Bin).
 
 
 -ifdef(TEST).
@@ -27,8 +27,8 @@ maybe_atom_test_() ->
 %% See `XapianErlangDriver::addPrefix'
 append_prefix(#x_prefix_name{name=Name, prefix=Prefix, 
     is_boolean=Bool, is_exclusive=Ex}, Bin@) ->
-    Bin@ = append_iolist(prefix_name_to_binary(Name), Bin@),
-    Bin@ = append_iolist(Prefix, Bin@),
+    Bin@ = append_string(prefix_name_to_binary(Name), Bin@),
+    Bin@ = append_string(Prefix, Bin@),
     Bin@ = append_boolean(Bool, Bin@),
     Bin@ = append_boolean(Ex, Bin@),
     Bin@.

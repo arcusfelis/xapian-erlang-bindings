@@ -5,7 +5,7 @@
 
 -import(xapian_common, [
     append_uint8/2,
-    append_iolist/2,
+    append_string/2,
     read_document_count/1,
     read_weight/1
 ]).
@@ -39,7 +39,7 @@ append_mset_info_param(Param, Bin) when is_atom(Param) ->
     append_uint8(mset_info_param_id(Param), Bin);
 
 append_mset_info_param({Param, Term}, Bin) when is_atom(Param) ->
-    append_iolist(Term, append_uint8(mset_info_param_id(Param), Bin)).
+    append_string(Term, append_uint8(mset_info_param_id(Param), Bin)).
 
 
 decode_mset_info_param(Param, {Acc, Bin}) ->

@@ -9,6 +9,7 @@
 -compile({parse_transform, seqbind}).
 -import(xapian_common, [ 
     append_iolist/2,
+    append_string/2,
     append_slot/2,
     append_int/2,
     append_uint8/2,
@@ -110,7 +111,7 @@ append_data(Value, Bin) ->
 
 append_term(Action, Value, WDF, Ignore, Bin@) ->
     Bin@ = append_type(term_type(Action), Bin@),
-    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_string(Value, Bin@),
     Bin@ = append_int(WDF, Bin@),
     Bin@ = append_boolean(Ignore, Bin@),
     Bin@.
@@ -136,7 +137,7 @@ append_posting(Action, Value, undefined, WDF, Ignore, Bin) ->
 
 append_posting(Action, Value, Pos, WDF, Ignore, Bin@) ->
     Bin@ = append_type(posting_type(Action), Bin@),
-    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_string(Value, Bin@),
     Bin@ = append_int(Pos, Bin@),
     Bin@ = append_int(WDF, Bin@),
     Bin@ = append_boolean(Ignore, Bin@),
@@ -153,7 +154,7 @@ append_decrease_wdf(Value, WDF, Ignore, Bin@) ->
 
 append_term_wdf(Type, Value, WDF, Ignore, Bin@) ->
     Bin@ = append_type(Type, Bin@),
-    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_string(Value, Bin@),
     Bin@ = append_int(WDF, Bin@),
     Bin@ = append_boolean(Ignore, Bin@),
     Bin@.
@@ -173,9 +174,9 @@ append_delta(Pos, Bin) ->
 
 append_text(Value, WDF, Prefix, Bin@) ->
     Bin@ = append_type(text, Bin@),
-    Bin@ = append_iolist(Value, Bin@),
+    Bin@ = append_string(Value, Bin@),
     Bin@ = append_int(WDF, Bin@),
-    Bin@ = append_iolist(Prefix, Bin@),
+    Bin@ = append_string(Prefix, Bin@),
     Bin@.
 
 

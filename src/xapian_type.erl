@@ -37,8 +37,8 @@
 -type x_document_constructor() :: [x_document_index_part()].
 
 
--type x_string()        :: string() | binary().
--type x_non_empty_string() :: nonempty_string() | <<_:8, _:_*8>>.
+-type x_string()           :: unicode:chardata().
+-type x_non_empty_string() :: unicode:chardata().
 -type x_slot_name()     :: atom().
 -type x_slot_type()     :: float | string.
 -type x_slot()          :: non_neg_integer().

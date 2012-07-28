@@ -30,7 +30,7 @@ This field is optional.
 x_term.frequency
 ----------------
 
-The within-document frequency, or wdf, of a term t in D is the 
+The within-document frequency, or WDF, of a term t in D is the 
 number of times it is pulled out of D in the indexing process. 
 Usually this is the size of the wdp vector, but in Xapian it can 
 exceed it, since we can apply extra wdf to some parts of the 
@@ -176,7 +176,7 @@ call a parser with a query string `"language:erlang process linux OTP"`.
 This field is only used with `Xapian::QueryParser`.
 
 
-If `thue`, then this method will be called:
+If `true`, then this method will be called:
 
 ```c++
 Xapian::QueryParser::add_boolean_prefix

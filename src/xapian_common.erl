@@ -12,6 +12,7 @@
 
 %% Basic encoding functions
 -export([append_iolist/2,
+         append_string/2,
          append_int/2,
          append_int8/2,
          append_uint/2,
@@ -99,7 +100,13 @@ string_to_binary(Str) ->
 
 %% Append iolist as a string
 append_iolist(Str, Bin) ->
-%   StrBin = erlang:iolist_to_binary(Str),
+    StrBin = erlang:iolist_to_binary(Str),
+    StrLen = erlang:byte_size(StrBin),
+    <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
+
+
+%% Append characters as a string
+append_string(Str, Bin) ->
     StrBin = string_to_binary(Str),
     StrLen = erlang:byte_size(StrBin),
     <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.

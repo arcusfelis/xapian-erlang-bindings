@@ -7,7 +7,7 @@
     append_uint/2,
     append_uint8/2,
     append_double/2,
-    append_iolist/2,
+    append_string/2,
     slot_id/2]).
 
 -import(xapian_const, [
@@ -45,7 +45,7 @@ encode(#x_query_value_range{op=Op, slot=Slot, from=From, to=To}, N2S, S2T, Bin@)
 
 encode(#x_query_term{name=Name, wqf=WQF, position=Pos}, _N2S, _S2T, Bin@) ->
     Bin@ = append_type(query_term, Bin@),
-    Bin@ = append_iolist(Name, Bin@),
+    Bin@ = append_string(Name, Bin@),
     Bin@ = append_uint(WQF, Bin@),
     Bin@ = append_uint(Pos, Bin@),
     Bin@;
@@ -54,8 +54,8 @@ encode(#x_query_string{parser=Parser, value=String,
     default_prefix=Prefix, features=Features}, _N2S, _S2T, Bin@) ->
     Bin@ = append_type(query_string, Bin@),
     Bin@ = append_parser(Parser, Bin@),
-    Bin@ = append_iolist(String, Bin@),
-    Bin@ = append_iolist(Prefix, Bin@),
+    Bin@ = append_string(String, Bin@),
+    Bin@ = append_string(Prefix, Bin@),
     Bin@ = append_parser_feature_ids(Features, Bin@),
     Bin@;
 
