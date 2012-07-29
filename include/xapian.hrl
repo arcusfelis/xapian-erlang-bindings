@@ -301,7 +301,7 @@
 %% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_match_set]
 -record(x_match_set, {
     enquire = ?REQUIRED :: xapian_type:x_resource(),
-    from = 0 :: non_neg_integer(), 
+    offset = 0 :: non_neg_integer(), 
     max_items = undefined :: non_neg_integer() | undefined, 
     check_at_least = 0 :: non_neg_integer(), 
     spies = [] :: [xapian_type:x_resource()]

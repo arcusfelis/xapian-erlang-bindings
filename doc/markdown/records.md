@@ -258,8 +258,8 @@ This field is an enquire resource that defines a set of documents to handle.
 It is required.
 
 
-x_match_set.from
-----------------
+x_match_set.offset
+------------------
 
 This field  contains non negative integer, that means how many objects to skip 
 from the beginning.

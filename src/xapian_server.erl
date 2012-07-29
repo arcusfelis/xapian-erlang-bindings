@@ -418,7 +418,7 @@ document(Server, DocId) -> %% DocId can be an unique term.
 %%  ```
 %%  #x_match_set{
 %%      enquire = EnquireResource, 
-%%      from = From, 
+%%      offset = Offset, 
 %%      max_items = MaxItems, 
 %%      check_at_least = CheckAtLeast, 
 %%      spies = Spies
@@ -428,7 +428,7 @@ document(Server, DocId) -> %% DocId can be an unique term.
 %%  where 
 %%      * `EnquireResource' contains the result of the search. 
 %%              @see enquire/2. It is required;
-%%      * `From' means how many elements to skip. It is 0 by default;
+%%      * `Offset' means how many elements to skip. It is 0 by default;
 %%      * `MaxItems' means how many elements to return. 
 %%              Not more than `MaxItems' elements will be return. 
 %%              It is `undefined' by default, 
@@ -1310,7 +1310,7 @@ handle_call({document, DocId}, {FromPid, _FromRef}, State) ->
 handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
     #x_match_set{
         enquire = EnquireRef, 
-        from = From, 
+        offset = Offset, 
         max_items = MaxItems, 
         check_at_least = CheckAtLeast, 
         spies = SpyRefs
@@ -1324,7 +1324,7 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
             <- ref_to_num(Register, EnquireRef, enquire),
 
         MSetNum <-
-            port_match_set(Port, EnquireNum, From, 
+            port_match_set(Port, EnquireNum, Offset, 
                 MaxItems, CheckAtLeast, SpyNums),
 
         register_resource(State, mset, FromPid, MSetNum)]));
