@@ -87,7 +87,7 @@ resource_type_id(x_query)         -> 5;
 resource_type_id(match_decider)   -> 6;
 resource_type_id(stem)            -> 7;
 resource_type_id(expand_decoder)  -> 8;
-resource_type_id(date_value_range_processor) -> 9;
+resource_type_id(value_range_processor) -> 9;
 resource_type_id(match_spy)       -> 10;
 resource_type_id(document)        -> 11;
 resource_type_id(last)            -> 11.
@@ -108,7 +108,7 @@ resource_type_name(5)  -> x_query;
 resource_type_name(6)  -> match_decider;
 resource_type_name(7)  -> stem;
 resource_type_name(8)  -> expand_decoder;
-resource_type_name(9)  -> date_value_range_processor;
+resource_type_name(9)  -> value_range_processor;
 resource_type_name(10) -> match_spy;
 resource_type_name(11) -> document.
 

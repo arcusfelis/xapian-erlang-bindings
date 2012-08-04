@@ -13,8 +13,22 @@
 -export([
     multi_value_key_maker/2]).
 
+%% ValueRangeProcessor
+-export([
+    string_value_range_processor/2,
+    string_value_range_processor/4,
+    number_value_range_processor/2,
+    number_value_range_processor/4,
+    date_value_range_processor/4,
+    date_value_range_processor/6
+    ]).
 
--import(xapian_common, [append_double/2]).
+-import(xapian_common, [
+        append_double/2, 
+        append_string/2, 
+        append_boolean/2, 
+        append_uint/2,
+        append_int/2]).
 
 -compile({parse_transform, seqbind}).
 
@@ -65,17 +79,118 @@ trad_weight(Server, K) ->
 
 
 -spec multi_value_key_maker(x_server(), Slots) -> x_resource() when
-    Slots :: [xapian_type:x_slot_value()].
+    Slots :: [xapian_type:x_slot_value() | ValueWithReversedOrder],
+    ValueWithReversedOrder :: {reverse, xapian_type:x_slot_value()}.
 
 multi_value_key_maker(Server, Slots) ->
     GenFn = 
         fun(State) ->
             N2S = xapian_server:name_to_slot(State),
-            {ok, xapian_common:append_slots(N2S, Slots, <<>>)}
+            {ok, xapian_common:append_slots_with_order(N2S, Slots, <<>>)}
         end,
     xapian_server:internal_create_resource(Server, multi_value_key_maker, GenFn).
 
 
+-spec date_value_range_processor(x_server(), Slot, EpochYear, PreferMDY) -> 
+    x_resource() when
+    Slot      :: xapian_type:x_slot_value(),
+    EpochYear :: integer(),
+    PreferMDY :: boolean().
+
+date_value_range_processor(Server, Slot, EpochYear, PreferMDY) ->
+    GenFn = 
+        fun(State) ->
+            SlotNum = xapian_server:name_to_slot(State, Slot),
+            Bin@ = append_uint(SlotNum, <<>>),
+            Bin@ = append_int(EpochYear, Bin@),
+            Bin@ = append_boolean(PreferMDY, Bin@),
+            {ok, Bin@}
+        end,
+    xapian_server:internal_create_resource(Server, 
+                                           date_value_range_processor3, GenFn).
+
+
+-spec date_value_range_processor(x_server(), Slot, Str, Prefix,
+                                 EpochYear, PreferMDY) -> 
+    x_resource() when
+    Slot      :: xapian_type:x_slot_value(),
+    Str       :: xapian_type:x_string(),
+    EpochYear :: integer(),
+    PreferMDY :: boolean(),
+    Prefix    :: boolean() | prefix | suffix.
+
+date_value_range_processor(Server, Slot, Str, Prefix, EpochYear, PreferMDY) ->
+    GenFn1 = value_range_processor_gen(Slot, Str, Prefix),
+    GenFn = 
+        fun(State) ->
+            {ok, Bin@} = GenFn1(State),
+            Bin@ = append_int(EpochYear, Bin@),
+            Bin@ = append_boolean(PreferMDY, Bin@),
+            {ok, Bin@}
+        end,
+    xapian_server:internal_create_resource(Server, 
+                                           date_value_range_processor5, GenFn).
+
+
+-spec number_value_range_processor(x_server(), Slot, Str, Prefix) ->
+    x_resource() when
+    Slot      :: xapian_type:x_slot_value(),
+    Str       :: xapian_type:x_string(),
+    Prefix    :: boolean() | prefix | suffix.
+
+number_value_range_processor(Server, Slot, Str, Prefix) ->
+    GenFn = value_range_processor_gen(Slot, Str, Prefix),
+    xapian_server:internal_create_resource(Server, 
+                                           number_value_range_processor3, GenFn).
+
+
+-spec number_value_range_processor(x_server(), Slot) -> x_resource() when
+    Slot      :: xapian_type:x_slot_value().
+
+number_value_range_processor(Server, Slot) ->
+    GenFn = slot_gen(Slot),
+    xapian_server:internal_create_resource(Server, 
+                                           number_value_range_processor1, GenFn).
+
+
+-spec string_value_range_processor(x_server(), Slot, Str, Prefix) ->
+    x_resource() when
+    Slot      :: xapian_type:x_slot_value(),
+    Str       :: xapian_type:x_string(),
+    Prefix    :: boolean() | prefix | suffix.
+
+string_value_range_processor(Server, Slot, Str, Prefix) ->
+    GenFn = value_range_processor_gen(Slot, Str, Prefix),
+    xapian_server:internal_create_resource(Server, 
+                                           string_value_range_processor3, GenFn).
+
+
+-spec string_value_range_processor(x_server(), Slot) -> x_resource() when
+    Slot      :: xapian_type:x_slot_value().
+
+string_value_range_processor(Server, Slot) ->
+    GenFn = slot_gen(Slot),
+    xapian_server:internal_create_resource(Server, 
+                                           string_value_range_processor1, GenFn).
+
+
+value_range_processor_gen(Slot, Str, Prefix) ->
+    fun(State) ->
+        SlotNum = xapian_server:name_to_slot(State, Slot),
+        Bin@ = append_uint(SlotNum, <<>>),
+        Bin@ = append_string(Str, Bin@),
+        Bin@ = append_boolean(handle_prefix_atom(Prefix), Bin@),
+        {ok, Bin@}
+    end.
+
+slot_gen(Slot) ->
+    fun(State) -> 
+        SlotNum = xapian_server:name_to_slot(State, Slot),
+        {ok, append_uint(SlotNum, <<>>)} 
+    end.
+
+handle_prefix_atom(prefix) -> true;
+handle_prefix_atom(suffix) -> false.
 
 
 %% ------------------------------------------------------------------

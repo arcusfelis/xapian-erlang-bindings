@@ -21,8 +21,8 @@ template class ObjectRegister<const Xapian::Query>;
 template class ObjectRegister<const Xapian::MatchDecider>;
 template class ObjectRegister<const Xapian::Stem>;
 template class ObjectRegister<const Xapian::ExpandDecider>;
-template class ObjectRegister<const Xapian::DateValueRangeProcessor>;
 template class ObjectRegister<SpyController>;
+template class ObjectRegister<Xapian::ValueRangeProcessor>;
 
 // used in user_resources
 template class ObjectRegister<UserResource>;

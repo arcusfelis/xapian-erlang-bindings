@@ -45,8 +45,8 @@ class Driver
     ObjectRegister<const Xapian::MatchDecider>  m_match_decider_store;
     ObjectRegister<const Xapian::Stem>          m_stem_store;
     ObjectRegister<const Xapian::ExpandDecider> m_expand_decider_store;
-    ObjectRegister<const Xapian::DateValueRangeProcessor> 
-        m_date_value_range_processor_store;
+    ObjectRegister<const Xapian::ValueRangeProcessor> 
+        m_value_range_processor_store;
     ObjectRegister<SpyController>               m_match_spy_store;
 
     /**

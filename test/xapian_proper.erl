@@ -75,7 +75,7 @@ x_query() ->
 -spec x_query_value() -> xp_generator().
 x_query_value() ->
     #x_query_value{
-        op = oneof(['VALUE GE', 'VALUE LE', greater, less, lower]),
+        op = oneof(['VALUE GE', 'VALUE LE', greater, less, lower, equal]),
         slot = non_neg_integer(),
         value = x_string()
     }.

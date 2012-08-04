@@ -75,6 +75,8 @@ value_to_float_value(Field) -> Field.
 %% * freq
 %% * value
 %% * positions
+%%
+%% Only `freq' and `value' can be used with `Xapian::ValueCountMatchSpy'.
 record(TupleName, TupleFields) ->
     #rec{name=TupleName, fields=TupleFields}.
 

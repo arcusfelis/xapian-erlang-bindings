@@ -45,6 +45,7 @@
          append_slot/2,
          append_slot/3,
          append_slots/3,
+         append_slots_with_order/3,
          append_value/2,
          append_terms/2,
          append_floats/2
@@ -205,6 +206,21 @@ append_slots(N2S, Slots, Bin) ->
     BadValue = bad_value(),
     <<Bin/binary, SlotsBin/binary, BadValue/binary>>.
 
+
+append_slots_with_order(N2S, Slots, Bin) ->
+    ValueAndOrders = [ slot_id_and_order(Slot, N2S) || Slot <- Slots ],
+    SlotsBin = 
+    <<  <<Value:32/native-unsigned-integer,
+           Order:8/native-unsigned-integer>>  
+            || {Value, Order} <- ValueAndOrders >>,
+    BadValue = bad_value(),
+    <<Bin/binary, SlotsBin/binary, BadValue/binary>>.
+
+
+slot_id_and_order({reverse, Value}, N2S) ->
+    {slot_id(Value, N2S), 1}; %% reverse = true
+slot_id_and_order(Value, N2S) ->
+    {slot_id(Value, N2S), 0}. %% reverse = false (default)
 
 bad_value() ->      
     <<(bnot 0):32>>.

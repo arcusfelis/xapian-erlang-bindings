@@ -82,8 +82,8 @@ Driver::Driver(MemoryManager& mm, ResourceGenerator& generator)
     m_stores.add(ResourceType::MATCH_DECIDER,  &m_match_decider_store);
     m_stores.add(ResourceType::STEM,           &m_stem_store);
     m_stores.add(ResourceType::EXPAND_DECIDER, &m_expand_decider_store);
-    m_stores.add(ResourceType::DATE_VALUE_RANGE_PROCESSOR, 
-        &m_date_value_range_processor_store);
+    m_stores.add(ResourceType::VALUE_RANGE_PROCESSOR, 
+        &m_value_range_processor_store);
     m_stores.add(ResourceType::MATCH_SPY,      &m_match_spy_store);
     m_stores.add(ResourceType::DOCUMENT,       &m_document_store);
 

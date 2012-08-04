@@ -53,11 +53,73 @@ createMultiValueKeyMaker(ResourceManager& /*manager*/, ParamDecoder& params)
 {
     Xapian::MultiValueKeyMaker* km = new Xapian::MultiValueKeyMaker();
     uint32_t slot;
+    uint8_t  is_reversed;
     while ( (slot = params) != Xapian::BAD_VALUENO )
-        km->add_value(slot);
+    { 
+        is_reversed = params;
+        km->add_value(slot, is_reversed);
+    }
     return new KeyMakerController(km);
 }
 
+
+ResourceObjectP
+createDateValueRangeProcessor3(ResourceManager& /*manager*/, ParamDecoder& params)
+{
+    uint32_t slot       = params;
+     int32_t epoch_year = params;
+    uint8_t  prefer_mdy = params;
+    return new Xapian::DateValueRangeProcessor(slot, prefer_mdy, epoch_year);
+}
+
+
+ResourceObjectP
+createDateValueRangeProcessor5(ResourceManager& /*manager*/, ParamDecoder& params)
+{
+    uint32_t    slot          = params;
+    const std::string& str    = params;
+    uint8_t     prefix        = params;
+     int32_t    epoch_year    = params;
+    uint8_t     prefer_mdy    = params;
+    return new Xapian::DateValueRangeProcessor(
+              slot, str, prefix, prefer_mdy, epoch_year);
+}
+
+
+ResourceObjectP
+createNumberValueRangeProcessor1(ResourceManager& /*m*/, ParamDecoder& params)
+{
+    uint32_t slot         = params;
+    return new Xapian::NumberValueRangeProcessor(slot);
+}
+
+
+ResourceObjectP
+createNumberValueRangeProcessor3(ResourceManager& /*m*/, ParamDecoder& params)
+{
+    uint32_t slot          = params;
+    const std::string& str = params;
+    uint8_t  prefix        = params;
+    return new Xapian::NumberValueRangeProcessor(slot, str, prefix);
+}
+
+
+ResourceObjectP
+createStringValueRangeProcessor1(ResourceManager& /*m*/, ParamDecoder& params)
+{
+    uint32_t slot         = params;
+    return new Xapian::StringValueRangeProcessor(slot);
+}
+
+
+ResourceObjectP
+createStringValueRangeProcessor3(ResourceManager& /*m*/, ParamDecoder& params)
+{
+    uint32_t slot          = params;
+    const std::string& str = params;
+    uint8_t  prefix        = params;
+    return new Xapian::StringValueRangeProcessor(slot, str, prefix);
+}
 
 void
 registerUserCallbacks(ResourceGenerator& generator)
@@ -80,6 +142,30 @@ registerUserCallbacks(ResourceGenerator& generator)
 
     generator.add(new UserResource(ResourceType::KEY_MAKER, 
         std::string("multi_value_key_maker"), &createMultiValueKeyMaker));
+
+    generator.add(new UserResource(ResourceType::VALUE_RANGE_PROCESSOR, 
+        std::string("date_value_range_processor3"), 
+        &createDateValueRangeProcessor3));
+
+    generator.add(new UserResource(ResourceType::VALUE_RANGE_PROCESSOR, 
+        std::string("date_value_range_processor5"), 
+        &createDateValueRangeProcessor5));
+
+    generator.add(new UserResource(ResourceType::VALUE_RANGE_PROCESSOR, 
+        std::string("number_value_range_processor1"), 
+        &createNumberValueRangeProcessor1));
+
+    generator.add(new UserResource(ResourceType::VALUE_RANGE_PROCESSOR, 
+        std::string("number_value_range_processor3"), 
+        &createNumberValueRangeProcessor3));
+
+    generator.add(new UserResource(ResourceType::VALUE_RANGE_PROCESSOR, 
+        std::string("string_value_range_processor1"), 
+        &createStringValueRangeProcessor1));
+
+    generator.add(new UserResource(ResourceType::VALUE_RANGE_PROCESSOR, 
+        std::string("string_value_range_processor3"), 
+        &createStringValueRangeProcessor3));
 }
 
 

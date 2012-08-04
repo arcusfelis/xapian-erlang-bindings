@@ -701,11 +701,11 @@ value_count_match_spy_gen() ->
         Meta = xapian_term_record:record(spy_term, 
                     record_info(fields, spy_term)),
 
-        %% These elements sorted by value.
+        %% These elements are sorted by value.
         Table = xapian_term_qlc:value_count_match_spy_table(
             Server, SpySlot1, Meta),
 
-        %% These elements sorted by freq.
+        %% These elements are sorted by freq.
         TopTable = xapian_term_qlc:top_value_count_match_spy_table(
             Server, SpySlot1, 100, Meta),
 
@@ -2137,9 +2137,11 @@ remote_db_test() ->
 
 
 get_state_fields_gen() ->
+    %% Here check, that value names are stored in the orddict correctly.
+    %% Don't change the order of `#x_value_name' here!
     Params = 
-        [ #x_value_name{slot = 1, name = slot1, type = float}
-        , #x_value_name{slot = 2, name = slot2, type = string}
+        [ #x_value_name{slot = 2, name = slot2, type = string}
+        , #x_value_name{slot = 1, name = slot1, type = float}
         ],
     {ok, Server} = ?SRV:start_link([], Params),
 

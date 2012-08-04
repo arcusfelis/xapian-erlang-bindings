@@ -205,7 +205,7 @@
 %% ```
 -record(x_query_value, {
     %% `'VALUE GE'` (`greater`) or `'VALUE LE'` (`less`, `lower`)
-    op = ?REQUIRED :: 'VALUE GE' | 'VALUE LE' | greater | less | lower,
+    op = equal :: 'VALUE GE' | 'VALUE LE' | greater | less | lower | equal,
     slot :: xapian_type:x_slot() | xapian_type:x_slot_name(),
     value :: xapian_type:x_string()
 }).
@@ -271,6 +271,9 @@
     type = ?REQUIRED :: xapian_type:x_order_type(),
     value :: xapian_type:x_slot_value() 
            | xapian_type:x_resource(), %% KeyMaker resource
+    %% This field means, that the values in the slot or returned by the resource 
+    %% will be in the reversed order.
+    %% Documents are never sorted by relevance in the reversed order.
     is_reversed = false :: boolean()
 }).
 

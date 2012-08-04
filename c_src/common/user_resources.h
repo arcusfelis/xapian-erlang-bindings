@@ -38,7 +38,7 @@ public:
         MATCH_DECIDER   = 6,
         STEM            = 7,
         EXPAND_DECIDER  = 8,
-        DATE_VALUE_RANGE_PROCESSOR = 9,
+        VALUE_RANGE_PROCESSOR = 9,
         MATCH_SPY       = 10,
         DOCUMENT        = 11,
         LAST_TYPE       = 11

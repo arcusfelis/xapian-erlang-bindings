@@ -26,6 +26,10 @@ encode(#x_query{op=Op, value=Value, parameter=Param}, N2S, S2T, Bin@) ->
     Bin@ = append_query(Value, N2S, S2T, Bin@),
     Bin@;
 
+encode(#x_query_value{op=equal, slot=Slot, value=Value}, N2S, S2T, Bin) ->
+    Q = #x_query_value_range{op=equal, slot=Slot, from=Value, to=Value},
+    encode(Q, N2S, S2T, Bin);
+
 encode(#x_query_value{op=Op, slot=Slot, value=Value}, N2S, S2T, Bin@) ->
     SlotId = slot_id(Slot, N2S),
     Bin@ = append_type(query_value, Bin@),
