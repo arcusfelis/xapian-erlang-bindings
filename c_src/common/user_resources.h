@@ -177,6 +177,13 @@ class ResourceGenerator
  */
 class ResourceManager
 {
+    enum ResourceSchemaType
+    {
+        SCHEMA_TYPE_REFERENCE    = 1,
+        SCHEMA_TYPE_CONSTRUCTOR  = 2
+    };
+
+
     ResourceGenerator& 
     m_generator;
 
@@ -277,6 +284,50 @@ class ResourceManager
 
         // Register the object in the store and return its number
         return store.putVoidPointer(resource_object);
+    }
+
+
+    ResourceObjectP
+    extract(ParamDecoder& params, ResourceValidObjectType expected_group_type)
+    {
+        switch(uint8_t schema_type = params)
+        {
+            case SCHEMA_TYPE_REFERENCE:
+            {
+                uint8_t   passed_group_type = params;
+                if (passed_group_type != expected_group_type)
+                    throw GroupResourceTypeMismatchDriverError(
+                            passed_group_type, expected_group_type);
+
+                ResourceObjectNum   resource_num = params;
+                ObjectBaseRegister& reg = get(expected_group_type);
+                return reg.getVoidPointer(resource_num);
+                break;
+            }
+
+            case SCHEMA_TYPE_CONSTRUCTOR:
+            {
+                // Get type of resource
+                ResourceObjectType          passed_group_type = params;
+                if (passed_group_type != expected_group_type)
+                    throw GroupResourceTypeMismatchDriverError(
+                            passed_group_type, expected_group_type);
+
+                // Create an object
+                ResourceObjectP resource_object = m_generator.create(*this, params);
+
+                // Get a store for the object
+                ObjectBaseRegister& store = get(expected_group_type);
+
+                // Register the object in the store and return its number
+                ResourceObjectNum   resource_num = store.putVoidPointer(resource_object);
+                return resource_object;
+                break;
+            }
+
+            default:                                
+                throw BadCommandDriverError(schema_type);
+        }
     }
 };
 

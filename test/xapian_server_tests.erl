@@ -1022,10 +1022,12 @@ stemmer_test() ->
 
 query_parser_test() ->
     Path = testdb_path(parser),
-    Params = [write, create, overwrite],
+    Params = [write, create, overwrite, 
+              #x_value_name{slot = 0, name = num, type = float}],
     Document =
         [ #x_data{value = "My test data as iolist (NOT INDEXED)"} 
         , #x_text{value = "The quick brown fox jumps over the lazy dog."} 
+        , #x_value{slot = num, value = 1} 
         ],
     {ok, Server} = ?SRV:start_link(Path, Params),
     try
@@ -1047,6 +1049,8 @@ query_parser_test() ->
         P1 = #x_query_parser{},
         P2 = #x_query_parser{default_op='AND'},
         P4 = #x_query_parser{name=standard},
+        NVRP = xapian_resource:number_value_range_processor(num, "mm", suffix),
+        P5 = #x_query_parser{value_range_processors = [NVRP]},
 
         Q1 = #x_query_string{parser=P1, value="dog"},
         Q2 = #x_query_string{parser=P2, value="dog fox"},
@@ -1055,10 +1059,13 @@ query_parser_test() ->
         Q3 = #x_query_string{parser=standard, value="dog"},
         Q4 = #x_query_string{parser=P4, value="dog"},
 
+        Q5 = #x_query_string{parser=P5, value="1..2mm"},
+
         F(Q1),
         F(Q2),
         F(Q3),
-        F(Q4)
+        F(Q4),
+        F(Q5)
     after
         ?SRV:close(Server)
     end.
@@ -1562,13 +1569,12 @@ enquire_sort_order_case(Server) ->
 %% TODO: more strict testing
 enquire_key_maker_case(Server) ->
     Case = fun() ->
-        KeyMaker = xapian_resource:multi_value_key_maker(Server, [author, title]),
-        Order = #x_sort_order{type=key, value=KeyMaker},
+        KeyMakerCon = xapian_resource:multi_value_key_maker([author, title]),
+        Order = #x_sort_order{type=key, value=KeyMakerCon},
         %% telecom OR game
         Query = #x_query{op = 'OR', value = ["telecom", "game"]},
         EnquireDescriptor = #x_enquire{order=Order, value=Query},
         AllIds = all_record_ids(Server, EnquireDescriptor),
-        xapian_server:release_resource(Server, KeyMaker),
 
         %% Check documents order
         %% Code = 2, Software = 1
@@ -1788,7 +1794,7 @@ advanced_enquire_weight_case(Server) ->
     Case = fun() ->
         Query = #x_enquire{
             value = "Erlang",
-            weighting_scheme = xapian_resource:bool_weight(Server)
+            weighting_scheme = xapian_resource:bool_weight()
         },
         EnquireResourceId = ?SRV:enquire(Server, Query),
         ?assert(is_reference(EnquireResourceId)),
@@ -2027,6 +2033,7 @@ mset_table(Server, Query, mdocument) ->
 mset_table(Server, Query, Meta) ->
     EnquireResourceId = ?SRV:enquire(Server, Query),
     MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
+    ?assertEqual(?SRV:resource_info(Server, EnquireResourceId, type), enquire),
     Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
     %% Table has a pointer on resources.
     ?SRV:release_resource(Server, EnquireResourceId),

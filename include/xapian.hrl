@@ -232,7 +232,8 @@
     stemming_strategy = default :: none | some | all | default,
     max_wildcard_expansion = unlimited :: non_neg_integer() | unlimited,
     default_op = 'OR' :: xapian_type:x_operator(),
-    prefixes = [] :: [xapian_type:x_prefix_name()]
+    prefixes = [] :: [xapian_type:x_prefix_name()],
+    value_range_processors = [] :: [xapian_type:x_resource()]
 }).
 
 

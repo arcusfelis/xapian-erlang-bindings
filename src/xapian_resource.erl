@@ -1,26 +1,30 @@
 -module(xapian_resource).
 
-
 %% Weight
 -export([
-    bool_weight/1, 
-    bm25_weight/2, 
-    bm25_weight/6, 
-    trad_weight/1, 
-    trad_weight/2]).
+    bool_weight/0, 
+    bm25_weight/1, 
+    bm25_weight/5, 
+    trad_weight/0, 
+    trad_weight/1]).
 
 %% KeyMaker
 -export([
-    multi_value_key_maker/2]).
+    multi_value_key_maker/1]).
 
 %% ValueRangeProcessor
 -export([
-    string_value_range_processor/2,
-    string_value_range_processor/4,
-    number_value_range_processor/2,
-    number_value_range_processor/4,
-    date_value_range_processor/4,
-    date_value_range_processor/6
+    string_value_range_processor/1,
+    string_value_range_processor/3,
+    number_value_range_processor/1,
+    number_value_range_processor/3,
+    date_value_range_processor/3,
+    date_value_range_processor/5
+    ]).
+
+%% MatchSpy
+-export([
+    value_count_match_spy/1
     ]).
 
 -import(xapian_common, [
@@ -29,6 +33,11 @@
         append_boolean/2, 
         append_uint/2,
         append_int/2]).
+
+%% internal
+-export([
+    create/2,
+    compile/4]).
 
 -compile({parse_transform, seqbind}).
 
@@ -41,19 +50,31 @@
 -define(RES, ?MODULE).
 -endif.
 
--type x_server()        :: xapian_type:x_server().
--type x_resource()      :: xapian_type:x_resource().
+-type x_resource_con()      :: xapian_type:x_resource_con().
+-record(resourse_const, {name, generator}).
+
+con(Name, Gen) ->
+    #resourse_const{name = Name, generator = Gen}.
+
+con(Name) ->
+    #resourse_const{name = Name}.
+
+%% @doc Append the second parameter as a binary.
+%% @see xapian_server:compile_resource/3
+compile(State, #resourse_const{name = TypeName, generator = Gen}, TypeGroupName, Bin) ->
+    xapian_server:execute_generator(State, TypeName, TypeGroupName, Gen, Bin).
+
+create(Server, #resourse_const{name = TypeName, generator = Gen}) ->
+    xapian_server:internal_create_resource(Server, TypeName, Gen).
+
+bool_weight() ->
+    con(bool_weight).
 
 
-bool_weight(Server) ->
-    xapian_server:internal_create_resource(Server, bool_weight).
+bm25_weight(#x_bm25_weight{k1=K1, k2=K2, l3=K3, b=B, min_normlen=MinNormLen}) ->
+    bm25_weight(K1, K2, K3, B, MinNormLen).
 
-
-bm25_weight(Server, 
-    #x_bm25_weight{k1=K1, k2=K2, l3=K3, b=B, min_normlen=MinNormLen}) ->
-    bm25_weight(Server, K1, K2, K3, B, MinNormLen).
-
-bm25_weight(Server, K1, K2, K3, B, MinNormLen) ->
+bm25_weight(K1, K2, K3, B, MinNormLen) ->
     GenFn = 
         fun() ->
             Bin@ = <<>>,
@@ -64,40 +85,40 @@ bm25_weight(Server, K1, K2, K3, B, MinNormLen) ->
             Bin@ = append_double(MinNormLen, Bin@),
             {ok, Bin@}
         end,
-    xapian_server:internal_create_resource(Server, bm25_weight, GenFn).
+    con(bm25_weight, GenFn).
     
 
-trad_weight(Server) ->
-    trad_weight(Server, 1).
+trad_weight() ->
+    trad_weight(1).
 
-trad_weight(Server, K) ->
+trad_weight(K) ->
     GenFn = 
         fun() ->
             {ok, append_double(K, <<>>)}
         end,
-    xapian_server:internal_create_resource(Server, trad_weight, GenFn).
+    con(trad_weight, GenFn).
 
 
--spec multi_value_key_maker(x_server(), Slots) -> x_resource() when
+-spec multi_value_key_maker(Slots) -> x_resource_con() when
     Slots :: [xapian_type:x_slot_value() | ValueWithReversedOrder],
     ValueWithReversedOrder :: {reverse, xapian_type:x_slot_value()}.
 
-multi_value_key_maker(Server, Slots) ->
+multi_value_key_maker(Slots) ->
     GenFn = 
         fun(State) ->
             N2S = xapian_server:name_to_slot(State),
             {ok, xapian_common:append_slots_with_order(N2S, Slots, <<>>)}
         end,
-    xapian_server:internal_create_resource(Server, multi_value_key_maker, GenFn).
+    con(multi_value_key_maker, GenFn).
 
 
--spec date_value_range_processor(x_server(), Slot, EpochYear, PreferMDY) -> 
-    x_resource() when
+-spec date_value_range_processor(Slot, EpochYear, PreferMDY) -> 
+    x_resource_con() when
     Slot      :: xapian_type:x_slot_value(),
     EpochYear :: integer(),
     PreferMDY :: boolean().
 
-date_value_range_processor(Server, Slot, EpochYear, PreferMDY) ->
+date_value_range_processor(Slot, EpochYear, PreferMDY) ->
     GenFn = 
         fun(State) ->
             SlotNum = xapian_server:name_to_slot(State, Slot),
@@ -106,20 +127,19 @@ date_value_range_processor(Server, Slot, EpochYear, PreferMDY) ->
             Bin@ = append_boolean(PreferMDY, Bin@),
             {ok, Bin@}
         end,
-    xapian_server:internal_create_resource(Server, 
-                                           date_value_range_processor3, GenFn).
+    con(date_value_range_processor3, GenFn).
 
 
--spec date_value_range_processor(x_server(), Slot, Str, Prefix,
+-spec date_value_range_processor(Slot, Str, Prefix,
                                  EpochYear, PreferMDY) -> 
-    x_resource() when
+    x_resource_con() when
     Slot      :: xapian_type:x_slot_value(),
     Str       :: xapian_type:x_string(),
     EpochYear :: integer(),
     PreferMDY :: boolean(),
     Prefix    :: boolean() | prefix | suffix.
 
-date_value_range_processor(Server, Slot, Str, Prefix, EpochYear, PreferMDY) ->
+date_value_range_processor(Slot, Str, Prefix, EpochYear, PreferMDY) ->
     GenFn1 = value_range_processor_gen(Slot, Str, Prefix),
     GenFn = 
         fun(State) ->
@@ -128,50 +148,45 @@ date_value_range_processor(Server, Slot, Str, Prefix, EpochYear, PreferMDY) ->
             Bin@ = append_boolean(PreferMDY, Bin@),
             {ok, Bin@}
         end,
-    xapian_server:internal_create_resource(Server, 
-                                           date_value_range_processor5, GenFn).
+    con(date_value_range_processor5, GenFn).
 
 
--spec number_value_range_processor(x_server(), Slot, Str, Prefix) ->
-    x_resource() when
+-spec number_value_range_processor(Slot, Str, Prefix) ->
+    x_resource_con() when
     Slot      :: xapian_type:x_slot_value(),
     Str       :: xapian_type:x_string(),
     Prefix    :: boolean() | prefix | suffix.
 
-number_value_range_processor(Server, Slot, Str, Prefix) ->
+number_value_range_processor(Slot, Str, Prefix) ->
     GenFn = value_range_processor_gen(Slot, Str, Prefix),
-    xapian_server:internal_create_resource(Server, 
-                                           number_value_range_processor3, GenFn).
+    con(number_value_range_processor3, GenFn).
 
 
--spec number_value_range_processor(x_server(), Slot) -> x_resource() when
+-spec number_value_range_processor(Slot) -> x_resource_con() when
     Slot      :: xapian_type:x_slot_value().
 
-number_value_range_processor(Server, Slot) ->
+number_value_range_processor(Slot) ->
     GenFn = slot_gen(Slot),
-    xapian_server:internal_create_resource(Server, 
-                                           number_value_range_processor1, GenFn).
+    con(number_value_range_processor1, GenFn).
 
 
--spec string_value_range_processor(x_server(), Slot, Str, Prefix) ->
-    x_resource() when
+-spec string_value_range_processor(Slot, Str, Prefix) ->
+    x_resource_con() when
     Slot      :: xapian_type:x_slot_value(),
     Str       :: xapian_type:x_string(),
     Prefix    :: boolean() | prefix | suffix.
 
-string_value_range_processor(Server, Slot, Str, Prefix) ->
+string_value_range_processor(Slot, Str, Prefix) ->
     GenFn = value_range_processor_gen(Slot, Str, Prefix),
-    xapian_server:internal_create_resource(Server, 
-                                           string_value_range_processor3, GenFn).
+    con(string_value_range_processor3, GenFn).
 
 
--spec string_value_range_processor(x_server(), Slot) -> x_resource() when
+-spec string_value_range_processor(Slot) -> x_resource_con() when
     Slot      :: xapian_type:x_slot_value().
 
-string_value_range_processor(Server, Slot) ->
+string_value_range_processor(Slot) ->
     GenFn = slot_gen(Slot),
-    xapian_server:internal_create_resource(Server, 
-                                           string_value_range_processor1, GenFn).
+    con(string_value_range_processor1, GenFn).
 
 
 value_range_processor_gen(Slot, Str, Prefix) ->
@@ -192,6 +207,19 @@ slot_gen(Slot) ->
 handle_prefix_atom(prefix) -> true;
 handle_prefix_atom(suffix) -> false.
 
+
+-spec value_count_match_spy(Slot) -> Spy
+    when Slot :: xapian_type:x_slot_value(),
+          Spy :: xapian_type:x_resource_con().
+
+%% Create Xapian::ValueCountMatchSpy Object as a resource
+value_count_match_spy(Slot) ->
+    GenFn = 
+        fun(State) ->
+            SlotNo = xapian_server:name_to_slot(State, Slot),
+            {ok, xapian_common:append_slot(SlotNo, <<>>)}
+        end,
+    con(value_count_match_spy, GenFn).
 
 %% ------------------------------------------------------------------
 %% Tests
@@ -228,7 +256,7 @@ resource_clean(Server) ->
 
 bool_weight_case(Server) ->
     Case = fun() ->
-        ResourceId = ?RES:bool_weight(Server),
+            ResourceId = ?SRV:create_resource(Server, ?RES:bool_weight()),
         io:format(user, "Xapian::BoolWeight ~p~n", [ResourceId])
         end,
     {"Check creation of Xapian::BoolWeight", Case}.
@@ -236,7 +264,7 @@ bool_weight_case(Server) ->
 
 bm25_weight_case(Server) ->
     Case = fun() ->
-        ResourceId = ?RES:bm25_weight(Server, #x_bm25_weight{}),
+        ResourceId = ?SRV:create_resource(Server, ?RES:bm25_weight(#x_bm25_weight{})),
         io:format(user, "Xapian::BM25Weight ~p~n", [ResourceId])
         end,
     {"Check creation of Xapian::BM25Weight", Case}.
@@ -244,7 +272,7 @@ bm25_weight_case(Server) ->
 
 trad_weight_case(Server) ->
     Case = fun() ->
-        ResourceId = ?RES:trad_weight(Server),
+        ResourceId = ?SRV:create_resource(Server, ?RES:trad_weight()),
         io:format(user, "Xapian::TradWeight ~p~n", [ResourceId])
         end,
     {"Check creation of Xapian::TradWeight", Case}.

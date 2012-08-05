@@ -57,8 +57,12 @@
          index_one_of/2,
          slot_id/2, 
          slot_type/2, 
-         fix_value/3]).
+         fix_value/3,
+         resource_reference_to_number/3,
+         append_resource/4]).
 
+
+-include("xapian.hrl").
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -418,3 +422,23 @@ read_unknown_type_value(Bin1) ->
 
 value_type(0) -> string;
 value_type(1) -> double.
+
+
+%% @doc Convert a resource reference to its number.
+resource_reference_to_number(Register, ResRef, Type) ->
+    case xapian_register:get(Register, ResRef) of
+        {ok, #resource{type=Type, number=ResNum}} ->
+            {ok, ResNum};
+        {error, _} = Error ->
+            Error;
+        {ok, _Res} ->
+            {error, bad_resource_type}
+    end.
+
+
+%% @doc Append a resource reference or constructor.
+append_resource(State, Res, Type, Bin) ->
+    {ok, F} = xapian_server:compile_resource(State, Res, Type),
+    F(Bin).
+
+

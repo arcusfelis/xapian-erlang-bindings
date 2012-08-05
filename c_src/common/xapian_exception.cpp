@@ -127,6 +127,23 @@ ElementNotFoundDriverError::buildString(uint32_t num)
 
 
 // -------------------------------------------------------------------
+// GroupResourceTypeMismatchDriverError
+// -------------------------------------------------------------------
+GroupResourceTypeMismatchDriverError::GroupResourceTypeMismatchDriverError(
+        uint32_t passed, uint32_t expected) : 
+    DriverRuntimeError(TYPE, buildString(passed, expected)) {}
+
+const std::string 
+GroupResourceTypeMismatchDriverError::buildString(uint32_t passed, uint32_t expected)
+{
+    std::stringstream ss;
+    ss << "Element with the group type = " << passed 
+       << " was passed, but the " << expected << " group type was expected.";
+    return ss.str();
+}
+
+
+// -------------------------------------------------------------------
 // MatchSpyFinalizedDriverError
 // -------------------------------------------------------------------
 MatchSpyFinalizedDriverError::MatchSpyFinalizedDriverError() : 
@@ -144,5 +161,6 @@ REG_TYPE(NotWritableDatabaseError)
 REG_TYPE(DbIsNotReadyDriverError)
 REG_TYPE(ElementNotFoundDriverError)
 REG_TYPE(MatchSpyFinalizedDriverError)
+REG_TYPE(GroupResourceTypeMismatchDriverError)
 
 XAPIAN_ERLANG_NS_END

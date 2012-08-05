@@ -555,6 +555,7 @@ Driver::document(PR)
 void
 Driver::valueMatchSpyToSlot(PR)
 {
+    // Number of created resource is expected.
     uint32_t   resource_num = params;
     SpyController&
     spy = *m_match_spy_store.get(resource_num);
@@ -576,9 +577,7 @@ Driver::releaseResource(ParamDecoder& params)
 void 
 Driver::matchSet(PR)
 {
-    uint32_t   enquire_num = params;
-    Xapian::Enquire& enquire = m_enquire_store.get(enquire_num)
-        ->getEnquire();
+    Xapian::Enquire& enquire = extractEnquireController(params).getEnquire();
 
     Xapian::doccount    first, maxitems, checkatleast;
     first = params;
@@ -588,12 +587,11 @@ Driver::matchSet(PR)
         : params;
     checkatleast = params;
 
-
-    while (const uint32_t num = params)
+    /* Read a count of passed Spy objects. */
+    uint32_t count = params;
+    while (count--)
     {
-        SpyController&
-        spy = *m_match_spy_store.get(num);
-
+        SpyController& spy = extractSpy(params);
         if (!spy.is_finalized())
         {
             // It can be added just once
@@ -1039,10 +1037,7 @@ Driver::fillEnquire(ParamDecoder& params, EnquireController& enquire_ctrl)
 
     case EC_ORDER:
         {
-        uint8_t type   = params;
-        bool reverse   = params;
-        uint32_t value = params;
-        fillEnquireOrder(enquire_ctrl, type, value, reverse);
+        fillEnquireOrder(enquire_ctrl, params);
         break;
         }
 
@@ -1059,9 +1054,7 @@ Driver::fillEnquire(ParamDecoder& params, EnquireController& enquire_ctrl)
 
     case EC_WEIGHTING_SCHEME:
         {
-        uint32_t num = params;
-        const Xapian::Weight& 
-        weight = *m_weight_store.get(num);
+        const Xapian::Weight& weight = extractWeight(params);
         enquire.set_weighting_scheme(weight);
         break;
         }
@@ -1091,16 +1084,17 @@ Driver::fillEnquire(ParamDecoder& params, EnquireController& enquire_ctrl)
 
 
 void
-Driver::fillEnquireOrder(EnquireController& enquire_ctrl, 
-    const uint8_t type, const uint32_t value, const bool reverse)
+Driver::fillEnquireOrder(EnquireController& enquire_ctrl, ParamDecoder& params)
 {
     Xapian::Enquire     enquire = enquire_ctrl.getEnquire();
+    uint8_t type   = params;
+    bool reverse   = params;
 
     switch(type)
     {
     case OT_KEY:
         {
-        KeyMakerController& kmc = *m_key_maker_store.get(value);
+        KeyMakerController& kmc = extractKeyMaker(params);
         Xapian::KeyMaker* sorter = kmc.getKeyMaker();
         enquire_ctrl.addKeyMakerController(kmc);
         enquire.set_sort_by_key(sorter, reverse);
@@ -1109,7 +1103,7 @@ Driver::fillEnquireOrder(EnquireController& enquire_ctrl,
 
     case OT_KEY_RELEVANCE:
         {
-        KeyMakerController& kmc = *m_key_maker_store.get(value);
+        KeyMakerController& kmc = extractKeyMaker(params);
         Xapian::KeyMaker* sorter = kmc.getKeyMaker();
         enquire_ctrl.addKeyMakerController(kmc);
         enquire.set_sort_by_key_then_relevance(sorter, reverse);
@@ -1118,7 +1112,7 @@ Driver::fillEnquireOrder(EnquireController& enquire_ctrl,
 
     case OT_RELEVANCE_KEY:
         {
-        KeyMakerController& kmc = *m_key_maker_store.get(value);
+        KeyMakerController& kmc = extractKeyMaker(params);
         Xapian::KeyMaker* sorter = kmc.getKeyMaker();
         enquire_ctrl.addKeyMakerController(kmc);
         enquire.set_sort_by_relevance_then_key(sorter, reverse);
@@ -1126,16 +1120,25 @@ Driver::fillEnquireOrder(EnquireController& enquire_ctrl,
         }
 
     case OT_VALUE:
+        {
+        uint32_t value = params;
         enquire.set_sort_by_value(value, reverse);
         break;
+        }
 
     case OT_RELEVANCE_VALUE:
+        {
+        uint32_t value = params;
         enquire.set_sort_by_relevance_then_value(value, reverse);
         break;
+        }
 
     case OT_VALUE_RELEVANCE:
+        {
+        uint32_t value = params;
         enquire.set_sort_by_value_then_relevance(value, reverse);
         break;
+        }
 
     default:
         throw BadCommandDriverError(type);
@@ -1216,6 +1219,13 @@ Driver::readParser(ParamDecoder& params)
     case QP_PREFIX:
         addPrefix(params, qp);
         break;
+
+    case QP_VALUE_RANGE_PROCESSOR:
+        {
+        Xapian::ValueRangeProcessor* vrp = & extractRangeProcessor(params);
+        qp.add_valuerangeprocessor(vrp);
+        break;
+        }
 
     default:
         throw BadCommandDriverError(command);
@@ -2610,6 +2620,7 @@ Driver::msetInfo(PR)
 {
     uint32_t   mset_num = params;
     Xapian::MSet& mset = *m_mset_store.get(mset_num);
+
     while (uint8_t command = params)
     switch (command)
     {

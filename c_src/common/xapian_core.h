@@ -45,7 +45,7 @@ class Driver
     ObjectRegister<const Xapian::MatchDecider>  m_match_decider_store;
     ObjectRegister<const Xapian::Stem>          m_stem_store;
     ObjectRegister<const Xapian::ExpandDecider> m_expand_decider_store;
-    ObjectRegister<const Xapian::ValueRangeProcessor> 
+    ObjectRegister<Xapian::ValueRangeProcessor> 
         m_value_range_processor_store;
     ObjectRegister<SpyController>               m_match_spy_store;
 
@@ -212,7 +212,8 @@ class Driver
         QP_MAX_WILDCARD_EXPANSION   = 3,
         QP_DEFAULT_OP               = 4,
         QP_PARSER_TYPE              = 5,
-        QP_PREFIX                   = 6
+        QP_PREFIX                   = 6,
+        QP_VALUE_RANGE_PROCESSOR    = 7
     };
 
     enum queryParserType {
@@ -457,8 +458,7 @@ class Driver
 
     void fillEnquire(ParamDecoder&, EnquireController& enquire_ctrl);
 
-    void fillEnquireOrder(EnquireController& enquire_ctrl, 
-        const uint8_t type, const uint32_t value, const bool reverse);
+    void fillEnquireOrder(EnquireController& enquire_ctrl, ParamDecoder& params);
 
     /**
      * Throws error if the database was opened only for reading.
@@ -597,6 +597,42 @@ class Driver
     static const std::string 
     decodeValue(ParamDecoder& params);
     /*! \} */
+
+
+    SpyController&
+    extractSpy(ParamDecoder& params)
+    {
+        void* ptr = m_stores.extract(params, ResourceType::MATCH_SPY);
+        return *static_cast<SpyController*>(ptr);
+    }
+
+    Xapian::ValueRangeProcessor&
+    extractRangeProcessor(ParamDecoder& params)
+    {
+        void* ptr = m_stores.extract(params, ResourceType::VALUE_RANGE_PROCESSOR);
+        return *static_cast<Xapian::ValueRangeProcessor*>(ptr);
+    }
+
+    const Xapian::Weight&
+    extractWeight(ParamDecoder& params)
+    {
+        void* ptr = m_stores.extract(params, ResourceType::WEIGHT);
+        return *static_cast<Xapian::Weight*>(ptr);
+    }
+
+    KeyMakerController&
+    extractKeyMaker(ParamDecoder& params)
+    {
+        void* ptr = m_stores.extract(params, ResourceType::KEY_MAKER);
+        return *static_cast<KeyMakerController*>(ptr);
+    }
+
+    EnquireController&
+    extractEnquireController(ParamDecoder& params)
+    {
+        void* ptr = m_stores.extract(params, ResourceType::ENQUIRE);
+        return *static_cast<EnquireController*>(ptr);
+    }
 };
 
 XAPIAN_ERLANG_NS_END

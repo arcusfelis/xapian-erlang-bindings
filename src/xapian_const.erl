@@ -20,12 +20,16 @@
          mset_info_param_id/1,
          enquire_command_id/1,
          order_type_id/1,
+         sort_order_value_type/1,
          docid_order_type_id/1,
          spy_type_id/1,
          term_field_id/1,
          document_field_id/1,
          parser_type_id/1,
+         resource_encoding_schema_id/1,
          resource_info_match_spy_field_id/1]).
+
+-compile({parse_transform, gin}).
 
 
 %% Command ids
@@ -165,7 +169,8 @@ parser_command_id(stemming_strategy)        -> 2;
 parser_command_id(max_wildcard_expansion)   -> 3;
 parser_command_id(default_op)               -> 4;
 parser_command_id(parser_type)              -> 5; 
-parser_command_id(prefix)                   -> 6.
+parser_command_id(prefix)                   -> 6;
+parser_command_id(value_range_processor)    -> 7.
 
 
 %% From `XapianErlangDriver::queryParserType'
@@ -355,6 +360,12 @@ order_type_id(relevance_value)    -> 5;
 order_type_id(value_relevance)    -> 6.
 
 
+sort_order_value_type(X) ->
+    if in(X, [key, key_relevance, relevance_key]) -> key;
+       in(X, [value, value_relevance, relevance_value]) -> value
+       end.
+
+
 docid_order_type_id(default)    -> 1;
 docid_order_type_id(asc)        -> 1;
 docid_order_type_id(desc)       -> 2;
@@ -395,3 +406,7 @@ document_field_id(db_name)     -> document_field_id(db_number).
 resource_info_match_spy_field_id(document_count) -> 1;
 resource_info_match_spy_field_id(slot)           -> 2;
 resource_info_match_spy_field_id(_)              -> undefined.
+
+
+resource_encoding_schema_id(reference)    -> 1;
+resource_encoding_schema_id(constructor)  -> 2.

@@ -112,6 +112,17 @@ class ElementNotFoundDriverError: public DriverRuntimeError
     buildString(uint32_t num);
 };
 
+class GroupResourceTypeMismatchDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    GroupResourceTypeMismatchDriverError(uint32_t passed, uint32_t expected);
+
+    static const std::string 
+    buildString(uint32_t passed, uint32_t expected);
+};
+
 class MatchSpyFinalizedDriverError: public DriverRuntimeError
 {
     static const char TYPE[];

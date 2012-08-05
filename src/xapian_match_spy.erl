@@ -8,9 +8,5 @@
 
 %% Create Xapian::ValueCountMatchSpy Object as a resource
 value_count(Server, Slot) ->
-    GenFn = 
-        fun(State) ->
-            SlotNo = xapian_server:name_to_slot(State, Slot),
-            {ok, xapian_common:append_slot(SlotNo, <<>>)}
-        end,
-    xapian_server:internal_create_resource(Server, value_count_match_spy, GenFn).
+    Con = xapian_resource:value_count_match_spy(Slot),
+    xapian_server:create_resource(Server, Con).

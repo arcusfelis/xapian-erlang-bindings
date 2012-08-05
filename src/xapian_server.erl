@@ -34,8 +34,10 @@
          match_set/2]).
 
 %% Resources
--export([release_resource/2,
+-export([create_resource/2,
+         release_resource/2,
          release_table/2]).
+
 
 %% Information
 -export([mset_info/2,
@@ -71,9 +73,12 @@
          internal_transaction_lock_server/2,
          internal_transaction_cancel/2,
 
+         internal_test_run/3,
+         execute_generator/5,
+         compile_resource/3,
+
          internal_create_resource/2,
-         internal_create_resource/3,
-         internal_test_run/3
+         internal_create_resource/3
          ]).
 
 
@@ -117,7 +122,8 @@
     append_unique_document_id/2,
     read_uint/1,
     read_uint8/1,
-    read_string/1]).
+    read_string/1,
+    resource_reference_to_number/3]).
 
 -import(xapian_const, [
     command_id/1,
@@ -448,10 +454,13 @@ match_set(Server, EnquireResource) ->
 
 %% @doc Release a resource.
 %% It will be called automaticly, if the client process is died.
+%% If a release constructor will be passed, then the error occurs.
 -spec release_resource(x_server(), x_resource()) -> ok.
-release_resource(Server, ResourceRef) ->
+release_resource(Server, ResourceRef) when is_reference(ResourceRef) ->
     call(Server, {release_resource, ResourceRef}).
 
+create_resource(Server, Con) ->
+    xapian_resource:create(Server, Con).
 
 %% @doc Clean resources allocated by the QLC table.
 -spec release_table(x_server(), x_table()) -> ok.
@@ -1277,7 +1286,7 @@ handle_call({query_page, Offset, PageSize, Query, Meta}, _From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
         subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
     Reply = port_query_page(Port, Offset, PageSize, Query, 
-                            Meta, Name2Slot, Id2Name, Slot2Type),
+                            Meta, Name2Slot, Id2Name, Slot2Type, State),
     {reply, Reply, State};
 
 handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
@@ -1288,7 +1297,7 @@ handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
         register = Register } = State,
 
     %% Special handling of errors
-    case port_enquire(Port, Query, Name2Slot, Slot2TypeArray, Register) of
+    case port_enquire(Port, Query, Name2Slot, Slot2TypeArray, State) of
         {error, _Reason} = Error ->
             {reply, Error, State};
         {ok, ResourceNum} ->
@@ -1315,17 +1324,18 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
         check_at_least = CheckAtLeast, 
         spies = SpyRefs
     } = Mess, 
-    #state{port = Port, register = Register } = State,
+    #state{port = Port } = State,
     do_reply(State, do([error_m ||
-        SpyNums  
-            <- check_all([ref_to_num(Register, SpyRef, match_spy) 
+        SpyRFs
+            <- check_all([compile_resource(State, SpyRef, match_spy) 
                     || SpyRef <- SpyRefs]),
-        EnquireNum 
-            <- ref_to_num(Register, EnquireRef, enquire),
+        %% Resource function (RF): fun(Bin) -> Bin.
+        EnquireRF
+            <- compile_resource(State, EnquireRef, enquire),
 
         MSetNum <-
-            port_match_set(Port, EnquireNum, Offset, 
-                MaxItems, CheckAtLeast, SpyNums),
+            port_match_set(Port, EnquireRF, Offset, 
+                MaxItems, CheckAtLeast, SpyRFs),
 
         register_resource(State, mset, FromPid, MSetNum)]));
 
@@ -1392,28 +1402,19 @@ handle_call({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
 %% with a number `ResourceObjectNumber',
 %% using creator with a number `UserResourceNumber'.
 %% Return an Erlang reference of new object.
-handle_call({create_resource, ResourceTypeName, ParamCreatorFun}, 
+handle_call({create_resource, ResourceTypeName, Gen}, 
     {FromPid, _FromRef}, State) ->
     #state{ name_to_resource = N2R, port = Port } = State,
     do_reply(State, do([error_m ||
-        #resource{ type = ResouceType, number = UserResourceNumber }  
+        %% `ResouceType' is a name of the resource group (ie `match_set').
+        #resource{ type = ResouceType }  
             <- orddict_find(ResourceTypeName, N2R),
-        
-        ParamBin 
-            <-  if 
-                    is_function(ParamCreatorFun) ->
-                        {arity, Arity} = erlang:fun_info(ParamCreatorFun, arity),
-                        case Arity of
-                            0 -> ParamCreatorFun();
-                            1 -> ParamCreatorFun(State)
-                        end;
-                    true ->
-                        {ok, <<>>}
-                end,
+
+        ParamBin <-
+            execute_generator(State, ResourceTypeName, ResouceType, Gen, <<>>),
 
         ResourceObjectNumber
-            <- port_create_resource(
-                Port, ResouceType, UserResourceNumber, ParamBin),
+            <- port_create_resource(Port, ParamBin),
 
         register_resource(State, ResouceType, FromPid, ResourceObjectNumber)]));
 
@@ -1423,7 +1424,7 @@ handle_call({mset_info, MSetRef, Params}, _From, State) ->
     Reply = 
     do([error_m ||
         MSetNum 
-            <- ref_to_num(Register, MSetRef, mset),
+            <- resource_reference_to_number(Register, MSetRef, mset),
 
         port_mset_info(Port, MSetNum, Params)
     ]),
@@ -1546,6 +1547,73 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
+
+%% @doc Create the `fun(Bin)' function.
+compile_resource(State, ResRef, Type) when is_reference(ResRef) ->
+    #state{ register = Register } = State,
+    Schema = xapian_const:resource_encoding_schema_id(reference),
+    do([error_m ||
+        ResNum 
+            <- resource_reference_to_number(Register, ResRef, Type),
+        {ok, fun(Bin@) -> 
+                Bin@ = append_uint8(Schema, Bin@),
+                Bin@ = append_uint8(resource_type_id(Type), Bin@),
+                append_uint(ResNum, Bin@) 
+                end}
+       ]);
+
+%% Res is a constructor record (returns by a function from xapian_resource).
+%% It will be passed to `xapian_resource:compile' (1), 
+%% that will pass it to `xapian_server' (2).
+%% 
+%% 1. extracts info from the `Res' record fields;
+%% 2. extracts info from `State'.
+compile_resource(State, Res, Type) when is_tuple(Res) ->
+    Schema = xapian_const:resource_encoding_schema_id(constructor),
+    do([error_m ||
+        CompiledConBin 
+               %% append_resource_access will be called
+            <- xapian_resource:compile(State, Res, Type, <<>>),
+        {ok, fun(Bin) -> append_binary(CompiledConBin, append_uint8(Schema, Bin)) end}
+       ]).
+
+
+%% @doc Form the binary string: 
+%% `<<Bin, ResTypeGroup, ResTypeConstructorNum, GenParam>>'.
+%% This data allows to create a resource using a user object constructor 
+%% (see user_object).
+execute_generator(State = #state{}, ResourceTypeName, GroupName, Gen, Bin) ->
+    #state{ name_to_resource = N2R } = State,
+    do([error_m ||
+        %% Info about a resource constructor
+        #resource{ type = ResouceType, number = UserResourceNumber }  
+            <- orddict_find(ResourceTypeName, N2R),
+        ok  <- compare_resource_groups(ResouceType, GroupName),
+        
+        %% Write a constructor's parameters.
+        ParamBin 
+            <- run_resource_generator(State, Gen),
+
+        %% Concat all together.
+        {ok, append_resource_access(
+                ResouceType, UserResourceNumber, ParamBin, Bin)}
+       ]).
+
+
+%% @doc Check, that the created resource has a valid type.
+compare_resource_groups(X, X) -> {ok, ok};
+compare_resource_groups(_, _) -> {error, resource_groups_mismatch}.
+
+
+%% * `ResouceType' - `match_spy' or `value_range_processor',
+%%      defines the big group of resources (used to select the QlcTable).
+%% * `UserResourceNumber' - the number of the user's object constructor.
+%% * `ParamBin' - data, used by the user's object consctructor.
+append_resource_access(ResouceType, UserResourceNumber, ParamBin, Bin@) ->
+    Bin@ = append_uint8(resource_type_id(ResouceType), Bin@),
+    Bin@ = append_uint(UserResourceNumber, Bin@),
+    <<Bin@/binary, ParamBin/binary>>.
+
 
 document_encode(Document, #state{
         name_to_prefix = Name2Prefix,
@@ -1810,18 +1878,18 @@ port_document_info_resource(Port, EncodedDocument) ->
 
 
 port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot, Id2Name, 
-                Slot2Type) ->
+                Slot2Type, State) ->
     Bin@ = <<>>,
     Bin@ = append_uint(Offset, Bin@),
     Bin@ = append_uint(PageSize, Bin@),
-    Bin@ = xapian_query:encode(Query, Name2Slot, Slot2Type, Bin@),
+    Bin@ = xapian_query:encode(Query, Name2Slot, Slot2Type, State, Bin@),
     Bin@ = xapian_record:encode(Meta, Name2Slot, Slot2Type, Bin@),
     decode_records_result(control(Port, query_page, Bin@), Meta, Id2Name).
 
 
-port_enquire(Port, Enquire, Name2Slot, Slot2TypeArray, Register) ->
+port_enquire(Port, Enquire, Name2Slot, Slot2TypeArray, State) ->
     Bin@ = <<>>,
-    Bin@ = xapian_enquire:encode(Enquire, Name2Slot, Slot2TypeArray, Register, Bin@),
+    Bin@ = xapian_enquire:encode(Enquire, Name2Slot, Slot2TypeArray, State, Bin@),
     decode_resource_result(control(Port, enquire, Bin@)).
 
 
@@ -1831,19 +1899,18 @@ port_document(Port, DocId) ->
     decode_resource_result(control(Port, document, Bin@)).
 
 
-port_match_set(Port, MSetResourceNum, From, MaxItems, CheckAtLeast, SpyNums) ->
+port_match_set(Port, EnqRF, From, MaxItems, CheckAtLeast, SpyRFs) ->
     Bin@ = <<>>,
-    Bin@ = append_uint(MSetResourceNum, Bin@),
+    Bin@ = append_compiled_resource(EnqRF, Bin@),
     Bin@ = append_uint(From, Bin@),
     Bin@ = append_max_items(MaxItems, Bin@),
     Bin@ = append_uint(CheckAtLeast, Bin@),
-    Bin@ = append_match_spies(SpyNums, Bin@),
+    Bin@ = append_uint(length(SpyRFs), Bin@),
+    Bin@ = lists:foldl(fun append_compiled_resource/2, Bin@, SpyRFs),
     decode_resource_result(control(Port, match_set, Bin@)).
 
 
-append_match_spies(Spies, Bin) when is_binary(Bin), is_list(Spies) ->
-    append_uint(0, lists:foldl(fun xapian_common:append_uint/2, Bin, Spies)).
-
+append_compiled_resource(Res, Bin) -> Res(Bin).
 
 append_max_items(MaxItems, Bin@) 
     when is_integer(MaxItems), MaxItems >= 0 ->
@@ -1868,12 +1935,8 @@ port_qlc_next_portion(Port, QlcResNum, From, Count) ->
     control(Port, qlc_next_portion, Bin@).
 
 
-port_create_resource(Port, ResouceType, UserResourceNumber, ParamBin) ->
-    Bin@ = <<>>,
-    Bin@ = append_uint8(resource_type_id(ResouceType), Bin@),
-    Bin@ = append_uint(UserResourceNumber, Bin@),
-    Bin@ = <<Bin@/binary, ParamBin/binary>>,
-    decode_resource_result(control(Port, create_resource, Bin@)).
+port_create_resource(Port, ParamBin) ->
+    decode_resource_result(control(Port, create_resource, ParamBin)).
     
 
 
@@ -2017,7 +2080,7 @@ internal_value_spy_to_type(State, SpyRes) ->
 internal_value_spy_to_slot(State, SpyRes) ->
     #state{port = Port, register = Register } = State,
     do([error_m ||
-        SpyNum <- ref_to_num(Register, SpyRes, match_spy),
+        SpyNum <- resource_reference_to_number(Register, SpyRes, match_spy),
         port_spy_to_slot(Port, SpyNum)
        ]).
 
@@ -2160,17 +2223,6 @@ m_do_register_resource(State, Type, FromPid, Result) ->
     end.
 
          
-ref_to_num(Register, ResRef, Type) ->
-    case xapian_register:get(Register, ResRef) of
-        {ok, #resource{type=Type, number=ResNum}} ->
-            {ok, ResNum};
-        {error, _} = Error ->
-            Error;
-        {ok, _Res} ->
-            {error, bad_resource_type}
-    end.
-
-
 %% @doc Helper for monades and list comprehensions.
 check_all(List) ->
     check_all(List, []).
@@ -2208,6 +2260,16 @@ append_default_params(Params) ->
             DefParams ++ Params 
     end.
 
+
+%% @doc Run a function from the `xapian_resource' module.
+run_resource_generator(State, Gen) when is_function(Gen) ->
+    {arity, Arity} = erlang:fun_info(Gen, arity),
+    case Arity of
+        0 -> Gen();
+        1 -> Gen(State)
+    end;
+run_resource_generator(_State, undefined) ->
+    {ok, <<>>}.
 
 
 

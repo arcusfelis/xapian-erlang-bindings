@@ -6,18 +6,20 @@
 -include("xapian.hrl").
 
 -import(xapian_common, [ 
+    append_resource/4,
     append_uint/2,
     append_slot/3,
     append_boolean/2,
     append_double/2]).
 
 -import(xapian_const, [
+    sort_order_value_type/1,
     order_type_id/1,
     docid_order_type_id/1,
     enquire_command_id/1]).
 
 
-encode(Enquire=#x_enquire{}, Name2Slot, Slot2TypeArray, Register, Bin@) ->
+encode(Enquire=#x_enquire{}, Name2Slot, Slot2TypeArray, State, Bin@) ->
     #x_enquire{
         value = Query,
         query_len = QueryLen,
@@ -30,17 +32,17 @@ encode(Enquire=#x_enquire{}, Name2Slot, Slot2TypeArray, Register, Bin@) ->
         collapse_max = CollapseMax
     } = Enquire,
     Bin@ = append_query_len(QueryLen, Bin@),
-    Bin@ = append_query(Query, Name2Slot, Slot2TypeArray, Bin@),
-    Bin@ = append_order(Order, Name2Slot, Register, Bin@),
+    Bin@ = append_query(Query, Name2Slot, Slot2TypeArray, State, Bin@),
+    Bin@ = append_order(Order, Name2Slot, State, Bin@),
     Bin@ = append_docid_order(DocidOrder, Bin@),
-    Bin@ = append_weighting_scheme(Weight, Register, Bin@),
+    Bin@ = append_weighting_scheme(Weight, State, Bin@),
     Bin@ = append_cutoff(PercentCutoff, WeightCuttoff, Bin@),
     Bin@ = append_collapse_key(CollapseKey, CollapseMax, Name2Slot, Bin@),
     Bin@ = append_command(stop, Bin@),
     Bin@;
 
-encode(Query, Name2Slot, Slot2TypeArray, _Register, Bin@) ->
-    Bin@ = append_query(Query, Name2Slot, Slot2TypeArray, Bin@),
+encode(Query, Name2Slot, Slot2TypeArray, State, Bin@) ->
+    Bin@ = append_query(Query, Name2Slot, Slot2TypeArray, State, Bin@),
     Bin@ = append_command(stop, Bin@),
     Bin@.
 
@@ -52,38 +54,36 @@ append_query_len(QueryLen, Bin@) ->
     Bin@.
 
 
-append_query(Query,  N2S, Slot2TypeArray, Bin@) ->
+append_query(Query,  N2S, Slot2TypeArray, State, Bin@) ->
     Bin@ = append_command(x_query, Bin@),
-    Bin@ = xapian_query:encode(Query, N2S, Slot2TypeArray, Bin@),
+    Bin@ = xapian_query:encode(Query, N2S, Slot2TypeArray, State, Bin@),
     Bin@.
 
     
-append_order(relevance, _N2S, _Register, Bin@) ->
+append_order(relevance, _N2S, _State, Bin@) ->
     Bin@;
 
 append_order(#x_sort_order{type=relevance, is_reversed=false}, 
-             _N2S, _Register, Bin@) ->
+             _N2S, _State, Bin@) ->
     Bin@;
 
 append_order(#x_sort_order{type=relevance, is_reversed=true}, 
-             _N2S, _Register, _Bin) ->
+             _N2S, _State, _Bin) ->
     erlang:error(badarg);
 
 append_order(#x_sort_order{type=Type, value=Value, is_reversed=Reverse}, 
-    N2S, Register, Bin@) ->
+    N2S, State, Bin@) ->
     Bin@ = append_command(order, Bin@),
     Bin@ = append_uint8(order_type_id(Type), Bin@),
     Bin@ = append_boolean(Reverse, Bin@),
-    Bin@ = append_value(Value, N2S, Register, Bin@),
+    Bin@ = append_value(sort_order_value_type(Type), Value, N2S, State, Bin@),
     Bin@.
 
 
-append_value(ResourceId, _N2S, Register, Bin) when is_reference(ResourceId) ->
-    #resource{type=key_maker, number=ResNum} =
-        xapian_register:fetch(Register, ResourceId),
-    append_uint(ResNum, Bin);
+append_value(key, Res, _N2S, State, Bin) ->
+    append_resource(State, Res, key_maker, Bin);
 
-append_value(Value, N2S, _Register, Bin) ->
+append_value(value, Value, N2S, _State, Bin) ->
     append_slot(Value, N2S, Bin).
 
 
@@ -102,15 +102,12 @@ append_docid_order_id(DocidOrderId, _DefOrderId, Bin@) ->
     Bin@.
 
 
-append_weighting_scheme(undefined, _Register, Bin) ->
+append_weighting_scheme(undefined, _State, Bin) ->
     Bin;
 
-append_weighting_scheme(ResourceId, Register, Bin@) 
-    when is_reference(ResourceId) ->
-    #resource{type = weight, number = WeightNum} = 
-        xapian_register:fetch(Register, ResourceId),
+append_weighting_scheme(Res, State, Bin@) ->
     Bin@ = append_command(weighting_scheme, Bin@),
-    Bin@ = append_uint(WeightNum, Bin@),
+    Bin@ = append_resource(State, Res, weight, Bin@),
     Bin@.
 
 
