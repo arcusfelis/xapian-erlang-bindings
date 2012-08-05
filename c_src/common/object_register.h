@@ -2,6 +2,7 @@
 #define OBJECT_REGISTER_H
 
 #include <stdint.h>
+#include <vector>
 
 
 // Google dense map can be used as a store for ObjectBaseRegister.
@@ -22,9 +23,21 @@
 #define HASH_MAP std::unordered_map
 #endif
 
+#include "destructor_callback.h"
+#include "xapian_context.h"
 
 #include "xapian_config.h"
+
+/* FOR THE SECOND PART */
+/* For min */
+#include <algorithm>
+#include "xapian_exception.h"
 XAPIAN_ERLANG_NS_BEGIN
+
+// ------------------------------------------------------------------
+// Helper
+// ------------------------------------------------------------------
+
 
 /**
  * It is used for storing pointers on objects of a special type (elements).
@@ -45,6 +58,10 @@ class ObjectBaseRegister
     virtual void
     remove(Counter) = 0;
 
+    virtual void
+    attach(Counter parent_id, 
+           ObjectBaseRegister& child_register, Counter child_id) = 0;
+
 
     /**
      * Return the pointer of the element by its id.
@@ -59,16 +76,56 @@ class ObjectBaseRegister
      */
     virtual Counter 
     putVoidPointer(void* obj) = 0;
+};
+
+template <class Child>
+class RegisterElement
+{
+    typedef std::vector<DestructorCallback*> DestructorCallbacks;
+    DestructorCallbacks m_dcbs;
+    Child* m_child;
+
+    public:
+    RegisterElement(Child* child)
+    {
+        m_child = child;
+    }
+
+    ~RegisterElement()
+    {
+        // Erase the resource
+        delete m_child;
+
+        typename DestructorCallbacks::iterator i, e, b;
+        b = m_dcbs.begin();
+        e = m_dcbs.end();
+        for(i = b; i != e; i++)
+        {
+            DestructorCallback* cb = *i;
+            // Call callback
+            cb->call();
+            // Delete its object
+            delete cb;
+        }
+    }
+
+    Child* getChild()
+    {
+        return m_child;
+    }
+
+    void attachDestructorCallback(DestructorCallback* cb)
+    {
+        m_dcbs.push_back(cb);
+    }
 
     /**
-     * Return the pointer of the element by its id.
-     * Returned object must be deallocated by its user.
-     * Returned element will be no more in the set.
-     * The position of this element will be reused for the new object.
-     * No one element will be deleted by calling this method.
+     * Copy data from the passed context to this element.
      */
-    virtual void* 
-    replaceWithoutCleaning(Counter num, void* new_obj) = 0;
+    void attachContext(XapianContext& context)
+    {
+         context.moveAttached(m_dcbs);
+    }
 };
 
 
@@ -79,8 +136,6 @@ class ObjectBaseRegister
 template <class Child>
 class ObjectRegister : public ObjectBaseRegister
 {
-    public:
-
     /**
      * It is the mapping from id (of the type @ref Counter) to the 
      * reference on the object.
@@ -88,7 +143,7 @@ class ObjectRegister : public ObjectBaseRegister
      * Id will be generated automatically.
      */
     typedef 
-    HASH_MAP< Counter, Child*, HASH_TPL<uint32_t> > Hash;
+    HASH_MAP< Counter, RegisterElement<Child>*, HASH_TPL<uint32_t> > Hash;
 
     private:
     /* Contains a number of the latest added object */
@@ -98,6 +153,9 @@ class ObjectRegister : public ObjectBaseRegister
     Hash m_elements;
 
     public:
+    
+    typedef 
+    HASH_MAP< Counter, Child*, HASH_TPL<uint32_t> > PublicHash;
 
     ObjectRegister();
 
@@ -116,20 +174,149 @@ class ObjectRegister : public ObjectBaseRegister
     void
     remove(Counter num);
 
-    void* 
-    replaceWithoutCleaning(uint32_t num, void* new_obj);
+    void
+    attach(Counter parent_id, 
+           ObjectBaseRegister& child_register, Counter child_id);
 
-    Hash&
+    void
+    attachContext(Counter parent_id, XapianContext& context);
+
+    PublicHash
     getElements()
     {
-        return m_elements;
+        PublicHash elems;
+        elems.set_empty_key(0);
+        elems.set_deleted_key(1);
+
+        typename Hash::iterator i, e, b;
+        b = m_elements.begin();
+        e = m_elements.end();
+
+        // Copy elements (pointers) without meta information
+        for(i = b; i != e; i++)
+            elems[i->first] = i->second->getChild();
+
+        return elems;
     }
 
     ~ObjectRegister();
 };
 
 
-XAPIAN_ERLANG_NS_END
-#include "object_register.hpp"
 
+
+template <class Child>
+ObjectRegister<Child>::ObjectRegister()
+{
+    m_elements.set_empty_key(0);
+    m_elements.set_deleted_key(1);
+    m_counter = 1;
+}
+
+template <class Child>
+typename ObjectRegister<Child>::Counter 
+ObjectRegister<Child>::put(Child* obj)
+{
+    m_counter++;
+    m_elements[m_counter] = new RegisterElement<Child>(obj);
+
+    return m_counter;
+}
+
+template <class Child>
+void
+ObjectRegister<Child>::remove(Counter num)
+{
+    typename Hash::iterator i; 
+    i = m_elements.find(num);
+
+    if (i == m_elements.end())
+        throw ElementNotFoundDriverError(num);
+
+    delete i->second;
+    m_elements.erase(i);
+}
+
+
+/**
+ * Tell, that if the resource with id `parent_id` was be deleted from this
+ * register, than the object with id `child_id` from register `child_register`.
+ */
+template <class Child>
+void
+ObjectRegister<Child>::attach(
+   Counter parent_id, 
+   ObjectBaseRegister& child_register, 
+   Counter child_id)
+{
+    typename Hash::iterator i; 
+    i = m_elements.find(parent_id);
+
+    if (i == m_elements.end())
+        throw ElementNotFoundDriverError(parent_id);
+
+    DestructorCallback* p_cb = 
+        new RemoveResourceDestructorCallback(child_id, child_register);
+    i->second->attachDestructorCallback(p_cb);
+}
+
+/**
+ * Move data from the context to the element with the `parent_id` id.
+ */
+template <class Child>
+void
+ObjectRegister<Child>::attachContext(Counter parent_id, XapianContext& context)
+{
+    typename Hash::iterator i; 
+    i = m_elements.find(parent_id);
+
+    if (i == m_elements.end())
+        throw ElementNotFoundDriverError(parent_id);
+
+    i->second->attachContext(context);
+}
+
+template <class Child>
+Child*
+ObjectRegister<Child>::get(Counter num) 
+{
+    typename Hash::iterator i; 
+    i = m_elements.find(num);
+
+    if (i == m_elements.end())
+        throw ElementNotFoundDriverError(num);
+
+    return i->second->getChild();
+}
+
+
+template <class Child>
+void*
+ObjectRegister<Child>::getVoidPointer(Counter num)
+{
+    return (void*) get(num);
+}
+
+
+template <class Child>
+typename ObjectRegister<Child>::Counter 
+ObjectRegister<Child>::putVoidPointer(void* obj)
+{
+    return put(static_cast<Child*>(obj));
+}
+
+
+template <class Child>
+ObjectRegister<Child>::~ObjectRegister()
+{
+    typename Hash::iterator i, e, b;
+    b = m_elements.begin();
+    e = m_elements.end();
+    for(i = b; i != e; i++)
+    {
+        delete i->second;
+    }
+}
+
+XAPIAN_ERLANG_NS_END
 #endif

@@ -9,6 +9,7 @@
 #include "spy_ctrl.h"
 #include "enquire_ctrl.h"
 #include "key_maker_ctrl.h"
+#include "xapian_context.h"
 #include <xapian.h>
 #include <string>
 #include <stdint.h>
@@ -360,7 +361,7 @@ class Driver
     /**
      * `query_page'
      */
-    void query(PR);
+    void query(CPR);
 
     /**
      * Write a resource.
@@ -383,7 +384,7 @@ class Driver
      * Converts an enquire into a match set.
      * Write a resource.
      */
-    void matchSet(PR);
+    void matchSet(CPR);
 
     void qlcInit(PR);
 
@@ -454,11 +455,11 @@ class Driver
     
 
     Xapian::Query 
-    buildQuery(ParamDecoder&);
+    buildQuery(CP);
 
-    void fillEnquire(ParamDecoder&, EnquireController& enquire_ctrl);
+    void fillEnquire(CP, EnquireController& enquire_ctrl);
 
-    void fillEnquireOrder(EnquireController& enquire_ctrl, ParamDecoder& params);
+    void fillEnquireOrder(CP, EnquireController& enquire_ctrl);
 
     /**
      * Throws error if the database was opened only for reading.
@@ -475,7 +476,7 @@ class Driver
     readStemmingStrategy(ParamDecoder&);
 
     Xapian::QueryParser
-    readParser(ParamDecoder&);
+    readParser(CP);
 
     Xapian::QueryParser 
     selectParser(ParamDecoder&);
@@ -600,37 +601,37 @@ class Driver
 
 
     SpyController&
-    extractSpy(ParamDecoder& params)
+    extractSpy(CP)
     {
-        void* ptr = m_stores.extract(params, ResourceType::MATCH_SPY);
+        void* ptr = m_stores.extract(con, params, ResourceType::MATCH_SPY);
         return *static_cast<SpyController*>(ptr);
     }
 
     Xapian::ValueRangeProcessor&
-    extractRangeProcessor(ParamDecoder& params)
+    extractRangeProcessor(CP)
     {
-        void* ptr = m_stores.extract(params, ResourceType::VALUE_RANGE_PROCESSOR);
+        void* ptr = m_stores.extract(con, params, ResourceType::VALUE_RANGE_PROCESSOR);
         return *static_cast<Xapian::ValueRangeProcessor*>(ptr);
     }
 
     const Xapian::Weight&
-    extractWeight(ParamDecoder& params)
+    extractWeight(CP)
     {
-        void* ptr = m_stores.extract(params, ResourceType::WEIGHT);
+        void* ptr = m_stores.extract(con, params, ResourceType::WEIGHT);
         return *static_cast<Xapian::Weight*>(ptr);
     }
 
     KeyMakerController&
-    extractKeyMaker(ParamDecoder& params)
+    extractKeyMaker(CP)
     {
-        void* ptr = m_stores.extract(params, ResourceType::KEY_MAKER);
+        void* ptr = m_stores.extract(con, params, ResourceType::KEY_MAKER);
         return *static_cast<KeyMakerController*>(ptr);
     }
 
     EnquireController&
-    extractEnquireController(ParamDecoder& params)
+    extractEnquireController(CP)
     {
-        void* ptr = m_stores.extract(params, ResourceType::ENQUIRE);
+        void* ptr = m_stores.extract(con, params, ResourceType::ENQUIRE);
         return *static_cast<EnquireController*>(ptr);
     }
 };

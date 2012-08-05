@@ -389,7 +389,7 @@ Driver::isDocumentExist(PR)
 
 
 void
-Driver::query(PR)
+Driver::query(CPR)
 {
     /* offset, pagesize, query, template */
     const uint32_t offset   = params;
@@ -397,7 +397,7 @@ Driver::query(PR)
 
     // Use an Enquire object on the database to run the query.
     Xapian::Enquire enquire(m_db);
-    Xapian::Query   query = buildQuery(params);
+    Xapian::Query   query = buildQuery(con, params);
     enquire.set_query(query);
      
     // Get an result
@@ -490,10 +490,16 @@ Driver::enquire(PR)
     Xapian::Enquire enquire(m_db);
     EnquireController* p_enquire_ctrl = new EnquireController(enquire);
 
-    fillEnquire(params, *p_enquire_ctrl);
+    // Create a new context.
+    XapianContext enquire_con;
+    fillEnquire(enquire_con, params, *p_enquire_ctrl);
 
     // m_enquire_store will call the delete operator.
     uint32_t num = m_enquire_store.put(p_enquire_ctrl);
+
+    // All objects, created inside `enquire_con` will be deleted,
+    // when the Enquire object is finally deallocated.
+    m_enquire_store.attachContext(num, enquire_con);
     result << num;
 }
 
@@ -575,9 +581,9 @@ Driver::releaseResource(ParamDecoder& params)
 
 
 void 
-Driver::matchSet(PR)
+Driver::matchSet(CPR)
 {
-    Xapian::Enquire& enquire = extractEnquireController(params).getEnquire();
+    Xapian::Enquire& enquire = extractEnquireController(con, params).getEnquire();
 
     Xapian::doccount    first, maxitems, checkatleast;
     first = params;
@@ -591,7 +597,7 @@ Driver::matchSet(PR)
     uint32_t count = params;
     while (count--)
     {
-        SpyController& spy = extractSpy(params);
+        SpyController& spy = extractSpy(con, params);
         if (!spy.is_finalized())
         {
             // It can be added just once
@@ -915,7 +921,7 @@ Driver::addPrefix(ParamDecoder& params, QueryParserFactory& qpf)
 
 
 Xapian::Query 
-Driver::buildQuery(ParamDecoder& params)
+Driver::buildQuery(CP)
 {
     const uint8_t type = params;
     switch (type)
@@ -928,7 +934,7 @@ Driver::buildQuery(ParamDecoder& params)
             std::vector<Xapian::Query> subQueries;
 
             for (uint32_t i = 0; i < subQueryCount; i++)
-                subQueries.push_back(buildQuery(params));
+                subQueries.push_back(buildQuery(con, params));
 
             std::vector<Xapian::Query>::iterator qbegin = subQueries.begin();
             std::vector<Xapian::Query>::iterator qend   = subQueries.end();
@@ -980,7 +986,7 @@ Driver::buildQuery(ParamDecoder& params)
 
         case QUERY_PARSER: // query_string
         {
-            Xapian::QueryParser parser = readParser(params);
+            Xapian::QueryParser parser = readParser(con, params);
             const std::string&  query_string   = params;
             const std::string&  default_prefix = params;
             const unsigned flags               = decodeParserFeatureFlags(params); 
@@ -997,7 +1003,7 @@ Driver::buildQuery(ParamDecoder& params)
         {
             const uint8_t op        = params;
             const double  factor    = params;
-            Xapian::Query sub_query = buildQuery(params);
+            Xapian::Query sub_query = buildQuery(con, params);
 
             Xapian::Query q(
                 static_cast<Xapian::Query::op>(op), 
@@ -1013,7 +1019,7 @@ Driver::buildQuery(ParamDecoder& params)
 
 
 void 
-Driver::fillEnquire(ParamDecoder& params, EnquireController& enquire_ctrl)
+Driver::fillEnquire(CP, EnquireController& enquire_ctrl)
 {
     Xapian::termcount   qlen = 0;
     Xapian::Enquire     enquire = enquire_ctrl.getEnquire();
@@ -1023,7 +1029,7 @@ Driver::fillEnquire(ParamDecoder& params, EnquireController& enquire_ctrl)
     {
     case EC_QUERY:
         {
-        Xapian::Query   query = buildQuery(params);
+        Xapian::Query   query = buildQuery(con, params);
         enquire.set_query(query, qlen);
         break;
         }
@@ -1037,7 +1043,7 @@ Driver::fillEnquire(ParamDecoder& params, EnquireController& enquire_ctrl)
 
     case EC_ORDER:
         {
-        fillEnquireOrder(enquire_ctrl, params);
+        fillEnquireOrder(con, params, enquire_ctrl);
         break;
         }
 
@@ -1054,7 +1060,7 @@ Driver::fillEnquire(ParamDecoder& params, EnquireController& enquire_ctrl)
 
     case EC_WEIGHTING_SCHEME:
         {
-        const Xapian::Weight& weight = extractWeight(params);
+        const Xapian::Weight& weight = extractWeight(con, params);
         enquire.set_weighting_scheme(weight);
         break;
         }
@@ -1084,7 +1090,7 @@ Driver::fillEnquire(ParamDecoder& params, EnquireController& enquire_ctrl)
 
 
 void
-Driver::fillEnquireOrder(EnquireController& enquire_ctrl, ParamDecoder& params)
+Driver::fillEnquireOrder(CP, EnquireController& enquire_ctrl)
 {
     Xapian::Enquire     enquire = enquire_ctrl.getEnquire();
     uint8_t type   = params;
@@ -1094,7 +1100,7 @@ Driver::fillEnquireOrder(EnquireController& enquire_ctrl, ParamDecoder& params)
     {
     case OT_KEY:
         {
-        KeyMakerController& kmc = extractKeyMaker(params);
+        KeyMakerController& kmc = extractKeyMaker(con, params);
         Xapian::KeyMaker* sorter = kmc.getKeyMaker();
         enquire_ctrl.addKeyMakerController(kmc);
         enquire.set_sort_by_key(sorter, reverse);
@@ -1103,7 +1109,7 @@ Driver::fillEnquireOrder(EnquireController& enquire_ctrl, ParamDecoder& params)
 
     case OT_KEY_RELEVANCE:
         {
-        KeyMakerController& kmc = extractKeyMaker(params);
+        KeyMakerController& kmc = extractKeyMaker(con, params);
         Xapian::KeyMaker* sorter = kmc.getKeyMaker();
         enquire_ctrl.addKeyMakerController(kmc);
         enquire.set_sort_by_key_then_relevance(sorter, reverse);
@@ -1112,7 +1118,7 @@ Driver::fillEnquireOrder(EnquireController& enquire_ctrl, ParamDecoder& params)
 
     case OT_RELEVANCE_KEY:
         {
-        KeyMakerController& kmc = extractKeyMaker(params);
+        KeyMakerController& kmc = extractKeyMaker(con, params);
         Xapian::KeyMaker* sorter = kmc.getKeyMaker();
         enquire_ctrl.addKeyMakerController(kmc);
         enquire.set_sort_by_relevance_then_key(sorter, reverse);
@@ -1168,7 +1174,7 @@ Driver::selectParser(ParamDecoder& params)
 
 
 Xapian::QueryParser 
-Driver::readParser(ParamDecoder& params)
+Driver::readParser(CP)
 {
   uint8_t command = params;
   // No parameters?
@@ -1222,7 +1228,7 @@ Driver::readParser(ParamDecoder& params)
 
     case QP_VALUE_RANGE_PROCESSOR:
         {
-        Xapian::ValueRangeProcessor* vrp = & extractRangeProcessor(params);
+        Xapian::ValueRangeProcessor* vrp = & extractRangeProcessor(con, params);
         qp.add_valuerangeprocessor(vrp);
         break;
         }
@@ -1242,6 +1248,7 @@ Driver::handleCommand(PR,
     const unsigned int  command)
 {
     result << static_cast<uint8_t>( SUCCESS );
+    XapianContext con;
 
     try
     {
@@ -1335,7 +1342,7 @@ Driver::handleCommand(PR,
             break;
 
         case QUERY_PAGE:
-            query(params, result);
+            query(con, params, result);
             break;
 
         case SET_DEFAULT_STEMMER:
@@ -1363,7 +1370,7 @@ Driver::handleCommand(PR,
             break;
 
         case MATCH_SET:
-            matchSet(params, result);
+            matchSet(con, params, result);
             break;
 
         case QLC_INIT:
@@ -2590,10 +2597,10 @@ Driver::getResourceInfo(ResultEncoder& result)
 {
     ObjectRegister<UserResource>& 
     reg = m_generator.getRegister();
-    ObjectRegister<UserResource>::Hash&
+    ObjectRegister<UserResource>::PublicHash
     elements = reg.getElements();
 
-    ObjectRegister<UserResource>::Hash::iterator i, e, b;
+    ObjectRegister<UserResource>::PublicHash::iterator i, e, b;
     b = elements.begin();
     e = elements.end();
     for(i = b; i != e; i++)

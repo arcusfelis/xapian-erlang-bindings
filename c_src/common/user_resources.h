@@ -287,8 +287,12 @@ class ResourceManager
     }
 
 
+    /**
+     * Extract a resource by its number from the QLC table or
+     * create the new resource in the current context.
+     */
     ResourceObjectP
-    extract(ParamDecoder& params, ResourceValidObjectType expected_group_type)
+    extract(CP, ResourceValidObjectType expected_group_type)
     {
         switch(uint8_t schema_type = params)
         {
@@ -321,6 +325,7 @@ class ResourceManager
 
                 // Register the object in the store and return its number
                 ResourceObjectNum   resource_num = store.putVoidPointer(resource_object);
+                con.attach(store, resource_num);
                 return resource_object;
                 break;
             }
