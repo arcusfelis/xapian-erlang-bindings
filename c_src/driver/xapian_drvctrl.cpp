@@ -75,6 +75,7 @@ DriverController::stop(
     Driver* 
     drv = reinterpret_cast<Driver*>( drv_data );
 
+    drv->clear();
 
     if (drv != NULL)
         delete drv;

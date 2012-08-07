@@ -174,6 +174,8 @@ class ResourceGenerator
 /**
  * Resource manager is single for each port (for each gen_server).
  * It contains function for searching among active resources.
+ *
+ * see m_stores
  */
 class ResourceManager
 {
@@ -261,6 +263,13 @@ class ResourceManager
     add(ResourceValidObjectType type, ObjectBaseRegister* reg)
     {
         m_stores[type] = reg;
+    }
+
+    void
+    clear()
+    {
+        for (int i = 0; i <= ResourceType::LAST_TYPE; i++)
+            m_stores[i]->clear();
     }
 
     

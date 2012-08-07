@@ -7,7 +7,11 @@ XAPIAN_ERLANG_NS_BEGIN
 void
 RemoveResourceDestructorCallback::call()
 {
-    m_child_register->remove(m_child_id);
+    try
+    {
+        mp_child_register->remove(m_child_id);
+    } catch(ElementNotFoundDriverError e)
+    {}
 }
 
 XAPIAN_ERLANG_NS_END

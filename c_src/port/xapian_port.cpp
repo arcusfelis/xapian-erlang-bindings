@@ -116,6 +116,7 @@ void run()
         // Free memory, if it was allocated by ResultEncoder.
         result.clear();
     }
+    drv.clear();
 }
 
 XAPIAN_ERLANG_NS_END

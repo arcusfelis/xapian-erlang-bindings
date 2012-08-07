@@ -318,6 +318,8 @@ class Driver
     Driver(MemoryManager&, ResourceGenerator&);
 
     ~Driver();
+    void
+    clear();
 
     /**
      * Read and execute one command from a client.

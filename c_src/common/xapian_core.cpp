@@ -96,6 +96,12 @@ Driver::Driver(MemoryManager& mm, ResourceGenerator& generator)
 }
 
 
+void
+Driver::clear()
+{
+    m_stores.clear();
+}
+
 Driver::~Driver()
 {}
 

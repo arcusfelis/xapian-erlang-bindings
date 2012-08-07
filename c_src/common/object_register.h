@@ -27,6 +27,7 @@
 #include "xapian_context.h"
 
 #include "xapian_config.h"
+#include <stdio.h>
 
 /* FOR THE SECOND PART */
 /* For min */
@@ -50,6 +51,7 @@ class ObjectBaseRegister
 
     public:
     virtual ~ObjectBaseRegister() {};
+    virtual void clear() = 0;
 
     /**
      * Remove the element by id from the register.
@@ -200,6 +202,7 @@ class ObjectRegister : public ObjectBaseRegister
     }
 
     ~ObjectRegister();
+    void clear();
 };
 
 
@@ -309,6 +312,20 @@ ObjectRegister<Child>::putVoidPointer(void* obj)
 template <class Child>
 ObjectRegister<Child>::~ObjectRegister()
 {
+    clear();
+}
+
+
+/**
+ * This method is called from m_stores.clear, that is called from driver.clear.
+ * It is called for all ObjectRegisters twice: the first tile, it is called 
+ * while all other registers alive (directly), the second time, when they
+ * are alive partically (from ~ObjectRegister).
+ */
+template <class Child>
+void
+ObjectRegister<Child>::clear()
+{
     typename Hash::iterator i, e, b;
     b = m_elements.begin();
     e = m_elements.end();
@@ -316,6 +333,7 @@ ObjectRegister<Child>::~ObjectRegister()
     {
         delete i->second;
     }
+    m_elements.clear();
 }
 
 XAPIAN_ERLANG_NS_END

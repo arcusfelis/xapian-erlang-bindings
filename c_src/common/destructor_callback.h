@@ -19,17 +19,17 @@ class RemoveResourceDestructorCallback : public DestructorCallback
 {
     typedef uint32_t Counter;
     Counter m_child_id; 
-    ObjectBaseRegister* m_child_register;
+    ObjectBaseRegister* mp_child_register;
 
     public:
     RemoveResourceDestructorCallback(Counter child_id, ObjectBaseRegister& child_register) 
     {
         m_child_id = child_id;
-        m_child_register = &child_register;
+        mp_child_register = &child_register;
     }
    
     ~RemoveResourceDestructorCallback() {}
-    virtual void call();
+    void call();
 };
 
 XAPIAN_ERLANG_NS_END
