@@ -54,7 +54,7 @@
 %%      action = add | set | update | remove,
 %%      ignore = boolean()}.
 %%
-%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_term]
+%% [https://github.com/freeakk/xapian-docsprint/erlang/records.rst#x_term]
 -record(x_term, {
     value = ?REQUIRED :: xapian_type:x_string(),
     position :: xapian_type:x_position() | [xapian_type:x_position()] | undefined,
@@ -121,7 +121,7 @@
 %% These records contain metainfo
 % ----------------------------------------------------------
 
-%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_prefix_name]
+%% [https://github.com/freeakk/xapian-docsprint/erlang/records.rst#x_prefix_name]
 -record(x_prefix_name, {
     name = ?REQUIRED  :: xapian_type:x_non_empty_string() | atom(),
     prefix = ?REQUIRED :: xapian_type:x_non_empty_string() | char(),
@@ -131,7 +131,7 @@
 }).
 
 
-%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_value_name]
+%% [https://github.com/freeakk/xapian-docsprint/erlang/records.rst#x_value_name]
 -record(x_value_name, {
     name :: atom(),
     slot :: non_neg_integer(),
@@ -225,7 +225,7 @@
 }).
 
 
-%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_query_parser]
+%% [https://github.com/freeakk/xapian-docsprint/erlang/records.rst#x_query_parser]
 -record(x_query_parser, {
     name = default :: default | standard,
     stemmer :: xapian_type:x_stemmer() | undefined,
@@ -279,7 +279,7 @@
 }).
 
 
-%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_enquire]
+%% [https://github.com/freeakk/xapian-docsprint/erlang/records.rst#x_enquire]
 -record(x_enquire, {
     value = xapian_type:x_sub_query(),
     query_len = 0 :: non_neg_integer(),
@@ -302,7 +302,7 @@
 }).
 
 
-%% [https://github.com/freeakk/xapian/blob/master/doc/markdown/records.md#x_match_set]
+%% [https://github.com/freeakk/xapian-docsprint/erlang/records.rst#x_match_set]
 -record(x_match_set, {
     enquire = ?REQUIRED :: xapian_type:x_resource(),
     offset = 0 :: non_neg_integer(), 
