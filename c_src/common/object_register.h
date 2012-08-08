@@ -155,7 +155,7 @@ class ObjectRegister : public ObjectBaseRegister
     Hash m_elements;
 
     public:
-    
+
     typedef 
     HASH_MAP< Counter, Child*, HASH_TPL<uint32_t> > PublicHash;
 

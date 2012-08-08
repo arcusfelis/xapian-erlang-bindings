@@ -10,6 +10,12 @@
 #include "enquire_ctrl.h"
 #include "key_maker_ctrl.h"
 #include "xapian_context.h"
+#include "stopper_ctrl.h"       
+#include "stem_ctrl.h"          
+#include "val_range_ctrl.h"     
+#include "match_decider_ctrl.h" 
+#include "expand_decider_ctrl.h"
+#include "query_parser_ctrl.h"  
 #include <xapian.h>
 #include <string>
 #include <stdint.h>
@@ -41,14 +47,15 @@ class Driver
     ObjectRegister<KeyMakerController>          m_key_maker_store;
     ObjectRegister<Xapian::MSet>                m_mset_store;
     ObjectRegister<QlcTable>                    m_qlc_store;
-    ObjectRegister<const Xapian::Weight>        m_weight_store;
-    ObjectRegister<const Xapian::Query>         m_query_store;
-    ObjectRegister<const Xapian::MatchDecider>  m_match_decider_store;
-    ObjectRegister<const Xapian::Stem>          m_stem_store;
-    ObjectRegister<const Xapian::ExpandDecider> m_expand_decider_store;
-    ObjectRegister<Xapian::ValueRangeProcessor> 
+    ObjectRegister<Xapian::Weight>              m_weight_store;
+    ObjectRegister<Xapian::Query>               m_query_store;
+    ObjectRegister<MatchDeciderController>      m_match_decider_store;
+    ObjectRegister<StemController>              m_stem_store;
+    ObjectRegister<ExpandDeciderController>     m_expand_decider_store;
+    ObjectRegister<ValueRangeProcessorController> 
         m_value_range_processor_store;
     ObjectRegister<SpyController>               m_match_spy_store;
+    ObjectRegister<QueryParserController>       m_query_parser_store;
 
     /**
      * It is global.
@@ -106,7 +113,8 @@ class Driver
         IS_DOCUMENT_EXIST           = 32,
         REPLACE_DOCUMENT            = 33,
         VALUE_MATCH_SPY_TO_SLOT     = 34,
-        RESOURCE_INFO               = 35
+        RESOURCE_INFO               = 35,
+        CREATE_QUERY_PARSER         = 36
     };
 
 
@@ -609,11 +617,11 @@ class Driver
         return *static_cast<SpyController*>(ptr);
     }
 
-    Xapian::ValueRangeProcessor&
+    ValueRangeProcessorController&
     extractRangeProcessor(CP)
     {
         void* ptr = m_stores.extract(con, params, ResourceType::VALUE_RANGE_PROCESSOR);
-        return *static_cast<Xapian::ValueRangeProcessor*>(ptr);
+        return *static_cast<ValueRangeProcessorController*>(ptr);
     }
 
     const Xapian::Weight&
@@ -636,6 +644,9 @@ class Driver
         void* ptr = m_stores.extract(con, params, ResourceType::ENQUIRE);
         return *static_cast<EnquireController*>(ptr);
     }
+
+    void
+    createQueryParser(PR);
 };
 
 XAPIAN_ERLANG_NS_END

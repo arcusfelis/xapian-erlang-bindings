@@ -69,7 +69,8 @@ command_id(document_info_resource)      -> 31;
 command_id(is_document_exist)           -> 32;
 command_id(replace_document)            -> 33;
 command_id(value_spy_to_slot)           -> 34;
-command_id(resource_info)               -> 35.
+command_id(resource_info)               -> 35;
+command_id(create_query_parser)         -> 36.
 
 
 %% Open modes of the DB

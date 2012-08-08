@@ -1,6 +1,7 @@
 #include "user_resources.h"
 #include "spy_value_ctrl.h"
 #include "key_maker_ctrl.h"
+#include "val_range_ctrl.h"
 #include "xapian.h"
 
 /**
@@ -69,7 +70,8 @@ createDateValueRangeProcessor3(ResourceManager& /*manager*/, ParamDecoder& param
     uint32_t slot       = params;
      int32_t epoch_year = params;
     uint8_t  prefer_mdy = params;
-    return new Xapian::DateValueRangeProcessor(slot, prefer_mdy, epoch_year);
+    return new ValueRangeProcessorController(
+            new Xapian::DateValueRangeProcessor(slot, prefer_mdy, epoch_year));
 }
 
 
@@ -81,8 +83,9 @@ createDateValueRangeProcessor5(ResourceManager& /*manager*/, ParamDecoder& param
     uint8_t     prefix        = params;
      int32_t    epoch_year    = params;
     uint8_t     prefer_mdy    = params;
-    return new Xapian::DateValueRangeProcessor(
-              slot, str, prefix, prefer_mdy, epoch_year);
+    return  new ValueRangeProcessorController(
+                new Xapian::DateValueRangeProcessor(
+                    slot, str, prefix, prefer_mdy, epoch_year));
 }
 
 
@@ -90,7 +93,8 @@ ResourceObjectP
 createNumberValueRangeProcessor1(ResourceManager& /*m*/, ParamDecoder& params)
 {
     uint32_t slot         = params;
-    return new Xapian::NumberValueRangeProcessor(slot);
+    return  new ValueRangeProcessorController(
+                new Xapian::NumberValueRangeProcessor(slot));
 }
 
 
@@ -100,7 +104,8 @@ createNumberValueRangeProcessor3(ResourceManager& /*m*/, ParamDecoder& params)
     uint32_t slot          = params;
     const std::string& str = params;
     uint8_t  prefix        = params;
-    return new Xapian::NumberValueRangeProcessor(slot, str, prefix);
+    return  new ValueRangeProcessorController(
+                new Xapian::NumberValueRangeProcessor(slot, str, prefix));
 }
 
 
@@ -108,7 +113,8 @@ ResourceObjectP
 createStringValueRangeProcessor1(ResourceManager& /*m*/, ParamDecoder& params)
 {
     uint32_t slot         = params;
-    return new Xapian::StringValueRangeProcessor(slot);
+    return  new ValueRangeProcessorController(
+                new Xapian::StringValueRangeProcessor(slot));
 }
 
 
@@ -118,8 +124,10 @@ createStringValueRangeProcessor3(ResourceManager& /*m*/, ParamDecoder& params)
     uint32_t slot          = params;
     const std::string& str = params;
     uint8_t  prefix        = params;
-    return new Xapian::StringValueRangeProcessor(slot, str, prefix);
+    return  new ValueRangeProcessorController(
+                new Xapian::StringValueRangeProcessor(slot, str, prefix));
 }
+
 
 void
 registerUserCallbacks(ResourceGenerator& generator)

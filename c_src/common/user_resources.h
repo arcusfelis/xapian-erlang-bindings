@@ -41,7 +41,8 @@ public:
         VALUE_RANGE_PROCESSOR = 9,
         MATCH_SPY       = 10,
         DOCUMENT        = 11,
-        LAST_TYPE       = 11
+        QUERY_PARSER    = 12,
+        LAST_TYPE       = 12
     };
 
     /**
@@ -314,7 +315,6 @@ class ResourceManager
 
                 ResourceObjectNum   resource_num = params;
                 ObjectBaseRegister& reg = get(expected_group_type);
-                return reg.getVoidPointer(resource_num);
                 break;
             }
 

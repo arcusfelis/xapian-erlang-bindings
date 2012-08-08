@@ -86,7 +86,7 @@ Driver::Driver(MemoryManager& mm, ResourceGenerator& generator)
         &m_value_range_processor_store);
     m_stores.add(ResourceType::MATCH_SPY,      &m_match_spy_store);
     m_stores.add(ResourceType::DOCUMENT,       &m_document_store);
-
+    m_stores.add(ResourceType::QUERY_PARSER,   &m_query_parser_store);
 
     m_default_parser_factory.set_database(m_db);
     m_standard_parser_factory.set_database(m_db);
@@ -509,6 +509,30 @@ Driver::enquire(PR)
     result << num;
 }
 
+
+
+/**
+ * Create a parser with a corrected string inside.
+ */
+void
+Driver::createQueryParser(PR)
+{
+    // Create a new context.
+    XapianContext parser_con;
+
+    Xapian::QueryParser* p_parser = 
+        new Xapian::QueryParser(readParser(parser_con, params));
+
+    QueryParserController* p_parser_ctrl = new QueryParserController(p_parser);
+
+    // m_enquire_store will call the delete operator.
+    uint32_t num = m_query_parser_store.put(p_parser_ctrl);
+
+    // All objects, created inside `enquire_con` will be deleted,
+    // when the Enquire object is finally deallocated.
+    m_query_parser_store.attachContext(num, parser_con);
+    result << num;
+}
 
 // Get a copy of a document.
 // Caller must deallocate the returned object.
@@ -1179,7 +1203,7 @@ Driver::selectParser(ParamDecoder& params)
 }
 
 
-Xapian::QueryParser 
+Xapian::QueryParser
 Driver::readParser(CP)
 {
   uint8_t command = params;
@@ -1234,8 +1258,9 @@ Driver::readParser(CP)
 
     case QP_VALUE_RANGE_PROCESSOR:
         {
-        Xapian::ValueRangeProcessor* vrp = & extractRangeProcessor(con, params);
-        qp.add_valuerangeprocessor(vrp);
+        ValueRangeProcessorController& vrp_ctrl = 
+            extractRangeProcessor(con, params);
+        qp.add_valuerangeprocessor(vrp_ctrl.getValueRangeProcessor());
         break;
         }
 
@@ -1418,6 +1443,10 @@ Driver::handleCommand(PR,
         case CLOSE: 
             m_wdb.close();
             m_db.close();
+            break;
+
+        case CREATE_QUERY_PARSER: 
+            createQueryParser(params, result);
             break;
 
         default:

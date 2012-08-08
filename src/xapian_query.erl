@@ -1,5 +1,6 @@
 -module(xapian_query).
 -export([encode/5]).
+-export([append_parser/3]).
 
 -include_lib("xapian/include/xapian.hrl").
 -compile({parse_transform, seqbind}).

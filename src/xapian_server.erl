@@ -31,7 +31,11 @@
 %% Resources
 -export([enquire/2,
          document/2,
-         match_set/2]).
+         match_set/2,
+         query_parser/2]).
+
+
+-export([parse_string/3]).
 
 %% Resources
 -export([create_resource/2,
@@ -443,7 +447,9 @@ document(Server, DocId) -> %% DocId can be an unique term.
 %%
 %% @see xapian_mset_qlc
 %% @see mset_info/3
--spec match_set(x_server(), #x_match_set{} | x_resource()) -> x_resource().
+-spec match_set(x_server(), #x_match_set{} | Enquire) -> x_resource() when 
+    Enquire :: x_resource().
+
 match_set(Server, #x_match_set{} = Rec) ->
     call(Server, Rec);
 
@@ -451,6 +457,26 @@ match_set(Server, EnquireResource) ->
     Rec = #x_match_set{enquire = EnquireResource},
     match_set(Server, Rec).
 
+
+-spec query_parser(x_server(), #x_query_parser{}) -> x_resource().
+
+query_parser(Server, #x_query_parser{} = Rec) ->
+    call(Server, Rec).
+
+
+%% @doc Run a query parser for getting a Query object or a corrected 
+%%      query string.
+%%
+%%      Corrected query string is used for syntax checking.
+-spec parse_string(x_server(), #x_query_string{}, Fields) -> Result when
+    Fields :: [Key],
+    Key :: query_resource | corrected_query_string,
+    Result :: [Pair] | Value,
+    Pair :: {Key, Value},
+    Value :: x_resource() | x_string().
+
+parse_string(Server, #x_query_string{} = Rec, Fields) ->
+    call(Server, {parse_string, Rec, Fields}).
 
 %% @doc Release a resource.
 %% It will be called automaticly, if the client process is died.
@@ -1316,6 +1342,14 @@ handle_call({document, DocId}, {FromPid, _FromRef}, State) ->
                            port_document(Port, DocId));
 
 
+handle_call(#x_query_parser{} = QP, {FromPid, _FromRef}, State) ->
+    #state{port = Port } = State,
+    do_reply(State, do([error_m ||
+        QPNum <-
+            port_create_query_parser(Port, State, QP),
+        register_resource(State, query_parser, FromPid, QPNum)]));
+
+
 handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
     #x_match_set{
         enquire = EnquireRef, 
@@ -1909,6 +1943,9 @@ port_match_set(Port, EnqRF, From, MaxItems, CheckAtLeast, SpyRFs) ->
     Bin@ = lists:foldl(fun append_compiled_resource/2, Bin@, SpyRFs),
     decode_resource_result(control(Port, match_set, Bin@)).
 
+port_create_query_parser(Port, State, QP) ->
+    EncodedQP = xapian_query:append_parser(State, QP, <<>>),
+    decode_resource_result(control(Port, create_query_parser, EncodedQP)).
 
 append_compiled_resource(Res, Bin) -> Res(Bin).
 
