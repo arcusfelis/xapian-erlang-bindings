@@ -15,9 +15,6 @@
 #include "result_encoder.h"
 #include "xapian_exception.h"
 #include "qlc_table.h"
-#include "object_register.h"
-#include "user_resources.h"
-#include "termiter_doc_gen.h"
 
 #include <assert.h>
 #include <cstdlib>
@@ -68,26 +65,9 @@ Driver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
 };
 
 
-Driver::Driver(MemoryManager& mm, ResourceGenerator& generator)
-: m_generator(generator), m_stores(generator), m_number_of_databases(0), m_mm(mm)
+Driver::Driver(MemoryManager& mm)
+: m_number_of_databases(0), m_mm(mm)
 {
-    // RESOURCE_TYPE_ID_MARK
-    m_stores.add(ResourceType::DOCUMENT,       &m_document_store);
-    m_stores.add(ResourceType::ENQUIRE,        &m_enquire_store);
-    m_stores.add(ResourceType::MSET,           &m_mset_store);
-    m_stores.add(ResourceType::QLC_TABLE,      &m_qlc_store);
-    m_stores.add(ResourceType::WEIGHT,         &m_weight_store);
-    m_stores.add(ResourceType::KEY_MAKER,      &m_key_maker_store);
-    m_stores.add(ResourceType::QUERY,          &m_query_store);
-    m_stores.add(ResourceType::MATCH_DECIDER,  &m_match_decider_store);
-    m_stores.add(ResourceType::STEM,           &m_stem_store);
-    m_stores.add(ResourceType::EXPAND_DECIDER, &m_expand_decider_store);
-    m_stores.add(ResourceType::VALUE_RANGE_PROCESSOR, 
-        &m_value_range_processor_store);
-    m_stores.add(ResourceType::MATCH_SPY,      &m_match_spy_store);
-    m_stores.add(ResourceType::DOCUMENT,       &m_document_store);
-    m_stores.add(ResourceType::QUERY_PARSER,   &m_query_parser_store);
-
     m_default_parser_factory.set_database(m_db);
     m_standard_parser_factory.set_database(m_db);
     m_default_parser_factory.set_database(m_db);
@@ -714,7 +694,7 @@ Driver::termGenerator(ParamDecoder& params,
         {
             assert(resource_type == ResourceType::DOCUMENT);
             Xapian::Document& doc = *m_document_store.get(resource_num);
-            return new DocumentTermIteratorGenerator(doc);
+            return TermIteratorGenerator.create(doc);
         }
 
         case QlcType::SPY_TERMS:
@@ -724,7 +704,8 @@ Driver::termGenerator(ParamDecoder& params,
 
             SpyController&
             spy = *m_match_spy_store.get(resource_num);
-            return spy.getIteratorGenerator(params);
+
+            return TermIteratorGenerator.create(params, spy);
         }
 
         default:

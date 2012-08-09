@@ -3,8 +3,16 @@
 
 #include <xapian.h>
 
+namespace Xapian
+{
+    class ValueCountMatchSpy;
+    class Document;
+};
+
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
+
+class ParamDecoder;
 
 /**
  * @brief Contains functions for iterator creation and retrieving information.
@@ -33,6 +41,17 @@ class TermIteratorGenerator
     {
         return begin() == end();
     }
+
+    /**
+     * Create from Spy.
+     */
+    static
+    TermIteratorGenerator*                                                        
+    create(ParamDecoder& params, Xapian::ValueCountMatchSpy& spy);
+
+    static
+    TermIteratorGenerator*                                                        
+    create(Xapian::Document& doc);
 };
 
 XAPIAN_ERLANG_NS_END

@@ -1,24 +1,13 @@
 #ifndef XAPIAN_CORE_H
 #define XAPIAN_CORE_H
+#include <xapian.h>
+#include <string>
+#include <stdint.h>
 
 #include "result_encoder.h"
 #include "query_parser_factory.h"
 #include "qlc_table.h"
-#include "object_register.h"
-#include "user_resources.h"
-#include "spy_ctrl.h"
-#include "enquire_ctrl.h"
-#include "key_maker_ctrl.h"
-#include "xapian_context.h"
-#include "stopper_ctrl.h"       
-#include "stem_ctrl.h"          
-#include "val_range_ctrl.h"     
-#include "match_decider_ctrl.h" 
-#include "expand_decider_ctrl.h"
-#include "query_parser_ctrl.h"  
-#include <xapian.h>
-#include <string>
-#include <stdint.h>
+#include "resource/factory.h"
 
 
 #include "xapian_config.h"
@@ -42,32 +31,17 @@ class Driver
     Xapian::QueryParser m_standard_parser;
     QueryParserFactory m_default_parser_factory;
     QueryParserFactory m_standard_parser_factory;
-    ObjectRegister<Xapian::Document>            m_document_store;
-    ObjectRegister<EnquireController>           m_enquire_store;
-    ObjectRegister<KeyMakerController>          m_key_maker_store;
-    ObjectRegister<Xapian::MSet>                m_mset_store;
-    ObjectRegister<QlcTable>                    m_qlc_store;
-    ObjectRegister<Xapian::Weight>              m_weight_store;
-    ObjectRegister<Xapian::Query>               m_query_store;
-    ObjectRegister<MatchDeciderController>      m_match_decider_store;
-    ObjectRegister<StemController>              m_stem_store;
-    ObjectRegister<ExpandDeciderController>     m_expand_decider_store;
-    ObjectRegister<ValueRangeProcessorController> 
-        m_value_range_processor_store;
-    ObjectRegister<SpyController>               m_match_spy_store;
-    ObjectRegister<QueryParserController>       m_query_parser_store;
 
     /**
      * It is global.
      * It knows how to create user customized resources.
      */
-    ResourceGenerator&  m_generator;
+    Resource::Factory m_store;
 
     /**
      * It is different for each port.
      * It is a manager of ObjectRegisters.
      */
-    ResourceManager     m_stores;
     unsigned            m_number_of_databases;
     MemoryManager&      m_mm;
 
@@ -323,7 +297,7 @@ class Driver
     /**
      * A constructor.
      */
-    Driver(MemoryManager&, ResourceGenerator&);
+    Driver(MemoryManager&);
 
     ~Driver();
     void
@@ -336,9 +310,6 @@ class Driver
     handleCommand(PR, const unsigned int  command);
 
     void setDefaultStemmer(const Xapian::Stem& stemmer);
-
-    ObjectBaseRegister&
-    getRegisterByType(uint8_t type);
 
     int openWriteMode(uint8_t mode);
 
@@ -467,9 +438,9 @@ class Driver
     Xapian::Query 
     buildQuery(CP);
 
-    void fillEnquire(CP, EnquireController& enquire_ctrl);
+    void fillEnquire(CP, Xapian::Enquire& enquire);
 
-    void fillEnquireOrder(CP, EnquireController& enquire_ctrl);
+    void fillEnquireOrder(CP, Xapian::Enquire& enquire);
 
     /**
      * Throws error if the database was opened only for reading.

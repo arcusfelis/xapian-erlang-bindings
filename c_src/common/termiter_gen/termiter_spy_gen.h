@@ -10,15 +10,13 @@ XAPIAN_ERLANG_NS_BEGIN
 class SpyValueIteratorGenerator : public TermIteratorGenerator
 {
     protected:
-    SpyController m_controller;
     Xapian::ValueCountMatchSpy* mp_spy;
 
     public:
-    SpyValueIteratorGenerator(SpyController& controller) 
+    SpyValueIteratorGenerator(Xapian::ValueCountMatchSpy& spy) 
         : m_controller(controller)
     {
-        mp_spy = 
-        static_cast<Xapian::ValueCountMatchSpy*>(m_controller.getSpy());
+        mp_spy = &spy;
     }
 
     Xapian::TermIterator begin()
@@ -39,8 +37,8 @@ class TopSpyValueIteratorGenerator : public SpyValueIteratorGenerator
 
     public:
     TopSpyValueIteratorGenerator(
-        SpyController& controller, uint32_t maxvalues) 
-            : SpyValueIteratorGenerator(controller), m_maxvalues(maxvalues)
+        Xapian::ValueCountMatchSpy& spy, uint32_t maxvalues) 
+            : SpyValueIteratorGenerator(spy), m_maxvalues(maxvalues)
     {}
 
     Xapian::TermIterator begin()

@@ -131,5 +131,27 @@ class MatchSpyFinalizedDriverError: public DriverRuntimeError
     MatchSpyFinalizedDriverError();
 };
 
+class ResourceTypeMismatchDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    ResourceTypeMismatchDriverError(std::string passed, std::string expected);
+
+    static const std::string 
+    buildString(std::string passed, std::string expected);
+};
+
+
+class AbstractMethodDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    AbstractMethodDriverError(std::string object_type, std::string method_name);
+
+    static const std::string
+    buildString(std::string object_type, std::string method_name);
+};
 XAPIAN_ERLANG_NS_END
 #endif

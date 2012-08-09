@@ -57,51 +57,7 @@ public:
 };
 
 
-/**
- * It is a number for each class, which can be handled as a resource.
- */
-typedef ResourceType::ResourceValidObjectType ResourceValidObjectType;
 
-/**
- * CreateUserResourceFn is a function for calling new Constructor of a resource.
- */
-typedef ResourceObjectP (*CreateUserResourceFn)
-    (ResourceManager& manager, ParamDecoder& params);
-
-
-/**
- * Encapsulate information about how to create new resource.
- */
-class UserResource
-{
-    ResourceValidObjectType m_type;
-    std::string m_name;
-    CreateUserResourceFn m_creator;
-
-    public:
-    UserResource(ResourceValidObjectType type, 
-        const std::string& name, 
-        CreateUserResourceFn creator)
-        : m_type(type), m_name(name), m_creator(creator)
-    {
-    }
-
-    ResourceObjectP
-    create(ResourceManager& manager, ParamDecoder& params)
-    {
-        return m_creator(manager, params);
-    }
-
-    const std::string& getName()
-    {
-        return m_name;
-    }
-
-    uint8_t getType()
-    {
-        return m_type;
-    }
-};
 
 
 /**
@@ -113,8 +69,7 @@ class ResourceGenerator
     /**
      * Stores resource creator functions
      */
-    ObjectRegister<UserResource>
-    m_resources;
+    vector<Constructor> m_constructors;
 
 
     public:
@@ -300,8 +255,10 @@ class ResourceManager
     /**
      * Extract a resource by its number from the QLC table or
      * create the new resource in the current context.
+     *
+     * Return a link on Element, which is stored inside a Context (con).
      */
-    ResourceObjectP
+    Resource::Element&
     extract(CP, ResourceValidObjectType expected_group_type)
     {
         switch(uint8_t schema_type = params)

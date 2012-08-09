@@ -144,6 +144,42 @@ GroupResourceTypeMismatchDriverError::buildString(uint32_t passed, uint32_t expe
 
 
 // -------------------------------------------------------------------
+// ResourceTypeMismatchDriverError
+// -------------------------------------------------------------------
+ResourceTypeMismatchDriverError::ResourceTypeMismatchDriverError(
+        std::string passed, std::string expected) : 
+    DriverRuntimeError(TYPE, buildString(passed, expected)) {}
+
+const std::string 
+ResourceTypeMismatchDriverError::buildString(std::string passed, 
+                                             std::string expected)
+{
+    std::stringstream ss;
+    ss << "Resource::Controller with the type = " << passed 
+       << " was passed, but the " << expected << " type was expected.";
+    return ss.str();
+}
+
+
+// -------------------------------------------------------------------
+// AbstractMethodDriverError
+// -------------------------------------------------------------------
+AbstractMethodDriverError::AbstractMethodDriverError(
+        std::string object_type, std::string method_name) : 
+    AbstractMethodDriverError(TYPE, buildString(passed, expected)) {}
+
+const std::string 
+AbstractMethodDriverError::buildString(std::string object_type, 
+                                       std::string method_name)
+{
+    std::stringstream ss;
+    ss << "Non-implemented method " << method_name
+       << " was called from " << object_type << ".";
+    return ss.str();
+}
+
+
+// -------------------------------------------------------------------
 // MatchSpyFinalizedDriverError
 // -------------------------------------------------------------------
 MatchSpyFinalizedDriverError::MatchSpyFinalizedDriverError() : 
@@ -162,5 +198,7 @@ REG_TYPE(DbIsNotReadyDriverError)
 REG_TYPE(ElementNotFoundDriverError)
 REG_TYPE(MatchSpyFinalizedDriverError)
 REG_TYPE(GroupResourceTypeMismatchDriverError)
+REG_TYPE(ResourceTypeMismatchDriverError)
+REG_TYPE(AbstractMethodDriverError)
 
 XAPIAN_ERLANG_NS_END
