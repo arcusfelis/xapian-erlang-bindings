@@ -10,8 +10,23 @@ namespace Xapian
     class Weight;
     class ValueRangeProcessor;
     class ValueCountMatchSpy;
+    class MSet;
     class KeyMaker;
+    class Enquire;
+    class Query;
+    class MatchDecider;
+    class ExpandDecider;
+    class QueryParser;
+    class Stopper;
+    class Stem;
+    class MatchSpy;
+    class MSet;
+    class Document;
 };
+
+XAPIAN_ERLANG_NS_BEGIN
+    class QlcTable;
+XAPIAN_ERLANG_NS_END
 
 XAPIAN_RESOURCE_NS_BEGIN
 
@@ -45,6 +60,33 @@ class Element
     static Element wrap(Xapian::ValueRangeProcessor* p_proc);
     static Element wrap(Xapian::KeyMaker* p_key_maker);
     static Element wrap(uint32_t slot, Xapian::ValueCountMatchSpy* p_spy);
+    static Element wrap(Xapian::Enquire* p_enquire);
+    static Element wrap(Xapian::QueryParser* p_query_parser);
+    static Element wrap(Xapian::Document* p_document);
+    static Element wrap(Xapian::MSet* p_mset);
+    static Element wrap(QlcTable* p_table);
+    /**
+     * Create a new context.
+     * Context is a object, that's goal is aggregating other Elements.
+     */
+    static Element createContext();
+    operator Xapian::MSet&();
+    operator Xapian::KeyMaker&();
+    operator Xapian::Enquire&();
+    operator QlcTable&();
+    operator Xapian::Weight&();
+    operator Xapian::Query&();
+    operator Xapian::MatchDecider&();
+    operator Xapian::ExpandDecider&();
+    operator Xapian::ValueRangeProcessor&();
+    operator Xapian::QueryParser&();
+    operator Xapian::Stopper&();
+    operator Xapian::Stem&();
+    operator Xapian::ValueCountMatchSpy&();
+    operator Xapian::MatchSpy&();
+    operator Xapian::Document&();
+    void finalize();
+    bool is_finalized();
 };
 
 XAPIAN_RESOURCE_NS_END

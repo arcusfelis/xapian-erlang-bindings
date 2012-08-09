@@ -300,8 +300,6 @@ class Driver
     Driver(MemoryManager&);
 
     ~Driver();
-    void
-    clear();
 
     /**
      * Read and execute one command from a client.
@@ -581,39 +579,43 @@ class Driver
     /*! \} */
 
 
-    SpyController&
+    Xapian::MatchSpy&
     extractSpy(CP)
     {
-        void* ptr = m_stores.extract(con, params, ResourceType::MATCH_SPY);
-        return *static_cast<SpyController*>(ptr);
+        return m_store.extract(con, params);
     }
 
-    ValueRangeProcessorController&
+    Xapian::MatchSpy&
+    extractWritableSpy(CP);
+
+    Xapian::ValueRangeProcessor&
     extractRangeProcessor(CP)
     {
-        void* ptr = m_stores.extract(con, params, ResourceType::VALUE_RANGE_PROCESSOR);
-        return *static_cast<ValueRangeProcessorController*>(ptr);
+        return m_store.extract(con, params);
     }
 
-    const Xapian::Weight&
+    Xapian::Weight&
     extractWeight(CP)
     {
-        void* ptr = m_stores.extract(con, params, ResourceType::WEIGHT);
-        return *static_cast<Xapian::Weight*>(ptr);
+        return m_store.extract(con, params);
     }
 
-    KeyMakerController&
+    Xapian::KeyMaker&
     extractKeyMaker(CP)
     {
-        void* ptr = m_stores.extract(con, params, ResourceType::KEY_MAKER);
-        return *static_cast<KeyMakerController*>(ptr);
+        return m_store.extract(con, params);
     }
 
-    EnquireController&
-    extractEnquireController(CP)
+    Xapian::Enquire&
+    extractEnquire(CP)
     {
-        void* ptr = m_stores.extract(con, params, ResourceType::ENQUIRE);
-        return *static_cast<EnquireController*>(ptr);
+        return m_store.extract(con, params);
+    }
+
+    Xapian::MSet&
+    extractMSet(CP)
+    {
+        return m_store.extract(con, params);
     }
 
     void

@@ -18,6 +18,23 @@ save(Element& element, ResultEncoder& result)
     result << element_num;
 }
 
+void
+Factory::
+release(ParamDecoder& params)
+{
+    uint32_t element_num = params;
+    m_register.remove(element_num);
+}
+
+Element
+Factory::
+extract(Element& context, ParamDecoder& params)
+{
+    Element elem = extract(params);
+    context.attach(elem);
+    return elem;
+}
+
 Element
 Factory::
 extract(ParamDecoder& params)

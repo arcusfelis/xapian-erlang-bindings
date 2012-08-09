@@ -28,6 +28,7 @@ namespace Xapian
     class Stopper;
     class MatchSpy;
     class ValueCountMatchSpy;
+    class Document;
 }
 
 XAPIAN_RESOURCE_CTRL_NS_BEGIN
@@ -137,6 +138,11 @@ class Base
     virtual operator Xapian::MatchSpy&()
     {
         throw ResourceTypeMismatchDriverError(type(), "Xapian::MatchSpy");
+    }
+
+    virtual operator Xapian::Document&()
+    {
+        throw ResourceTypeMismatchDriverError(type(), "Xapian::Document");
     }
 
     virtual void finalize()

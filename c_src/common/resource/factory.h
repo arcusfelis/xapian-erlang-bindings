@@ -31,8 +31,14 @@ class Factory
     Element
     extract(ParamDecoder& params);
 
+    Element
+    extract(Element& context, ParamDecoder& params);
+
     void
     save(Element& element, ResultEncoder& result);
+
+    void
+    release(ParamDecoder& params);
 };
 
 XAPIAN_RESOURCE_NS_END

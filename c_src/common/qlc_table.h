@@ -68,7 +68,7 @@ class QlcTable
      * It counts the total count of objects in the set (in the table).
      */
     virtual uint32_t
-    numOfObjects() = 0;
+    size() = 0;
 
     /**
      * It allows paganation.
@@ -96,7 +96,7 @@ class MSetQlcTable : public QlcTable
     MSetQlcTable(Driver& driver, 
         Xapian::MSet& mset, const ParamDecoderController& controller);
 
-    uint32_t numOfObjects();
+    uint32_t size();
 
     void getPage(ResultEncoder&, uint32_t from, uint32_t count);
 
@@ -140,7 +140,7 @@ class TermQlcTable : public QlcTable
      * Calculate, how many objects in the set.
      * Return zero if unknown.
      */
-    uint32_t numOfObjects();
+    uint32_t size();
 
     void getPage(ResultEncoder&, uint32_t from, uint32_t count);
 

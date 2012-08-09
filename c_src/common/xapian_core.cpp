@@ -72,15 +72,8 @@ Driver::Driver(MemoryManager& mm)
     m_standard_parser_factory.set_database(m_db);
     m_default_parser_factory.set_database(m_db);
     m_standard_parser_factory.set_database(m_db);
-    m_stores.set_database(m_db);
 }
 
-
-void
-Driver::clear()
-{
-    m_stores.clear();
-}
 
 Driver::~Driver()
 {}
@@ -113,13 +106,6 @@ Driver::setDefaultPrefixes(ParamDecoder& params)
     }
     // Update the mirror
     m_default_parser = m_default_parser_factory;
-}
-
-
-ObjectBaseRegister&
-Driver::getRegisterByType(uint8_t type)
-{
-    return m_stores.get(type);
 }
 
 
@@ -473,20 +459,15 @@ void
 Driver::enquire(PR)
 {
     // Use an Enquire object on the database to run the query.
-    Xapian::Enquire enquire(m_db);
-    EnquireController* p_enquire_ctrl = new EnquireController(enquire);
-
     // Create a new context.
-    XapianContext enquire_con;
-    fillEnquire(enquire_con, params, *p_enquire_ctrl);
+    Resource::Element elem = 
+        Resource::Element::wrap(new Xapian::Enquire(m_db));
+    Xapian::Enquire& enquire = elem;
 
-    // m_enquire_store will call the delete operator.
-    uint32_t num = m_enquire_store.put(p_enquire_ctrl);
+    // Use elem as a context.
+    fillEnquire(elem, params, enquire);
 
-    // All objects, created inside `enquire_con` will be deleted,
-    // when the Enquire object is finally deallocated.
-    m_enquire_store.attachContext(num, enquire_con);
-    result << num;
+    m_store.save(elem, result);
 }
 
 
@@ -498,20 +479,19 @@ void
 Driver::createQueryParser(PR)
 {
     // Create a new context.
-    XapianContext parser_con;
+    Resource::Element parser_con = Resource::Element::createContext();
 
+    // Read parser into allocated pointer.
+    // parser_con holds child resources.
     Xapian::QueryParser* p_parser = 
         new Xapian::QueryParser(readParser(parser_con, params));
 
-    QueryParserController* p_parser_ctrl = new QueryParserController(p_parser);
+    Resource::Element elem = 
+        Resource::Element::wrap(p_parser);
 
-    // m_enquire_store will call the delete operator.
-    uint32_t num = m_query_parser_store.put(p_parser_ctrl);
-
-    // All objects, created inside `enquire_con` will be deleted,
-    // when the Enquire object is finally deallocated.
-    m_query_parser_store.attachContext(num, parser_con);
-    result << num;
+    // Add the context as a child.
+    elem.attach(parser_con);
+    m_store.save(elem, result);
 }
 
 // Get a copy of a document.
@@ -562,38 +542,28 @@ void
 Driver::document(PR)
 {
     const Xapian::Document& doc = getDocument(params);
-    // m_document_store will call delete
-    uint32_t num = m_document_store.put(new Xapian::Document(doc));
-    result << num;
-}
 
-// Return the slot on which data is collected into ValueCountMatchSpy.
-void
-Driver::valueMatchSpyToSlot(PR)
-{
-    // Number of created resource is expected.
-    uint32_t   resource_num = params;
-    SpyController&
-    spy = *m_match_spy_store.get(resource_num);
-    const Xapian::valueno   slot = spy.getSlot();
-    result << slot;
+    Resource::Element elem = 
+        Resource::Element::wrap(new Xapian::Document(doc));
+    Xapian::Enquire& enquire = elem;
+
+    m_store.save(elem, result);
 }
 
 void 
 Driver::releaseResource(ParamDecoder& params)
 {
-    uint8_t   type = params;
-    uint32_t   num = params;
-    ObjectBaseRegister&
-    reg = getRegisterByType(type);
-    reg.remove(num);
+    m_store.release(params);
 }
 
 
 void 
 Driver::matchSet(CPR)
 {
-    Xapian::Enquire& enquire = extractEnquireController(con, params).getEnquire();
+    // Spies and MatchSpy must be sepated.
+    // Enquire and Spies will be stored inside a temporary context (con
+    // parameter).
+    Xapian::Enquire& enquire = extractEnquire(con, params);
 
     Xapian::doccount    first, maxitems, checkatleast;
     first = params;
@@ -607,16 +577,9 @@ Driver::matchSet(CPR)
     uint32_t count = params;
     while (count--)
     {
-        SpyController& spy = extractSpy(con, params);
-        if (!spy.is_finalized())
-        {
-            // It can be added just once
-            enquire.add_matchspy(spy.getSpy());
-            spy.finalize();
-        } else {
-            throw MatchSpyFinalizedDriverError();
-        }
-        break;
+        // It can be added just once
+        Xapian::MatchSpy& spy = extractWritableSpy(con, params);
+        enquire.add_matchspy(&spy);
     }
 
     Xapian::MSet mset = enquire.get_mset(
@@ -626,111 +589,124 @@ Driver::matchSet(CPR)
 
     enquire.clear_matchspies();
 
-    // m_mset_store will call delete
-    uint32_t mset_num = m_mset_store.put(new Xapian::MSet(mset));
-    result << mset_num;
+    Resource::Element elem = 
+        Resource::Element::wrap(new Xapian::MSet(mset));
+
+    m_store.save(elem, result);
 }
 
+Xapian::MatchSpy&
+Driver::extractWritableSpy(CP)
+{
+    Resource::Element elem = m_store.extract(con, params);
+    if (elem.is_finalized())
+        throw MatchSpyFinalizedDriverError();
+    elem.finalize();
+    return elem;
+}
 
 void
 Driver::qlcInit(PR)
 {
-    uint8_t   qlc_type      = params;
-    uint8_t   resource_type = params;
-    uint32_t  resource_num  = params;
-    switch (qlc_type)
+    switch (uint8_t qlc_type = params)
     {
         case QlcType::MSET:
         {
-            assert(resource_type == ResourceType::MSET);
-             
-            Xapian::MSet& mset = *m_mset_store.get(resource_num);
+            // Cannot use extractMSet(), because we need Element for linking.
+            Resource::Element mset_elem = m_store.extract(params);
+            Xapian::MSet& mset = mset_elem;
+            // Extract a schema (a list of fields, settings for QLC).
             const ParamDecoderController& schema  
                 = retrieveDocumentSchema(params);
+            // Allocate the object
             MSetQlcTable* qlcTable = new MSetQlcTable(*this, mset, schema);
-            // m_qlc_store will call delete
-            const uint32_t qlc_num = m_qlc_store.put(qlcTable);
-            const uint32_t mset_size = qlcTable->numOfObjects();
+
+            Resource::Element elem = 
+                Resource::Element::wrap(qlcTable);
+
+            // Add MSet as a child of the QLC Table.
+            elem.attach(mset_elem);
+
+            // Write a resource.
+            m_store.save(elem, result);
         
-            result << qlc_num << mset_size;
+            // Write the size.
+            const uint32_t mset_size = qlcTable->size();
+            result << mset_size;
             break;
         }
 
         case QlcType::TERMS:
-        case QlcType::SPY_TERMS:
         {
-            TermIteratorGenerator* p_gen = 
-            termGenerator(params, qlc_type, resource_type, resource_num);
+            // Don't store copy of the document controller.
+            // The whole document will be copied into QlcTable.
+            Xapian::Document& doc = m_store.extract(params);
+            TermIteratorGenerator* p_gen = TermIteratorGenerator::create(doc);
+
             const ParamDecoderController& schema  
                 = retrieveTermSchema(params);
+
             TermQlcTable* qlcTable = new TermQlcTable(*this, p_gen, schema);
-            // qlcTable is now a master of p_gen object. 
-            // m_qlc_store will call delete
-            const uint32_t qlc_num = m_qlc_store.put(qlcTable);
-            const uint32_t list_size = qlcTable->numOfObjects();
+
+            Resource::Element elem = 
+                Resource::Element::wrap(qlcTable);
+
+            // Write a resource.
+            m_store.save(elem, result);
         
-            result << qlc_num << list_size;
+            // Write the size.
+            const uint32_t mset_size = qlcTable->size();
+            result << mset_size;
             break;
-        }
-
-        default:
-            throw BadCommandDriverError(resource_type);
-    }
-}
-
-
-/**
- * Caller must delete returned value.
- */
-TermIteratorGenerator*
-Driver::termGenerator(ParamDecoder& params, 
-    const /*QlcType*/ int8_t qlc_type, 
-    const /*ResourceType*/ int8_t resource_type, 
-    const uint32_t resource_num)
-{
-    switch (qlc_type)
-    {
-        case QlcType::TERMS:
-        {
-            assert(resource_type == ResourceType::DOCUMENT);
-            Xapian::Document& doc = *m_document_store.get(resource_num);
-            return TermIteratorGenerator.create(doc);
         }
 
         case QlcType::SPY_TERMS:
         {
-            // Init commons
-            assert(resource_type == ResourceType::MATCH_SPY);
+            Resource::Element spy_elem = m_store.extract(params);
+            Xapian::ValueCountMatchSpy& spy = spy_elem;
+            TermIteratorGenerator* p_gen = 
+                TermIteratorGenerator::create(params, spy);
 
-            SpyController&
-            spy = *m_match_spy_store.get(resource_num);
+            const ParamDecoderController& schema  
+                = retrieveTermSchema(params);
 
-            return TermIteratorGenerator.create(params, spy);
+            TermQlcTable* qlcTable = new TermQlcTable(*this, p_gen, schema);
+
+            Resource::Element elem = 
+                Resource::Element::wrap(qlcTable);
+
+            spy_elem.attach(elem);
+
+            // Write a resource.
+            m_store.save(elem, result);
+        
+            // Write the size.
+            const uint32_t mset_size = qlcTable->size();
+            result << mset_size;
+            break;
         }
 
         default:
-            throw BadCommandDriverError(resource_type);
+            throw BadCommandDriverError(qlc_type);
     }
 }
+
 
 void
 Driver::qlcNext(PR)
 {
-    uint32_t   resource_num = params;
-    uint32_t   from         = params;
-    uint32_t   count        = params;
+    QlcTable& qlc_table = m_store.extract(params);
+    uint32_t   from     = params;
+    uint32_t   count    = params;
  
-    QlcTable& qlcTable = *m_qlc_store.get(resource_num);
-    qlcTable.getPage(result, from, count);
+    qlc_table.getPage(result, from, count);
 }
 
 void
 Driver::qlcLookup(PR)
 {
-    uint32_t   resource_num = params;
- 
-    QlcTable& qlcTable = *m_qlc_store.get(resource_num);
-    qlcTable.lookup(params, result);
+    QlcTable& qlc_table = m_store.extract(params);
+    qlc_table.lookup(params, result);
 }
 
 
@@ -795,8 +771,9 @@ Driver::documentInfoResource(PR)
 {
     Xapian::Document* doc = new Xapian::Document();
     applyDocument(params, *doc);
-    uint32_t res_num = m_document_store.put(doc);
-    result << res_num;
+
+    Resource::Element elem = Resource::Element::wrap(doc);
+    m_store.save(elem, result);
 }
 
 
@@ -1030,10 +1007,9 @@ Driver::buildQuery(CP)
 
 
 void 
-Driver::fillEnquire(CP, EnquireController& enquire_ctrl)
+Driver::fillEnquire(CP, Xapian::Enquire& enquire)
 {
     Xapian::termcount   qlen = 0;
-    Xapian::Enquire     enquire = enquire_ctrl.getEnquire();
 
     while (uint8_t command = params)
     switch (command)
@@ -1054,7 +1030,7 @@ Driver::fillEnquire(CP, EnquireController& enquire_ctrl)
 
     case EC_ORDER:
         {
-        fillEnquireOrder(con, params, enquire_ctrl);
+        fillEnquireOrder(con, params, enquire);
         break;
         }
 
@@ -1101,9 +1077,8 @@ Driver::fillEnquire(CP, EnquireController& enquire_ctrl)
 
 
 void
-Driver::fillEnquireOrder(CP, EnquireController& enquire_ctrl)
+Driver::fillEnquireOrder(CP, Xapian::Enquire& enquire)
 {
-    Xapian::Enquire     enquire = enquire_ctrl.getEnquire();
     uint8_t type   = params;
     bool reverse   = params;
 
@@ -1111,28 +1086,22 @@ Driver::fillEnquireOrder(CP, EnquireController& enquire_ctrl)
     {
     case OT_KEY:
         {
-        KeyMakerController& kmc = extractKeyMaker(con, params);
-        Xapian::KeyMaker* sorter = kmc.getKeyMaker();
-        enquire_ctrl.addKeyMakerController(kmc);
-        enquire.set_sort_by_key(sorter, reverse);
+        Xapian::KeyMaker& sorter = extractKeyMaker(con, params);
+        enquire.set_sort_by_key(&sorter, reverse);
         break;
         }
 
     case OT_KEY_RELEVANCE:
         {
-        KeyMakerController& kmc = extractKeyMaker(con, params);
-        Xapian::KeyMaker* sorter = kmc.getKeyMaker();
-        enquire_ctrl.addKeyMakerController(kmc);
-        enquire.set_sort_by_key_then_relevance(sorter, reverse);
+        Xapian::KeyMaker& sorter = extractKeyMaker(con, params);
+        enquire.set_sort_by_key_then_relevance(&sorter, reverse);
         break;
         }
 
     case OT_RELEVANCE_KEY:
         {
-        KeyMakerController& kmc = extractKeyMaker(con, params);
-        Xapian::KeyMaker* sorter = kmc.getKeyMaker();
-        enquire_ctrl.addKeyMakerController(kmc);
-        enquire.set_sort_by_relevance_then_key(sorter, reverse);
+        Xapian::KeyMaker& sorter = extractKeyMaker(con, params);
+        enquire.set_sort_by_relevance_then_key(&sorter, reverse);
         break;
         }
 
@@ -1260,7 +1229,7 @@ Driver::handleCommand(PR,
     const unsigned int  command)
 {
     result << static_cast<uint8_t>( SUCCESS );
-    XapianContext con;
+    Resource::Element con = Resource::Element::createContext();
 
     try
     {
@@ -2611,6 +2580,7 @@ Driver::applyDocumentSchema(
 void
 Driver::getResourceInfo(ResultEncoder& result)
 {
+    // TODO: here
     ObjectRegister<UserResource>& 
     reg = m_generator.getRegister();
     ObjectRegister<UserResource>::PublicHash
@@ -2633,8 +2603,8 @@ Driver::getResourceInfo(ResultEncoder& result)
 void 
 Driver::createResource(PR)
 {
-    uint32_t resource_num = m_stores.createAndRegister(params);
-    result << resource_num;
+    Resource::Element elem = m_store.extract(params);
+    m_store.save(elem, result);
 }
 
 

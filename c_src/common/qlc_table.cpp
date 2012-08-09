@@ -30,7 +30,7 @@ MSetQlcTable::MSetQlcTable(Driver& driver,
 
 
 uint32_t 
-MSetQlcTable::numOfObjects()
+MSetQlcTable::size()
 {
     return static_cast<uint32_t>(m_mset.size());
 }
@@ -153,7 +153,7 @@ TermQlcTable::TermQlcTable(Driver& driver,
 
 
 uint32_t 
-TermQlcTable::numOfObjects()
+TermQlcTable::size()
 {
     return m_size;
 }
