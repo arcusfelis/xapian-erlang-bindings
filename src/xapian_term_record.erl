@@ -55,8 +55,9 @@ fix_spy_meta(Server, SpyRes, Meta) ->
     HasValueField = lists:member(value, TupleFields),
     case HasValueField of
         true ->
-            SpyValueType = xapian_server:value_spy_to_type(Server, SpyRes),
-            case SpyValueType of
+            Slot = xapian_server:match_spy_info(Server, SpyRes, value_slot),
+            ValueType  = xapian_server:slot_to_type(Server, Slot),
+            case ValueType of
                 string -> Meta;
                 float  -> Meta#rec{fields = [value_to_float_value(X) 
                                                 || X <- TupleFields]}

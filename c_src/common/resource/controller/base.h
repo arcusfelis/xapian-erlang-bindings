@@ -31,6 +31,10 @@ namespace Xapian
     class Document;
 }
 
+XAPIAN_EXT_NS_BEGIN
+    class ValueCountMatchSpy;
+XAPIAN_EXT_NS_END
+
 XAPIAN_RESOURCE_CTRL_NS_BEGIN
 
 class Base
@@ -143,6 +147,13 @@ class Base
     virtual operator Xapian::Document&()
     {
         throw ResourceTypeMismatchDriverError(type(), "Xapian::Document");
+    }
+
+    // Extensions
+    virtual operator Extension::ValueCountMatchSpy&()
+    {
+        throw ResourceTypeMismatchDriverError(type(), 
+                "Extension::ValueCountMatchSpy");
     }
 
     virtual void finalize()

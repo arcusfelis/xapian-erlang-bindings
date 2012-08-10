@@ -28,6 +28,10 @@ XAPIAN_ERLANG_NS_BEGIN
     class QlcTable;
 XAPIAN_ERLANG_NS_END
 
+XAPIAN_EXT_NS_BEGIN
+    class ValueCountMatchSpy;
+XAPIAN_EXT_NS_END
+
 XAPIAN_RESOURCE_NS_BEGIN
 
 namespace Controller
@@ -85,6 +89,10 @@ class Element
     operator Xapian::ValueCountMatchSpy&();
     operator Xapian::MatchSpy&();
     operator Xapian::Document&();
+
+    // Extensions
+    operator Extension::ValueCountMatchSpy&();
+
     void finalize();
     bool is_finalized();
 };

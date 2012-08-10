@@ -39,6 +39,9 @@ class Factory
 
     void
     release(ParamDecoder& params);
+
+    void
+    getResourceConstructors(ResultEncoder& result);
 };
 
 XAPIAN_RESOURCE_NS_END

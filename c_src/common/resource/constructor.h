@@ -31,6 +31,8 @@ class Constructor
     {
         return mp_fun(manager, params);
     }
+
+    std::string name() { return m_name; }
 };
 
 XAPIAN_RESOURCE_NS_END

@@ -15,6 +15,7 @@
 #include "result_encoder.h"
 #include "xapian_exception.h"
 #include "qlc_table.h"
+#include "extension/value_count_mspy.h"
 
 #include <assert.h>
 #include <cstdlib>
@@ -1208,9 +1209,9 @@ Driver::readParser(CP)
 
     case QP_VALUE_RANGE_PROCESSOR:
         {
-        ValueRangeProcessorController& vrp_ctrl = 
+        Xapian::ValueRangeProcessor& vrp = 
             extractRangeProcessor(con, params);
-        qp.add_valuerangeprocessor(vrp_ctrl.getValueRangeProcessor());
+        qp.add_valuerangeprocessor(&vrp);
         break;
         }
 
@@ -1366,8 +1367,8 @@ Driver::handleCommand(PR,
             qlcLookup(params, result);
             break;
 
-        case GET_RESOURCE_INFO:
-            getResourceInfo(result);
+        case GET_RESOURCE_CONSTRUCTORS:
+            getResourceConstructors(result);
             break;
 
         case CREATE_RESOURCE:
@@ -1382,8 +1383,8 @@ Driver::handleCommand(PR,
             databaseInfo(params, result);
             break;
 
-        case RESOURCE_INFO:
-            resourceInfo(params, result);
+        case MATCH_SPY_INFO:
+            matchSpyInfo(params, result);
             break;
 
         case SET_METADATA:
@@ -2578,25 +2579,9 @@ Driver::applyDocumentSchema(
  * This function will be called inside xapian_open:init
  */
 void
-Driver::getResourceInfo(ResultEncoder& result)
+Driver::getResourceConstructors(ResultEncoder& result)
 {
-    // TODO: here
-    ObjectRegister<UserResource>& 
-    reg = m_generator.getRegister();
-    ObjectRegister<UserResource>::PublicHash
-    elements = reg.getElements();
-
-    ObjectRegister<UserResource>::PublicHash::iterator i, e, b;
-    b = elements.begin();
-    e = elements.end();
-    for(i = b; i != e; i++)
-    {
-        uint32_t            num     = i->first;
-        UserResource&       res     = * (i->second);
-        const std::string&  name    = res.getName();
-        uint8_t             type    = res.getType();
-        result << type << num << name;
-    }
+    m_store.getResourceConstructors(result);
 }
 
 
@@ -2611,8 +2596,7 @@ Driver::createResource(PR)
 void 
 Driver::msetInfo(PR)
 {
-    uint32_t   mset_num = params;
-    Xapian::MSet& mset = *m_mset_store.get(mset_num);
+    Xapian::MSet& mset = m_store.extract(params);
 
     while (uint8_t command = params)
     switch (command)
@@ -2793,39 +2777,31 @@ Driver::databaseInfo(PR)
 }
 
 void
-Driver::resourceInfo(PR)
+Driver::matchSpyInfo(PR)
 {
-    uint8_t   resource_type = params;
-    uint32_t   resource_num = params;
-    switch (resource_type)
-    {
-        case ResourceType::MATCH_SPY:
-            resourceInfoMatchSpy(resource_num, params, result);
-            break;
-
-        default:
-            throw BadCommandDriverError(resource_type);
-    }
-}
-
-void
-Driver::resourceInfoMatchSpy(uint32_t resource_num, PR)
-{
-    SpyController&
-    spy = *m_match_spy_store.get(resource_num);
+    Resource::Element elem = m_store.extract(params);
+    Xapian::MatchSpy&
+    spy = elem;
     while (uint8_t field = params)
     switch (field)
     {
-        case RIMS_DOCUMENT_COUNT:
+        case SPY_DOCUMENT_COUNT:
         {
-            uint32_t document_count = spy.getTotal();
+            // This field is for ValueCountMatchSpy only.
+            Xapian::ValueCountMatchSpy&
+            vc_spy = elem;
+            uint32_t document_count = vc_spy.get_total();
             result << document_count;
             break;
         }
 
-        case RIMS_SLOT:
+        case SPY_SLOT:
         {
-            uint32_t slot = spy.getSlot();
+            // The extension is for fields, that have no public access.
+            Extension::ValueCountMatchSpy&
+            vc_spy_ext = elem;
+            
+            uint32_t slot = vc_spy_ext.getSlot();
             result << slot;
             break;
         }

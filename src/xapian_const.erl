@@ -1,9 +1,7 @@
 -module(xapian_const).
 -export([command_id/1,
          open_mode_id/1,
-         resource_type_id/1,
          qlc_type_id/1,
-         resource_type_name/1,
          test_id/1,
          operator_id/1,
          query_id/1,
@@ -18,6 +16,7 @@
          source_type_id/1,
          db_info_param_id/1,
          mset_info_param_id/1,
+         spy_info_param_id/1,
          enquire_command_id/1,
          order_type_id/1,
          sort_order_value_type/1,
@@ -26,8 +25,7 @@
          term_field_id/1,
          document_field_id/1,
          parser_type_id/1,
-         resource_encoding_schema_id/1,
-         resource_info_match_spy_field_id/1]).
+         resource_encoding_schema_id/1]).
 
 -compile({parse_transform, gin}).
 
@@ -51,7 +49,7 @@ command_id(match_set)                   -> 13;
 command_id(qlc_init)                    -> 14;
 command_id(qlc_next_portion)            -> 15;
 command_id(qlc_lookup)                  -> 16;
-command_id(get_resource_info)           -> 17;
+command_id(get_resource_constructors)   -> 17;
 command_id(create_resource)             -> 18;
 command_id(mset_info)                   -> 19;
 command_id(database_info)               -> 20;
@@ -69,7 +67,7 @@ command_id(document_info_resource)      -> 31;
 command_id(is_document_exist)           -> 32;
 command_id(replace_document)            -> 33;
 command_id(value_spy_to_slot)           -> 34;
-command_id(resource_info)               -> 35;
+command_id(match_spy_info)              -> 35;
 command_id(create_query_parser)         -> 36.
 
 
@@ -81,41 +79,9 @@ open_mode_id(write_create_or_overwrite) -> 3;
 open_mode_id(write_open)                -> 4.
 
 
-%% RESOURCE_TYPE_ID_MARK
-%% enum ResourceValidObjectType 
-resource_type_id(enquire)         -> 0;
-resource_type_id(mset)            -> 1;
-resource_type_id(qlc)             -> 2;
-resource_type_id(weight)          -> 3;
-resource_type_id(key_maker)       -> 4;
-resource_type_id(x_query)         -> 5;
-resource_type_id(match_decider)   -> 6;
-resource_type_id(stem)            -> 7;
-resource_type_id(expand_decoder)  -> 8;
-resource_type_id(value_range_processor) -> 9;
-resource_type_id(match_spy)       -> 10;
-resource_type_id(document)        -> 11;
-resource_type_id(last)            -> 11.
-
-
 qlc_type_id(mset)                 -> 0;
 qlc_type_id(terms)                -> 1;
 qlc_type_id(spy_terms)            -> 2.
-
-
-%% Resources of each type are stored together
-resource_type_name(0)  -> enquire;
-resource_type_name(1)  -> mset;
-resource_type_name(2)  -> qlc;
-resource_type_name(3)  -> weight;
-resource_type_name(4)  -> key_maker;
-resource_type_name(5)  -> x_query;
-resource_type_name(6)  -> match_decider;
-resource_type_name(7)  -> stem;
-resource_type_name(8)  -> expand_decoder;
-resource_type_name(9)  -> value_range_processor;
-resource_type_name(10) -> match_spy;
-resource_type_name(11) -> document.
 
 
 %% Identificators for C++ tests
@@ -338,6 +304,10 @@ mset_info_param_id(max_attained)                    -> 9;
 mset_info_param_id(term_weight)                     -> 10;
 mset_info_param_id(term_freq)                       -> 11.
 
+spy_info_param_id(stop)                             -> 0;
+spy_info_param_id(value_slot)                       -> 1;
+spy_info_param_id(document_count)                   -> 2.
+
 %% ------------------------------------------------------------
 %% Enquire
 %% ------------------------------------------------------------
@@ -404,10 +374,6 @@ document_field_id(db_number)   -> 9;
 document_field_id(db_name)     -> document_field_id(db_number).
 
 
-resource_info_match_spy_field_id(document_count) -> 1;
-resource_info_match_spy_field_id(slot)           -> 2;
-resource_info_match_spy_field_id(_)              -> undefined.
-
-
 resource_encoding_schema_id(reference)    -> 1;
 resource_encoding_schema_id(constructor)  -> 2.
+

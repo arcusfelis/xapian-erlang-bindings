@@ -69,7 +69,7 @@ class Driver
         QLC_INIT                    = 14,
         QLC_NEXT_PORTION            = 15,
         QLC_LOOKUP                  = 16,
-        GET_RESOURCE_INFO           = 17,
+        GET_RESOURCE_CONSTRUCTORS   = 17,
         CREATE_RESOURCE             = 18,
         MSET_INFO                   = 19,
         DB_INFO                     = 20,
@@ -87,7 +87,7 @@ class Driver
         IS_DOCUMENT_EXIST           = 32,
         REPLACE_DOCUMENT            = 33,
         VALUE_MATCH_SPY_TO_SLOT     = 34,
-        RESOURCE_INFO               = 35,
+        MATCH_SPY_INFO              = 35,
         CREATE_QUERY_PARSER         = 36
     };
 
@@ -113,11 +113,6 @@ class Driver
         WRITE_CREATE                = 2,
         WRITE_CREATE_OR_OVERWRITE   = 3,
         WRITE_OPEN                  = 4
-    };
-
-    enum resourceInfoMatchSpyField {
-        RIMS_DOCUMENT_COUNT = 1,
-        RIMS_SLOT           = 2
     };
 
     /// Types of fields.
@@ -239,6 +234,12 @@ class Driver
         MI_TERM_FREQ                        = 11
     };
 
+    enum matchSpyInfoParams {
+        SPY_DOCUMENT_COUNT = 1,
+        SPY_SLOT           = 2
+    };
+
+
     enum dbInfoParams {
         DBI_HAS_POSITIONS                   = 1,
         DBI_DOCCOUNT                        = 2,
@@ -333,8 +334,6 @@ class Driver
     void updateDocument(PR, bool create);
     void isDocumentExist(PR);
     void deleteDocument(PR);
-    void resourceInfo(PR);
-    void resourceInfoMatchSpy(uint32_t resource_num, PR);
     void setMetadata(ParamDecoder&);
 
     /**
@@ -383,13 +382,15 @@ class Driver
 
     void documentInfoResource(PR);
 
+    void matchSpyInfo(PR);
+
 
     void testResultEncoder(ResultEncoder&, Xapian::docid from, Xapian::docid to);
     void testEcho(PR);
     void testException();
     void testMemory();
 
-    void getResourceInfo(ResultEncoder&);
+    void getResourceConstructors(ResultEncoder&);
 
     /**
      * Create a resource object using an user function.

@@ -57,4 +57,22 @@ extract(ParamDecoder& params)
     }
 }
 
+/**
+ * Get a metadata about constructors.
+ * It is called from `xapian_server:init/2`.
+ */
+void
+Factory::
+getResourceConstructors(ResultEncoder& result)
+{
+    Generator::constructor_iterator i, e;
+    i = m_generator.constructor_begin();
+    e = m_generator.constructor_end();
+    for (unsigned n = 0; i != e; i++, n++)
+    {
+        Constructor& constructor = **i;
+        std::string name = constructor.name();
+    }
+}
+
 XAPIAN_RESOURCE_NS_END

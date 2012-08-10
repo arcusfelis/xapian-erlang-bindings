@@ -59,6 +59,26 @@ class Generator
 
     void
     registerCallbacks();
+
+    typedef std::vector<Constructor*>::iterator constructor_iterator;
+    typedef std::vector<Constructor*>::const_iterator const_constructor_iterator;
+
+    constructor_iterator 
+    constructor_begin() 
+    { return m_constructors.begin(); }
+
+    const_constructor_iterator 
+    constructor_begin() const 
+    { return m_constructors.begin(); }
+
+    constructor_iterator 
+    constructor_end() 
+    { return m_constructors.end(); }
+
+    const_constructor_iterator 
+    constructor_end() const 
+    { return m_constructors.end(); }
+
 };
 
 XAPIAN_RESOURCE_NS_END

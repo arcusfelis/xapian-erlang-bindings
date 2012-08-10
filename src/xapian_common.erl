@@ -32,6 +32,7 @@
          read_unknown_type_value/1,
          read_term_count/1,
          read_rank/1,
+         read_slot/1,
          read_weight/1,
          read_percent/1,
          read_db_id/1,
@@ -279,6 +280,10 @@ read_weight(Bin) ->
 
 
 read_rank(Bin) ->
+    read_uint(Bin).
+
+
+read_slot(Bin) ->
     read_uint(Bin).
 
 

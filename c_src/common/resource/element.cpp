@@ -173,6 +173,9 @@ Element::
 operator Xapian::Document&()
 { return *mp_controller; }
 
+Element::
+operator Extension::ValueCountMatchSpy&()
+{ return *mp_controller; }
 
 void 
 Element::
