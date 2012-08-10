@@ -7,7 +7,7 @@ namespace Xapian
 {
     class ValueCountMatchSpy;
     class Document;
-};
+}
 
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN

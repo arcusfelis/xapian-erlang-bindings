@@ -2,6 +2,7 @@
 #include <xapian.h> 
 
 #include "termiter_spy_gen.h"
+#include "termiter_doc_gen.h"
 #include "xapian_exception.h"
 #include "param_decoder.h"
 

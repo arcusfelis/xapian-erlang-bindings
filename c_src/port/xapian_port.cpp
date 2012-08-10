@@ -68,9 +68,7 @@ std::ostream&  write_packet_length(std::ostream& s, uint32_t len)
 void run()
 {
     MemoryManager mm;
-    ResourceGenerator generator;
-    registerUserCallbacks(generator);
-    Driver drv = Driver(mm, generator);
+    Driver drv(mm);
     ResultEncoder result(mm);
 
     // Place to collect result, can be extended
@@ -116,7 +114,6 @@ void run()
         // Free memory, if it was allocated by ResultEncoder.
         result.clear();
     }
-    drv.clear();
 }
 
 XAPIAN_ERLANG_NS_END

@@ -2,7 +2,7 @@
 #define XAPIAN_TERM_SPY_ITER_GEN_H
 
 #include "termiter_gen.h"
-#include "spy_ctrl.h"
+#include <stdint.h>
 
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
@@ -14,7 +14,6 @@ class SpyValueIteratorGenerator : public TermIteratorGenerator
 
     public:
     SpyValueIteratorGenerator(Xapian::ValueCountMatchSpy& spy) 
-        : m_controller(controller)
     {
         mp_spy = &spy;
     }

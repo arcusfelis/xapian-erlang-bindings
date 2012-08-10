@@ -136,10 +136,11 @@ class ResourceTypeMismatchDriverError: public DriverRuntimeError
     static const char TYPE[];
 
     public:
-    ResourceTypeMismatchDriverError(std::string passed, std::string expected);
+    ResourceTypeMismatchDriverError(const std::string& passed, 
+                                    const std::string& expected);
 
     static const std::string 
-    buildString(std::string passed, std::string expected);
+    buildString(const std::string& passed, const std::string& expected);
 };
 
 
@@ -148,10 +149,10 @@ class AbstractMethodDriverError: public DriverRuntimeError
     static const char TYPE[];
 
     public:
-    AbstractMethodDriverError(std::string object_type, std::string method_name);
+    AbstractMethodDriverError(const std::string& object_type, const std::string& method_name);
 
     static const std::string
-    buildString(std::string object_type, std::string method_name);
+    buildString(const std::string& object_type, const std::string& method_name);
 };
 XAPIAN_ERLANG_NS_END
 #endif

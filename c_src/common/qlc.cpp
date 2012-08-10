@@ -1,5 +1,6 @@
-#include "qlc_table.h"
+#include "qlc.h"
 #include "xapian_core.h"
+#include "xapian_exception.h"
 #include <assert.h>
 #include <vector>
 #include <set>

@@ -43,6 +43,14 @@ class Base
     std::vector<Element> m_children;
     bool mb_attached;
 
+    /// Assignment operator.
+    /// Assignment is not allowed.
+    Base & operator= (const Base & /*source*/) { assert(false); return *this; }
+
+    /// Copy constructor.
+    /// Copy is not allowed.
+    Base(const Base & /*source*/) { assert(false); }
+
     public:
     Base() : m_counter(0) {}
     virtual 

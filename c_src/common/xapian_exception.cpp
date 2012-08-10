@@ -147,12 +147,12 @@ GroupResourceTypeMismatchDriverError::buildString(uint32_t passed, uint32_t expe
 // ResourceTypeMismatchDriverError
 // -------------------------------------------------------------------
 ResourceTypeMismatchDriverError::ResourceTypeMismatchDriverError(
-        std::string passed, std::string expected) : 
+        const std::string& passed, const std::string& expected) : 
     DriverRuntimeError(TYPE, buildString(passed, expected)) {}
 
 const std::string 
-ResourceTypeMismatchDriverError::buildString(std::string passed, 
-                                             std::string expected)
+ResourceTypeMismatchDriverError::buildString(const std::string& passed, 
+                                             const std::string& expected)
 {
     std::stringstream ss;
     ss << "Resource::Controller with the type = " << passed 
@@ -165,12 +165,12 @@ ResourceTypeMismatchDriverError::buildString(std::string passed,
 // AbstractMethodDriverError
 // -------------------------------------------------------------------
 AbstractMethodDriverError::AbstractMethodDriverError(
-        std::string object_type, std::string method_name) : 
-    AbstractMethodDriverError(TYPE, buildString(passed, expected)) {}
+        const std::string& object_type, const std::string& method_name) : 
+    DriverRuntimeError(TYPE, buildString(object_type, method_name)) {}
 
 const std::string 
-AbstractMethodDriverError::buildString(std::string object_type, 
-                                       std::string method_name)
+AbstractMethodDriverError::buildString(const std::string& object_type, 
+                                       const std::string& method_name)
 {
     std::stringstream ss;
     ss << "Non-implemented method " << method_name

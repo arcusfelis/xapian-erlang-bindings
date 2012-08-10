@@ -22,7 +22,7 @@ namespace Xapian
     class MatchSpy;
     class MSet;
     class Document;
-};
+}
 
 XAPIAN_ERLANG_NS_BEGIN
     class QlcTable;
@@ -37,7 +37,7 @@ XAPIAN_RESOURCE_NS_BEGIN
 namespace Controller
 {
     class Base;
-};
+}
 
 class Element 
 {
@@ -46,7 +46,10 @@ class Element
     public:
     Element(Controller::Base& controller);
     Element(Controller::Base* p_controller);
+    Element&
+    operator = (const Element& source);
 
+    Element() : mp_controller(0) {}
     /// Copy is allowed
     Element(const Element& src);
 

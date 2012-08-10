@@ -5,7 +5,6 @@
 
 #include "param_decoder.h"
 #include "result_encoder.h"
-#include "user_resources.h"
 
 #include <assert.h>
 
@@ -15,7 +14,6 @@
 
 XAPIAN_ERLANG_NS_BEGIN
 
-ResourceGenerator* gp_generator = NULL;
 MemoryManager* gp_driverMemoryManager = NULL;
 
 /**
@@ -24,11 +22,6 @@ MemoryManager* gp_driverMemoryManager = NULL;
 int 
 DriverController::init()
 {
-    if (gp_generator == NULL)
-    {
-        gp_generator = new ResourceGenerator();
-        registerUserCallbacks(*gp_generator);
-    }
     if (gp_driverMemoryManager == NULL)
     {
         gp_driverMemoryManager = new DriverMemoryManager();
@@ -43,14 +36,10 @@ DriverController::init()
 void 
 DriverController::finish()
 {
-    if (gp_generator != NULL)
-        delete gp_generator;
-
     if (gp_driverMemoryManager != NULL)
         delete gp_driverMemoryManager;
 
     gp_driverMemoryManager = NULL;
-    gp_generator = NULL;
 }
 
 
@@ -62,8 +51,7 @@ DriverController::start(
     /* If the flag is set to PORT_CONTROL_FLAG_BINARY, 
        a binary will be returned. */       
     set_port_control_flags(port, PORT_CONTROL_FLAG_BINARY); 
-    assert(gp_generator != NULL);
-    Driver* drv_data = new Driver(*gp_driverMemoryManager, *gp_generator);
+    Driver* drv_data = new Driver(*gp_driverMemoryManager);
     return reinterpret_cast<ErlDrvData>( drv_data );
 }
 
@@ -74,8 +62,6 @@ DriverController::stop(
 {
     Driver* 
     drv = reinterpret_cast<Driver*>( drv_data );
-
-    drv->clear();
 
     if (drv != NULL)
         delete drv;

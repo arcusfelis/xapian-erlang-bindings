@@ -66,7 +66,7 @@ command_id(document_info)               -> 30;
 command_id(document_info_resource)      -> 31;
 command_id(is_document_exist)           -> 32;
 command_id(replace_document)            -> 33;
-command_id(value_spy_to_slot)           -> 34;
+%% 34 is empty
 command_id(match_spy_info)              -> 35;
 command_id(create_query_parser)         -> 36.
 

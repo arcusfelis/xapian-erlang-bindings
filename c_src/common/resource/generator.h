@@ -23,6 +23,14 @@ class Generator
     /// Registered constructors
     Constructors m_constructors;
 
+    /// Assignment operator.
+    /// Assignment is not allowed.
+    Generator & operator= (const Generator & /*source*/) { assert(false); return *this; }
+
+    /// Copy constructor.
+    /// Copy is not allowed.
+    Generator(const Generator & /*source*/) { assert(false); }
+
     bool
     isExists(uint32_t constructor_num)
     {

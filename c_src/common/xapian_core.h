@@ -6,7 +6,7 @@
 
 #include "result_encoder.h"
 #include "query_parser_factory.h"
-#include "qlc_table.h"
+#include "qlc.h"
 #include "resource/factory.h"
 
 
@@ -44,6 +44,14 @@ class Driver
      */
     unsigned            m_number_of_databases;
     MemoryManager&      m_mm;
+
+    /// Assignment operator.
+    /// Assignment is not allowed.
+    Driver & operator= (const Driver & /*source*/) { assert(false); return *this; }
+
+    /// Copy constructor.
+    /// Copy is not allowed.
+    Driver(const Driver & source) : m_mm(source.m_mm) { assert(false); }
 
     public:
     friend class MSetQlcTable;
@@ -86,7 +94,7 @@ class Driver
         DOCUMENT_INFO_RESOURCE      = 31,
         IS_DOCUMENT_EXIST           = 32,
         REPLACE_DOCUMENT            = 33,
-        VALUE_MATCH_SPY_TO_SLOT     = 34,
+        // 34 is empty
         MATCH_SPY_INFO              = 35,
         CREATE_QUERY_PARSER         = 36
     };

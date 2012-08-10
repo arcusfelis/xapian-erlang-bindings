@@ -14,7 +14,7 @@
 #include "param_decoder_controller.h"
 #include "result_encoder.h"
 #include "xapian_exception.h"
-#include "qlc_table.h"
+#include "qlc.h"
 #include "extension/value_count_mspy.h"
 
 #include <assert.h>
@@ -546,8 +546,6 @@ Driver::document(PR)
 
     Resource::Element elem = 
         Resource::Element::wrap(new Xapian::Document(doc));
-    Xapian::Enquire& enquire = elem;
-
     m_store.save(elem, result);
 }
 
@@ -1341,10 +1339,6 @@ Driver::handleCommand(PR,
 
         case DOCUMENT:
             document(params, result);
-            break;
-
-        case VALUE_MATCH_SPY_TO_SLOT:
-            valueMatchSpyToSlot(params, result);
             break;
 
         case RELEASE_RESOURCE:
@@ -2780,8 +2774,8 @@ void
 Driver::matchSpyInfo(PR)
 {
     Resource::Element elem = m_store.extract(params);
-    Xapian::MatchSpy&
-    spy = elem;
+//  Xapian::MatchSpy&
+//  spy = elem;
     while (uint8_t field = params)
     switch (field)
     {

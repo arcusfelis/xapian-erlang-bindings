@@ -21,6 +21,19 @@ put(Element elem)
     return m_counter;
 }
 
+Element 
+Register::
+get(Register::Counter num)
+{
+    typename Hash::iterator i; 
+    i = m_elements.find(num);
+
+    if (i == m_elements.end())
+        throw ElementNotFoundDriverError(num);
+
+    return i->second;
+}
+
 void
 Register::
 remove(Register::Counter num)

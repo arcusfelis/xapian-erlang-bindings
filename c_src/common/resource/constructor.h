@@ -25,7 +25,7 @@ class Constructor
 
     public:
     Constructor(std::string name, CreateResourceFn p_fun) 
-        : m_name(name), mp_fun(p_fun) { }
+        : mp_fun(p_fun), m_name(name) { }
 
     Element call(Register& manager, ParamDecoder& params)
     {

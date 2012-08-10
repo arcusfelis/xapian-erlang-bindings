@@ -68,10 +68,13 @@ getResourceConstructors(ResultEncoder& result)
     Generator::constructor_iterator i, e;
     i = m_generator.constructor_begin();
     e = m_generator.constructor_end();
-    for (unsigned n = 0; i != e; i++, n++)
+    // Reserve n = 0 for something else.
+    for (uint32_t n = 1; i != e; i++, n++)
     {
         Constructor& constructor = **i;
         std::string name = constructor.name();
+        // see xapian_server:decode_resource_constructor_info_cycle/2
+        result << n << name;
     }
 }
 

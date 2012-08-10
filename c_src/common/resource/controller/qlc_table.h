@@ -2,7 +2,7 @@
 #define QLC_TABLE_RCTRL_H
 
 #include "resource/controller/base.h"
-#include "qlc_table.h"
+#include "qlc.h"
 
 #include "xapian_config.h"
 
@@ -14,9 +14,9 @@ class QlcTable : public Base
 
     public:
     QlcTable(XAPIAN_ERLANG_NS::QlcTable* p_table) : mp_table(p_table) {}
-    ~QlcTable() { delete mp_km; }
+    ~QlcTable() { delete mp_table; }
 
-    virtual operator Xapian::QlcTable&()
+    operator XAPIAN_ERLANG_NS::QlcTable&()
     {
         return *mp_table;
     }
