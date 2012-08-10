@@ -243,8 +243,8 @@ class Driver
     };
 
     enum matchSpyInfoParams {
-        SPY_DOCUMENT_COUNT = 1,
-        SPY_SLOT           = 2
+        SI_DOCUMENT_COUNT = 1,
+        SI_VALUE_SLOT     = 2
     };
 
 

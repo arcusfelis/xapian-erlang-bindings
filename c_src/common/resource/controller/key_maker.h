@@ -20,6 +20,11 @@ class KeyMaker : public Base
     {
         return *mp_km;
     }
+
+    std::string type()
+    {
+        return "Resource::KeyMaker";
+    }
 };
 
 XAPIAN_RESOURCE_CTRL_NS_END

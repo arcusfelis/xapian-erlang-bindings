@@ -18,8 +18,11 @@ class Factory
 {
     enum ResourceSchemaType
     {
-        SCHEMA_TYPE_REFERENCE    = 1,
-        SCHEMA_TYPE_CONSTRUCTOR  = 2
+        // These numbers are "interesting".
+        // It allows to get BadCommandDriverError exception, 
+        // if something was encoded illegally.
+        SCHEMA_TYPE_REFERENCE    = 56,
+        SCHEMA_TYPE_CONSTRUCTOR  = 97
     };
 
     Generator m_generator;
@@ -36,6 +39,9 @@ class Factory
 
     void
     save(Element& element, ResultEncoder& result);
+
+    Element
+    create(ParamDecoder& params);
 
     void
     release(ParamDecoder& params);

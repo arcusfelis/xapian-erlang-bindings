@@ -20,6 +20,11 @@ class Enquire : public Base
     {
         return *mp_enquire;
     }
+
+    std::string type()
+    {
+        return "Resource::Enquire";
+    }
 };
 
 XAPIAN_RESOURCE_CTRL_NS_END

@@ -6,7 +6,7 @@
 -include("xapian.hrl").
 
 -import(xapian_common, [ 
-    append_resource/4,
+    append_resource/3,
     append_uint/2,
     append_slot/3,
     append_boolean/2,
@@ -81,7 +81,8 @@ append_order(#x_sort_order{type=Type, value=Value, is_reversed=Reverse},
 
 
 append_value(key, Res, _N2S, State, Bin) ->
-    append_resource(State, Res, key_maker, Bin);
+    %% KeyMaker
+    append_resource(State, Res, Bin);
 
 append_value(value, Value, N2S, _State, Bin) ->
     append_slot(Value, N2S, Bin).
@@ -107,7 +108,8 @@ append_weighting_scheme(undefined, _State, Bin) ->
 
 append_weighting_scheme(Res, State, Bin@) ->
     Bin@ = append_command(weighting_scheme, Bin@),
-    Bin@ = append_resource(State, Res, weight, Bin@),
+    %% Weight
+    Bin@ = append_resource(State, Res, Bin@),
     Bin@.
 
 

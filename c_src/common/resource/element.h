@@ -63,6 +63,13 @@ class Element
      */
     void attach(Element& child);
 
+    /**
+     * Attach children of the @a context.
+     *
+     * If the context has no children, then do nothing.
+     */
+    void attachContext(Element& context);
+
     static Element wrap(Xapian::Weight* p_weight);
     static Element wrap(Xapian::ValueRangeProcessor* p_proc);
     static Element wrap(Xapian::KeyMaker* p_key_maker);

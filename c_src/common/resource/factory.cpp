@@ -37,6 +37,13 @@ extract(Element& context, ParamDecoder& params)
 
 Element
 Factory::
+create(ParamDecoder& params)
+{
+    return m_generator.create(m_register, params);
+}
+
+Element
+Factory::
 extract(ParamDecoder& params)
 {
     switch(uint8_t schema_type = params)
@@ -45,11 +52,13 @@ extract(ParamDecoder& params)
         {
             uint32_t element_num = params;
             return m_register.get(element_num);
+            break;
         }
 
         case SCHEMA_TYPE_CONSTRUCTOR:
         {
             return m_generator.create(m_register, params);
+            break;
         }
 
         default:
@@ -68,8 +77,8 @@ getResourceConstructors(ResultEncoder& result)
     Generator::constructor_iterator i, e;
     i = m_generator.constructor_begin();
     e = m_generator.constructor_end();
-    // Reserve n = 0 for something else.
-    for (uint32_t n = 1; i != e; i++, n++)
+    // n = 0 and nothing else, because the vector is used inside Generator.
+    for (uint32_t n = 0; i != e; i++, n++)
     {
         Constructor& constructor = **i;
         std::string name = constructor.name();

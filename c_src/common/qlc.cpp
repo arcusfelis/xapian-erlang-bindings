@@ -307,4 +307,10 @@ TermQlcTable::goToAndCheckBorder(const uint32_t wanted_pos)
     }
 }
 
+TermQlcTable::~TermQlcTable()
+{
+    assert(mp_gen);
+    delete mp_gen;
+}
+
 XAPIAN_ERLANG_NS_END

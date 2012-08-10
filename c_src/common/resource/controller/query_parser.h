@@ -20,6 +20,11 @@ class QueryParser : public Base
     {
         return *mp_qp;
     }
+
+    std::string type()
+    {
+        return "Resource::QueryParser";
+    }
 };
 
 XAPIAN_RESOURCE_CTRL_NS_END

@@ -22,6 +22,11 @@ class MatchSpy : public Base
         return *mp_spy;
     }
 
+    std::string type()
+    {
+        return "Resource::MatchSpy";
+    }
+
     void finalize()
     {
         mb_finalized = true;

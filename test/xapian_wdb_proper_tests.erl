@@ -25,7 +25,7 @@
 -export([untag_ok/1]).
 
 
--record(state, {path, server, document_ids = []}).
+-record(state, {path, server, document_ids = [], deleted_document_ids = []}).
 
 initial_state() -> 
     #state{}.
@@ -55,10 +55,10 @@ commands_for_non_empty_db(#state{document_ids = []}) ->
     [];
 commands_for_non_empty_db(#state{server = Server} = S) ->
     RemDoc = {call, ?SRV, delete_document, [Server, document_id(S)]},
-    [{10,  RemDoc}].
+    [{50,  RemDoc}].
 
 
-document_id(#state{document_ids = Ids}) ->
+document_id(#state{document_ids = Ids = [_|_]}) ->
     oneof(Ids).
 
 
@@ -73,10 +73,16 @@ next_state(S, V, {call, _, add_document, _}) ->
     S#state{document_ids = [V | S#state.document_ids]};
 
 next_state(S, _V, {call, _, delete_document, [_Server, Id]}) ->
-    S#state{document_ids = S#state.document_ids -- [Id]};
+%   io:format(user, "~n DEL: ~p ~p~n", [S#state.document_ids, Id]),
+    S#state{document_ids = delete(S#state.document_ids, Id),
+            deleted_document_ids = [Id|S#state.deleted_document_ids] };
 
 next_state(S, _V, _C) ->
     S.
+
+
+delete([X|T], X) -> T;
+delete([H|T], X) -> [H|delete(T, X)].
 
 
 precondition(_S, _C) ->
@@ -93,12 +99,14 @@ postcondition(S, {call, _, delete_document, [_Server, Id]}, _R) ->
 %%      add_document(Server, Doc) =:= last_document_id();
 %%      otherwise last_document_id() =:= undefined.
 postcondition(S, {call, _, last_document_id, [_Server]}, R) ->
-    #state{document_ids = Ids} = S,
+    #state{document_ids = Ids, deleted_document_ids = DelIds} = S,
+
     Expected = 
-        case Ids of
-            [H|_]  -> H; 
+       case lists:reverse(lists:sort(Ids ++ DelIds)) of
+            [H|_]  -> H;
             []     -> undefined
         end,
+%   io:format(user, "~n ~p ~p~n", [Ids, R]),
     Expected =:= R;
 
 postcondition(_S, _C, _R) ->
@@ -112,7 +120,7 @@ prop_main() ->
             {History,State,Result} = run_commands(?MODULE, Cmds),
             catch ?SRV:close(State#state.server),
             [remove_directory_with_files(DirName) 
-                || DirName <- State#state.path, 
+                || DirName <- [State#state.path], 
                    DirName =/= undefined, filelib:is_dir(DirName)],
             ?WHENFAIL(io:format("History: ~p\nState: ~p\nResult: ~p\n",
                                [History, State, Result]),
@@ -124,7 +132,7 @@ prop_main() ->
 remove_directory_with_files(DirName) ->
     SubFileNamesPattern = filename:join(DirName, "*"),
     SubFileNames = filelib:wildcard(SubFileNamesPattern),
-    [ok = file:delele(FileName) || FileName <- SubFileNames],
+    [ok = file:delete(FileName) || FileName <- SubFileNames],
     ok = file:del_dir(DirName).
 
 

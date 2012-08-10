@@ -1370,9 +1370,8 @@ handle_call({qlc_init, QlcType, ResRef, EncFun}, {FromPid, _FromRef}, State) ->
             <- port_qlc_init(State, QlcType, ResNum, EncFun),
 
         begin
-            QlcElem = #resource{type=qlc, number=QlcResNum},
             {ok, {NewRegister, QlcRef}} = 
-            xapian_register:put(Register, FromPid, QlcElem),
+            xapian_register:put(Register, FromPid, QlcResNum),
             NewState = State#state{register = NewRegister},
 
             %% Add a reference
@@ -1401,7 +1400,7 @@ handle_call({create_resource, ResourceConName, Gen},
     #state{ port = Port } = State,
     do_reply(State, do([error_m ||
         ParamBin <-
-            execute_generator(State, ResourceConName, Gen, <<>>),
+                execute_generator(State, ResourceConName, Gen, <<>>),
 
         ResourceConNumber
             <- port_create_resource(Port, ParamBin),
@@ -1565,14 +1564,14 @@ compile_resource(State, Res) when is_tuple(Res) ->
     Schema = xapian_const:resource_encoding_schema_id(constructor),
     do([error_m ||
         CompiledConBin 
-               %% append_resource_access will be called
             <- xapian_resource:compile(State, Res, <<>>),
+               %% execute_generator is called
         {ok, fun(Bin) -> append_binary(CompiledConBin, append_uint8(Schema, Bin)) end}
        ]).
 
 
 %% @doc Form the binary string: 
-%% `<<Bin, ResTypeGroup, ResTypeConstructorNum, GenParam>>'.
+%% `<<Bin, ResTypeConstructorNum, GenParam>>'.
 %% This data allows to create a resource using a user object constructor 
 %% (see user_object).
 execute_generator(State = #state{}, ResourceTypeName, Gen, Bin) ->
@@ -1639,7 +1638,7 @@ control(Port, Operation, Data) ->
         1 -> 
             {Type, Bin1} = read_string(Result),
             {Mess, <<>>} = read_string(Bin1),
-            {error, #x_error{type=Type, reason=Mess}}
+            {error, #x_error{type=Type, reason=Mess, command=Operation}}
     end.
 
 
@@ -1905,7 +1904,10 @@ append_max_items(undefined, Bin@) ->
 
 port_release_resource(Port, ResourceNum) ->
     Bin@ = <<>>,
-    Bin@ = append_resource_number(ResourceNum, Bin@),
+    %% append_resource_number
+    %%
+    %% Append a number of the real resource without a schema type.
+    Bin@ = append_uint(ResourceNum, Bin@),
     control(Port, release_resource, Bin@).
 
 
@@ -1996,12 +1998,12 @@ run_release_resource(Ref, State) ->
 %% @doc If the type of the resource is qlc, then delete information about
 %%      the qlc table from the state.
 maybe_erase_qlc_table(TableRegister, Ref) ->
-    case xapian_qlc_table_hash:erase(TableRegister) of
+    case xapian_qlc_table_hash:erase(TableRegister, Ref) of
         {ok, {NewTableRegister, Ref, _Hash}} ->
             %% Shrink the result.
             {ok, NewTableRegister};
-        {error, _Reason} = Error ->
-            Error
+        {error, _Reason} ->
+            {ok, TableRegister}
     end.
 
 
@@ -2196,38 +2198,4 @@ run_resource_generator(State, Gen) when is_function(Gen) ->
     end;
 run_resource_generator(_State, undefined) ->
     {ok, <<>>}.
-
-
-
-%% ------------------------------------------------------------------
-%% Tests
-%% ------------------------------------------------------------------
-
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
-%% This module uses eunit lazy generators.
-%% We check, that the mapping from type's id into its name and back is right.
-resource_type_conversation_test_() ->
-    FirstId = 1,
-    LastId = resource_type_id(last),
-    StopId = LastId + 1,
-    ?assert(FirstId < StopId),
-    {"Check resource_type_id and resource_type_name.", 
-        resource_type_conversation_gen(FirstId, StopId)}.
-    
-
-resource_type_conversation_gen(CurId, CurId) ->
-    [];
-
-resource_type_conversation_gen(CurId, StopId) ->
-    Case = 
-    fun () ->
-        More = resource_type_conversation_gen(CurId + 1, StopId),
-        [?_assertEqual(CurId, 
-            resource_type_id(resource_type_name(CurId))) | More]
-        end,
-    {generator, Case}.
-
--endif.
 

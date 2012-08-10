@@ -20,6 +20,11 @@ class QlcTable : public Base
     {
         return *mp_table;
     }
+
+    std::string type()
+    {
+        return "Resource::QlcTable";
+    }
 };
 
 XAPIAN_RESOURCE_CTRL_NS_END

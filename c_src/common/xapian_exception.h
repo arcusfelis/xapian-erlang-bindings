@@ -149,10 +149,25 @@ class AbstractMethodDriverError: public DriverRuntimeError
     static const char TYPE[];
 
     public:
-    AbstractMethodDriverError(const std::string& object_type, const std::string& method_name);
+    AbstractMethodDriverError(const std::string& object_type, 
+                              const std::string& method_name);
 
     static const std::string
     buildString(const std::string& object_type, const std::string& method_name);
 };
+
+
+class AlreadyAttachedDriverError: public DriverRuntimeError
+{
+    static const char TYPE[];
+
+    public:
+    AlreadyAttachedDriverError(const std::string& parent_type, 
+                               const std::string& child_type);
+
+    static const std::string 
+    buildString(const std::string& parent_type, const std::string& child_type);
+};
+
 XAPIAN_ERLANG_NS_END
 #endif

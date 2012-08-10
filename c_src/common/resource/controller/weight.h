@@ -20,6 +20,11 @@ class Weight : public Base
     {
         return *mp_weight;
     }
+
+    std::string type()
+    {
+        return "Resource::Weight";
+    }
 };
 
 XAPIAN_RESOURCE_CTRL_NS_END

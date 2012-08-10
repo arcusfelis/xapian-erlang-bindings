@@ -170,7 +170,10 @@
     type,
 
     %% Long description
-    reason
+    reason,
+
+    %% Current operation
+    command
 }).
 
 

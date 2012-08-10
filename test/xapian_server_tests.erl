@@ -727,14 +727,11 @@ value_count_match_spy_gen() ->
         qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
             Value =:= "white" orelse Value =:= "green"])),
 
-        %% resource_info
-        SpySlot1ResNum  = ?SRV:resource_info(Server, SpySlot1, number),
-        SpySlot1ResType = ?SRV:resource_info(Server, SpySlot1, type),
-        SpySlot1ResTypeAndNum = ?SRV:resource_info(Server, SpySlot1, 
-                                                   [type, number]),
-        SpySlot1DocCount = ?SRV:resource_info(Server, SpySlot1, document_count),
-        SpySlot1Info = ?SRV:resource_info(Server, SpySlot1, 
-                                          [type, document_count, number]),
+        %% match_spy_info
+        SpySlot1Slot     = ?SRV:match_spy_info(Server, SpySlot1, value_slot),
+        SpySlot1DocCount = ?SRV:match_spy_info(Server, SpySlot1, document_count),
+        SpySlot1Info = ?SRV:match_spy_info(Server, SpySlot1, 
+                                          [value_slot, document_count]),
 
 
         [ ?_assertEqual(Values, 
@@ -746,38 +743,15 @@ value_count_match_spy_gen() ->
             , ?_assertEqual(TopFreqOrderValues, [<<"green">>, <<"white">>])
             ]}
         , ?_assertEqual(RedValues, [<<"Red">>])
-        , {"xapian_server:resource_info/3",
-           [ ?_assert(is_integer(SpySlot1ResNum))
-           , ?_assertEqual(SpySlot1ResType, match_spy)
-           , ?_assertEqual(SpySlot1ResTypeAndNum, [{type, SpySlot1ResType}
-                                                  ,{number, SpySlot1ResNum}])
-           , ?_assert(is_integer(SpySlot1DocCount))
-           , ?_assertEqual(SpySlot1Info, [{type, SpySlot1ResType}
-                                         ,{document_count, SpySlot1DocCount}
-                                         ,{number, SpySlot1ResNum}])
+        , {"xapian_server:match_spy_info/3",
+           [ ?_assertEqual(SpySlot1Info, [{value_slot, SpySlot1Slot}
+                                         ,{document_count, SpySlot1DocCount}])
            ]}
         ]
     after
         ?SRV:close(Server)
     end.
-    
-      
-value_spy_to_type_or_slot_test() ->
-    Path = testdb_path(value_spy_to_type_or_slot),
-    Params = [write, create, overwrite, 
-        #x_value_name{slot = 1, name = color, type = float}],
-    {ok, Server} = ?SRV:start_link(Path, Params),
-    try
-        %% Call with a slot name
-        MatchSpy = xapian_match_spy:value_count(Server, color),
-        ?assertEqual(?SRV:value_spy_to_slot(Server, MatchSpy), 1),
-        ?assertEqual(?SRV:value_spy_to_type(Server, MatchSpy), float)
 
-    after
-        ?SRV:close(Server)
-    end.
-    
-      
 
 add_color_document(Server, Color) ->
     Document = [ #x_value{slot = color, value = Color} ],
@@ -800,22 +774,29 @@ float_value_count_match_spy_gen() ->
         [ ?SRV:add_document(Server, Doc) || Doc <- Docs ],
 
         %% Call with a slot name
-        SpySlot1 = xapian_match_spy:value_count(Server, page_count),
+        SpySlot1Res = xapian_match_spy:value_count(Server, page_count),
 
         Query = "",
         EnquireResourceId = ?SRV:enquire(Server, Query),
         MSetParams = #x_match_set{
             enquire = EnquireResourceId, 
-            spies = [SpySlot1]},
+            spies = [SpySlot1Res]},
         %% Collect statistic 
 %       MSetResourceId = 
         ?SRV:match_set(Server, MSetParams),
         Meta = xapian_term_record:record(spy_term, 
                     record_info(fields, spy_term)),
 
+        %% Has it the same type?
+        Slot1 = xapian_server:match_spy_info(Server, SpySlot1Res, value_slot),
+        ?assertEqual(Slot1, 1),
+        ValueType = xapian_server:slot_to_type(Server, Slot1),
+        ?assertEqual(ValueType, float),
+
+
         %% These elements sorted by value.
         Table = xapian_term_qlc:value_count_match_spy_table(
-            Server, SpySlot1, Meta),
+            Server, SpySlot1Res, Meta),
 
         Values =
         qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table])),
@@ -2033,7 +2014,6 @@ mset_table(Server, Query, mdocument) ->
 mset_table(Server, Query, Meta) ->
     EnquireResourceId = ?SRV:enquire(Server, Query),
     MSetResourceId = ?SRV:match_set(Server, EnquireResourceId),
-    ?assertEqual(?SRV:resource_info(Server, EnquireResourceId, type), enquire),
     Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
     %% Table has a pointer on resources.
     ?SRV:release_resource(Server, EnquireResourceId),

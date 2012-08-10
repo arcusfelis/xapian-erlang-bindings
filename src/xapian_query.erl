@@ -211,7 +211,7 @@ append_prefixes([], Bin) ->
 value_range_processors(State, Procs, Bin) ->
     F = fun(R, B@) -> 
             B@ = append_parser_command(value_range_processor, B@),
-            xapian_common:append_resource(State, R, value_range_processor, B@)
+            xapian_common:append_resource(State, R, B@)
         end,
     lists:foldl(F, Bin, Procs).
 

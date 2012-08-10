@@ -491,7 +491,9 @@ Driver::createQueryParser(PR)
         Resource::Element::wrap(p_parser);
 
     // Add the context as a child.
-    elem.attach(parser_con);
+    // Delete the context (and all inside) when the QueryParser is deleted
+    // only.
+    elem.attachContext(parser_con);
     m_store.save(elem, result);
 }
 
@@ -674,9 +676,10 @@ Driver::qlcInit(PR)
             Resource::Element elem = 
                 Resource::Element::wrap(qlcTable);
 
-            spy_elem.attach(elem);
+            // Delete the ValueCountMatchSpy when the QlcTable is deleted only.
+            elem.attach(spy_elem);
 
-            // Write a resource.
+            // Write a QlcTable resource.
             m_store.save(elem, result);
         
             // Write the size.
@@ -1152,6 +1155,9 @@ Driver::selectParser(ParamDecoder& params)
 }
 
 
+/**
+ * Return a cloned parser.
+ */
 Xapian::QueryParser
 Driver::readParser(CP)
 {
@@ -2582,7 +2588,7 @@ Driver::getResourceConstructors(ResultEncoder& result)
 void 
 Driver::createResource(PR)
 {
-    Resource::Element elem = m_store.extract(params);
+    Resource::Element elem = m_store.create(params);
     m_store.save(elem, result);
 }
 
@@ -2779,7 +2785,7 @@ Driver::matchSpyInfo(PR)
     while (uint8_t field = params)
     switch (field)
     {
-        case SPY_DOCUMENT_COUNT:
+        case SI_DOCUMENT_COUNT:
         {
             // This field is for ValueCountMatchSpy only.
             Xapian::ValueCountMatchSpy&
@@ -2789,7 +2795,7 @@ Driver::matchSpyInfo(PR)
             break;
         }
 
-        case SPY_SLOT:
+        case SI_VALUE_SLOT:
         {
             // The extension is for fields, that have no public access.
             Extension::ValueCountMatchSpy&

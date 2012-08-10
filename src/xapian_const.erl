@@ -305,8 +305,8 @@ mset_info_param_id(term_weight)                     -> 10;
 mset_info_param_id(term_freq)                       -> 11.
 
 spy_info_param_id(stop)                             -> 0;
-spy_info_param_id(value_slot)                       -> 1;
-spy_info_param_id(document_count)                   -> 2.
+spy_info_param_id(document_count)                   -> 1;
+spy_info_param_id(value_slot)                       -> 2.
 
 %% ------------------------------------------------------------
 %% Enquire
@@ -374,6 +374,6 @@ document_field_id(db_number)   -> 9;
 document_field_id(db_name)     -> document_field_id(db_number).
 
 
-resource_encoding_schema_id(reference)    -> 1;
-resource_encoding_schema_id(constructor)  -> 2.
+resource_encoding_schema_id(reference)    -> 56;
+resource_encoding_schema_id(constructor)  -> 97.
 

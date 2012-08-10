@@ -52,7 +52,7 @@ class Base
     Base(const Base & /*source*/) { assert(false); }
 
     public:
-    Base() : m_counter(0) {}
+    Base() : m_counter(0), mb_attached(false) {}
     virtual 
     ~Base() {}
 
@@ -68,6 +68,8 @@ class Base
     void
     attach(Element& child)
     {
+        if (mb_attached)
+            throw AlreadyAttachedDriverError(type(), child.get().type());
         assert(!mb_attached);
 
         // Create a copy of "the reference" 
@@ -75,6 +77,16 @@ class Base
         m_children.push_back(child);
         // Lock the list of children.
         child.get().mb_attached = true;
+    }
+
+    void
+    attachContext(Element& context)
+    {
+        Base con_base = context.get();
+        if (con_base.m_children.empty())
+            attach(context);
+        else
+            con_base.mb_attached = true;
     }
 
     virtual std::string type()

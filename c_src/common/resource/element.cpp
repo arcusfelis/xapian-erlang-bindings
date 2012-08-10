@@ -75,6 +75,13 @@ attach(Element& child)
     mp_controller->attach(child);
 }
 
+void 
+Element::
+attachContext(Element& context)
+{
+    assert(mp_controller);
+    mp_controller->attachContext(context);
+}
 
 Element::
 operator Xapian::MSet&()

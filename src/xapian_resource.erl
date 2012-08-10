@@ -232,6 +232,8 @@ cases_test_() ->
     [ fun bool_weight_case/1
     , fun bm25_weight_case/1
     , fun trad_weight_case/1
+
+    , fun value_count_match_spy_case/1
     ],
     Server = resource_setup(),
     %% One setup for each test
@@ -250,7 +252,7 @@ resource_setup() ->
     
 
 resource_clean(Server) ->
-%   ?SRV:close(Server).
+    ?SRV:close(Server),
     ok.
 
 
@@ -276,5 +278,14 @@ trad_weight_case(Server) ->
         io:format(user, "Xapian::TradWeight ~p~n", [ResourceId])
         end,
     {"Check creation of Xapian::TradWeight", Case}.
+
+
+value_count_match_spy_case(Server) ->
+    Case = fun() ->
+        ResourceId = ?SRV:create_resource(Server, ?RES:value_count_match_spy(0)),
+        io:format(user, "Xapian::ValueCountMatchSpy ~p~n", [ResourceId]),
+        ?SRV:release_resource(Server, ResourceId)
+        end,
+    {"Check creation of Xapian::ValueCountMatchSpy", Case}.
 
 -endif.

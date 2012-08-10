@@ -59,8 +59,8 @@
          slot_id/2, 
          slot_type/2, 
          fix_value/3,
-         resource_reference_to_number/3,
-         append_resource/4]).
+         resource_reference_to_number/2,
+         append_resource/3]).
 
 
 -include("xapian.hrl").
@@ -430,20 +430,18 @@ value_type(1) -> double.
 
 
 %% @doc Convert a resource reference to its number.
-resource_reference_to_number(Register, ResRef, Type) ->
+resource_reference_to_number(Register, ResRef) ->
     case xapian_register:get(Register, ResRef) of
-        {ok, #resource{type=Type, number=ResNum}} ->
+        {ok, ResNum} ->
             {ok, ResNum};
         {error, _} = Error ->
-            Error;
-        {ok, _Res} ->
-            {error, bad_resource_type}
+            Error
     end.
 
 
 %% @doc Append a resource reference or constructor.
-append_resource(State, Res, Type, Bin) ->
-    {ok, F} = xapian_server:compile_resource(State, Res, Type),
+append_resource(State, Res, Bin) ->
+    {ok, F} = xapian_server:compile_resource(State, Res),
     F(Bin).
 
 

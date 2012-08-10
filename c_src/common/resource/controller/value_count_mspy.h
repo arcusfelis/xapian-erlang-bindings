@@ -12,23 +12,28 @@ XAPIAN_RESOURCE_CTRL_NS_BEGIN
 class ValueCountMatchSpy : public MatchSpy
 {
     uint32_t m_slot;
-    Extension::ValueCountMatchSpy m_ext;
     // It is the same pointer, as in MatchSpy.
     // The object will be deleted by MatchSpy.
-    ValueCountMatchSpy* m_vc_spy;
+    Xapian::ValueCountMatchSpy* mp_vc_spy;
+    Extension::ValueCountMatchSpy m_ext;
 
     public:
     ValueCountMatchSpy(uint32_t slot, Xapian::ValueCountMatchSpy* p_spy) 
-        : MatchSpy(p_spy), m_ext(slot) {}
+        : MatchSpy(p_spy), mp_vc_spy(p_spy), m_ext(slot) {}
 
     operator Xapian::ValueCountMatchSpy&()
     {
-        return *m_vc_spy;
+        return *mp_vc_spy;
     }
 
     operator Extension::ValueCountMatchSpy&()
     {
         return m_ext;
+    }
+
+    std::string type()
+    {
+        return "Resource::ValueCountMatchSpy";
     }
 };
 

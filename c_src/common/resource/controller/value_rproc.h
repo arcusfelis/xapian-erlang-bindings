@@ -20,6 +20,11 @@ class ValueRangeProcessor : public Base
     {
         return *mp_proc;
     }
+
+    std::string type()
+    {
+        return "Resource::ValueRangeProcessor";
+    }
 };
 
 XAPIAN_RESOURCE_CTRL_NS_END

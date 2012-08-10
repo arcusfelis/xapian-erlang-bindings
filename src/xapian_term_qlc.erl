@@ -25,7 +25,7 @@ value_count_match_spy_table(Server, SpyRes, Meta) ->
 
 value_count_match_spy_table(Server, SpyRes, Meta, UserParams) ->
     Meta1 = xapian_term_record:fix_spy_meta(Server, SpyRes, Meta),
-    EncoderFun = fun(match_spy, _DrvState, Bin@) ->
+    EncoderFun = fun(Bin@) ->
         Bin@ = append_spy_type(values, Bin@),
         xapian_term_record:encode(Meta1, Bin@)
         end,
@@ -40,7 +40,7 @@ top_value_count_match_spy_table(Server, SpyRes, Limit, Meta) ->
 
 top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams) ->
     Meta1 = xapian_term_record:fix_spy_meta(Server, SpyRes, Meta),
-    EncoderFun = fun(match_spy, _DrvState, Bin@) ->
+    EncoderFun = fun(Bin@) ->
         Bin@ = append_spy_type(top_values, Bin@),
         Bin@ = xapian_common:append_uint(Limit, Bin@),
         xapian_term_record:encode(Meta1, Bin@)
@@ -57,7 +57,7 @@ document_term_table(Server, DocRes, Meta) ->
 %% Second argument can be a resource of a document or a document.
 document_term_table(Server, DocRes, Meta, UserParams) 
     when is_reference(DocRes) ->
-    EncoderFun = fun(document, Bin) ->
+    EncoderFun = fun(Bin) ->
         xapian_term_record:encode(Meta, Bin)
         end,
     UserParams2 = [{is_sorted_value, true} | UserParams],

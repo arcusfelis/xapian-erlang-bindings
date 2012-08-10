@@ -131,10 +131,7 @@ class TermQlcTable : public QlcTable
         const ParamDecoderController& controller);
 
     
-    ~TermQlcTable() 
-    {
-        delete mp_gen;
-    }
+    ~TermQlcTable();
 
     /**
      * Calculate, how many objects in the set.

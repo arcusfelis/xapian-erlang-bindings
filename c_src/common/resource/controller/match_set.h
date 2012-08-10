@@ -20,6 +20,11 @@ class MSet : public Base
     {
         return *mp_mset;
     }
+
+    std::string type()
+    {
+        return "Resource::MatchSet";
+    }
 };
 
 XAPIAN_RESOURCE_CTRL_NS_END

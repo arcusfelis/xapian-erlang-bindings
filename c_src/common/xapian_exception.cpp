@@ -180,6 +180,23 @@ AbstractMethodDriverError::buildString(const std::string& object_type,
 
 
 // -------------------------------------------------------------------
+// AlreadyAttachedDriverError
+// -------------------------------------------------------------------
+AlreadyAttachedDriverError::AlreadyAttachedDriverError(
+        const std::string& parent_type, const std::string& child_type) : 
+    DriverRuntimeError(TYPE, buildString(parent_type, child_type)) {}
+
+const std::string 
+AlreadyAttachedDriverError::buildString(const std::string& parent_type, 
+                                        const std::string& child_type)
+{
+    std::stringstream ss;
+    ss << "Cannot attach " << child_type << " to " << parent_type << ". "
+       << " The parent context already attached.";
+    return ss.str();
+}
+
+// -------------------------------------------------------------------
 // MatchSpyFinalizedDriverError
 // -------------------------------------------------------------------
 MatchSpyFinalizedDriverError::MatchSpyFinalizedDriverError() : 
@@ -200,5 +217,6 @@ REG_TYPE(MatchSpyFinalizedDriverError)
 REG_TYPE(GroupResourceTypeMismatchDriverError)
 REG_TYPE(ResourceTypeMismatchDriverError)
 REG_TYPE(AbstractMethodDriverError)
+REG_TYPE(AlreadyAttachedDriverError)
 
 XAPIAN_ERLANG_NS_END

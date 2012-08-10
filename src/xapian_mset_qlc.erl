@@ -9,7 +9,7 @@
 
 
 table(Server, MSet, Meta) ->
-    EncoderFun = fun(mset, DrvState, Bin) ->
+    EncoderFun = fun(DrvState, Bin) ->
         Name2Slot  = xapian_server:name_to_slot(DrvState),
         Value2Type = xapian_server:slot_to_type(DrvState),
         xapian_record:encode(Meta, Name2Slot, Value2Type, Bin)
@@ -19,6 +19,7 @@ table(Server, MSet, Meta) ->
         resource_number = ResNum,
         resource_ref = ResRef
     } = xapian_server:internal_qlc_init(Server, mset, MSet, EncoderFun),
+    %% `mset' is a qlc type.
     From = 0,
     Len = 20,
     SubDbNames = xapian_server:subdb_names(Server),
