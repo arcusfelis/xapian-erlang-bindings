@@ -19,7 +19,10 @@
     enquire_command_id/1]).
 
 
-encode(Enquire=#x_enquire{}, Name2Slot, Slot2TypeArray, State, Bin@) ->
+%% RA is a resource appender.
+%% N2S is a name to slot.
+%% S2T is a slot to type.
+encode(Enquire=#x_enquire{}, N2S, S2T, RA, Bin@) ->
     #x_enquire{
         value = Query,
         query_len = QueryLen,
@@ -32,17 +35,17 @@ encode(Enquire=#x_enquire{}, Name2Slot, Slot2TypeArray, State, Bin@) ->
         collapse_max = CollapseMax
     } = Enquire,
     Bin@ = append_query_len(QueryLen, Bin@),
-    Bin@ = append_query(Query, Name2Slot, Slot2TypeArray, State, Bin@),
-    Bin@ = append_order(Order, Name2Slot, State, Bin@),
+    Bin@ = append_query(Query, N2S, S2T, RA, Bin@),
+    Bin@ = append_order(Order, N2S, RA, Bin@),
     Bin@ = append_docid_order(DocidOrder, Bin@),
-    Bin@ = append_weighting_scheme(Weight, State, Bin@),
+    Bin@ = append_weighting_scheme(Weight, RA, Bin@),
     Bin@ = append_cutoff(PercentCutoff, WeightCuttoff, Bin@),
-    Bin@ = append_collapse_key(CollapseKey, CollapseMax, Name2Slot, Bin@),
+    Bin@ = append_collapse_key(CollapseKey, CollapseMax, N2S, Bin@),
     Bin@ = append_command(stop, Bin@),
     Bin@;
 
-encode(Query, Name2Slot, Slot2TypeArray, State, Bin@) ->
-    Bin@ = append_query(Query, Name2Slot, Slot2TypeArray, State, Bin@),
+encode(Query, N2S, S2T, RA, Bin@) ->
+    Bin@ = append_query(Query, N2S, S2T, RA, Bin@),
     Bin@ = append_command(stop, Bin@),
     Bin@.
 
@@ -54,37 +57,37 @@ append_query_len(QueryLen, Bin@) ->
     Bin@.
 
 
-append_query(Query,  N2S, Slot2TypeArray, State, Bin@) ->
+append_query(Query,  N2S, S2T, RA, Bin@) ->
     Bin@ = append_command(x_query, Bin@),
-    Bin@ = xapian_query:encode(Query, N2S, Slot2TypeArray, State, Bin@),
+    Bin@ = xapian_query:encode(Query, N2S, S2T, RA, Bin@),
     Bin@.
 
     
-append_order(relevance, _N2S, _State, Bin@) ->
+append_order(relevance, _N2S, _RA, Bin@) ->
     Bin@;
 
 append_order(#x_sort_order{type=relevance, is_reversed=false}, 
-             _N2S, _State, Bin@) ->
+             _N2S, _RA, Bin@) ->
     Bin@;
 
 append_order(#x_sort_order{type=relevance, is_reversed=true}, 
-             _N2S, _State, _Bin) ->
+             _N2S, _RA, _Bin) ->
     erlang:error(badarg);
 
 append_order(#x_sort_order{type=Type, value=Value, is_reversed=Reverse}, 
-    N2S, State, Bin@) ->
+    N2S, RA, Bin@) ->
     Bin@ = append_command(order, Bin@),
     Bin@ = append_uint8(order_type_id(Type), Bin@),
     Bin@ = append_boolean(Reverse, Bin@),
-    Bin@ = append_value(sort_order_value_type(Type), Value, N2S, State, Bin@),
+    Bin@ = append_value(sort_order_value_type(Type), Value, N2S, RA, Bin@),
     Bin@.
 
 
-append_value(key, Res, _N2S, State, Bin) ->
+append_value(key, Res, _N2S, RA, Bin) ->
     %% KeyMaker
-    append_resource(State, Res, Bin);
+    append_resource(RA, Res, Bin);
 
-append_value(value, Value, N2S, _State, Bin) ->
+append_value(value, Value, N2S, _RA, Bin) ->
     append_slot(Value, N2S, Bin).
 
 
@@ -103,13 +106,13 @@ append_docid_order_id(DocidOrderId, _DefOrderId, Bin@) ->
     Bin@.
 
 
-append_weighting_scheme(undefined, _State, Bin) ->
+append_weighting_scheme(undefined, _RA, Bin) ->
     Bin;
 
-append_weighting_scheme(Res, State, Bin@) ->
+append_weighting_scheme(Res, RA, Bin@) ->
     Bin@ = append_command(weighting_scheme, Bin@),
     %% Weight
-    Bin@ = append_resource(State, Res, Bin@),
+    Bin@ = append_resource(RA, Res, Bin@),
     Bin@.
 
 

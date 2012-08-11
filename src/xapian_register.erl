@@ -47,8 +47,8 @@ delete(Store, ClientPid, ResRef)
     when is_pid(ClientPid), is_reference(ResRef) ->
     case gb_trees:lookup(ClientPid, Store) of
         {value, Con=#context{resources = Resources}} ->
-            case gb_trees:is_defined(ResRef, Resources) of
-                true ->
+            case gb_trees:lookup(ResRef, Resources) of
+                {value, Elem} ->
                     %% Delete this resource from the context.
                     NewResources = gb_trees:delete(ResRef, Resources),
                     case gb_trees:is_empty(NewResources) of
@@ -57,14 +57,14 @@ delete(Store, ClientPid, ResRef)
                             %% Delete this context.
                             erlang:demonitor(Con#context.mon_ref),
                             NewStore = gb_trees:delete(ClientPid, Store),
-                            {ok, NewStore};
+                            {ok, {NewStore, Elem}};
                         false ->
                             %% Replace contexts.
                             NewCon = Con#context{resources = NewResources},
                             NewStore = gb_trees:update(ClientPid, NewCon, Store),
-                            {ok, NewStore}
+                            {ok, {NewStore, Elem}}
                     end;
-                false ->
+                none ->
                     {error, elem_not_found}
             end;
         none ->
@@ -74,7 +74,7 @@ delete(Store, ClientPid, ResRef)
     end.
         
 
-%% @doc Erase context.
+%% @doc Erase context: all resources, used by `ClientPid'.
 %%
 %% ClientPid is dead.
 erase(Store, ClientPid, MonRef) 
@@ -83,7 +83,7 @@ erase(Store, ClientPid, MonRef)
         {value, #context{mon_ref = MonRef, resources = Resources}} ->
             NewStore = gb_trees:delete(ClientPid, Store),
             %% MonRef is already demonitored.
-            {ok, gb_trees:to_list(Resources), NewStore};
+            {ok, {NewStore, gb_trees:to_list(Resources)}};
         none ->
             {error, empty_context}
     end.

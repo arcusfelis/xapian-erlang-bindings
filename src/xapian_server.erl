@@ -77,7 +77,7 @@
 
          internal_test_run/3,
          execute_generator/4,
-         compile_resource/2,
+         compile_resource/3,
 
          internal_create_resource/2,
          internal_create_resource/3
@@ -108,7 +108,7 @@
 
 
 %% ------------------------------------------------------------------
-%% Import types
+%% Import 
 %% ------------------------------------------------------------------
 
 -import(xapian_common, [ 
@@ -120,15 +120,20 @@
     append_string/2,
     append_document_id/2,
     append_unique_document_id/2,
+    resource_appender/2,
     read_uint/1,
-    read_string/1,
-    resource_reference_to_number/2]).
+    read_string/1]).
 
 -import(xapian_const, [
     command_id/1,
     open_mode_id/1,
     qlc_type_id/1,
     test_id/1]).
+
+resource_reference_to_number(Register, {ClientPid, _ClientRef}, ResRef) ->
+    xapian_register:get(Register, ClientPid, ResRef);
+resource_reference_to_number(Register, ClientPid, ResRef) ->
+    xapian_register:get(Register, ClientPid, ResRef).
 
 
 %% ------------------------------------------------------------------
@@ -1167,7 +1172,6 @@ init([Path, Params]) ->
         ResourceCons <-
             port_get_resource_constructors(Port),
         begin
-
         %% number is a object id in __Resource:Generator__,
         %% not a number in the register.
         Name2NumCon = 
@@ -1283,11 +1287,12 @@ handle_call({read_document_by_id, Id, Meta}, _From, State) ->
                                      Meta, Name2Slot, Id2Name, Slot2Type),
     {reply, Reply, State};
 
-handle_call({query_page, Offset, PageSize, Query, Meta}, _From, State) ->
+handle_call({query_page, Offset, PageSize, Query, Meta}, From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
         subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
+    RA = resource_appender(State, From),
     Reply = port_query_page(Port, Offset, PageSize, Query, 
-                            Meta, Name2Slot, Id2Name, Slot2Type, State),
+                            Meta, Name2Slot, Id2Name, Slot2Type, RA),
     {reply, Reply, State};
 
 handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
@@ -1295,7 +1300,8 @@ handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
         port = Port, 
         name_to_slot = Name2Slot, 
         slot_to_type = Slot2TypeArray } = State,
-    PortAnswer = port_enquire(Port, Query, Name2Slot, Slot2TypeArray, State),
+    RA = resource_appender(State, FromPid),
+    PortAnswer = port_enquire(Port, Query, Name2Slot, Slot2TypeArray, RA),
     %% Special handling of errors
     m_do_register_resource(State, FromPid, PortAnswer);
 
@@ -1322,11 +1328,11 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
     #state{port = Port } = State,
     do_reply(State, do([error_m ||
         SpyRFs
-            <- check_all([compile_resource(State, SpyRef) 
+            <- check_all([compile_resource(State, SpyRef, FromPid) 
                     || SpyRef <- SpyRefs]),
         %% Resource function (RF): fun(Bin) -> Bin.
         EnquireRF
-            <- compile_resource(State, EnquireRef),
+            <- compile_resource(State, EnquireRef, FromPid),
 
         MSetNum <-
             port_match_set(Port, EnquireRF, Offset, 
@@ -1339,8 +1345,8 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
 %% If the error occures, we can throw an exception inside the client code.
 %%
 %% The return value is useless.
-handle_call({release_resource, Ref}, _From, State) ->
-    case run_release_resource(Ref, State) of
+handle_call({release_resource, Ref}, {FromPid, _FromRef}, State) ->
+    case run_release_resource(Ref, FromPid, State) of
         {ok, NewState} ->
             {reply, {ok, ok}, NewState};
         {error, _Reason} = Error ->
@@ -1363,15 +1369,15 @@ handle_call({qlc_init, QlcType, ResRef, EncFun}, {FromPid, _FromRef}, State) ->
     do_reply(State, do([error_m ||
         %% Get an iterable resource by the reference
         ResNum 
-            <- xapian_register:get(Register, ResRef),
+            <- xapian_register:get(Register, FromPid, ResRef),
 
         %% Create QLC table (iterator-like object in Erlang)
         #internal_qlc_info{resource_number = QlcResNum} = Reply
             <- port_qlc_init(State, QlcType, ResNum, EncFun),
 
+        {NewRegister, QlcRef}  
+            <- xapian_register:put(Register, FromPid, QlcResNum),
         begin
-            {ok, {NewRegister, QlcRef}} = 
-            xapian_register:put(Register, FromPid, QlcResNum),
             NewState = State#state{register = NewRegister},
 
             %% Add a reference
@@ -1408,23 +1414,23 @@ handle_call({create_resource, ResourceConName, Gen},
         register_resource(State, FromPid, ResourceConNumber)]));
 
 
-handle_call({mset_info, MSetRef, Params}, _From, State) ->
+handle_call({mset_info, MSetRef, Params}, From, State) ->
     #state{port = Port, register = Register } = State,
     Reply = 
     do([error_m ||
         MSetNum 
-            <- resource_reference_to_number(Register, MSetRef),
+            <- resource_reference_to_number(Register, From, MSetRef),
 
         port_mset_info(Port, MSetNum, Params)
     ]),
     {reply, Reply, State};
 
-handle_call({match_spy_info, MatchSpyRef, Params}, _From, State) ->
+handle_call({match_spy_info, MatchSpyRef, Params}, From, State) ->
     #state{port = Port, register = Register } = State,
     Reply = 
     do([error_m ||
         MatchSpyNum
-            <- resource_reference_to_number(Register, MatchSpyRef),
+            <- resource_reference_to_number(Register, From, MatchSpyRef),
 
         port_match_spy_info(Port, MatchSpyNum, Params)
     ]),
@@ -1503,9 +1509,9 @@ stop_if_error(Other) ->
 
 
 %% @private
-%% Ref is created for each resource.
-handle_info(#'DOWN'{ref=Ref, type=process}, State) ->
-    case run_release_resource(Ref, State) of
+%% Ref is created for each process that uses resources.
+handle_info(#'DOWN'{ref=Ref, type=process, id=ClientPid}, State) ->
+    case run_erase_context(Ref, ClientPid, State) of
         {error, _Reason} ->
             {noreply, State}; %% ignore an error
         {ok, NewState} ->
@@ -1539,14 +1545,14 @@ append_resource_number(ResNum, Bin@) ->
     Bin@ = append_uint8(Schema, Bin@),
     append_uint(ResNum, Bin@).
 
-
 %% @doc Create the `fun(Bin)' function.
-compile_resource(State, ResRef) when is_reference(ResRef) ->
+compile_resource(State, ResRef, ClientPid)
+    when is_reference(ResRef), is_pid(ClientPid) ->
     #state{ register = Register } = State,
     Schema = xapian_const:resource_encoding_schema_id(reference),
     do([error_m ||
         ResNum 
-            <- resource_reference_to_number(Register, ResRef),
+            <- resource_reference_to_number(Register, ClientPid, ResRef),
         {ok, fun(Bin@) ->
                 %% append_resource_number
                 Bin@ = append_uint8(Schema, Bin@),
@@ -1560,13 +1566,14 @@ compile_resource(State, ResRef) when is_reference(ResRef) ->
 %% 
 %% 1. extracts info from the `Res' record fields;
 %% 2. extracts info from `State'.
-compile_resource(State, Res) when is_tuple(Res) ->
+compile_resource(State, Res, _ClientPid) when is_tuple(Res) ->
     Schema = xapian_const:resource_encoding_schema_id(constructor),
     do([error_m ||
         CompiledConBin 
             <- xapian_resource:compile(State, Res, <<>>),
                %% execute_generator is called
-        {ok, fun(Bin) -> append_binary(CompiledConBin, append_uint8(Schema, Bin)) end}
+        {ok, fun(Bin) -> append_binary(CompiledConBin, 
+                                       append_uint8(Schema, Bin)) end}
        ]).
 
 
@@ -1857,18 +1864,18 @@ port_document_info_resource(Port, EncodedDocument) ->
 
 
 port_query_page(Port, Offset, PageSize, Query, Meta, Name2Slot, Id2Name, 
-                Slot2Type, State) ->
+                Slot2Type, RA) ->
     Bin@ = <<>>,
     Bin@ = append_uint(Offset, Bin@),
     Bin@ = append_uint(PageSize, Bin@),
-    Bin@ = xapian_query:encode(Query, Name2Slot, Slot2Type, State, Bin@),
+    Bin@ = xapian_query:encode(Query, Name2Slot, Slot2Type, RA, Bin@),
     Bin@ = xapian_record:encode(Meta, Name2Slot, Slot2Type, Bin@),
     decode_records_result(control(Port, query_page, Bin@), Meta, Id2Name).
 
 
-port_enquire(Port, Enquire, Name2Slot, Slot2TypeArray, State) ->
+port_enquire(Port, Enquire, Name2Slot, Slot2TypeArray, RA) ->
     Bin@ = <<>>,
-    Bin@ = xapian_enquire:encode(Enquire, Name2Slot, Slot2TypeArray, State, Bin@),
+    Bin@ = xapian_enquire:encode(Enquire, Name2Slot, Slot2TypeArray, RA, Bin@),
     decode_resource_result(control(Port, enquire, Bin@)).
 
 
@@ -1909,6 +1916,17 @@ port_release_resource(Port, ResourceNum) ->
     %% Append a number of the real resource without a schema type.
     Bin@ = append_uint(ResourceNum, Bin@),
     control(Port, release_resource, Bin@).
+
+%% This is a multi-version of port_release_resource. 
+%% If the resource is not exist, then the error will be ignored.
+port_release_resources(Port, ResourceNumbers) ->
+    Bin@ = <<>>,
+    %% append_resource_number
+    %%
+    %% Append a number of the real resource without a schema type.
+    Bin@ = lists:foldl(fun xapian_common:append_uint/2,  Bin@, ResourceNumbers),
+    Bin@ = append_uint(0, Bin@),
+    control(Port, release_resources, Bin@).
 
 
 port_qlc_next_portion(Port, QlcResNum, From, Count) ->
@@ -1979,27 +1997,43 @@ port_database_info(Port, Params) ->
             
 %% @doc Delete information about allocated resource, deallocate resource,
 %%      clean information about the qlc table.
-run_release_resource(Ref, State) ->
+run_release_resource(ResRef, ClientPid, State) ->
     #state{port = Port, register = Register,
            qlc_reference_and_table_hash = TableRegister} = State,
     do([error_m ||
-    {NewRegister, ResourceNum} <- 
-        xapian_register:erase(Register, Ref),
+    {NewRegister, ResNum} <- 
+        xapian_register:delete(Register, ClientPid, ResRef),
     %% Delete qlc.
     NewTableRegister <- 
-        maybe_erase_qlc_table(TableRegister, Ref),
+        maybe_erase_qlc_table(ResRef, TableRegister),
     <<>> <- 
-        port_release_resource(Port, ResourceNum),
+        port_release_resource(Port, ResNum),
     {ok, State#state{register = NewRegister,
                      qlc_reference_and_table_hash = NewTableRegister}}
     ]).
 
+run_erase_context(MonRef, ClientPid, State) ->
+    #state{port = Port, register = Register,
+           qlc_reference_and_table_hash = TableRegister} = State,
+    do([error_m ||
+    {NewRegister, ResRef2Num} 
+        <- xapian_register:erase(Register, ClientPid, MonRef),
+    {ResRefs, ResNums}
+        = lists:unzip(ResRef2Num),
+    %% Delete qlc.
+    NewTableRegister 
+        <- error_foldl(fun maybe_erase_qlc_table/2, TableRegister, ResRefs),
+    <<>> 
+        <- port_release_resources(Port, ResNums),
+    {ok, State#state{register = NewRegister,
+                     qlc_reference_and_table_hash = NewTableRegister}}
+    ]).
 
 %% @doc If the type of the resource is qlc, then delete information about
 %%      the qlc table from the state.
-maybe_erase_qlc_table(TableRegister, Ref) ->
-    case xapian_qlc_table_hash:erase(TableRegister, Ref) of
-        {ok, {NewTableRegister, Ref, _Hash}} ->
+maybe_erase_qlc_table(ResRef, TableRegister) ->
+    case xapian_qlc_table_hash:erase(TableRegister, ResRef) of
+        {ok, {NewTableRegister, ResRef, _Hash}} ->
             %% Shrink the result.
             {ok, NewTableRegister};
         {error, _Reason} ->
@@ -2163,6 +2197,18 @@ check_all([{error, _} = H|_T], _Acc) ->
 
 check_all([], Acc) ->
     {ok, lists:reverse(Acc)}.
+
+
+%% @doc Foldl, while the result is not error.
+error_foldl(F, Acc, [H|T]) ->
+    case F(H, Acc) of
+        {ok, Acc2} ->
+            error_foldl(F, Acc2, T);
+        {error, _Reason} = Error ->
+            Error
+    end;
+error_foldl(_F, Acc, []) ->
+    {ok, Acc}.
 
 
 subdb_numbers(Names) ->

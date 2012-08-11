@@ -94,7 +94,7 @@ class Driver
         DOCUMENT_INFO_RESOURCE      = 31,
         IS_DOCUMENT_EXIST           = 32,
         REPLACE_DOCUMENT            = 33,
-        // 34 is empty
+        RELEASE_RESOURCES           = 34,
         MATCH_SPY_INFO              = 35,
         CREATE_QUERY_PARSER         = 36
     };
@@ -365,6 +365,7 @@ class Driver
      * Erase the stored object.
      */
     void releaseResource(ParamDecoder&);
+    void releaseResources(ParamDecoder&);
 
     /**
      * Converts an enquire into a match set.

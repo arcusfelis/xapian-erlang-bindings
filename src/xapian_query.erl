@@ -20,18 +20,19 @@
     stem_strategy_id/1]).
 
 %% S2T stands for Slot2TypeArray.
-encode(#x_query{op=Op, value=Value, parameter=Param}, N2S, S2T, State, Bin@) ->
+%% RA/2 is a resource appender.
+encode(#x_query{op=Op, value=Value, parameter=Param}, N2S, S2T, RA, Bin@) ->
     Bin@ = append_type(query_group, Bin@),
     Bin@ = append_operator(Op, Bin@),
     Bin@ = append_uint(Param, Bin@),
-    Bin@ = append_query(Value, N2S, S2T, State, Bin@),
+    Bin@ = append_query(Value, N2S, S2T, RA, Bin@),
     Bin@;
 
-encode(#x_query_value{op=equal, slot=Slot, value=Value}, N2S, S2T, State, Bin) ->
+encode(#x_query_value{op=equal, slot=Slot, value=Value}, N2S, S2T, RA, Bin) ->
     Q = #x_query_value_range{op=equal, slot=Slot, from=Value, to=Value},
-    encode(Q, N2S, S2T, State, Bin);
+    encode(Q, N2S, S2T, RA, Bin);
 
-encode(#x_query_value{op=Op, slot=Slot, value=Value}, N2S, S2T, _State, Bin@) ->
+encode(#x_query_value{op=Op, slot=Slot, value=Value}, N2S, S2T, _RA, Bin@) ->
     SlotId = slot_id(Slot, N2S),
     Bin@ = append_type(query_value, Bin@),
     Bin@ = append_operator(Op, Bin@),
@@ -40,7 +41,7 @@ encode(#x_query_value{op=Op, slot=Slot, value=Value}, N2S, S2T, _State, Bin@) ->
     Bin@;
 
 encode(#x_query_value_range{op=Op, slot=Slot, from=From, to=To}, 
-       N2S, S2T, _State, Bin@) ->
+       N2S, S2T, _RA, Bin@) ->
     SlotId = slot_id(Slot, N2S),
     Bin@ = append_type(query_value_range, Bin@),
     Bin@ = append_operator(Op, Bin@),
@@ -49,7 +50,7 @@ encode(#x_query_value_range{op=Op, slot=Slot, from=From, to=To},
     Bin@ = append_value(SlotId, To, S2T, Bin@),
     Bin@;
 
-encode(#x_query_term{name=Name, wqf=WQF, position=Pos}, _N2S, _S2T, _State, Bin@) ->
+encode(#x_query_term{name=Name, wqf=WQF, position=Pos}, _N2S, _S2T, _RA, Bin@) ->
     Bin@ = append_type(query_term, Bin@),
     Bin@ = append_string(Name, Bin@),
     Bin@ = append_uint(WQF, Bin@),
@@ -57,25 +58,25 @@ encode(#x_query_term{name=Name, wqf=WQF, position=Pos}, _N2S, _S2T, _State, Bin@
     Bin@;
 
 encode(#x_query_string{parser=Parser, value=String, 
-    default_prefix=Prefix, features=Features}, _N2S, _S2T, State, Bin@) ->
+    default_prefix=Prefix, features=Features}, _N2S, _S2T, RA, Bin@) ->
     Bin@ = append_type(query_string, Bin@),
-    Bin@ = append_parser(State, Parser, Bin@),
+    Bin@ = append_parser(RA, Parser, Bin@),
     Bin@ = append_string(String, Bin@),
     Bin@ = append_string(Prefix, Bin@),
     Bin@ = append_parser_feature_ids(Features, Bin@),
     Bin@;
 
 encode(#x_query_scale_weight{value=SubQuery, op=Op, factor=Fac}, 
-       N2S, S2T, State, Bin@) ->
+       N2S, S2T, RA, Bin@) ->
     Bin@ = append_type(query_scale_weight, Bin@),
     Bin@ = append_operator(Op, Bin@),
     Bin@ = append_double(Fac, Bin@),
-    Bin@ = encode(SubQuery, N2S, S2T, State, Bin@),
+    Bin@ = encode(SubQuery, N2S, S2T, RA, Bin@),
     Bin@;
 
 %% Otherwise, term
-encode(Term, N2S, S2T, State, Bin) ->
-    encode(#x_query_term{name=Term}, N2S, S2T, State, Bin).
+encode(Term, N2S, S2T, RA, Bin) ->
+    encode(#x_query_term{name=Term}, N2S, S2T, RA, Bin).
 
 
 append_operator(Op, Bin) ->
@@ -86,11 +87,11 @@ append_type(Type, Bin) ->
     append_uint8(query_id(Type), Bin).
 
 
-append_query(Query, N2S, S2T, State, Bin@) ->
+append_query(Query, N2S, S2T, RA, Bin@) ->
     %% Defines when to stop.
     SubQueryCount = erlang:length(Query),
     Bin@ = append_uint(SubQueryCount, Bin@),
-    lists:foldl(fun(Rec, Acc) -> encode(Rec, N2S, S2T, State, Acc) end, Bin@, Query).
+    lists:foldl(fun(Rec, Acc) -> encode(Rec, N2S, S2T, RA, Acc) end, Bin@, Query).
 
 append_parser_type_id(Id, Bin) ->
     append_uint8(parser_type_id(Id), Bin).
@@ -109,17 +110,17 @@ append_parser_feature_id(Flag, Bin) ->
 %% ------------------------------------------------------------
 
 %% Encode QueryParser
-append_parser(_State, default, Bin@) ->
+append_parser(_RA, default, Bin@) ->
     %% DEFAULT_PARSER_CHECK_MARK in the C++ code
     %% No commands, the default parser
     append_uint8(0, Bin@);
 
-append_parser(_State, standard, Bin@) ->
+append_parser(_RA, standard, Bin@) ->
     Bin@ = append_parser_type(standard, Bin@),
     Bin@ = append_parser_command(stop, Bin@),
     Bin@;
 
-append_parser(State, #x_query_parser{}=Rec, Bin@) ->
+append_parser(RA, #x_query_parser{}=Rec, Bin@) ->
     #x_query_parser
     {
         name = Type,
@@ -136,7 +137,7 @@ append_parser(State, #x_query_parser{}=Rec, Bin@) ->
     Bin@ = append_max_wildcard_expansion(MaxWildCardExp, Bin@),
     Bin@ = append_default_op(Operator, Bin@),
     Bin@ = append_prefixes(Prefixes, Bin@),
-    Bin@ = value_range_processors(State, ValueRangeProcessors, Bin@),
+    Bin@ = value_range_processors(RA, ValueRangeProcessors, Bin@),
     Bin@ = append_parser_command(stop, Bin@),
     Bin@.
 
@@ -208,10 +209,10 @@ append_prefixes([], Bin) ->
     Bin.
 
 
-value_range_processors(State, Procs, Bin) ->
+value_range_processors(RA, Procs, Bin) ->
     F = fun(R, B@) -> 
             B@ = append_parser_command(value_range_processor, B@),
-            xapian_common:append_resource(State, R, B@)
+            xapian_common:append_resource(RA, R, B@)
         end,
     lists:foldl(F, Bin, Procs).
 

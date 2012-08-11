@@ -26,6 +26,14 @@ release(ParamDecoder& params)
     m_register.remove(element_num);
 }
 
+void
+Factory::
+multiRelease(ParamDecoder& params)
+{
+    while (uint32_t element_num = params)
+        m_register.removeAny(element_num);
+}
+
 Element
 Factory::
 extract(Element& context, ParamDecoder& params)

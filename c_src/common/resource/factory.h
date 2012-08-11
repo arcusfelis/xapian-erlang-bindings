@@ -47,6 +47,9 @@ class Factory
     release(ParamDecoder& params);
 
     void
+    multiRelease(ParamDecoder& params);
+
+    void
     getResourceConstructors(ResultEncoder& result);
 };
 

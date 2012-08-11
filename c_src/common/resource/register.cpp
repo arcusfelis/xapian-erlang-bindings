@@ -48,6 +48,17 @@ remove(Register::Counter num)
 }
 
 
+void
+Register::
+removeAny(Register::Counter num)
+{
+    typename Hash::iterator i; 
+    i = m_elements.find(num);
+
+    if (i != m_elements.end())
+        m_elements.erase(i);
+}
+
 Register::
 ~Register()
 {

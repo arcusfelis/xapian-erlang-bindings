@@ -59,6 +59,9 @@ class Register
     void
     remove(Counter num);
 
+    void
+    removeAny(Counter num);
+
     ~Register();
     void clear();
 };

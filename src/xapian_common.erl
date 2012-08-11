@@ -59,8 +59,9 @@
          slot_id/2, 
          slot_type/2, 
          fix_value/3,
-         resource_reference_to_number/2,
-         append_resource/3]).
+         resource_appender/2,
+         append_resource/3,
+         append_resource/4]).
 
 
 -include("xapian.hrl").
@@ -429,19 +430,31 @@ value_type(0) -> string;
 value_type(1) -> double.
 
 
-%% @doc Convert a resource reference to its number.
-resource_reference_to_number(Register, ResRef) ->
-    case xapian_register:get(Register, ResRef) of
-        {ok, ResNum} ->
-            {ok, ResNum};
-        {error, _} = Error ->
-            Error
-    end.
+%% It is a black box.
+-type x_resource_appender() :: {xapian_type:x_state(), pid()}.
+
+-spec resource_appender(State, Client) -> x_resource_appender() when
+    State :: xapian_type:x_state(),
+    Client :: pid() | {pid(), reference()}.
+
+resource_appender(State, {ClientPid, _ClientRef}) ->
+    {State, ClientPid};
+resource_appender(State, ClientPid) ->
+    {State, ClientPid}.
+
+
+-spec append_resource(RA, Res, Bin) -> Bin when
+    RA :: x_resource_appender(),
+    Res :: xapian_type:x_resource(),
+    Bin :: binary().
+
+append_resource({State, ClientPid} = _RA, Res, Bin) ->
+    append_resource(State, Res, Bin, ClientPid).
 
 
 %% @doc Append a resource reference or constructor.
-append_resource(State, Res, Bin) ->
-    {ok, F} = xapian_server:compile_resource(State, Res),
+append_resource(State, Res, Bin, ClientPid) ->
+    {ok, F} = xapian_server:compile_resource(State, Res, ClientPid),
     F(Bin).
 
 
