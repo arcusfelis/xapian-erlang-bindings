@@ -1,6 +1,6 @@
 -module(xapian_query).
 -export([encode/5]).
--export([append_parser/3]).
+-export([append_parser/3, append_query_string/3]).
 
 -include_lib("xapian/include/xapian.hrl").
 -compile({parse_transform, seqbind}).
@@ -57,13 +57,9 @@ encode(#x_query_term{name=Name, wqf=WQF, position=Pos}, _N2S, _S2T, _RA, Bin@) -
     Bin@ = append_uint(Pos, Bin@),
     Bin@;
 
-encode(#x_query_string{parser=Parser, value=String, 
-    default_prefix=Prefix, features=Features}, _N2S, _S2T, RA, Bin@) ->
+encode(#x_query_string{} = Rec, _N2S, _S2T, RA, Bin@) ->
     Bin@ = append_type(query_string, Bin@),
-    Bin@ = append_parser(RA, Parser, Bin@),
-    Bin@ = append_string(String, Bin@),
-    Bin@ = append_string(Prefix, Bin@),
-    Bin@ = append_parser_feature_ids(Features, Bin@),
+    Bin@ = append_query_string(Rec, RA, Bin@),
     Bin@;
 
 encode(#x_query_scale_weight{value=SubQuery, op=Op, factor=Fac}, 
@@ -72,6 +68,11 @@ encode(#x_query_scale_weight{value=SubQuery, op=Op, factor=Fac},
     Bin@ = append_operator(Op, Bin@),
     Bin@ = append_double(Fac, Bin@),
     Bin@ = encode(SubQuery, N2S, S2T, RA, Bin@),
+    Bin@;
+
+encode(ResRef, _N2S, _S2T, RA, Bin@) when is_reference(ResRef) ->
+    Bin@ = append_type(query_resource, Bin@),
+    Bin@ = xapian_common:append_resource(RA, ResRef, Bin@),
     Bin@;
 
 %% Otherwise, term
@@ -105,6 +106,15 @@ append_parser_feature_id(Flag, Bin) ->
     append_uint8(parser_feature_id(Flag), Bin).
 
 
+append_query_string(#x_query_string{parser=Parser, value=String, 
+    default_prefix=Prefix, features=Features}, RA, Bin@) ->
+    Bin@ = append_parser(RA, Parser, Bin@),
+    Bin@ = append_string(String, Bin@),
+    Bin@ = append_string(Prefix, Bin@),
+    Bin@ = append_parser_feature_ids(Features, Bin@),
+    Bin@.
+
+
 %% ------------------------------------------------------------
 %% Query Parser
 %% ------------------------------------------------------------
@@ -115,8 +125,8 @@ append_parser(_RA, default, Bin@) ->
     %% No commands, the default parser
     append_uint8(0, Bin@);
 
-append_parser(_RA, standard, Bin@) ->
-    Bin@ = append_parser_type(standard, Bin@),
+append_parser(RA, standard, Bin@) ->
+    Bin@ = append_parser_type(standard, RA, Bin@),
     Bin@ = append_parser_command(stop, Bin@),
     Bin@;
 
@@ -129,28 +139,40 @@ append_parser(RA, #x_query_parser{}=Rec, Bin@) ->
         max_wildcard_expansion = MaxWildCardExp,
         default_op = Operator,
         prefixes = Prefixes,
-        value_range_processors = ValueRangeProcessors
+        value_range_processors = ValueRangeProcs
     } = Rec,
-    Bin@ = append_parser_type(Type, Bin@),
+    Bin@ = append_parser_type(Type, RA, Bin@),
     Bin@ = append_stemmer(Stem, Bin@),
     Bin@ = append_stemming_strategy(StemStrategy, Bin@),
     Bin@ = append_max_wildcard_expansion(MaxWildCardExp, Bin@),
     Bin@ = append_default_op(Operator, Bin@),
     Bin@ = append_prefixes(Prefixes, Bin@),
-    Bin@ = value_range_processors(RA, ValueRangeProcessors, Bin@),
+    Bin@ = value_range_processors(RA, ValueRangeProcs, Bin@),
+    Bin@ = append_parser_command(stop, Bin@),
+    Bin@;
+
+append_parser(RA, ResRef, Bin@) when is_reference(ResRef) ->
+    Bin@ = append_parser_command(from_resource, Bin@),
+    Bin@ = xapian_common:append_resource(RA, ResRef, Bin@),
     Bin@ = append_parser_command(stop, Bin@),
     Bin@.
-
 
 %% -----------------------------------------------------------
 %% Query Parser Commands
 %% -----------------------------------------------------------
 
 %% `QP_PARSER_TYPE' command, `XapianErlangDriver::selectParser'
-append_parser_type(default, Bin) ->
+append_parser_type(default, _RA, Bin) ->
     Bin; %% It is default by default :)
 
-append_parser_type(Type, Bin@) ->
+%% `#x_query_parser{name = ResRef}'
+append_parser_type(ResRef, RA, Bin@) 
+        when is_reference(ResRef) ->
+    Bin@ = append_parser_command(from_resource, Bin@),
+    Bin@ = xapian_common:append_resource(RA, ResRef, Bin@),
+    Bin@;
+
+append_parser_type(Type, _RA, Bin@) ->
     Bin@ = append_parser_command(parser_type, Bin@),
     Bin@ = append_parser_type_id(Type, Bin@),
     Bin@.

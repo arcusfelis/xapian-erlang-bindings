@@ -497,6 +497,46 @@ Driver::createQueryParser(PR)
     m_store.save(elem, result);
 }
 
+void
+Driver::parseString(CPR)
+{
+    // see xapian_query:append_query_string
+    Xapian::QueryParser parser = readParser(con, params);
+    const std::string&  query_string   = params;
+    const std::string&  default_prefix = params;
+    const unsigned flags               = decodeParserFeatureFlags(params); 
+
+    Xapian::Query q = 
+    parser.parse_query(
+        query_string, 
+        flags, 
+        default_prefix);
+
+    while(uint8_t field_id = params)
+    switch(field_id)
+    {
+        case PS_CREATE_QUERY_PARSER:
+            {
+            Resource::Element elem = 
+                Resource::Element::wrap(new Xapian::Query(q));
+            m_store.save(elem, result);
+            break;
+            }
+
+        case PS_CORRECTED_QUERY_STRING:
+            {
+            const std::string& corrected 
+                = parser.get_corrected_query_string();
+            result << corrected;
+            break;
+            }
+
+        default:
+            throw BadCommandDriverError(field_id);
+    }
+}
+
+
 // Get a copy of a document.
 // Caller must deallocate the returned object.
 Xapian::Document
@@ -555,6 +595,12 @@ void
 Driver::releaseResource(ParamDecoder& params)
 {
     m_store.release(params);
+}
+
+void 
+Driver::releaseResources(ParamDecoder& params)
+{
+    m_store.multiRelease(params);
 }
 
 
@@ -979,7 +1025,7 @@ Driver::buildQuery(CP)
             Xapian::QueryParser parser = readParser(con, params);
             const std::string&  query_string   = params;
             const std::string&  default_prefix = params;
-            const unsigned flags               = decodeParserFeatureFlags(params); 
+            const unsigned flags               = decodeParserFeatureFlags(params);
 
             Xapian::Query q = 
             parser.parse_query(
@@ -1000,6 +1046,11 @@ Driver::buildQuery(CP)
                 sub_query, 
                 factor);
             return q;
+        }
+
+        case QUERY_REFERENCE:
+        {
+            return extractQuery(con, params);
         }
 
         default:
@@ -1169,15 +1220,11 @@ Driver::readParser(CP)
  
   // Clone parser
   Xapian::QueryParser qp = m_default_parser_factory;
+
   do
   {
     switch (command)
     {
-    case QP_PARSER_TYPE: 
-        // Clone
-        qp = selectParser(params);
-        break; 
-
     case QP_STEMMER: 
         {
         const Xapian::Stem&  stemmer = params;
@@ -1216,6 +1263,22 @@ Driver::readParser(CP)
         Xapian::ValueRangeProcessor& vrp = 
             extractRangeProcessor(con, params);
         qp.add_valuerangeprocessor(&vrp);
+        break;
+        }
+
+    case QP_PARSER_TYPE: 
+        // Clone
+        qp = selectParser(params);
+        break; 
+
+
+    case QP_FROM_RESOURCE:
+        {
+        Resource::Element elem = m_store.extract(params);
+        // The elem is not interesting for us, but its children are.
+        con.attachContext(elem);
+        // Copy from resource
+        qp = elem;
         break;
         }
 
@@ -1351,6 +1414,10 @@ Driver::handleCommand(PR,
             releaseResource(params);
             break;
 
+        case RELEASE_RESOURCES:
+            releaseResources(params);
+            break;
+
         case MATCH_SET:
             matchSet(con, params, result);
             break;
@@ -1398,6 +1465,10 @@ Driver::handleCommand(PR,
 
         case CREATE_QUERY_PARSER: 
             createQueryParser(params, result);
+            break;
+
+        case PARSE_STRING:
+            parseString(con, params, result);
             break;
 
         default:

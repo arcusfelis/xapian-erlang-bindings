@@ -96,7 +96,8 @@ class Driver
         REPLACE_DOCUMENT            = 33,
         RELEASE_RESOURCES           = 34,
         MATCH_SPY_INFO              = 35,
-        CREATE_QUERY_PARSER         = 36
+        CREATE_QUERY_PARSER         = 36,
+        PARSE_STRING                = 37
     };
 
 
@@ -189,7 +190,8 @@ class Driver
         QUERY_VALUE_RANGE           = 3,
         QUERY_TERM                  = 4,
         QUERY_PARSER                = 5,
-        QUERY_SCALE_WEIGHT          = 6  /// query, double
+        QUERY_SCALE_WEIGHT          = 6,  /// query, double
+        QUERY_REFERENCE             = 7
     };
 
     enum queryParserCommand {
@@ -199,13 +201,20 @@ class Driver
         QP_DEFAULT_OP               = 4,
         QP_PARSER_TYPE              = 5,
         QP_PREFIX                   = 6,
-        QP_VALUE_RANGE_PROCESSOR    = 7
+        QP_VALUE_RANGE_PROCESSOR    = 7,
+        QP_FROM_RESOURCE            = 8
     };
 
     enum queryParserType {
         QP_TYPE_DEFAULT             = 0,
         QP_TYPE_EMPTY               = 1
     };
+
+    enum parseStringFieldId {
+        PS_QUERY_RESOURCE           = 1,
+        PS_CORRECTED_QUERY_STRING   = 2
+     };
+
 
     /// see `xapian_enquire:encode'
     enum enquireCommand {
@@ -589,6 +598,18 @@ class Driver
     /*! \} */
 
 
+    Xapian::QueryParser&
+    extractQueryParser(CP)
+    {
+        return m_store.extract(con, params);
+    }
+
+    Xapian::Query&
+    extractQuery(CP)
+    {
+        return m_store.extract(con, params);
+    }
+
     Xapian::MatchSpy&
     extractSpy(CP)
     {
@@ -630,6 +651,9 @@ class Driver
 
     void
     createQueryParser(PR);
+
+    void
+    parseString(CPR);
 };
 
 XAPIAN_ERLANG_NS_END

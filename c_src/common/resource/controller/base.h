@@ -82,7 +82,7 @@ class Base
     void
     attachContext(Element& context)
     {
-        Base con_base = context.get();
+        Base& con_base = context.get();
         if (con_base.m_children.empty())
             attach(context);
         else

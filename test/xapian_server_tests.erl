@@ -1052,6 +1052,39 @@ query_parser_test() ->
     end.
 
 
+parse_string_gen() ->
+    Path = testdb_path(parse_string),
+    Params = [write, create, overwrite],
+    Document =
+        [ #x_text{value = "The quick brown fox jumps over the lazy dog."} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        %% Test a term generator
+        DocId = ?SRV:add_document(Server, Document),
+        ?assert(is_integer(DocId)),
+
+        P1  = #x_query_parser{},
+        %% CP is a compiled query parser (as a resource).
+        CP1 = xapian_server:query_parser(Server, P1),
+        S1  = #x_query_string{parser=CP1, value="dog"},
+        CS1 = xapian_server:parse_string(Server, S1, corrected_query_string),
+        
+        %% CQ is a compiled query (as a resource).
+        CQ1 = xapian_server:parse_string(Server, S1, query_resource),
+        Fs1 = xapian_server:parse_string(Server, S1, [corrected_query_string, 
+                                                      query_resource]),
+        Ids1 = all_record_ids(Server, CQ1),
+        [ ?_assertEqual(CS1, same) %% same means the same.
+         , ?_assertMatch([{corrected_query_string, same} 
+                        ,{query_resource, _}], Fs1)
+        , ?_assertEqual(Ids1, [DocId])
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
+
 %% ------------------------------------------------------------------
 %% Transations tests
 %% ------------------------------------------------------------------

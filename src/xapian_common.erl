@@ -49,7 +49,9 @@
          append_slots_with_order/3,
          append_value/2,
          append_terms/2,
-         append_floats/2
+         append_floats/2,
+         append_stop/1,
+         append_param/2
         ]).
 
 %% Other functions
@@ -61,7 +63,11 @@
          fix_value/3,
          resource_appender/2,
          append_resource/3,
-         append_resource/4]).
+         append_resource/4,
+         resource_reader/2,
+         resource_register/1,
+         read_resource/2
+        ]).
 
 
 -include("xapian.hrl").
@@ -152,6 +158,14 @@ append_int(Num, Bin) ->
 append_uint8(Value, Bin) ->
     <<Bin/binary, Value:8/native-unsigned-integer>>.
 
+
+append_param(0, _Bin) ->
+    erlang:error(bad_field);
+append_param(Value, Bin) ->
+    append_uint8(Value, Bin).
+
+append_stop(Bin) ->
+    <<Bin/binary, 0>>.
 
 read_uint8(Bin) ->
     <<Value:8/native-unsigned-integer, Bin2/binary>> = Bin,  
@@ -458,3 +472,18 @@ append_resource(State, Res, Bin, ClientPid) ->
     F(Bin).
 
 
+%% Resource Register State
+%% Used, while decoding.
+-record(rr_state, {client, register}).
+resource_reader(Register, ClientPid) ->
+    #rr_state{client = ClientPid, register = Register}.
+
+resource_register(#rr_state{register = Register}) ->
+    Register.
+
+read_resource(RR = #rr_state{client = ClientPid, register = Register}, Bin) ->
+    {ResNum, Bin2} = read_uint(Bin),
+    {ok, {NewRegister, ResRef}} 
+        = xapian_register:put(Register, ClientPid, ResNum),
+    RR2 = RR#rr_state{register = NewRegister},
+    {ResRef, RR2, Bin2}.

@@ -25,7 +25,8 @@
          term_field_id/1,
          document_field_id/1,
          parser_type_id/1,
-         resource_encoding_schema_id/1]).
+         resource_encoding_schema_id/1,
+         parse_string_field_id/1]).
 
 -compile({parse_transform, gin}).
 
@@ -68,7 +69,8 @@ command_id(is_document_exist)           -> 32;
 command_id(replace_document)            -> 33;
 command_id(release_resources)           -> 34;
 command_id(match_spy_info)              -> 35;
-command_id(create_query_parser)         -> 36.
+command_id(create_query_parser)         -> 36;
+command_id(parse_string)                -> 37.
 
 
 %% Open modes of the DB
@@ -122,7 +124,8 @@ query_id(query_value)       -> 2;
 query_id(query_value_range) -> 3;
 query_id(query_term)        -> 4;
 query_id(query_string)      -> 5;
-query_id(query_scale_weight) -> 6.
+query_id(query_scale_weight) -> 6;
+query_id(query_resource)    -> 7.
 
 
 %% ------------------------------------------------------------
@@ -137,7 +140,8 @@ parser_command_id(max_wildcard_expansion)   -> 3;
 parser_command_id(default_op)               -> 4;
 parser_command_id(parser_type)              -> 5; 
 parser_command_id(prefix)                   -> 6;
-parser_command_id(value_range_processor)    -> 7.
+parser_command_id(value_range_processor)    -> 7;
+parser_command_id(from_resource)            -> 8.
 
 
 %% From `XapianErlangDriver::queryParserType'
@@ -377,3 +381,6 @@ document_field_id(db_name)     -> document_field_id(db_number).
 resource_encoding_schema_id(reference)    -> 56;
 resource_encoding_schema_id(constructor)  -> 97.
 
+parse_string_field_id(stop)                     -> 0;
+parse_string_field_id(query_resource)           -> 1;
+parse_string_field_id(corrected_query_string)   -> 2.

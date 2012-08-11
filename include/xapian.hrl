@@ -230,10 +230,12 @@
 
 %% [https://github.com/freeakk/xapian-docsprint/erlang/records.rst#x_query_parser]
 -record(x_query_parser, {
-    name = default :: default | standard,
+    name = default 
+        :: default | standard | xapian_type:x_resource(),
     stemmer :: xapian_type:x_stemmer() | undefined,
     stemming_strategy = default :: none | some | all | default,
-    max_wildcard_expansion = unlimited :: non_neg_integer() | unlimited,
+    max_wildcard_expansion = unlimited 
+        :: non_neg_integer() | unlimited,
     default_op = 'OR' :: xapian_type:x_operator(),
     prefixes = [] :: [xapian_type:x_prefix_name()],
     value_range_processors = [] :: [xapian_type:x_resource()]

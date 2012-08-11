@@ -121,6 +121,8 @@
     append_document_id/2,
     append_unique_document_id/2,
     resource_appender/2,
+    resource_reader/2,
+    resource_register/1,
     read_uint/1,
     read_string/1]).
 
@@ -1340,6 +1342,18 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
 
         register_resource(State, FromPid, MSetNum)]));
 
+handle_call({parse_string, Parser, Fields}, {FromPid, _FromRef}, State) ->
+    #state{register = Register, port = Port } = State,
+    RA = resource_appender(State, FromPid),
+    RR = resource_reader(Register, FromPid),
+    do_reply(State, do([error_m ||
+        {Res, RR2}
+            <- port_parse_string(Port, RA, RR, Parser, Fields),
+        NewState 
+            = State#state{register = resource_register(RR2)},
+        {reply, {ok, Res}, NewState}
+    ]));
+
 %% It is synchronous, because it we put this code into `handle_cast', we cannot
 %% find the place where the client sends a message.
 %% If the error occures, we can throw an exception inside the client code.
@@ -1895,6 +1909,13 @@ port_match_set(Port, EnqRF, From, MaxItems, CheckAtLeast, SpyRFs) ->
     Bin@ = lists:foldl(fun append_compiled_resource/2, Bin@, SpyRFs),
     decode_resource_result(control(Port, match_set, Bin@)).
 
+
+port_parse_string(Port, RA, RR, Parser, Fields) ->
+    Bin = xapian_parse_string:encode(Parser, RA, Fields, <<>>),
+    Data = control(Port, parse_string, Bin),
+    decode_parse_string_result(Data, RR, Fields).
+
+
 port_create_query_parser(Port, State, QP) ->
     EncodedQP = xapian_query:append_parser(State, QP, <<>>),
     decode_resource_result(control(Port, create_query_parser, EncodedQP)).
@@ -2103,6 +2124,9 @@ decode_resource_result(Data) ->
 
 decode_boolean_result(Data) -> 
     decode_result_with_hof(Data, fun xapian_common:read_boolean/1).
+
+decode_parse_string_result(Data, RR, Fields) -> 
+    decode_result_with_hof(Data, Fields, RR, fun xapian_parse_string:decode/3).
 
 
 

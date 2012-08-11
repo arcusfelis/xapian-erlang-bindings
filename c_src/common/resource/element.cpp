@@ -7,6 +7,7 @@
 #include "resource/controller/key_maker.h"
 #include "resource/controller/enquire.h"
 #include "resource/controller/query_parser.h"
+#include "resource/controller/query.h"
 #include "resource/controller/document.h"
 #include "resource/controller/match_set.h"
 #include "resource/controller/qlc_table.h"
@@ -221,6 +222,13 @@ Element::
 wrap(Xapian::QueryParser* p_query_parser)
 {
     return Element(new Controller::QueryParser(p_query_parser));
+}
+
+Element
+Element::
+wrap(Xapian::Query* p_query)
+{
+    return Element(new Controller::Query(p_query));
 }
 
 Element
