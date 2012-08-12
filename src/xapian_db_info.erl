@@ -5,7 +5,8 @@
          properties/0]).
 
 -import(xapian_common, [
-    append_uint8/2,
+    append_param/2,
+    append_stop/1,
     append_string/2,
     append_slot/2,
     append_document_id/2,
@@ -26,12 +27,10 @@
 -endif.
     
 encode(Params, Bin) when is_list(Params) ->
-    append_uint8(db_info_param_id(stop),
-        lists:foldl(fun append_db_info_param/2, Bin, Params));
+    append_stop(lists:foldl(fun append_db_info_param/2, Bin, Params));
 
 encode(Param, Bin) ->
-    append_uint8(db_info_param_id(stop),
-        append_db_info_param(Param, Bin)).
+    append_stop(append_db_info_param(Param, Bin)).
 
     
 decode(Params, Bin) when is_list(Params) ->
@@ -45,10 +44,10 @@ decode(Param, Bin) ->
 
 append_db_info_param(Param, Bin) when is_atom(Param) ->
     true = lists:member(Param, properties()),
-    append_uint8(db_info_param_id(Param), Bin);
+    append_param(db_info_param_id(Param), Bin);
 
 append_db_info_param({Param, Value}, Bin) when is_atom(Param) ->
-    encode_param(Param, Value, append_uint8(db_info_param_id(Param), Bin)).
+    encode_param(Param, Value, append_param(db_info_param_id(Param), Bin)).
 
 
 decode_db_info_param(Param, {Acc, Bin}) ->

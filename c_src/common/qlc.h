@@ -26,7 +26,8 @@ public:
     {
         MSET            = 0,
         TERMS           = 1,
-        SPY_TERMS       = 2
+        SPY_TERMS       = 2,
+        QUERY_PARSER_TERMS = 3
     };
 };
 

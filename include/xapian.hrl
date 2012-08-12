@@ -108,7 +108,22 @@
     frequency = 1 :: xapian_type:x_wdf_difference(),
 
     %% The term prefix to use (default is no prefix). 
-    prefix = <<>> :: xapian_type:x_string()
+    prefix = <<>> :: xapian_type:x_string(),
+    %% If undefined, then features=[default].
+    %% `[default]' and `[]' are _different_.
+    %%
+    %% `[]' means no features.
+    %%
+    %% `[default]' means to use default options for `TermGenerator'. 
+    %% Default options are hardcoded inside Xapian.
+    %% 
+    %% Options (is default?):
+    %% * positions (true);
+    %% * spelling (false).
+    %% 
+    %% You can disable the flag, using `{not, Flag}'.
+    %% For example. `[default, {not, positions}]'.
+    features :: [xapian_type:x_generator_feature()] | undefined
 }).
 
 
@@ -232,7 +247,8 @@
 -record(x_query_parser, {
     name = default 
         :: default | standard | xapian_type:x_resource(),
-    stemmer :: xapian_type:x_stemmer() | undefined,
+    stemmer :: xapian_type:x_stemmer() | xapian_type:x_resource() | undefined,
+    stopper :: xapian_type:x_resource() | undefined,
     stemming_strategy = default :: none | some | all | default,
     max_wildcard_expansion = unlimited 
         :: non_neg_integer() | unlimited,
@@ -241,6 +257,13 @@
     value_range_processors = [] :: [xapian_type:x_resource()]
 }).
 
+-record(x_term_generator, {
+    name = default 
+        :: default | standard | xapian_type:x_resource(),
+    stemmer :: xapian_type:x_stemmer() | xapian_type:x_resource() | undefined,
+    stopper :: xapian_type:x_resource() | undefined,
+    stemming_strategy = default :: none | some | all | default
+}).
 
 %% `#x_query_string' will be decoded using QueryParser.
 -record(x_query_string, {

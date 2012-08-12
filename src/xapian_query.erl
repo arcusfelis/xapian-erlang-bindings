@@ -7,6 +7,9 @@
 -import(xapian_common, [ 
     append_uint/2,
     append_uint8/2,
+    append_param/2,
+    append_stop/1,
+    append_flags/2,
     append_double/2,
     append_string/2,
     slot_id/2]).
@@ -85,7 +88,7 @@ append_operator(Op, Bin) ->
 
 
 append_type(Type, Bin) ->
-    append_uint8(query_id(Type), Bin).
+    append_param(query_id(Type), Bin).
 
 
 append_query(Query, N2S, S2T, RA, Bin@) ->
@@ -95,15 +98,12 @@ append_query(Query, N2S, S2T, RA, Bin@) ->
     lists:foldl(fun(Rec, Acc) -> encode(Rec, N2S, S2T, RA, Acc) end, Bin@, Query).
 
 append_parser_type_id(Id, Bin) ->
-    append_uint8(parser_type_id(Id), Bin).
+    append_param(parser_type_id(Id), Bin).
 
 
 append_parser_command(Command, Bin) ->
-    append_uint8(parser_command_id(Command), Bin).
+    append_param(parser_command_id(Command), Bin).
 
-
-append_parser_feature_id(Flag, Bin) ->
-    append_uint8(parser_feature_id(Flag), Bin).
 
 
 append_query_string(#x_query_string{parser=Parser, value=String, 
@@ -123,11 +123,11 @@ append_query_string(#x_query_string{parser=Parser, value=String,
 append_parser(_RA, default, Bin@) ->
     %% DEFAULT_PARSER_CHECK_MARK in the C++ code
     %% No commands, the default parser
-    append_uint8(0, Bin@);
+    append_stop(Bin@);
 
 append_parser(RA, standard, Bin@) ->
     Bin@ = append_parser_type(standard, RA, Bin@),
-    Bin@ = append_parser_command(stop, Bin@),
+    Bin@ = append_stop(Bin@),
     Bin@;
 
 append_parser(RA, #x_query_parser{}=Rec, Bin@) ->
@@ -136,25 +136,27 @@ append_parser(RA, #x_query_parser{}=Rec, Bin@) ->
         name = Type,
         stemmer = Stem,
         stemming_strategy = StemStrategy,
+        stopper = Stopper,
         max_wildcard_expansion = MaxWildCardExp,
         default_op = Operator,
         prefixes = Prefixes,
         value_range_processors = ValueRangeProcs
     } = Rec,
     Bin@ = append_parser_type(Type, RA, Bin@),
-    Bin@ = append_stemmer(Stem, Bin@),
+    Bin@ = append_stemmer(Stem, RA, Bin@),
+    Bin@ = append_stopper(Stopper, RA, Bin@),
     Bin@ = append_stemming_strategy(StemStrategy, Bin@),
     Bin@ = append_max_wildcard_expansion(MaxWildCardExp, Bin@),
     Bin@ = append_default_op(Operator, Bin@),
     Bin@ = append_prefixes(Prefixes, Bin@),
     Bin@ = value_range_processors(RA, ValueRangeProcs, Bin@),
-    Bin@ = append_parser_command(stop, Bin@),
+    Bin@ = append_stop(Bin@),
     Bin@;
 
 append_parser(RA, ResRef, Bin@) when is_reference(ResRef) ->
     Bin@ = append_parser_command(from_resource, Bin@),
     Bin@ = xapian_common:append_resource(RA, ResRef, Bin@),
-    Bin@ = append_parser_command(stop, Bin@),
+    Bin@ = append_stop(Bin@),
     Bin@.
 
 %% -----------------------------------------------------------
@@ -178,12 +180,26 @@ append_parser_type(Type, _RA, Bin@) ->
     Bin@.
 
 
-append_stemmer(undefined, Bin) ->
+append_stemmer(undefined, _RA, Bin) ->
     Bin;
 
-append_stemmer(#x_stemmer{}=Stemmer, Bin@) ->
+append_stemmer(#x_stemmer{}=Stemmer, _RA, Bin@) ->
     Bin@ = append_parser_command(stemmer, Bin@),
     Bin@ = xapian_encode:append_stemmer(Stemmer, Bin@),
+    Bin@;
+
+append_stemmer(Stemmer, RA, Bin@) ->
+    Bin@ = append_parser_command(stemmer_resource, Bin@),
+    Bin@ = xapian_common:append_resource(RA, Stemmer, Bin@),
+    Bin@.
+
+
+append_stopper(undefined, _RA, Bin) ->
+    Bin;
+
+append_stopper(Stopper, RA, Bin@) ->
+    Bin@ = append_parser_command(stopper_resource, Bin@),
+    Bin@ = xapian_common:append_resource(RA, Stopper, Bin@),
     Bin@.
 
 
@@ -249,11 +265,25 @@ append_parser_feature_ids(Features, Bin) ->
 
 
 %% See `XapianErlangDriver::decodeParserFeatureFlags'
-append_features([], Bin) ->
-    append_parser_feature_id(stop, Bin);
+append_features(Features, Bin) ->
+    Nums = encode_features(Features),
+    append_flags(Nums, Bin).
 
-append_features([H|T], Bin) ->
-    append_features(T, append_parser_feature_id(H, Bin)).
+%% Unset group
+encode_features([{except, [_|_] = H}|T]) ->
+    toggle_group(encode_features(H)) ++ encode_features(T);
+%% Unset single 
+encode_features([{except, H}|T]) ->
+    [- parser_feature_id(H) | encode_features(T)];
+%% Set single
+encode_features([H|T]) ->
+    [parser_feature_id(H) | encode_features(T)];
+encode_features([]) ->
+    [].
+
+
+toggle_group(Nums) ->
+    [-N || N <- Nums].
 
 
 

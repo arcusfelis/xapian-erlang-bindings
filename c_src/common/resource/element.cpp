@@ -11,6 +11,7 @@
 #include "resource/controller/document.h"
 #include "resource/controller/match_set.h"
 #include "resource/controller/qlc_table.h"
+#include "resource/controller/stopper.h"
 
 #include <xapian.h>
 
@@ -236,6 +237,13 @@ Element::
 wrap(Xapian::Document* p_document)
 {
     return Element(new Controller::Document(p_document));
+}
+
+Element
+Element::
+wrap(Xapian::Stopper* p_stopper)
+{
+    return Element(new Controller::Stopper(p_stopper));
 }
 
 XAPIAN_RESOURCE_NS_END

@@ -51,7 +51,8 @@
          append_terms/2,
          append_floats/2,
          append_stop/1,
-         append_param/2
+         append_param/2,
+         append_flags/2
         ]).
 
 %% Other functions
@@ -125,9 +126,9 @@ append_string(Str, Bin) ->
     <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
 
 
-append_not_empty_iolist(Str, Bin) ->
+append_non_empty_string(Str, Bin) ->
     StrBin = string_to_binary(Str),
-    [erlang:error(iolist_is_empty) || Str =:= <<>>],
+    [erlang:error(string_is_empty) || Str =:= <<>>],
     StrLen = erlang:byte_size(StrBin),
     <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
 
@@ -163,6 +164,12 @@ append_param(0, _Bin) ->
     erlang:error(bad_field);
 append_param(Value, Bin) ->
     append_uint8(Value, Bin).
+
+%% @doc Append flags, used in `XapianErlangDriver::decodeParserFeatureFlags'.
+append_flags(Flags, Bin) ->
+    FlagsBin = << <<X/native-signed-integer>> || X <- Flags, X =/= 0 >>,
+    <<Bin/binary, FlagsBin/binary, 0>>.
+
 
 append_stop(Bin) ->
     <<Bin/binary, 0>>.
@@ -386,7 +393,7 @@ append_docids(DocIds, Bin@) ->
 
 
 append_terms(Terms, Bin@) ->
-    Bin@ = lists:foldl(fun append_not_empty_iolist/2, Bin@, Terms),
+    Bin@ = lists:foldl(fun append_non_empty_string/2, Bin@, Terms),
     Bin@ = append_iolist("", Bin@),
     Bin@.
 

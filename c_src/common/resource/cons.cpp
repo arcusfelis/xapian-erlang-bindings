@@ -129,6 +129,21 @@ createStringValueRangeProcessor3(Register& /*m*/, ParamDecoder& params)
 }
 
 
+Element
+createSimpleStopper(Register& /*m*/, ParamDecoder& params)
+{
+    Xapian::SimpleStopper* p_stopper = new Xapian::SimpleStopper();
+    for(;;)
+    {
+        const std::string& str = params;
+        if (str == "")
+            break;
+        p_stopper->add(str);
+    }
+    return Element::wrap(p_stopper);
+}
+
+
 void
 Generator::registerCallbacks()
 {
@@ -168,6 +183,9 @@ Generator::registerCallbacks()
 
     add(new Constructor(std::string("string_value_range_processor3"), 
                         &createStringValueRangeProcessor3));
+
+    add(new Constructor(std::string("simple_stopper"), 
+                        &createSimpleStopper));
 }
 
 

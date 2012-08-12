@@ -15,13 +15,16 @@
     append_uint8/2,
     append_boolean/2,
     slot_id/2,
-    append_value/2]).
+    append_value/2,
+    append_flags/2]).
 
 -import(xapian_const, [ 
     term_type/1,
     posting_type/1,
     value_type/1,
-    document_part_id/1]).
+    document_part_id/1,
+    generator_feature_id/1
+]).
 
 
 %% @doc Encode parts of the document to a binary.
@@ -93,8 +96,9 @@ enc([#x_value{} = H|T], Bin) ->
 enc([#x_delta{position = Pos}|T], Bin) ->
     enc(T, append_delta(Pos, Bin));
 
-enc([#x_text{value = Value, frequency = WDF, prefix = Prefix}|T], Bin) ->
-    enc(T, append_text(Value, WDF, Prefix, Bin)).
+enc([#x_text{value = Value, frequency = WDF, prefix = Prefix, 
+             features = Features}|T], Bin) ->
+    enc(T, append_text(Value, WDF, Prefix, Features, Bin)).
 
     
 append_stop(Bin) ->
@@ -172,13 +176,37 @@ append_delta(Pos, Bin) ->
     append_int(Pos, append_type(delta, Bin)).
 
 
-append_text(Value, WDF, Prefix, Bin@) ->
+append_text(Value, WDF, Prefix, Features, Bin@) ->
     Bin@ = append_type(text, Bin@),
     Bin@ = append_string(Value, Bin@),
     Bin@ = append_int(WDF, Bin@),
     Bin@ = append_string(Prefix, Bin@),
+    Bin@ = append_features(Features, Bin@),
     Bin@.
 
+
+append_features(undefined, Bin) ->
+    append_features([default], Bin);
+append_features(Features, Bin) ->
+    Nums = encode_features(Features),
+    append_flags(Nums, Bin).
+
+
+%% Unset group
+encode_features([{except, [_|_] = H}|T]) ->
+    toggle_group(encode_features(H)) ++ encode_features(T);
+%% Unset single
+encode_features([{except, H}|T]) ->
+    [- generator_feature_id(H) | encode_features(T)];
+%% Set single
+encode_features([H|T]) ->
+    [generator_feature_id(H) | encode_features(T)];
+encode_features([]) ->
+    [].
+
+
+toggle_group(Nums) ->
+    [-N || N <- Nums].
 
 %% ------------------------------------------------------------------
 %% Helpers

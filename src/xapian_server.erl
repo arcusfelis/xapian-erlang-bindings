@@ -1315,7 +1315,8 @@ handle_call({document, DocId}, {FromPid, _FromRef}, State) ->
 
 handle_call(#x_query_parser{} = QP, {FromPid, _FromRef}, State) ->
     #state{port = Port } = State,
-    PortAnswer = port_create_query_parser(Port, State, QP),
+    RA = resource_appender(State, FromPid),
+    PortAnswer = port_create_query_parser(Port, RA, QP),
     m_do_register_resource(State, FromPid, PortAnswer);
 
 
@@ -1342,13 +1343,13 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
 
         register_resource(State, FromPid, MSetNum)]));
 
-handle_call({parse_string, Parser, Fields}, {FromPid, _FromRef}, State) ->
+handle_call({parse_string, QS, Fields}, {FromPid, _FromRef}, State) ->
     #state{register = Register, port = Port } = State,
     RA = resource_appender(State, FromPid),
     RR = resource_reader(Register, FromPid),
     do_reply(State, do([error_m ||
         {Res, RR2}
-            <- port_parse_string(Port, RA, RR, Parser, Fields),
+            <- port_parse_string(Port, RA, RR, QS, Fields),
         NewState 
             = State#state{register = resource_register(RR2)},
         {reply, {ok, Res}, NewState}
@@ -1910,14 +1911,14 @@ port_match_set(Port, EnqRF, From, MaxItems, CheckAtLeast, SpyRFs) ->
     decode_resource_result(control(Port, match_set, Bin@)).
 
 
-port_parse_string(Port, RA, RR, Parser, Fields) ->
-    Bin = xapian_parse_string:encode(Parser, RA, Fields, <<>>),
+port_parse_string(Port, RA, RR, QS, Fields) ->
+    Bin = xapian_parse_string:encode(QS, RA, Fields, <<>>),
     Data = control(Port, parse_string, Bin),
     decode_parse_string_result(Data, RR, Fields).
 
 
-port_create_query_parser(Port, State, QP) ->
-    EncodedQP = xapian_query:append_parser(State, QP, <<>>),
+port_create_query_parser(Port, RA, QP) ->
+    EncodedQP = xapian_query:append_parser(RA, QP, <<>>),
     decode_resource_result(control(Port, create_query_parser, EncodedQP)).
 
 append_compiled_resource(Res, Bin) -> Res(Bin).

@@ -1,6 +1,7 @@
 #include <stdint.h>
-#include <xapian.h> 
+#include <xapian.h>
 
+#include "termiter_qp_gen.h"
 #include "termiter_spy_gen.h"
 #include "termiter_doc_gen.h"
 #include "xapian_exception.h"
@@ -9,11 +10,13 @@
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
 
-enum ObjectType           
-{                         
-    VALUES           = 0, 
-    TOP_VALUES       = 1  
-};                        
+enum ObjectType
+{
+    VALUES           = 0,
+    TOP_VALUES       = 1,
+    UNSTEM           = 0,
+    STOP_LIST        = 1
+};
 
 TermIteratorGenerator*
 TermIteratorGenerator::create(
@@ -43,6 +46,29 @@ TermIteratorGenerator*
 TermIteratorGenerator::create(Xapian::Document& doc)
 {
     return new DocumentTermIteratorGenerator(doc);
+}
+
+TermIteratorGenerator*
+TermIteratorGenerator::create(
+        ParamDecoder& params,
+        Xapian::QueryParser& qp)
+{
+    switch (uint8_t type = params)
+    {
+        case UNSTEM:
+        {
+            std::string term = params;
+            return new UnstemQueryParserIteratorGenerator(qp, term);
+        }
+
+        case STOP_LIST:
+        {
+            return new StopListQueryParserIteratorGenerator(qp);
+        }
+
+        default:
+            throw BadCommandDriverError(type);
+    }
 }
 
 XAPIAN_ERLANG_NS_END

@@ -7,7 +7,6 @@
          query_id/1,
          parser_command_id/1,
          stem_strategy_id/1,
-         parser_feature_id/1,
          document_part_id/1,
          value_type/1,
          posting_type/1,
@@ -22,11 +21,14 @@
          sort_order_value_type/1,
          docid_order_type_id/1,
          spy_type_id/1,
+         query_parser_type_id/1,
          term_field_id/1,
          document_field_id/1,
          parser_type_id/1,
          resource_encoding_schema_id/1,
-         parse_string_field_id/1]).
+         parse_string_field_id/1,
+         parser_feature_id/1,
+         generator_feature_id/1]).
 
 -compile({parse_transform, gin}).
 
@@ -141,7 +143,9 @@ parser_command_id(default_op)               -> 4;
 parser_command_id(parser_type)              -> 5; 
 parser_command_id(prefix)                   -> 6;
 parser_command_id(value_range_processor)    -> 7;
-parser_command_id(from_resource)            -> 8.
+parser_command_id(from_resource)            -> 8;
+parser_command_id(stemmer_resource)         -> 9;
+parser_command_id(stopper_resource)         -> 10.
 
 
 %% From `XapianErlangDriver::queryParserType'
@@ -209,6 +213,15 @@ parser_feature_id(auto_synonyms) ->
 parser_feature_id(default) -> 
     parser_feature_id('DEFAULT').
 
+
+%% generator flags
+generator_feature_id(spelling)  -> 1;
+%% Delimeter 50
+%% The default has the same number as a delimeter.
+generator_feature_id(default)   -> 50;
+
+%% Other flags
+generator_feature_id(positions) -> 51.
 
 %% ------------------------------------------------------------
 %% Document
@@ -354,7 +367,10 @@ docid_order_type_id(dont_care)  -> 3.
 
 spy_type_id(values)     -> 0;
 spy_type_id(top_values) -> 1.
-   
+
+query_parser_type_id(unstem)    -> 0;
+query_parser_type_id(stop_list) -> 1.
+
 term_field_id(stop)            -> 0;
 term_field_id(value)           -> 1;
 term_field_id(wdf)             -> 2;

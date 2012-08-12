@@ -932,7 +932,7 @@ reopen_test() ->
 
 -record(stemmer_test_record, {docid, data}).
 
-stemmer_test() ->
+stemmer_gen() ->
     % Open test with the default stemmer
     Path = testdb_path(stemmer),
     Params = [write, create, overwrite, 
@@ -977,25 +977,36 @@ stemmer_test() ->
                                    default_op='AND'},
         Q9 = #x_query_string{value="return", parser=Q9Parser},
 
+        %% `exclude' is used for unsetting flags.
+        Q10 = #x_query_string{value="test -return"},
+        Q11 = #x_query_string{value="test -return",
+                              features=[default, {except, lovehate}]},
+        Q12 = #x_query_string{value="test -return",
+                              features=[default, {except, [lovehate]}]},
+
         F = fun(Query) ->
             RecList = ?SRV:query_page(Server, Offset, PageSize, Query, Meta),
             io:format(user, "~n~p~n", [RecList]),
             RecList
             end,
         Qs =
-        [Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9],
-        [R0, R1, R2, R3, R4, R5, R6, R7, R8, R9] = 
+        [Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10, Q11, Q12],
+        [R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12] = 
         lists:map(F, Qs),
-        ?assert(is_list(R0) andalso length(R0) =:= 1),
-        ?assertEqual(R1, R0),
-        ?assertEqual(R2, R0),
-        ?assertEqual(R3, []),
-        ?assertEqual(R4, []),
-        ?assertEqual(R5, []),
-        ?assertEqual(R6, R0),
-        ?assertEqual(R7, []),
-        ?assertEqual(R8, R0),
-        ?assertEqual(R9, R0)
+        [ ?_assert(is_list(R0) andalso length(R0) =:= 1)
+        , ?_assertEqual(R1, R0)
+        , ?_assertEqual(R2, R0)
+        , ?_assertEqual(R3, [])
+        , ?_assertEqual(R4, [])
+        , ?_assertEqual(R5, [])
+        , ?_assertEqual(R6, R0)
+        , ?_assertEqual(R7, [])
+        , ?_assertEqual(R8, R0)
+        , ?_assertEqual(R9, R0)
+        , ?_assertEqual(R10, [])
+        , ?_assertEqual(R11, R0)
+        , ?_assertEqual(R12, R0)
+        ]
     after
         ?SRV:close(Server)
     end.
@@ -1077,7 +1088,7 @@ parse_string_gen() ->
         Ids1 = all_record_ids(Server, CQ1),
         [ ?_assertEqual(CS1, same) %% same means the same.
          , ?_assertMatch([{corrected_query_string, same} 
-                        ,{query_resource, _}], Fs1)
+                         ,{query_resource, _}], Fs1)
         , ?_assertEqual(Ids1, [DocId])
         ]
     after

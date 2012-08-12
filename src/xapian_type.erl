@@ -17,6 +17,7 @@
     x_inet_port/0,
     x_inet_address/0,
     x_parser_feature/0,
+    x_generator_feature/0,
     x_query_parser/0,
     x_sub_query/0,
     x_operator/0,
@@ -123,6 +124,9 @@
     | auto_synonyms
     | default.
 
+-type x_generator_feature() ::
+      spelling
+    | positions.
 
 -type x_operator() ::
       'AND'

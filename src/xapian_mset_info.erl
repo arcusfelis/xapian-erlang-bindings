@@ -4,7 +4,8 @@
          properties/0]).
 
 -import(xapian_common, [
-    append_uint8/2,
+    append_param/2,
+    append_stop/1,
     append_string/2,
     read_document_count/1,
     read_weight/1
@@ -17,12 +18,10 @@
 -endif.
 
 encode(Params, Bin) when is_list(Params) ->
-    append_uint8(mset_info_param_id(stop),
-        lists:foldl(fun append_mset_info_param/2, Bin, Params));
+    append_stop(lists:foldl(fun append_mset_info_param/2, Bin, Params));
 
 encode(Param, Bin) ->
-    append_uint8(mset_info_param_id(stop),
-        append_mset_info_param(Param, Bin)).
+    append_stop(append_mset_info_param(Param, Bin)).
 
     
 decode(Params, Bin) when is_list(Params) ->
@@ -36,10 +35,10 @@ decode(Param, Bin) ->
 
 append_mset_info_param(Param, Bin) when is_atom(Param) ->
     true = lists:member(Param, properties()),
-    append_uint8(mset_info_param_id(Param), Bin);
+    append_param(mset_info_param_id(Param), Bin);
 
 append_mset_info_param({Param, Term}, Bin) when is_atom(Param) ->
-    append_string(Term, append_uint8(mset_info_param_id(Param), Bin)).
+    append_string(Term, append_param(mset_info_param_id(Param), Bin)).
 
 
 decode_mset_info_param(Param, {Acc, Bin}) ->

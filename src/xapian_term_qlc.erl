@@ -5,13 +5,48 @@
     top_value_count_match_spy_table/4, 
     top_value_count_match_spy_table/5,
     document_term_table/3,
-    document_term_table/4 ]).
+    document_term_table/4,
+    unstem_query_parser_table/4,
+    unstem_query_parser_table/5,
+    stop_list_query_parser_table/3,
+    stop_list_query_parser_table/4
+    ]).
 
 -include_lib("stdlib/include/qlc.hrl").
 -include_lib("xapian/include/xapian.hrl").
 -include("xapian.hrl").
 -compile({parse_transform, seqbind}).
--import(xapian_const, [spy_type_id/1]).
+-import(xapian_const, [spy_type_id/1, query_parser_type_id/1]).
+
+stop_list_query_parser_table(Server, QueryParserRes, Meta) ->
+    stop_list_query_parser_table(Server, QueryParserRes, Meta, []).
+
+
+stop_list_query_parser_table(Server, QueryParserRes, Meta, UserParams) ->
+    EncoderFun = fun(Bin@) ->
+        Bin@ = append_query_parser_type(stop_list, Bin@),
+        xapian_term_record:encode(Meta, Bin@)
+        end,
+    %% TODO: check, if sorted or not
+    UserParams2 = [{is_sorted_value, false} | UserParams],
+    table_int(Server, query_parser_terms, EncoderFun, QueryParserRes, 
+              Meta, UserParams2).
+
+
+unstem_query_parser_table(Server, QueryParserRes, Term, Meta) ->
+    unstem_query_parser_table(Server, QueryParserRes, Term, Meta, []).
+
+
+unstem_query_parser_table(Server, QueryParserRes, Term, Meta, UserParams) ->
+    EncoderFun = fun(Bin@) ->
+        Bin@ = append_query_parser_type(unstem, Bin@),
+        Bin@ = xapian_common:append_string(Term, Bin@),
+        xapian_term_record:encode(Meta, Bin@)
+        end,
+    %% TODO: check, if sorted or not
+    UserParams2 = [{is_sorted_value, false} | UserParams],
+    table_int(Server, query_parser_terms, EncoderFun, QueryParserRes, 
+              Meta, UserParams2).
 
 
 %% Fields of the record are limited:
@@ -196,3 +231,6 @@ fix_unknown_num_of_object(Info) ->
 
 append_spy_type(Type, Bin) ->
     xapian_common:append_uint8(spy_type_id(Type), Bin).
+
+append_query_parser_type(Type, Bin) ->
+    xapian_common:append_uint8(query_parser_type_id(Type), Bin).

@@ -59,7 +59,7 @@ class Driver
 
     // Commands
     // used in the control function
-    enum command {
+    enum e_command {
         OPEN                        = 0,
         LAST_DOC_ID                 = 1,
         ADD_DOCUMENT                = 2,
@@ -103,20 +103,20 @@ class Driver
 
     // Error prefix tags.
     // used in the control function
-    enum errorCode {
+    enum e_errorCode {
         SUCCESS                     = 0,
         ERROR                       = 1
     };
 
     // see fun xapian_common:append_unique_document_id/2
-    enum uniqueIdType {
+    enum e_uniqueIdType {
         UNIQUE_DOCID                = 1,
         UNIQUE_TERM                 = 2
     };
 
     // Modes for opening of a db
     // used in the open function
-    enum openMode {
+    enum e_openMode {
         READ_OPEN                   = 0,
         WRITE_CREATE_OR_OPEN        = 1,
         WRITE_CREATE                = 2,
@@ -126,7 +126,7 @@ class Driver
 
     /// Types of fields.
     /// Used in the @ref applyDocument function.
-    enum fieldTypeIn {
+    enum e_fieldTypeIn {
         STEMMER                     = 1,  /// Set a stemmer.
         DATA                        = 2,  /// Set data.
         DELTA                       = 3,  /// Add delta.
@@ -158,7 +158,7 @@ class Driver
 
     /// Types of the fields.
     /// Used in the retrieveDocument function.
-    enum fieldTypeOut {
+    enum e_fieldTypeOut {
         GET_VALUE                   = 1,
         GET_FLOAT_VALUE             = 2,
         GET_DATA                    = 3,
@@ -170,21 +170,21 @@ class Driver
         GET_DB_NUMBER               = 9
     };
 
-    enum encodedValueType {
+    enum e_encodedValueType {
         STRING_TYPE = 0,
         DOUBLE_TYPE = 1
     };
 
     /// Numbers of tests.
     /// Used in the test function.
-    enum testNumber {
+    enum e_testNumber {
         TEST_RESULT_ENCODER         = 1,
         TEST_EXCEPTION              = 2,
         TEST_ECHO                   = 3,
         TEST_MEMORY                 = 4
     };
 
-    enum queryType {
+    enum e_queryType {
         QUERY_GROUP                 = 1,
         QUERY_VALUE                 = 2,
         QUERY_VALUE_RANGE           = 3,
@@ -194,7 +194,7 @@ class Driver
         QUERY_REFERENCE             = 7
     };
 
-    enum queryParserCommand {
+    enum e_queryParserCommand {
         QP_STEMMER                  = 1,
         QP_STEMMING_STRATEGY        = 2,
         QP_MAX_WILDCARD_EXPANSION   = 3,
@@ -202,22 +202,24 @@ class Driver
         QP_PARSER_TYPE              = 5,
         QP_PREFIX                   = 6,
         QP_VALUE_RANGE_PROCESSOR    = 7,
-        QP_FROM_RESOURCE            = 8
+        QP_FROM_RESOURCE            = 8,
+        QP_STEMMER_RESOURCE         = 9,
+        QP_STOPPER_RESOURCE         = 10
     };
 
-    enum queryParserType {
+    enum e_queryParserType {
         QP_TYPE_DEFAULT             = 0,
         QP_TYPE_EMPTY               = 1
     };
 
-    enum parseStringFieldId {
+    enum e_parseStringFieldId {
         PS_QUERY_RESOURCE           = 1,
         PS_CORRECTED_QUERY_STRING   = 2
      };
 
 
     /// see `xapian_enquire:encode'
-    enum enquireCommand {
+    enum e_enquireCommand {
         EC_STOP                     = 0,
         EC_QUERY                    = 1,
         EC_QUERY_LEN                = 2,
@@ -228,7 +230,7 @@ class Driver
         EC_COLLAPSE_KEY             = 7
     };
 
-    enum enquireOrderTypes {
+    enum e_enquireOrderTypes {
         OT_KEY                = 1,
         OT_VALUE              = 2,
         OT_KEY_RELEVANCE      = 3,
@@ -237,7 +239,7 @@ class Driver
         OT_VALUE_RELEVANCE    = 6
     };
 
-    enum msetInfoParams {
+    enum e_msetInfoParams {
         MI_MATCHES_LOWER_BOUND              = 1,
         MI_MATCHES_ESTIMATED                = 2,
         MI_MATCHES_UPPER_BOUND              = 3,
@@ -251,13 +253,13 @@ class Driver
         MI_TERM_FREQ                        = 11
     };
 
-    enum matchSpyInfoParams {
+    enum e_matchSpyInfoParams {
         SI_DOCUMENT_COUNT = 1,
         SI_VALUE_SLOT     = 2
     };
 
 
-    enum dbInfoParams {
+    enum e_dbInfoParams {
         DBI_HAS_POSITIONS                   = 1,
         DBI_DOCCOUNT                        = 2,
         DBI_LASTDOCID                       = 3,
@@ -276,7 +278,7 @@ class Driver
         DBI_METADATA                        = 16
     };
 
-    enum termInfoFields {
+    enum e_termInfoFields {
         TERM_VALUE                          = 1,
         TERM_WDF                            = 2,
         TERM_FREQ                           = 3,
@@ -285,17 +287,46 @@ class Driver
         TERM_FLOAT_VALUE                    = 6
     };
 
-    enum decoderTypeFunIds {
+    enum e_decoderTypeFunIds {
         DEC_DOCUMENT                        = 0,
         DEC_ITERATOR                        = 1,
         DEC_BOTH                            = 2
     };
+
+    enum e_textFlags {
+        TEXT_FLAG_POSITIONS = 1
+    };
+
 
     static const unsigned
     PARSER_FEATURES[];
 
     static const uint8_t
     PARSER_FEATURE_COUNT;
+
+    static const unsigned
+    GENERATOR_FEATURES[];
+
+    static const uint8_t
+    GENERATOR_FEATURE_COUNT;
+
+    static const int
+    GENERATOR_AND_TEXT_FEATURES_DELIM;
+
+    static const unsigned
+    GENERATOR_DEFAULT_FEATURES;
+
+    static const unsigned
+    TEXT_DEFAULT_FEATURES;
+
+    static const int
+    GENERATOR_AND_TEXT_DEFAULT_FEATURES;
+
+    static const unsigned
+    TEXT_FEATURES[];
+
+    static const uint8_t
+    TEXT_FEATURE_COUNT;
 
     static const uint8_t
     STEM_STRATEGY_COUNT;
@@ -465,10 +496,20 @@ class Driver
     void assertWriteable() const;
 
     static unsigned
-    idToParserFeature(uint8_t type);
+    idToParserFeature(int type);
 
     static unsigned 
     decodeParserFeatureFlags(ParamDecoder&);
+
+    static unsigned
+    idToGeneratorFeature(int type);
+    static unsigned
+    idToTextFeature(int type);
+    static void
+    decodeGeneratorFeatureFlags(
+            ParamDecoder& params, 
+            unsigned& genFlags,
+            unsigned& textFlags);
 
     static Xapian::QueryParser::stem_strategy
     readStemmingStrategy(ParamDecoder&);
@@ -597,6 +638,18 @@ class Driver
     decodeValue(ParamDecoder& params);
     /*! \} */
 
+
+    Xapian::Stem&
+    extractStem(CP)
+    {
+        return m_store.extract(con, params);
+    }
+
+    Xapian::Stopper&
+    extractStopper(CP)
+    {
+        return m_store.extract(con, params);
+    }
 
     Xapian::QueryParser&
     extractQueryParser(CP)

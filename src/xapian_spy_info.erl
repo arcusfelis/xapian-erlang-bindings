@@ -4,7 +4,8 @@
          value_count_properties/0]).
 
 -import(xapian_common, [
-    append_uint8/2,
+    append_param/2,
+    append_stop/1,
     read_document_count/1,
     read_slot/1
 ]).
@@ -16,12 +17,10 @@
 -endif.
 
 encode(Params, Bin) when is_list(Params) ->
-    append_uint8(spy_info_param_id(stop),
-        lists:foldl(fun append_spy_info_param/2, Bin, Params));
+    append_stop(lists:foldl(fun append_spy_info_param/2, Bin, Params));
 
 encode(Param, Bin) ->
-    append_uint8(spy_info_param_id(stop),
-        append_spy_info_param(Param, Bin)).
+    append_stop(append_spy_info_param(Param, Bin)).
 
     
 decode(Params, Bin) when is_list(Params) ->
@@ -34,7 +33,7 @@ decode(Param, Bin) ->
 
 
 append_spy_info_param(Param, Bin) when is_atom(Param) ->
-    append_uint8(spy_info_param_id(Param), Bin).
+    append_param(spy_info_param_id(Param), Bin).
 
 
 decode_spy_info_param(Param, {Acc, Bin}) ->

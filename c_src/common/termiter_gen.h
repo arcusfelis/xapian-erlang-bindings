@@ -52,6 +52,10 @@ class TermIteratorGenerator
     static
     TermIteratorGenerator*                                                        
     create(Xapian::Document& doc);
+
+    static
+    TermIteratorGenerator*
+    create(ParamDecoder& params, Xapian::QueryParser& qp);
 };
 
 XAPIAN_ERLANG_NS_END

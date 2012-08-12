@@ -73,13 +73,15 @@ class Element
     static Element wrap(Xapian::Weight* p_weight);
     static Element wrap(Xapian::ValueRangeProcessor* p_proc);
     static Element wrap(Xapian::KeyMaker* p_key_maker);
-    static Element wrap(uint32_t slot, Xapian::ValueCountMatchSpy* p_spy);
     static Element wrap(Xapian::Enquire* p_enquire);
     static Element wrap(Xapian::QueryParser* p_query_parser);
     static Element wrap(Xapian::Document* p_document);
     static Element wrap(Xapian::Query* p_query);
     static Element wrap(Xapian::MSet* p_mset);
+    static Element wrap(Xapian::Stopper* p_stopper);
     static Element wrap(QlcTable* p_table);
+    static Element wrap(uint32_t slot, 
+            Xapian::ValueCountMatchSpy* p_spy);
     /**
      * Create a new context.
      * Context is a object, that's goal is aggregating other Elements.

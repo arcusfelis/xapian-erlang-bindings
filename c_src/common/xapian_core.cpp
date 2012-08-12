@@ -47,6 +47,34 @@ Driver::PARSER_FEATURES[PARSER_FEATURE_COUNT] = {
     /* 12 */ Xapian::QueryParser::FLAG_DEFAULT
 };
 
+/// Used to separate generator and text features.
+const int
+Driver::GENERATOR_AND_TEXT_FEATURES_DELIM = 50;
+
+/// Reset settings to default flag
+const int
+Driver::GENERATOR_AND_TEXT_DEFAULT_FEATURES = 50;
+
+/// Default flags
+const unsigned
+Driver::GENERATOR_DEFAULT_FEATURES = 0;
+
+const unsigned
+Driver::TEXT_DEFAULT_FEATURES = Driver::TEXT_FLAG_POSITIONS;
+
+const uint8_t Driver::GENERATOR_FEATURE_COUNT = 2;
+const unsigned 
+Driver::GENERATOR_FEATURES[GENERATOR_FEATURE_COUNT] = {
+        0,
+    /*  1 */ Xapian::TermGenerator::FLAG_SPELLING,
+};
+
+const uint8_t Driver::TEXT_FEATURE_COUNT = 2;
+const unsigned 
+Driver::TEXT_FEATURES[TEXT_FEATURE_COUNT] = {
+        0,
+    /*  1 */ Driver::TEXT_FLAG_POSITIONS,
+};
 
 const uint8_t Driver::STEM_STRATEGY_COUNT = 3;
 const Xapian::QueryParser::stem_strategy
@@ -515,7 +543,7 @@ Driver::parseString(CPR)
     while(uint8_t field_id = params)
     switch(field_id)
     {
-        case PS_CREATE_QUERY_PARSER:
+        case PS_QUERY_RESOURCE:
             {
             Resource::Element elem = 
                 Resource::Element::wrap(new Xapian::Query(q));
@@ -707,6 +735,7 @@ Driver::qlcInit(PR)
             break;
         }
 
+        // ValueCountMatchSpy top_values, values
         case QlcType::SPY_TERMS:
         {
             Resource::Element spy_elem = m_store.extract(params);
@@ -724,6 +753,34 @@ Driver::qlcInit(PR)
 
             // Delete the ValueCountMatchSpy when the QlcTable is deleted only.
             elem.attach(spy_elem);
+
+            // Write a QlcTable resource.
+            m_store.save(elem, result);
+        
+            // Write the size.
+            const uint32_t mset_size = qlcTable->size();
+            result << mset_size;
+            break;
+        }
+
+        // QueryParser unstem_begin, stoplist_begin
+        case QlcType::QUERY_PARSER_TERMS:
+        {
+            Resource::Element qp_elem = m_store.extract(params);
+            Xapian::QueryParser& qp = qp_elem;
+            TermIteratorGenerator* p_gen = 
+                TermIteratorGenerator::create(params, qp);
+
+            const ParamDecoderController& schema  
+                = retrieveTermSchema(params);
+
+            TermQlcTable* qlcTable = new TermQlcTable(*this, p_gen, schema);
+
+            Resource::Element elem = 
+                Resource::Element::wrap(qlcTable);
+
+            // Delete the QueryParser when the QlcTable is deleted only.
+            elem.attach(qp_elem);
 
             // Write a QlcTable resource.
             m_store.save(elem, result);
@@ -896,9 +953,9 @@ Driver::testMemory()
 
 
 unsigned
-Driver::idToParserFeature(uint8_t type)
+Driver::idToParserFeature(int type)
 {
-  if (type > PARSER_FEATURE_COUNT)
+  if ((type > PARSER_FEATURE_COUNT) || (type < 1))
     throw BadCommandDriverError(type);
   return PARSER_FEATURES[type];
 }
@@ -908,11 +965,72 @@ unsigned
 Driver::decodeParserFeatureFlags(ParamDecoder& params)
 {
     unsigned flags = 0;
-    while (const uint8_t type = params)
+    while (const int8_t type = params)
     {
-        flags |= idToParserFeature(type);
+        if (type > 0)
+            // set flag
+            flags |= idToParserFeature(type);
+        else
+            // unset flag
+            flags &= ~idToParserFeature(-type);
     }
     return flags;
+}
+
+
+unsigned
+Driver::idToGeneratorFeature(int type)
+{
+  if ((type > GENERATOR_FEATURE_COUNT) || (type < 1))
+    throw BadCommandDriverError(type);
+  return GENERATOR_FEATURES[type];
+}
+
+unsigned
+Driver::idToTextFeature(int type)
+{
+    // GEN_FEATURE < DELIM < TEXT_FEATURE
+    type -= GENERATOR_AND_TEXT_FEATURES_DELIM;
+
+    if ((type > TEXT_FEATURE_COUNT) || (type < 1))
+      throw BadCommandDriverError(type);
+
+    return TEXT_FEATURES[type];
+}
+
+
+void
+Driver::decodeGeneratorFeatureFlags(
+        ParamDecoder& params, 
+        unsigned& genFlags,
+        unsigned& textFlags)
+{
+    while (const int8_t type = params)
+    {
+        if (type == GENERATOR_AND_TEXT_DEFAULT_FEATURES)
+        {
+            /// Reset settings to default flag
+            genFlags = GENERATOR_DEFAULT_FEATURES;
+            textFlags = TEXT_DEFAULT_FEATURES;
+        }
+        else
+        if (type > 0)
+        {
+            // set flag
+            if (type > GENERATOR_AND_TEXT_FEATURES_DELIM)
+                textFlags |= idToTextFeature(type);
+            else
+                genFlags |= idToGeneratorFeature(type);
+        }
+        else
+        {
+            // unset flag
+            if (type < GENERATOR_AND_TEXT_FEATURES_DELIM)
+                textFlags &= ~idToTextFeature(type);
+            else
+                genFlags &= ~idToGeneratorFeature(type);
+         }
+    }
 }
 
 
@@ -1282,6 +1400,20 @@ Driver::readParser(CP)
         break;
         }
 
+    case QP_STEMMER_RESOURCE:
+        {
+        Xapian::Stem& stemmer = extractStem(con, params);
+        qp.set_stemmer(stemmer);
+        break;
+        }
+
+    case QP_STOPPER_RESOURCE:
+        {
+        Xapian::Stopper& stopper = extractStopper(con, params);
+        qp.set_stopper(&stopper);
+        break;
+        }
+
     default:
         throw BadCommandDriverError(command);
     }
@@ -1638,7 +1770,8 @@ Driver::applyDocument(
             {
                 // see xapian_document:append_delta
                 const uint32_t   delta = params;
-                termGenerator.increase_termpos(static_cast<Xapian::termcount>(delta));
+                termGenerator.increase_termpos(
+                        static_cast<Xapian::termcount>(delta));
                 break;
             }
 
@@ -1648,9 +1781,19 @@ Driver::applyDocument(
                 const std::string&     text    = params; // value
                 const uint32_t         wdf_inc = params; // pos
                 const std::string&     prefix  = params;
-                termGenerator.index_text(text, 
-                    static_cast<Xapian::termcount>(wdf_inc), 
-                    prefix); 
+                unsigned genFlags = 0, textFlags = 0;
+                decodeGeneratorFeatureFlags(params, genFlags, textFlags);
+                termGenerator.set_flags(Xapian::TermGenerator::flags(genFlags));
+
+                // if isset(TEXT_FLAG_POSITIONS)
+                if ((textFlags & TEXT_FLAG_POSITIONS) == TEXT_FLAG_POSITIONS)
+                    termGenerator.index_text(text, 
+                        static_cast<Xapian::termcount>(wdf_inc), 
+                        prefix); 
+                else
+                    termGenerator.index_text(text, 
+                        static_cast<Xapian::termcount>(wdf_inc), 
+                        prefix); 
                 break;
             }
 

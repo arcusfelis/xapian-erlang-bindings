@@ -27,6 +27,11 @@
     value_count_match_spy/1
     ]).
 
+%% Stopper 
+-export([
+    simple_stopper/1
+    ]).
+
 -import(xapian_common, [
         append_double/2, 
         append_string/2, 
@@ -220,6 +225,18 @@ value_count_match_spy(Slot) ->
             {ok, xapian_common:append_slot(SlotNo, <<>>)}
         end,
     con(value_count_match_spy, GenFn).
+
+
+-spec simple_stopper(Strings) -> Stopper
+    when Strings :: [xapian_type:x_string()],
+         Stopper :: xapian_type:x_resource_con().
+
+simple_stopper(Strings) ->
+    GenFn = 
+        fun() ->
+            {ok, xapian_common:append_terms(Strings, <<>>)}
+        end,
+    con(simple_stopper, GenFn).
 
 %% ------------------------------------------------------------------
 %% Tests
