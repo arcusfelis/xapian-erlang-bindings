@@ -1855,6 +1855,7 @@ Driver::applyDocument(
 {
     Resource::Element gen_con = 
         Resource::Element::createContext();
+    m_default_generator.set_database(m_wdb);
     Xapian::TermGenerator   tg = m_default_generator;
     tg.set_document(doc);
 //  tg.set_stemmer(m_default_stemmer);

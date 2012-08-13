@@ -1130,6 +1130,31 @@ parse_string_gen() ->
     end.
 
 
+parse_string_spelling_correction_gen() ->
+    Path = testdb_path(ps_spell),
+    Params = [write, create, overwrite],
+    Document =
+        [ #x_text{value = "The quick brown fox jumps over the lazy dog.",
+                  features = [spelling]} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        %% Test a term generator
+        ?SRV:add_document(Server, Document),
+
+        P1  = #x_query_parser{},
+        %% CP is a compiled query parser (as a resource).
+        CP1 = xapian_server:query_parser(Server, P1),
+        S1  = #x_query_string{parser=CP1, value="bown", 
+                              features = [default, spelling_correction]},
+        CS1 = xapian_server:parse_string(Server, S1, corrected_query_string),
+        [ ?_assertEqual(CS1, <<"brown">>)
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
+
 %% ------------------------------------------------------------------
 %% Transations tests
 %% ------------------------------------------------------------------
