@@ -940,8 +940,8 @@ term_generator_gen() ->
     try
         DocId1 = ?SRV:add_document(Server, Document1),
         DocId2 = ?SRV:add_document(Server, Document2),
-        Terms1 = ExtractDocTerms(DocId1),
         Terms2 = ExtractDocTerms(DocId2),
+        Terms1 = ExtractDocTerms(DocId1),
         %% Test, that the stemmed forms of the words was filtered by Stopper.
         [ {"Does the stopper actually work?"
           ,[?_assert(lists:member(<<"Zmy">>, Terms1))

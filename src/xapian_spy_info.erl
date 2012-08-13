@@ -42,9 +42,6 @@ decode_spy_info_param(Param, {Acc, Bin}) ->
 
 
 decode_spy_info_param2(Param, Bin) when is_atom(Param) ->
-    decode_param(Param, Bin);
-
-decode_spy_info_param2({Param, _Term}, Bin) when is_atom(Param) ->
     decode_param(Param, Bin).
 
 
