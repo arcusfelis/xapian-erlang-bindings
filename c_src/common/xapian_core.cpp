@@ -97,10 +97,14 @@ Driver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
 Driver::Driver(MemoryManager& mm)
 : m_number_of_databases(0), m_mm(mm)
 {
+    m_default_parser.set_database(m_db);
+    m_standard_parser.set_database(m_db);
+    m_default_generator.set_database(m_wdb);
+    m_standard_generator.set_database(m_wdb);
     m_default_parser_factory.set_database(m_db);
     m_standard_parser_factory.set_database(m_db);
-    m_default_parser_factory.set_database(m_db);
-    m_standard_parser_factory.set_database(m_db);
+    m_default_generator_factory.set_database(m_wdb);
+    m_standard_generator_factory.set_database(m_wdb);
 }
 
 
@@ -113,7 +117,9 @@ Driver::setDefaultStemmer(const Xapian::Stem& stemmer)
 {
     m_default_stemmer = stemmer;
     m_default_parser.set_stemmer(m_default_stemmer);
+    m_default_generator.set_stemmer(m_default_stemmer);
     m_default_parser_factory.set_stemmer(m_default_stemmer);
+    m_default_generator_factory.set_stemmer(m_default_stemmer);
 }
 
 
@@ -214,6 +220,7 @@ Driver::replaceDocument(PR)
                 m_wdb.get_document(docid);
                 m_wdb.replace_document(docid, doc);
             } catch (Xapian::DocNotFoundError e) {
+                // Set to undefined if it is not found.
                 docid = 0;
             }
             break;
@@ -1044,6 +1051,18 @@ Driver::readStemmingStrategy(ParamDecoder& params)
 }
 
 
+// TODO: add a STEM_ALL_Z
+//// It was new in 1.3.1
+//Xapian::TermGenerator::stem_strategy
+//Driver::readTermGeneratorStemmingStrategy(ParamDecoder& params)
+//{
+//  const uint8_t type = params;
+//  if (type > TG_STEM_STRATEGY_COUNT)
+//    throw BadCommandDriverError(type);
+//  return TG_STEM_STRATEGIES[type];
+//}
+
+
 void 
 Driver::addPrefix(ParamDecoder& params, Xapian::QueryParser& qp)
 {
@@ -1323,6 +1342,22 @@ Driver::selectParser(ParamDecoder& params)
     }
 }
 
+Xapian::TermGenerator
+Driver::selectGenerator(ParamDecoder& params)
+{
+    uint8_t type = params;
+    switch (type)
+    {
+    case TG_TYPE_DEFAULT:
+        return m_default_generator_factory;
+
+    case TG_TYPE_EMPTY:
+        return m_standard_generator_factory;
+
+    default:
+        throw BadCommandDriverError(type);
+    }
+}
 
 /**
  * Return a cloned parser.
@@ -1333,6 +1368,8 @@ Driver::readParser(CP)
   uint8_t command = params;
   // No parameters?
   // DEFAULT_PARSER_CHECK_MARK -- mark for Erlang
+  //
+  // Return the wrapper without changes.
   if (!command)
     return m_default_parser;
  
@@ -1423,6 +1460,77 @@ Driver::readParser(CP)
   return qp;
 }
 
+Xapian::TermGenerator
+Driver::readGenerator(CP)
+{
+  uint8_t command = params;
+  // No parameters?
+  // DEFAULT_GENERATOR_CHECK_MARK -- mark for Erlang
+  if (!command)
+    return m_default_generator;
+ 
+  // Clone parser
+  Xapian::TermGenerator tg = m_default_generator_factory;
+
+  do
+  {
+    switch (command)
+    {
+    case TG_STEMMER: 
+        {
+        const Xapian::Stem&  stemmer = params;
+        tg.set_stemmer(stemmer);
+        break; 
+        }
+
+    case TG_STEMMING_STRATEGY: 
+        {
+        throw BadCommandDriverError(command);
+//      Xapian::TermGenerator::stem_strategy 
+//      strategy = readTermGeneratorStemmingStrategy(params);
+//      qp.set_stemming_strategy(strategy);
+//      break;
+        }
+
+    case TG_GENERATOR_TYPE: 
+        // Clone
+        tg = selectGenerator(params);
+        break; 
+
+
+    case TG_FROM_RESOURCE:
+        {
+        throw BadCommandDriverError(command);
+//      Resource::Element elem = m_store.extract(params);
+//      // The elem is not interesting for us, but its children are.
+//      con.attachContext(elem);
+//      // Copy from resource
+//      tg = elem;
+//      break;
+        }
+
+    case TG_STEMMER_RESOURCE:
+        {
+        Xapian::Stem& stemmer = extractStem(con, params);
+        tg.set_stemmer(stemmer);
+        break;
+        }
+
+    case TG_STOPPER_RESOURCE:
+        {
+        Xapian::Stopper& stopper = extractStopper(con, params);
+        tg.set_stopper(&stopper);
+        break;
+        }
+
+    default:
+        throw BadCommandDriverError(command);
+    }
+  } while((command = params)); // yes, it's an assignment [-Wparentheses]
+  // warning: suggest parentheses around assignment used as truth value
+
+  return tg;
+}
 
 void
 Driver::handleCommand(PR,
@@ -1741,9 +1849,12 @@ Driver::applyDocument(
     ParamDecoder& params, 
     Xapian::Document& doc)
 {
-    Xapian::TermGenerator   termGenerator;
-    termGenerator.set_document(doc);
-    termGenerator.set_stemmer(m_default_stemmer);
+    Resource::Element gen_con = 
+        Resource::Element::createContext();
+    Xapian::TermGenerator   tg = m_default_generator;
+    tg.set_document(doc);
+//  tg.set_stemmer(m_default_stemmer);
+
 
     while (const uint8_t command = params)
     /* Do, while command != stop != 0 */
@@ -1754,7 +1865,14 @@ Driver::applyDocument(
             {
                 // see xapian_document:append_stemmer
                 const Xapian::Stem&  stemmer = params;
-                termGenerator.set_stemmer(stemmer);
+                tg.set_stemmer(stemmer);
+                break;
+            }
+
+            case TERM_GENERATOR:
+            {
+                tg = readGenerator(gen_con, params);
+                tg.set_document(doc);
                 break;
             }
 
@@ -1770,8 +1888,7 @@ Driver::applyDocument(
             {
                 // see xapian_document:append_delta
                 const uint32_t   delta = params;
-                termGenerator.increase_termpos(
-                        static_cast<Xapian::termcount>(delta));
+                tg.increase_termpos(static_cast<Xapian::termcount>(delta));
                 break;
             }
 
@@ -1783,15 +1900,15 @@ Driver::applyDocument(
                 const std::string&     prefix  = params;
                 unsigned genFlags = 0, textFlags = 0;
                 decodeGeneratorFeatureFlags(params, genFlags, textFlags);
-                termGenerator.set_flags(Xapian::TermGenerator::flags(genFlags));
+                tg.set_flags(Xapian::TermGenerator::flags(genFlags));
 
                 // if isset(TEXT_FLAG_POSITIONS)
                 if ((textFlags & TEXT_FLAG_POSITIONS) == TEXT_FLAG_POSITIONS)
-                    termGenerator.index_text(text, 
+                    tg.index_text(text, 
                         static_cast<Xapian::termcount>(wdf_inc), 
                         prefix); 
                 else
-                    termGenerator.index_text(text, 
+                    tg.index_text(text, 
                         static_cast<Xapian::termcount>(wdf_inc), 
                         prefix); 
                 break;
@@ -2660,7 +2777,7 @@ Driver::retrieveDocumentSchema(
 
 ParamDecoderController
 Driver::applyDocumentSchema(
-    ParamDecoder& params) const
+    ParamDecoder& params)
 {
     const char* from = params.currentPosition();
 
@@ -2673,6 +2790,16 @@ Driver::applyDocumentSchema(
             {
                 const Xapian::Stem&  stemmer = params;
                 (void) stemmer;
+                break;
+            }
+
+            case TERM_GENERATOR:
+            {
+                // Create a temporary context
+                Resource::Element gen_con = 
+                    Resource::Element::createContext();
+                Xapian::TermGenerator tg = readGenerator(gen_con, params);
+                (void) tg;
                 break;
             }
 

@@ -6,6 +6,7 @@
 
 #include "result_encoder.h"
 #include "query_parser_factory.h"
+#include "term_generator_factory.h"
 #include "qlc.h"
 #include "resource/factory.h"
 
@@ -29,8 +30,13 @@ class Driver
 
     Xapian::QueryParser m_default_parser;
     Xapian::QueryParser m_standard_parser;
+    Xapian::TermGenerator m_default_generator;
+    Xapian::TermGenerator m_standard_generator;
+
     QueryParserFactory m_default_parser_factory;
     QueryParserFactory m_standard_parser_factory;
+    TermGeneratorFactory m_default_generator_factory;
+    TermGeneratorFactory m_standard_generator_factory;
 
     /**
      * It is global.
@@ -131,6 +137,7 @@ class Driver
         DATA                        = 2,  /// Set data.
         DELTA                       = 3,  /// Add delta.
         TEXT                        = 4,  /// Set text.
+        TERM_GENERATOR              = 5,  /// Select TermGenerator.
                                            
         SET_POSTING                 = 15, /// Add posting term.
         ADD_POSTING                 = 25,
@@ -207,9 +214,23 @@ class Driver
         QP_STOPPER_RESOURCE         = 10
     };
 
+    enum e_termGeneratorCommand {
+        TG_STEMMER                  = 1,
+        TG_STEMMING_STRATEGY        = 2,
+        TG_GENERATOR_TYPE           = 3,
+        TG_FROM_RESOURCE            = 4,
+        TG_STEMMER_RESOURCE         = 5,
+        TG_STOPPER_RESOURCE         = 6
+    };
+
     enum e_queryParserType {
         QP_TYPE_DEFAULT             = 0,
         QP_TYPE_EMPTY               = 1
+    };
+
+    enum e_termGeneratorType {
+        TG_TYPE_DEFAULT             = 0,
+        TG_TYPE_EMPTY               = 1
     };
 
     enum e_parseStringFieldId {
@@ -333,6 +354,12 @@ class Driver
 
     static const Xapian::QueryParser::stem_strategy
     STEM_STRATEGIES[];
+
+//  static const uint8_t
+//  TG_STEM_STRATEGY_COUNT;
+
+//  static const Xapian::TermGenerator::stem_strategy
+//  TG_STEM_STRATEGIES[];
 
     static const uint8_t
     DOCID_ORDER_TYPE_COUNT;
@@ -479,8 +506,13 @@ class Driver
     void 
     applyDocument(ParamDecoder&, Xapian::Document& doc);
 
+    /**
+     * Run applyDocument without creating the real doc.
+     * It is useful, if you want to find the position of the ParamDecoder
+     * after running the applyDocument.
+     */
     ParamDecoderController
-    applyDocumentSchema(ParamDecoder&) const;
+    applyDocumentSchema(ParamDecoder&);
     
 
     Xapian::Query 
@@ -519,6 +551,12 @@ class Driver
 
     Xapian::QueryParser 
     selectParser(ParamDecoder&);
+
+    Xapian::TermGenerator
+    readGenerator(CP);
+
+    Xapian::TermGenerator 
+    selectGenerator(ParamDecoder& params);
 
     void addPrefix(ParamDecoder&, Xapian::QueryParser& qp);
     void addPrefix(ParamDecoder&, QueryParserFactory& qpf);

@@ -260,8 +260,11 @@
 -record(x_term_generator, {
     name = default 
         :: default | standard | xapian_type:x_resource(),
-    stemmer :: xapian_type:x_stemmer() | xapian_type:x_resource() | undefined,
+    %% The stopper is used to avoid indexing stemmed forms of
+    %% stopwords, but we still index the unstemmed forms so that searches for
+    %% phrases containing stopwords can be supported.
     stopper :: xapian_type:x_resource() | undefined,
+    stemmer :: xapian_type:x_stemmer() | xapian_type:x_resource() | undefined,
     stemming_strategy = default :: none | some | all | default
 }).
 

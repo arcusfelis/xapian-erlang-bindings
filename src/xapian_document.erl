@@ -2,10 +2,11 @@
 -module(xapian_document).
 
 %% Internal functions
--export([encode/4]).
+-export([encode/5]).
 
 
 -include_lib("xapian/include/xapian.hrl").
+-compile({parse_transform, mead}).
 -compile({parse_transform, seqbind}).
 -import(xapian_common, [ 
     append_iolist/2,
@@ -16,6 +17,8 @@
     append_boolean/2,
     slot_id/2,
     append_value/2,
+    append_stop/1,
+    append_param/2,
     append_flags/2]).
 
 -import(xapian_const, [ 
@@ -23,18 +26,22 @@
     posting_type/1,
     value_type/1,
     document_part_id/1,
-    generator_feature_id/1
+    generator_feature_id/1,
+    generator_type_id/1,
+    generator_command_id/1,
+    stem_strategy_id/1
 ]).
 
 
 %% @doc Encode parts of the document to a binary.
 -spec encode([xapian_type:x_document_index_part()], 
-             orddict:orddict(), orddict:orddict(), array()) -> binary().
+             orddict:orddict(), orddict:orddict(), array(),
+             term()) -> binary().
 
-encode(List, Name2Prefix, Name2Slot, Slot2TypeArray) ->
+encode(List, Name2Prefix, Name2Slot, Slot2TypeArray, RA) ->
     Pre = preprocess_hof(Name2Prefix, Name2Slot, Slot2TypeArray),
     List2 = [Pre(X) || X <- List], % lists:map(Pre, List)
-    enc(List2, <<>>).
+    enc(List2, RA, <<>>).
 
 
 %% @doc Replace all pseudonames on real values.
@@ -64,45 +71,46 @@ preprocess_hof(Name2Prefix, Name2Slot, Slot2TypeArray) ->
 
 
 %% @doc Build a binary from a list of parts.
-enc([], Bin) -> append_stop(Bin);
+enc([], _, Bin) -> append_stop(Bin);
 
-enc([#x_stemmer{}=Stemmer|T], Bin) ->
-    enc(T, append_stemmer(Stemmer, Bin));
+enc([#x_stemmer{}=Stemmer|T], _, Bin) ->
+    me(T, _, append_stemmer(Stemmer, Bin));
 
-enc([#x_data{value = Value}|T], Bin) ->
-    enc(T, append_data(Value, Bin));
+enc([#x_data{value = Value}|T], _, Bin) ->
+    me(T, _, append_data(Value, Bin));
 
-enc([#x_term{position = [HT|TT] = _Positions} = Rec|T], Bin) ->
-    enc([Rec#x_term{position = HT}, 
-         Rec#x_term{position = TT} | T], Bin);
+enc([#x_term{position = [HT|TT] = _Positions} = Rec|T], _, _) ->
+    me([Rec#x_term{position = HT}, 
+        Rec#x_term{position = TT} | T], _, _);
 
-enc([#x_term{} = H|T], Bin) ->
+enc([#x_term{} = H|T], _, Bin) ->
     #x_term{
         action = Action, 
         value = Value, 
         position = Pos,
         frequency = WDF, 
         ignore = Ignore} = H,
-    enc(T, append_posting(Action, Value, Pos, WDF, Ignore, Bin));
+    me(T, _, append_posting(Action, Value, Pos, WDF, Ignore, Bin));
 
-enc([#x_value{} = H|T], Bin) ->
+enc([#x_value{} = H|T], _, Bin) ->
     #x_value{
         action = Action, 
         slot = Slot, 
         value = Value, 
         ignore = Ignore} = H,
-    enc(T, append_value(Action, Slot, Value, Ignore, Bin));
+    me(T, _, append_value(Action, Slot, Value, Ignore, Bin));
 
-enc([#x_delta{position = Pos}|T], Bin) ->
-    enc(T, append_delta(Pos, Bin));
+enc([#x_delta{position = Pos}|T], _, Bin) ->
+    me(T, _, append_delta(Pos, Bin));
 
 enc([#x_text{value = Value, frequency = WDF, prefix = Prefix, 
-             features = Features}|T], Bin) ->
-    enc(T, append_text(Value, WDF, Prefix, Features, Bin)).
+             features = Features}|T], _, Bin) ->
+    me(T, _, append_text(Value, WDF, Prefix, Features, Bin));
 
-    
-append_stop(Bin) ->
-    append_type(stop, Bin).
+enc([#x_term_generator{}=H|T], RA, Bin@) ->
+    Bin@ = append_type(term_generator, Bin@),
+    me(T, _, append_generator(H, RA, Bin@)).
+
 
 
 append_stemmer(Stemmer, Bin) ->
@@ -213,7 +221,83 @@ toggle_group(Nums) ->
 %% ------------------------------------------------------------------
 
 append_type(Type, Bin) ->
-    append_uint8(document_part_id(Type), Bin).
+    append_param(document_part_id(Type), Bin).
+
+
+
+
+append_generator(#x_term_generator{name = Type, stopper = Stopper,
+                       stemmer = Stem, stemming_strategy = StemStrategy},
+                 RA, Bin@) ->
+    Bin@ = append_generator_type(Type, RA, Bin@),
+    Bin@ = append_stemmer(Stem, RA, Bin@),
+    Bin@ = append_stopper(Stopper, RA, Bin@),
+    Bin@ = append_stemming_strategy(StemStrategy, Bin@),
+    Bin@ = append_stop(Bin@),
+    Bin@.
+
+%% -----------------------------------------------------------
+%% Term Generator Commands
+%% -----------------------------------------------------------
+
+%% DEFAULT_GENERATOR_CHECK_MARK
+append_generator_type(default, _RA, Bin) ->
+    Bin; %% It is default by default :)
+
+%% `#x_query_generator{name = ResRef}'
+append_generator_type(ResRef, RA, Bin@) 
+        when is_reference(ResRef) ->
+    Bin@ = append_generator_command(from_resource, Bin@),
+    Bin@ = xapian_common:append_resource(RA, ResRef, Bin@),
+    Bin@;
+
+append_generator_type(Type, _RA, Bin@) ->
+    Bin@ = append_generator_command(generator_type, Bin@),
+    Bin@ = append_generator_type_id(Type, Bin@),
+    Bin@.
+
+
+append_stemmer(undefined, _RA, Bin) ->
+    Bin;
+
+append_stemmer(#x_stemmer{}=Stemmer, _RA, Bin@) ->
+    Bin@ = append_generator_command(stemmer, Bin@),
+    Bin@ = xapian_encode:append_stemmer(Stemmer, Bin@),
+    Bin@;
+
+append_stemmer(Stemmer, RA, Bin@) ->
+    Bin@ = append_generator_command(stemmer_resource, Bin@),
+    Bin@ = xapian_common:append_resource(RA, Stemmer, Bin@),
+    Bin@.
+
+
+append_stopper(undefined, _RA, Bin) ->
+    Bin;
+
+append_stopper(Stopper, RA, Bin@) ->
+    Bin@ = append_generator_command(stopper_resource, Bin@),
+    Bin@ = xapian_common:append_resource(RA, Stopper, Bin@),
+    Bin@.
+
+
+%% See `XapianErlangDriver::readStemmingStrategy'
+append_stemming_strategy(Strategy, Bin@) ->
+    case stem_strategy_id(Strategy) of
+    %% Default
+    0 -> 
+        Bin@;
+    StrategyId ->
+        Bin@ = append_generator_command(stemming_strategy, Bin@),
+        Bin@ = append_uint8(StrategyId, Bin@),
+        Bin@
+    end.
+
+append_generator_type_id(Id, Bin) ->
+    append_param(generator_type_id(Id), Bin).
+
+
+append_generator_command(Command, Bin) ->
+    append_param(generator_command_id(Command), Bin).
 
 
 -ifdef(TEST).
@@ -227,6 +311,6 @@ encode_test() ->
            , #x_text{value = "Paragraph 1"} 
            , #x_delta{}
            , #x_text{value = <<"Paragraph 2">>} 
-           ], [], [], undefined).
+           ], [], [], undefined, undefined).
 
 -endif.

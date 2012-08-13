@@ -918,6 +918,40 @@ term_advanced_actions_gen() ->
     end.
     
 
+term_generator_gen() ->
+    Path = testdb_path(term_generator),
+    Params = [write, create, overwrite,
+              #x_stemmer{language = <<"english">>}],
+    Meta = xapian_term_record:record(term, record_info(fields, term)),
+    Stopper = xapian_resource:simple_stopper(["my", "as", "the", "a", "an"]),
+    Document1 =
+        [ #x_text{value = "My text is inside the #x_text record."} 
+        ],
+    Document2 =
+        [ #x_term_generator{stopper = Stopper}
+        , #x_text{value = "My text is inside the #x_text record."} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    ExtractDocTerms = fun(Doc) ->
+        TermTable = xapian_term_qlc:document_term_table(Server, Doc, Meta),
+        Values = qlc:q([Val || #term{value = Val} <- TermTable]),
+        qlc:e(Values)
+        end,
+    try
+        DocId1 = ?SRV:add_document(Server, Document1),
+        DocId2 = ?SRV:add_document(Server, Document2),
+        Terms1 = ExtractDocTerms(DocId1),
+        Terms2 = ExtractDocTerms(DocId2),
+        %% Test, that the stemmed forms of the words was filtered by Stopper.
+        [ {"Does the stopper actually work?"
+          ,[?_assert(lists:member(<<"Zmy">>, Terms1))
+           ,?_assertNot(lists:member(<<"Zmy">>, Terms2))
+           ]}
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
 
 reopen_test() ->
     % Open test

@@ -1224,27 +1224,27 @@ handle_call(close, _From, State=#state{master=undefined}) ->
 handle_call(close, _From, State) ->
     {stop, normal, ok, State};
 
-handle_call({add_document, Document}, _From, State) ->
+handle_call({add_document, Document}, From, State) ->
     #state{ port = Port } = State,
-    EncodedDocument = document_encode(Document, State),
+    EncodedDocument = document_encode(Document, From, State),
     Reply = port_add_document(Port, EncodedDocument),
     {reply, Reply, State};
 
-handle_call({replace_or_create_document, Id, Document}, _From, State) ->
+handle_call({replace_or_create_document, Id, Document}, From, State) ->
     #state{ port = Port } = State,
-    EncodedDocument = document_encode(Document, State),
+    EncodedDocument = document_encode(Document, From, State),
     Reply = port_replace_or_create_document(Port, Id, EncodedDocument),
     {reply, Reply, State};
 
-handle_call({replace_document, Id, Document}, _From, State) ->
+handle_call({replace_document, Id, Document}, From, State) ->
     #state{ port = Port } = State,
-    EncodedDocument = document_encode(Document, State),
+    EncodedDocument = document_encode(Document, From, State),
     Reply = port_replace_document(Port, Id, EncodedDocument),
     {reply, Reply, State};
 
-handle_call({update_document, Id, Document, Create}, _From, State) ->
+handle_call({update_document, Id, Document, Create}, From, State) ->
     #state{ port = Port } = State,
-    EncodedDocument = document_encode(Document, State),
+    EncodedDocument = document_encode(Document, From, State),
     Reply = port_update_document(Port, Id, EncodedDocument, Create),
     {reply, Reply, State};
 
@@ -1270,14 +1270,14 @@ handle_call({test, TestName, Params}, _From, State) ->
 
 handle_call({document_info_resource, Document}, {FromPid, _FromRef}, State) ->
     #state{ port = Port } = State,
-    EncodedDocument = document_encode(Document, State),
+    EncodedDocument = document_encode(Document, FromPid, State),
     Result = port_document_info_resource(Port, EncodedDocument),
     m_do_register_resource(State, FromPid, Result);
 
-handle_call({document_info, Document, Meta}, _From, State) ->
+handle_call({document_info, Document, Meta}, From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
           subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
-    EncodedDocument = document_encode(Document, State),
+    EncodedDocument = document_encode(Document, From, State),
     Reply = port_document_info(Port, EncodedDocument, 
                                Meta, Name2Slot, Id2Name, Slot2Type),
     {reply, Reply, State};
@@ -1621,12 +1621,13 @@ append_resource_access(UserResourceNumber, ParamBin, Bin@) ->
     <<Bin@/binary, ParamBin/binary>>.
 
 
-document_encode(Document, #state{
+document_encode(Document, From, #state{
         name_to_prefix = Name2Prefix,
         name_to_slot = Name2Slot,
         slot_to_type = Slot2TypeArray
-    }) ->
-    xapian_document:encode(Document, Name2Prefix, Name2Slot, Slot2TypeArray).
+    } = State) ->
+    RA = resource_appender(State, From),
+    xapian_document:encode(Document, Name2Prefix, Name2Slot, Slot2TypeArray, RA).
 
 
 open_mode(Params) ->

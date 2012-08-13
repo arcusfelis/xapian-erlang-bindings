@@ -25,6 +25,8 @@
          term_field_id/1,
          document_field_id/1,
          parser_type_id/1,
+         generator_type_id/1,
+         generator_command_id/1,
          resource_encoding_schema_id/1,
          parse_string_field_id/1,
          parser_feature_id/1,
@@ -152,6 +154,20 @@ parser_command_id(stopper_resource)         -> 10.
 parser_type_id(default)  -> 0;
 parser_type_id(standard) -> 1.
 
+
+generator_type_id(default)  -> 0;
+generator_type_id(standard) -> 1.
+
+
+generator_command_id(stop)                     -> 0;
+generator_command_id(stemmer)                  -> 1;
+generator_command_id(stemming_strategy)        -> 2;
+generator_command_id(generator_type)           -> 3; 
+generator_command_id(from_resource)            -> 4;
+generator_command_id(stemmer_resource)         -> 5;
+generator_command_id(stopper_resource)         -> 6.
+
+
 %% From `XapianErlangDriver::STEM_STRATEGIES'
 stem_strategy_id(none)    -> 0;
 stem_strategy_id(default) -> 0;
@@ -227,11 +243,12 @@ generator_feature_id(positions) -> 51.
 %% Document
 %% ------------------------------------------------------------
 
-document_part_id(stop)       -> 0;
-document_part_id(stemmer)    -> 1;
-document_part_id(data)       -> 2;
-document_part_id(delta)      -> 3;
-document_part_id(text)       -> 4;
+document_part_id(stop)            -> 0;
+document_part_id(stemmer)         -> 1;
+document_part_id(data)            -> 2;
+document_part_id(delta)           -> 3;
+document_part_id(text)            -> 4;
+document_part_id(term_generator)  -> 5;
 
 document_part_id(set_posting)       -> 15;
 document_part_id(add_posting)       -> 25;
