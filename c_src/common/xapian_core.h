@@ -103,7 +103,8 @@ class Driver
         RELEASE_RESOURCES           = 34,
         MATCH_SPY_INFO              = 35,
         CREATE_QUERY_PARSER         = 36,
-        PARSE_STRING                = 37
+        PARSE_STRING                = 37,
+        ADD_SPELLING                = 38
     };
 
 
@@ -404,6 +405,7 @@ class Driver
     void getLastDocId(ResultEncoder&);
 
     void addDocument(PR);
+    void addSpelling(ParamDecoder&);
     void replaceDocument(PR);
     void replaceOrCreateDocument(PR);
     void updateDocument(PR, bool create);
@@ -592,6 +594,10 @@ class Driver
     static void
     handleTerm   (ParamDecoder&, uint8_t command, Xapian::Document& doc);
 
+    static void
+    handleSpelling  (ParamDecoder&, uint8_t command, 
+                    Xapian::WritableDatabase& mdb);
+
 
     static void
     qlcTermIteratorLookup(
@@ -676,6 +682,9 @@ class Driver
 
     void
     parseString(CPR);
+
+    void
+    setDatabaseAgain();
 };
 
 XAPIAN_ERLANG_NS_END

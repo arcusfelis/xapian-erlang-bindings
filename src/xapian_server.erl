@@ -23,7 +23,8 @@
          update_or_create_document/3,
          transaction/3,
          transaction/2,
-         set_metadata/3]).
+         set_metadata/3,
+         add_spelling/2]).
 
 %% Queries
 -export([query_page/5]). 
@@ -509,6 +510,25 @@ internal_register_qlc_table(Server, ResRef, Table) ->
 
 add_document(Server, Document) ->
     call(Server, {add_document, Document}).
+
+
+%% @doc Mass manipulations with spelling information.
+%%
+%% `Term' is:
+%% ```
+%% #xterm{ value = x_string()}
+%% ```
+%%
+%% The position field is meaningless.
+%% `action', `ignore', `frequency' can be used in the same manner,
+%% as with the `add_document/2' function.
+-spec add_spelling(Server, Spelling) -> no_return() when
+    Server :: x_server(),
+    Spelling :: [Term],
+    Term ::xapian_type:x_term().
+
+add_spelling(Server, Spelling) ->
+    call(Server, {add_spelling, Spelling}).
 
 
 %% @doc Replace all matched documents with the new version.
@@ -1230,6 +1250,12 @@ handle_call({add_document, Document}, From, State) ->
     Reply = port_add_document(Port, EncodedDocument),
     {reply, Reply, State};
 
+handle_call({add_spelling, Spelling}, From, State) ->
+    #state{ port = Port } = State,
+    EncodedSpelling = document_encode(Spelling, From, State),
+    Reply = port_add_spelling(Port, EncodedSpelling),
+    {reply, Reply, State};
+
 handle_call({replace_or_create_document, Id, Document}, From, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, From, State),
@@ -1785,6 +1811,10 @@ set_default_prefixes(Port, DefaultPrefixes) ->
 
 port_add_document(Port, EncodedDocument) ->
     decode_docid_result(control(Port, add_document, EncodedDocument)).
+
+
+port_add_spelling(Port, EncodedSpelling) ->
+    control(Port, add_spelling, EncodedSpelling).
 
 
 port_update_document(Port, Id, EncodedDocument, Create) ->

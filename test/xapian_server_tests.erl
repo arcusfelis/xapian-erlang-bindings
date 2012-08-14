@@ -448,12 +448,11 @@ term_actions_test() ->
     end.
 
 
--record(term_value, {value}).
 -record(term, {value, wdf}).
 -record(term_ext, {value, positions, position_count, freq, wdf}).
 -record(term_pos, {value, positions, position_count}).
 -record(short_term, {wdf}).
--record(spy_term, {value, freq}).
+-record(term_freq, {value, freq}).
 
 
 term_qlc_gen() ->
@@ -699,8 +698,8 @@ value_count_match_spy_gen() ->
             spies = [SpySlot1]},
 %       MSetResourceId = 
         ?SRV:match_set(Server, MSetParams),
-        Meta = xapian_term_record:record(spy_term, 
-                    record_info(fields, spy_term)),
+        Meta = xapian_term_record:record(term_freq, 
+                    record_info(fields, term_freq)),
 
         %% These elements are sorted by value.
         Table = xapian_term_qlc:value_count_match_spy_table(
@@ -710,22 +709,22 @@ value_count_match_spy_gen() ->
         TopTable = xapian_term_qlc:top_value_count_match_spy_table(
             Server, SpySlot1, 100, Meta),
 
-        Values = qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table])),
+        Values = qlc:e(qlc:q([Value || #term_freq{value = Value} <- Table])),
 
         %% "Red" was converted to <<"Red">> because of lookup function call.
         %% Erlang did not match it, but Xapian did.
         RedValues = qlc:e(qlc:q([Value 
-            || #spy_term{value = Value} <- Table, Value =:= "Red"])),
+            || #term_freq{value = Value} <- Table, Value =:= "Red"])),
 
-        OrderValues = qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table, 
+        OrderValues = qlc:e(qlc:q([Value || #term_freq{value = Value} <- Table, 
             Value =:= "white" orelse Value =:= "black"])),
 
         TopAlphOrderValues = 
-        qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
+        qlc:e(qlc:q([Value || #term_freq{value = Value} <- TopTable, 
             Value =:= "white" orelse Value =:= "black"])),
 
         TopFreqOrderValues = 
-        qlc:e(qlc:q([Value || #spy_term{value = Value} <- TopTable, 
+        qlc:e(qlc:q([Value || #term_freq{value = Value} <- TopTable, 
             Value =:= "white" orelse Value =:= "green"])),
 
         %% match_spy_info
@@ -785,8 +784,8 @@ float_value_count_match_spy_gen() ->
         %% Collect statistic 
 %       MSetResourceId = 
         ?SRV:match_set(Server, MSetParams),
-        Meta = xapian_term_record:record(spy_term, 
-                    record_info(fields, spy_term)),
+        Meta = xapian_term_record:record(term_freq, 
+                    record_info(fields, term_freq)),
 
         %% Has it the same type?
         Slot1 = xapian_server:match_spy_info(Server, SpySlot1Res, value_slot),
@@ -800,12 +799,12 @@ float_value_count_match_spy_gen() ->
             Server, SpySlot1Res, Meta),
 
         Values =
-        qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table])),
+        qlc:e(qlc:q([Value || #term_freq{value = Value} <- Table])),
         FilteredValues = 
-        qlc:e(qlc:q([Value || #spy_term{value = Value} <- Table, Value =:= 10])),
+        qlc:e(qlc:q([Value || #term_freq{value = Value} <- Table, Value =:= 10])),
         JoinValues = 
-        qlc:e(qlc:q([V1 || #spy_term{value = V1} <- Table, 
-                           #spy_term{value = V2} <- Table, V1 =:= V2])),
+        qlc:e(qlc:q([V1 || #term_freq{value = V1} <- Table, 
+                           #term_freq{value = V2} <- Table, V1 =:= V2])),
 
         [ {"Float values inside MatchSpy.",
            ?_assertEqual(Values, [10.0, 20.0, 100.0, 200.0])}
@@ -1143,9 +1142,12 @@ parse_string_spelling_correction_gen() ->
         %% Test a term generator
         ?SRV:add_document(Server, Document),
 
-        Meta = xapian_term_record:record(term_value, 
-                                         record_info(fields, term_value)),
+        Meta = xapian_term_record:record(term_freq, 
+                                         record_info(fields, term_freq)),
         Table = xapian_term_qlc:spelling_table(Server, Meta),
+        BrownQuery = qlc:q([Value || #term_freq{value = Value} <- Table, 
+                                     Value =:= <<"brown">>]),
+        BrownRecords = qlc:e(BrownQuery),
         Records = qlc:e(Table),
         io:format(user, "~n~p~n", [Records]),
 
@@ -1156,11 +1158,61 @@ parse_string_spelling_correction_gen() ->
                               features = [default, spelling_correction]},
         CS1 = xapian_server:parse_string(Server, S1, corrected_query_string),
         [ ?_assertEqual(CS1, <<"brown">>)
+        , ?_assertMatch([_], BrownRecords)
         ]
     after
         ?SRV:close(Server)
     end.
 
+
+add_spelling_gen() ->
+    Path = testdb_path(add_spelling),
+    Params = [write, create, overwrite],
+    Document =
+        [ #x_text{value = "The quick brown fox jumps over the lazy dog."} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        %% Test a term generator
+        ?SRV:add_spelling(Server, Document),
+
+        Meta = xapian_term_record:record(term_freq, 
+                                         record_info(fields, term_freq)),
+        Table = xapian_term_qlc:spelling_table(Server, Meta),
+        Records1 = qlc:e(Table),
+        Spelling = [#x_term{value = "cat",   frequency = 1}
+                   ,#x_term{value = "dog",   frequency = 1}
+                   ,#x_term{value = "fox",   frequency = {cur, -1}}
+                   ,#x_term{value = "the",   frequency = {cur, -1}}
+                   ,#x_term{value = "lazy",  frequency = {cur, 5}}
+                   ,#x_term{value = "over",  frequency = {abs, 5}}
+                   ,#x_term{value = "quick", frequency = -5}
+                   ],
+        ?SRV:add_spelling(Server, Spelling),
+        Table2 = xapian_term_qlc:spelling_table(Server, Meta),
+        Records2 = qlc:e(Table2),
+        io:format(user, "~n Before: ~p\tAfter: ~p~n", [Records1, Records2]),
+        [?_assertEqual(Records1, [#term_freq{value = <<"brown">>, freq = 1}
+                                 ,#term_freq{value = <<"dog">>,   freq = 1}
+                                 ,#term_freq{value = <<"fox">>,   freq = 1}
+                                 ,#term_freq{value = <<"jumps">>, freq = 1}
+                                 ,#term_freq{value = <<"lazy">>,  freq = 1}
+                                 ,#term_freq{value = <<"over">>,  freq = 1}
+                                 ,#term_freq{value = <<"quick">>, freq = 1}
+                                 ,#term_freq{value = <<"the">>,   freq = 2}
+                                 ])
+        ,?_assertEqual(Records2, [#term_freq{value = <<"brown">>, freq = 1}
+                                 ,#term_freq{value = <<"cat">>,   freq = 1}
+                                 ,#term_freq{value = <<"dog">>,   freq = 2}
+                                 ,#term_freq{value = <<"jumps">>, freq = 1}
+                                 ,#term_freq{value = <<"lazy">>,  freq = 6}
+                                 ,#term_freq{value = <<"over">>,  freq = 5}
+                                 ,#term_freq{value = <<"the">>,   freq = 1}
+                                 ])
+        ]
+    after
+        ?SRV:close(Server)
+    end.
 
 %% ------------------------------------------------------------------
 %% Transations tests

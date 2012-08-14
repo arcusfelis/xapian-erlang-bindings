@@ -159,6 +159,88 @@ Driver::addDocument(PR)
     result << static_cast<uint32_t>(docid);
 }
 
+void
+Driver::addSpelling(ParamDecoder& params)
+{
+    assertWriteable();
+
+    Resource::Element gen_con = 
+        Resource::Element::createContext();
+    Xapian::TermGenerator   tg = m_default_generator;
+    while (const uint8_t command = params)
+    /* Do, while command != stop != 0 */
+    {
+        switch (command)
+        {
+            case STEMMER:
+            {
+                // see xapian_document:append_stemmer
+                const Xapian::Stem&  stemmer = params;
+                tg.set_stemmer(stemmer);
+                break;
+            }
+
+            case TERM_GENERATOR:
+            {
+                tg = readGenerator(gen_con, params);
+                break;
+            }
+
+            case TEXT:
+            {
+                // see xapian_document:append_delta
+                const std::string&     text    = params; // value
+                const uint32_t         wdf_inc = params; // pos
+                const std::string&     prefix  = params;
+                unsigned genFlags = 0, textFlags = 0;
+                decodeGeneratorFeatureFlags(params, genFlags, textFlags);
+                genFlags |= Xapian::TermGenerator::FLAG_SPELLING;
+                tg.set_flags(Xapian::TermGenerator::flags(genFlags));
+
+                // if isset(TEXT_FLAG_POSITIONS)
+                if ((textFlags & TEXT_FLAG_POSITIONS) == TEXT_FLAG_POSITIONS)
+                    tg.index_text(text, 
+                        static_cast<Xapian::termcount>(wdf_inc), 
+                        prefix); 
+                else
+                    tg.index_text(text, 
+                        static_cast<Xapian::termcount>(wdf_inc), 
+                        prefix); 
+                break;
+            }
+
+            case SET_TERM:
+            case ADD_TERM:
+            case UPDATE_TERM:
+            case REMOVE_TERM:
+                handleSpelling(params, command, m_wdb);
+                break;
+
+            case SET_WDF:
+            case DEC_WDF:
+            // see append_decrease_wdf
+            // see append_set_wdf
+            {
+                const std::string&           tname   = params; // value
+                const uint32_t               wdf     = params;
+                const bool                   ignore  = params; 
+
+                const Xapian::termcount wdf2 =
+                    static_cast<Xapian::termcount>(wdf);
+                
+                if (command == SET_WDF)
+                    Helpers::trySetSpellingFreq(m_wdb, tname, wdf2, ignore);
+                else
+                    Helpers::tryDecreaseSpellingFreq(m_wdb, tname, wdf2, ignore);
+                break;
+            }
+
+            default:
+                throw BadCommandDriverError(command);
+        }
+    }
+}
+
 
 // REP_CRT_DOC_MARK
 void
@@ -1599,6 +1681,10 @@ Driver::handleCommand(PR,
             addDocument(params, result);
             break;
 
+        case ADD_SPELLING:
+            addSpelling(params);
+            break;
+
         case UPDATE_DOCUMENT:
         case UPDATE_OR_CREATE_DOCUMENT:
             updateDocument(params, result,
@@ -1751,6 +1837,18 @@ Driver::handleCommand(PR,
     }
 }
 
+void
+Driver::setDatabaseAgain()
+{
+    m_default_parser.set_database(m_db);
+    m_standard_parser.set_database(m_db);
+    m_default_generator.set_database(m_wdb);
+    m_standard_generator.set_database(m_wdb);
+    m_default_parser_factory.set_database(m_db);
+    m_standard_parser_factory.set_database(m_db);
+    m_default_generator_factory.set_database(m_wdb);
+    m_standard_generator_factory.set_database(m_wdb);
+}
 
 void 
 Driver::open(uint8_t mode, const std::string& dbpath)
@@ -1775,14 +1873,7 @@ Driver::open(uint8_t mode, const std::string& dbpath)
         default:
             throw BadCommandDriverError(mode);
     }
-    m_default_parser.set_database(m_db);
-    m_standard_parser.set_database(m_db);
-    m_default_generator.set_database(m_wdb);
-    m_standard_generator.set_database(m_wdb);
-    m_default_parser_factory.set_database(m_db);
-    m_standard_parser_factory.set_database(m_db);
-    m_default_generator_factory.set_database(m_wdb);
-    m_standard_generator_factory.set_database(m_wdb);
+    setDatabaseAgain();
 }
 
 int 
@@ -1841,6 +1932,7 @@ Driver::open(uint8_t mode, const std::string& host, uint16_t port,
         default:
             throw BadCommandDriverError(mode);
     }
+    setDatabaseAgain();
 }
 
 
@@ -1870,6 +1962,7 @@ Driver::open(uint8_t mode, const std::string& prog, const std::string& args,
         default:
             throw BadCommandDriverError(mode);
     }
+    setDatabaseAgain();
 }
 
 void 
@@ -2057,6 +2150,54 @@ Driver::handleTerm(
     doc.add_term(tname, wdf_inc);
 }
 
+
+void
+Driver::handleSpelling(
+    ParamDecoder& params, 
+    uint8_t command,
+    Xapian::WritableDatabase& wdb)
+{
+    // see xapian_document:append_term
+    const std::string&          tname    = params; // value
+    const uint32_t              wdf      = params;
+    const bool                  ignore   = params; 
+    // Pos = undefined
+
+    const Xapian::termcount wdf_inc =
+        static_cast<Xapian::termcount>(wdf);
+
+    bool is_error = false;
+
+    switch (command)
+    {
+        case REMOVE_TERM:
+            if ((!wdf_inc) 
+             || (wdf_inc == Helpers::getSpellingFrequency(wdb, tname)))
+            {
+                Helpers::tryRemoveSpelling(wdb, tname, ignore);
+                return;
+            }
+            else
+                is_error = true;
+
+        case ADD_TERM:
+            if (Helpers::isSpellingExist(wdb, tname))
+                is_error = true;
+            break;
+                
+        case UPDATE_TERM:
+            if (!Helpers::isSpellingExist(wdb, tname))
+                is_error = true;
+    }
+
+    if (is_error)
+    {
+        if (ignore) return;
+        else        throw BadArgumentDriverError();
+    }
+
+    wdb.add_spelling(tname, wdf_inc);
+}
 
 const std::string 
 Driver::decodeValue(ParamDecoder& params)

@@ -1,6 +1,7 @@
 #include "xapian_helpers.h"
 #include "xapian_exception.h"
 #include "wdf_manipulation.h"
+#include "sf_manipulation.h"
 
 #include <assert.h>
 #include <cstdlib>
@@ -104,16 +105,16 @@ Helpers::tryDecreaseWDF(
     {
         try 
         {
-            WdfManipulation hpos(doc, tname);
-            hpos.dec_wdf(wdf);
+            WdfManipulation man(doc, tname);
+            man.dec_wdf(wdf);
         } 
         catch (Xapian::InvalidArgumentError& e) {}
         catch (BadCommandDriverError& e) {}
     }
     else
     {
-        WdfManipulation hpos(doc, tname);
-        hpos.dec_wdf(wdf);
+        WdfManipulation man(doc, tname);
+        man.dec_wdf(wdf);
     }
 }
 
@@ -129,16 +130,16 @@ Helpers::trySetWDF(
     {
         try 
         {
-            WdfManipulation hpos(doc, tname);
-            hpos.set_wdf(wdf);
+            WdfManipulation man(doc, tname);
+            man.set_wdf(wdf);
         } 
         catch (Xapian::InvalidArgumentError& e) {}
         catch (BadCommandDriverError& e) {}
     }
     else
     {
-        WdfManipulation hpos(doc, tname);
-        hpos.set_wdf(wdf);
+        WdfManipulation man(doc, tname);
+        man.set_wdf(wdf);
     }
 }
 
@@ -248,6 +249,115 @@ Helpers::isPostingExist(
         return (piter != pend) && ((*piter) == term_pos);
     }
     return false;
+}
+
+Xapian::termcount
+Helpers::
+getSpellingFrequency(Xapian::Database& db, const std::string& tname)
+{
+    Xapian::TermIterator 
+        iter = db.spellings_begin(),
+        end = db.spellings_end();
+
+    if (iter == end)
+        return 0;
+    
+    iter.skip_to(tname);
+    // Current element is a term and its value is tname.
+    return ((iter != end) && (tname == (*iter))) 
+        ? iter.get_termfreq() : 0;
+        // use get_termfreq, not get_wdf
+}
+
+bool
+Helpers::
+isSpellingExist(Xapian::Database& db, const std::string& tname)
+{
+    Xapian::TermIterator    
+        iter = db.spellings_begin(),
+        end = db.spellings_end();
+
+    if (iter == end)
+        return false;
+
+    iter.skip_to(tname);
+    return (iter != end) && ((*iter) == tname);
+}
+
+void
+Helpers::
+trySetSpellingFreq(
+    Xapian::WritableDatabase& wdb, 
+    const std::string& tname, 
+    Xapian::termcount freq, 
+    bool ignoreErrors)
+{
+    if (ignoreErrors)
+    {
+        try 
+        {
+            SpellingFreqManipulation man(wdb, tname);
+            man.set_frequency(freq);
+        } 
+        catch (Xapian::InvalidArgumentError& e) {}
+        catch (BadCommandDriverError& e) {}
+    }
+    else
+    {
+        SpellingFreqManipulation man(wdb, tname);
+        man.set_frequency(freq);
+    }
+}
+
+
+void
+Helpers::
+tryDecreaseSpellingFreq(
+    Xapian::WritableDatabase& wdb, 
+    const std::string& tname, 
+    Xapian::termcount freq, 
+    bool ignoreErrors)
+{
+    if (ignoreErrors)
+    {
+        try 
+        {
+            SpellingFreqManipulation man(wdb, tname);
+            man.dec_frequency(freq);
+        } 
+        catch (Xapian::InvalidArgumentError& e) {}
+        catch (BadCommandDriverError& e) {}
+    }
+    else
+    {
+        SpellingFreqManipulation man(wdb, tname);
+        man.dec_frequency(freq);
+    }
+}
+
+
+void 
+Helpers::
+tryRemoveSpelling(
+    Xapian::WritableDatabase& wdb, 
+    const std::string& tname, 
+    bool ignoreErrors)
+{
+    if (ignoreErrors)
+    {
+        try 
+        {
+            SpellingFreqManipulation man(wdb, tname);
+            man.clear_frequency();
+        } 
+        catch (Xapian::InvalidArgumentError& e) {}
+        catch (BadCommandDriverError& e) {}
+    }
+    else
+    {
+        SpellingFreqManipulation man(wdb, tname);
+        man.clear_frequency();
+    }
 }
 
 XAPIAN_ERLANG_NS_END

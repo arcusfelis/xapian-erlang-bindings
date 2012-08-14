@@ -12,8 +12,8 @@
     stop_list_query_parser_table/4,
     spelling_table/2,
     spelling_table/3,
-    synonyms_table/3,
-    synonyms_table/4
+    synonym_table/3,
+    synonym_table/4
     ]).
 
 -include_lib("stdlib/include/qlc.hrl").
@@ -31,23 +31,28 @@ spelling_table(Server, Meta) ->
     spelling_table(Server, Meta, []).
 
 %% @doc An iterator which returns all the spelling correction targets.
+%%
+%% Valid fields are:
+%% * value;
+%% * freq - The frequency of each word.
+%%
 %% The `wdf' field isn't meaningful.
+%% The records are sorted by the value field.
 spelling_table(Server, Meta, UserParams) ->
     EncoderFun = fun(Bin@) -> 
-        Bin@ = append_db_term_iter_type(spelling, Bin@),
+        Bin@ = append_db_term_iter_type(spellings, Bin@),
         xapian_term_record:encode(Meta, Bin@)
         end,
-    %% TODO: check, if sorted or not
-    UserParams2 = [{is_sorted_value, false} | UserParams],
+    UserParams2 = [{is_sorted_value, true} | UserParams],
     table_int(Server, database_terms, EncoderFun, undefined,
               Meta, UserParams2).
 
 
-synonyms_table(Server, Term, Meta) ->
-    synonyms_table(Server, Term, Meta, []).
+synonym_table(Server, Term, Meta) ->
+    synonym_table(Server, Term, Meta, []).
 
 
-synonyms_table(Server, Term, Meta, UserParams) ->
+synonym_table(Server, Term, Meta, UserParams) ->
     EncoderFun = fun(Bin@) ->
         Bin@ = append_db_term_iter_type(synonyms, Bin@),
         Bin@ = append_string(Term, Bin@),
@@ -92,15 +97,16 @@ unstem_query_parser_table(Server, QueryParserRes, Term, Meta, UserParams)
               Meta, UserParams2).
 
 
+%% @equiv value_count_match_spy_table(Server, SpyRes, Meta, [])
+value_count_match_spy_table(Server, SpyRes, Meta) ->
+    value_count_match_spy_table(Server, SpyRes, Meta, []).
+
+
 %% Fields of the record are limited:
 %%  * value
 %%  * freq
 %%
 %%  Records are sorted by `value' in ascending alphabetical order.
-value_count_match_spy_table(Server, SpyRes, Meta) ->
-    value_count_match_spy_table(Server, SpyRes, Meta, []).
-
-
 value_count_match_spy_table(Server, SpyRes, Meta, UserParams)
     when is_reference(SpyRes) ->
     Meta1 = xapian_term_record:fix_spy_meta(Server, SpyRes, Meta),

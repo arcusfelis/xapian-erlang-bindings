@@ -20,7 +20,7 @@ enum ObjectType
     UNSTEM           = 0,
     STOP_LIST        = 1,
     SYNONYMS         = 0,
-    SPELLING         = 1
+    SPELLINGS        = 1
 };
 
 Iterator*
@@ -92,9 +92,9 @@ Iterator::create(
             return new Database::Synonyms(db, term);
         }
 
-        case SPELLING:
+        case SPELLINGS:
         {
-            return new Database::Spelling(db);
+            return new Database::Spellings(db);
         }
 
         default:

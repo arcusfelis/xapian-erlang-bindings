@@ -114,6 +114,7 @@ postcondition(_S, _C, _R) ->
 
 
 prop_main() ->
+    %% Run at least 200 commands
     ?FORALL(Cmds, more_commands(200, commands(?MODULE)),
        ?TRAPEXIT(
             begin

@@ -75,7 +75,8 @@ command_id(replace_document)            -> 33;
 command_id(release_resources)           -> 34;
 command_id(match_spy_info)              -> 35;
 command_id(create_query_parser)         -> 36;
-command_id(parse_string)                -> 37.
+command_id(parse_string)                -> 37;
+command_id(add_spelling)                -> 38.
 
 
 %% Open modes of the DB
@@ -392,7 +393,7 @@ query_parser_type_id(unstem)    -> 0;
 query_parser_type_id(stop_list) -> 1.
 
 db_term_iter_type_id(synonyms)  -> 0;
-db_term_iter_type_id(spelling)  -> 1.
+db_term_iter_type_id(spellings) -> 1.
 
 term_field_id(stop)            -> 0;
 term_field_id(value)           -> 1;

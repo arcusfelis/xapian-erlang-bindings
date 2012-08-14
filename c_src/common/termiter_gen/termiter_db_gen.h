@@ -20,10 +20,10 @@ class Database : public Iterator
 };
 
 
-class Spelling : public Database
+class Spellings : public Database
 {
     public:
-    Spelling(Xapian::Database& db) 
+    Spellings(Xapian::Database& db) 
             : Database(db)
     {}
 

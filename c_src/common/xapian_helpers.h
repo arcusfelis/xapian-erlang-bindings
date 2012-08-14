@@ -77,6 +77,36 @@ class Helpers
         Xapian::Document& doc, 
         const std::string& tname, 
         Xapian::termpos term_pos);
+
+
+
+
+    static Xapian::termcount
+    getSpellingFrequency(Xapian::Database& wdb, const std::string& tname);
+
+    static void
+    trySetSpellingFreq(
+        Xapian::WritableDatabase& wdb, 
+        const std::string& tname, 
+        Xapian::termcount freq, 
+        bool ignoreErrors);
+
+
+    static void
+    tryDecreaseSpellingFreq(
+        Xapian::WritableDatabase& wdb, 
+        const std::string& tname, 
+        Xapian::termcount freq, 
+        bool ignoreErrors);
+
+    static void 
+    tryRemoveSpelling(
+        Xapian::WritableDatabase& wdb, 
+        const std::string& tname, 
+        bool ignoreErrors);
+
+    static bool 
+    isSpellingExist(Xapian::Database& db, const std::string& tname);
 };
 
 XAPIAN_ERLANG_NS_END
