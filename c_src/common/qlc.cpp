@@ -137,7 +137,7 @@ MSetQlcTable::lookup(ParamDecoder& driver_params, ResultEncoder& result)
 // ------------------------------------------------------------------
 
 TermQlcTable::TermQlcTable(Driver& driver, 
-        TermIteratorGenerator* gen, 
+        TermGenerator::Iterator* gen, 
         const ParamDecoderController& controller) 
     : QlcTable(driver), mp_gen(gen), m_controller(controller)
 {

@@ -22,7 +22,8 @@ class Factory
         // It allows to get BadCommandDriverError exception, 
         // if something was encoded illegally.
         SCHEMA_TYPE_REFERENCE    = 56,
-        SCHEMA_TYPE_CONSTRUCTOR  = 97
+        SCHEMA_TYPE_CONSTRUCTOR  = 97,
+        SCHEMA_UNDEFINED         = 61
     };
 
     Generator m_generator;
@@ -33,6 +34,9 @@ class Factory
 
     Element
     extract(ParamDecoder& params);
+
+    void
+    skip(ParamDecoder& params);
 
     Element
     extract(Element& context, ParamDecoder& params);

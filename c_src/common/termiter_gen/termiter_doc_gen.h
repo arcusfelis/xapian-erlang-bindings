@@ -3,18 +3,19 @@
 
 #include <xapian.h>
 
+#include "termiter_gen.h"
 #include "xapian_config.h"
-XAPIAN_ERLANG_NS_BEGIN
+XAPIAN_DOC_GEN_NS_BEGIN
 
 /**
  * Generate @a TermIterator from `Xapian::Document`.
  */
-class DocumentTermIteratorGenerator : public TermIteratorGenerator
+class Terms : public Iterator
 {
     Xapian::Document m_doc;
 
     public:
-    DocumentTermIteratorGenerator(Xapian::Document& doc) : m_doc(doc)
+    Terms(Xapian::Document& doc) : m_doc(doc)
     {}
 
     Xapian::TermIterator begin()
@@ -35,10 +36,12 @@ class DocumentTermIteratorGenerator : public TermIteratorGenerator
         // It does the same, but it has a bug.
         //return m_doc.termlist_count();
         Xapian::termcount i = 0;
-        for (Xapian::TermIterator e = end(), b = begin(); b != e; b++, i++);
+        for (Xapian::TermIterator e = end(), b = begin()
+             ;b != e
+             ;b++, i++);
         return i;
     }
 };
 
-XAPIAN_ERLANG_NS_END
+XAPIAN_DOC_GEN_NS_END
 #endif

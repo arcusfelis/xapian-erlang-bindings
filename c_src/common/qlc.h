@@ -27,7 +27,8 @@ public:
         MSET            = 0,
         TERMS           = 1,
         SPY_TERMS       = 2,
-        QUERY_PARSER_TERMS = 3
+        QUERY_PARSER_TERMS = 3,
+        DATABASE_TERMS = 4
     };
 };
 
@@ -106,17 +107,17 @@ class MSetQlcTable : public QlcTable
 
 
 /**
- * This table is base on @ref TermIteratorGenerator.
+ * This table is base on @ref TermGenerator::Iterator.
  * This table is used for iterating terms in a document or for 
  * iterating values in MatchSpy.
- * @ref TermIteratorGenerator knows how to init 
+ * @ref TermGenerator::Iterator knows how to init 
  * @ref Xapian::TermIterator iterators.
  */
 class TermQlcTable : public QlcTable
 {
     // Don't change m_end value
     Xapian::TermIterator m_iter, m_end;
-    TermIteratorGenerator* mp_gen;
+    TermGenerator::Iterator* mp_gen;
     uint32_t m_current_pos, m_size;
     
     const ParamDecoderController m_controller;
@@ -128,7 +129,7 @@ class TermQlcTable : public QlcTable
      * @a gen and the new object have the same live-time.
      */
     TermQlcTable(Driver& driver, 
-        TermIteratorGenerator* gen, 
+        TermGenerator::Iterator* gen, 
         const ParamDecoderController& controller);
 
     

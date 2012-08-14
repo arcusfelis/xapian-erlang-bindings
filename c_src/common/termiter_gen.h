@@ -11,9 +11,11 @@ namespace Xapian
 
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
-
 class ParamDecoder;
+XAPIAN_ERLANG_NS_END
 
+
+XAPIAN_TERM_GEN_NS_BEGIN
 /**
  * @brief Contains functions for iterator creation and retrieving information.
  *
@@ -22,12 +24,12 @@ class ParamDecoder;
  *
  * Used from @ref Driver::termGenerator for QLC iterators.
  */
-class TermIteratorGenerator
+class Iterator
 {
     public:
     virtual Xapian::TermIterator begin() = 0; 
     virtual Xapian::TermIterator end() = 0; 
-    virtual ~TermIteratorGenerator() {}
+    virtual ~Iterator() {}
 
     /** 
      * If @ref size() is unknown, return 0.
@@ -46,17 +48,21 @@ class TermIteratorGenerator
      * Create from Spy.
      */
     static
-    TermIteratorGenerator*                                                        
+    Iterator*                                                        
     create(ParamDecoder& params, Xapian::ValueCountMatchSpy& spy);
 
     static
-    TermIteratorGenerator*                                                        
+    Iterator*                                                        
     create(Xapian::Document& doc);
 
     static
-    TermIteratorGenerator*
+    Iterator*
     create(ParamDecoder& params, Xapian::QueryParser& qp);
-};
 
-XAPIAN_ERLANG_NS_END
+    static
+    Iterator*
+    create(ParamDecoder& params, Xapian::Database& db);
+};
+XAPIAN_TERM_GEN_NS_END
+
 #endif

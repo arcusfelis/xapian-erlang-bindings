@@ -1382,9 +1382,11 @@ handle_call({qlc_release_table, Hash}, From, State) ->
 handle_call({qlc_init, QlcType, ResRef, EncFun}, {FromPid, _FromRef}, State) ->
     #state{register = Register } = State,
     do_reply(State, do([error_m ||
-        %% Get an iterable resource by the reference
+        %% Get an iterable resource by the reference.
+        %% DB term iterators use an undefined resource, 
+        %% that is why maybe_* is used.
         ResNum 
-            <- xapian_register:get(Register, FromPid, ResRef),
+            <- xapian_register:maybe_get(Register, FromPid, ResRef),
 
         %% Create QLC table (iterator-like object in Erlang)
         #internal_qlc_info{resource_number = QlcResNum} = Reply
@@ -1560,6 +1562,15 @@ append_resource_number(ResNum, Bin@) ->
     Bin@ = append_uint8(Schema, Bin@),
     append_uint(ResNum, Bin@).
 
+
+maybe_append_resource_number(undefined, Bin) ->
+    Schema = xapian_const:resource_encoding_schema_id(undefined),
+    append_uint8(Schema, Bin);
+
+maybe_append_resource_number(ResNum, Bin) ->
+    append_resource_number(ResNum, Bin).
+
+
 %% @doc Create the `fun(Bin)' function.
 compile_resource(State, ResRef, ClientPid)
     when is_reference(ResRef), is_pid(ClientPid) ->
@@ -1661,6 +1672,9 @@ control(Port, Operation, Data) ->
         1 -> 
             {Type, Bin1} = read_string(Result),
             {Mess, <<>>} = read_string(Bin1),
+            error_logger:error_msg("[~w:~w] ~s: \"~s\" ~nData: ~p~n", 
+                                   [Operation, command_id(Operation), 
+                                    Type, Mess, Data]),
             {error, #x_error{type=Type, reason=Mess, command=Operation}}
     end.
 
@@ -1973,7 +1987,7 @@ port_qlc_init(State, QlcType, ResourceNum, EncoderFun) ->
     #state{ port = Port } = State,
     Bin@ = <<>>,
     Bin@ = append_uint8(qlc_type_id(QlcType), Bin@),
-    Bin@ = append_resource_number(ResourceNum, Bin@),
+    Bin@ = maybe_append_resource_number(ResourceNum, Bin@),
     Bin@ = append_with_encoder(State, EncoderFun, Bin@), 
     decode_qlc_info_result(control(Port, qlc_init, Bin@)).
 

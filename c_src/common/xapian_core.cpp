@@ -98,14 +98,6 @@ Driver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
 Driver::Driver(MemoryManager& mm)
 : m_number_of_databases(0), m_mm(mm)
 {
-    m_default_parser.set_database(m_db);
-    m_standard_parser.set_database(m_db);
-    m_default_generator.set_database(m_wdb);
-    m_standard_generator.set_database(m_wdb);
-    m_default_parser_factory.set_database(m_db);
-    m_standard_parser_factory.set_database(m_db);
-    m_default_generator_factory.set_database(m_wdb);
-    m_standard_generator_factory.set_database(m_wdb);
 }
 
 
@@ -724,7 +716,7 @@ Driver::qlcInit(PR)
             // Don't store copy of the document controller.
             // The whole document will be copied into QlcTable.
             Xapian::Document& doc = m_store.extract(params);
-            TermIteratorGenerator* p_gen = TermIteratorGenerator::create(doc);
+            TermGenerator::Iterator* p_gen = TermGenerator::Iterator::create(doc);
 
             const ParamDecoderController& schema  
                 = retrieveTermSchema(params);
@@ -738,8 +730,8 @@ Driver::qlcInit(PR)
             m_store.save(elem, result);
         
             // Write the size.
-            const uint32_t mset_size = qlcTable->size();
-            result << mset_size;
+            const uint32_t size = qlcTable->size();
+            result << size;
             break;
         }
 
@@ -748,8 +740,8 @@ Driver::qlcInit(PR)
         {
             Resource::Element spy_elem = m_store.extract(params);
             Xapian::ValueCountMatchSpy& spy = spy_elem;
-            TermIteratorGenerator* p_gen = 
-                TermIteratorGenerator::create(params, spy);
+            TermGenerator::Iterator* p_gen = 
+                TermGenerator::Iterator::create(params, spy);
 
             const ParamDecoderController& schema  
                 = retrieveTermSchema(params);
@@ -766,8 +758,8 @@ Driver::qlcInit(PR)
             m_store.save(elem, result);
         
             // Write the size.
-            const uint32_t mset_size = qlcTable->size();
-            result << mset_size;
+            const uint32_t size = qlcTable->size();
+            result << size;
             break;
         }
 
@@ -776,8 +768,8 @@ Driver::qlcInit(PR)
         {
             Resource::Element qp_elem = m_store.extract(params);
             Xapian::QueryParser& qp = qp_elem;
-            TermIteratorGenerator* p_gen = 
-                TermIteratorGenerator::create(params, qp);
+            TermGenerator::Iterator* p_gen = 
+                TermGenerator::Iterator::create(params, qp);
 
             const ParamDecoderController& schema  
                 = retrieveTermSchema(params);
@@ -794,8 +786,32 @@ Driver::qlcInit(PR)
             m_store.save(elem, result);
         
             // Write the size.
-            const uint32_t mset_size = qlcTable->size();
-            result << mset_size;
+            const uint32_t size = qlcTable->size();
+            result << size;
+            break;
+        }
+
+        // Database spellings_begin, ...
+        case QlcType::DATABASE_TERMS:
+        {
+            m_store.skip(params);
+            TermGenerator::Iterator* p_gen = 
+                TermGenerator::Iterator::create(params, m_db);
+
+            const ParamDecoderController& schema  
+                = retrieveTermSchema(params);
+
+            TermQlcTable* qlcTable = new TermQlcTable(*this, p_gen, schema);
+
+            Resource::Element elem = 
+                Resource::Element::wrap(qlcTable);
+
+            // Write a QlcTable resource.
+            m_store.save(elem, result);
+        
+            // Write the size.
+            const uint32_t size = qlcTable->size();
+            result << size;
             break;
         }
 
@@ -1759,6 +1775,14 @@ Driver::open(uint8_t mode, const std::string& dbpath)
         default:
             throw BadCommandDriverError(mode);
     }
+    m_default_parser.set_database(m_db);
+    m_standard_parser.set_database(m_db);
+    m_default_generator.set_database(m_wdb);
+    m_standard_generator.set_database(m_wdb);
+    m_default_parser_factory.set_database(m_db);
+    m_standard_parser_factory.set_database(m_db);
+    m_default_generator_factory.set_database(m_wdb);
+    m_standard_generator_factory.set_database(m_wdb);
 }
 
 int 
@@ -1855,7 +1879,6 @@ Driver::applyDocument(
 {
     Resource::Element gen_con = 
         Resource::Element::createContext();
-    m_default_generator.set_database(m_wdb);
     Xapian::TermGenerator   tg = m_default_generator;
     tg.set_document(doc);
 //  tg.set_stemmer(m_default_stemmer);

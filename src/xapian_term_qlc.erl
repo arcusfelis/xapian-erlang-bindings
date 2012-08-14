@@ -9,20 +9,62 @@
     unstem_query_parser_table/4,
     unstem_query_parser_table/5,
     stop_list_query_parser_table/3,
-    stop_list_query_parser_table/4
+    stop_list_query_parser_table/4,
+    spelling_table/2,
+    spelling_table/3,
+    synonyms_table/3,
+    synonyms_table/4
     ]).
 
 -include_lib("stdlib/include/qlc.hrl").
 -include_lib("xapian/include/xapian.hrl").
 -include("xapian.hrl").
 -compile({parse_transform, seqbind}).
--import(xapian_const, [spy_type_id/1, query_parser_type_id/1]).
+-import(xapian_const, [
+        spy_type_id/1, 
+        query_parser_type_id/1,
+        db_term_iter_type_id/1]).
+-import(xapian_common, [append_string/2]).
+
+%% @equiv spelling_table(Server, Meta, []) 
+spelling_table(Server, Meta) ->
+    spelling_table(Server, Meta, []).
+
+%% @doc An iterator which returns all the spelling correction targets.
+%% The `wdf' field isn't meaningful.
+spelling_table(Server, Meta, UserParams) ->
+    EncoderFun = fun(Bin@) -> 
+        Bin@ = append_db_term_iter_type(spelling, Bin@),
+        xapian_term_record:encode(Meta, Bin@)
+        end,
+    %% TODO: check, if sorted or not
+    UserParams2 = [{is_sorted_value, false} | UserParams],
+    table_int(Server, database_terms, EncoderFun, undefined,
+              Meta, UserParams2).
+
+
+synonyms_table(Server, Term, Meta) ->
+    synonyms_table(Server, Term, Meta, []).
+
+
+synonyms_table(Server, Term, Meta, UserParams) ->
+    EncoderFun = fun(Bin@) ->
+        Bin@ = append_db_term_iter_type(synonyms, Bin@),
+        Bin@ = append_string(Term, Bin@),
+        xapian_term_record:encode(Meta, Bin@)
+        end,
+    %% TODO: check, if sorted or not
+    UserParams2 = [{is_sorted_value, false} | UserParams],
+    table_int(Server, database_terms, EncoderFun, undefined, 
+              Meta, UserParams2).
+
 
 stop_list_query_parser_table(Server, QueryParserRes, Meta) ->
     stop_list_query_parser_table(Server, QueryParserRes, Meta, []).
 
 
-stop_list_query_parser_table(Server, QueryParserRes, Meta, UserParams) ->
+stop_list_query_parser_table(Server, QueryParserRes, Meta, UserParams)
+    when is_reference(QueryParserRes) ->
     EncoderFun = fun(Bin@) ->
         Bin@ = append_query_parser_type(stop_list, Bin@),
         xapian_term_record:encode(Meta, Bin@)
@@ -37,7 +79,8 @@ unstem_query_parser_table(Server, QueryParserRes, Term, Meta) ->
     unstem_query_parser_table(Server, QueryParserRes, Term, Meta, []).
 
 
-unstem_query_parser_table(Server, QueryParserRes, Term, Meta, UserParams) ->
+unstem_query_parser_table(Server, QueryParserRes, Term, Meta, UserParams)
+    when is_reference(QueryParserRes) ->
     EncoderFun = fun(Bin@) ->
         Bin@ = append_query_parser_type(unstem, Bin@),
         Bin@ = xapian_common:append_string(Term, Bin@),
@@ -58,7 +101,8 @@ value_count_match_spy_table(Server, SpyRes, Meta) ->
     value_count_match_spy_table(Server, SpyRes, Meta, []).
 
 
-value_count_match_spy_table(Server, SpyRes, Meta, UserParams) ->
+value_count_match_spy_table(Server, SpyRes, Meta, UserParams)
+    when is_reference(SpyRes) ->
     Meta1 = xapian_term_record:fix_spy_meta(Server, SpyRes, Meta),
     EncoderFun = fun(Bin@) ->
         Bin@ = append_spy_type(values, Bin@),
@@ -73,7 +117,8 @@ top_value_count_match_spy_table(Server, SpyRes, Limit, Meta) ->
     top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, []).
 
 
-top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams) ->
+top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams)
+    when is_reference(SpyRes) ->
     Meta1 = xapian_term_record:fix_spy_meta(Server, SpyRes, Meta),
     EncoderFun = fun(Bin@) ->
         Bin@ = append_spy_type(top_values, Bin@),
@@ -115,7 +160,7 @@ document_term_table(Server, DocId, Meta, UserParams) ->
 %%
 %% IterRes stands for an iterable resource (Document or MatchSpy).
 table_int(Server, QlcType, EncFun, IterRes, Meta, UserParams) 
-    when is_reference(IterRes) ->
+    when is_reference(IterRes) orelse IterRes =:= undefined ->
     IgnoreEmpty = lists:member(ignore_empty, UserParams),
     IsSortedValue = lists:member(is_sorted_value, UserParams),
     
@@ -234,3 +279,6 @@ append_spy_type(Type, Bin) ->
 
 append_query_parser_type(Type, Bin) ->
     xapian_common:append_uint8(query_parser_type_id(Type), Bin).
+
+append_db_term_iter_type(Type, Bin) ->
+    xapian_common:append_uint8(db_term_iter_type_id(Type), Bin).

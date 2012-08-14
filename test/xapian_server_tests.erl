@@ -448,6 +448,7 @@ term_actions_test() ->
     end.
 
 
+-record(term_value, {value}).
 -record(term, {value, wdf}).
 -record(term_ext, {value, positions, position_count, freq, wdf}).
 -record(term_pos, {value, positions, position_count}).
@@ -1032,7 +1033,7 @@ stemmer_gen() ->
         , ?_assertEqual(R2, R0)
         , ?_assertEqual(R3, [])
         , ?_assertEqual(R4, [])
-        , ?_assertEqual(R5, [])
+        , ?_assertEqual(R5, R0)
         , ?_assertEqual(R6, R0)
         , ?_assertEqual(R7, [])
         , ?_assertEqual(R8, R0)
@@ -1141,6 +1142,12 @@ parse_string_spelling_correction_gen() ->
     try
         %% Test a term generator
         ?SRV:add_document(Server, Document),
+
+        Meta = xapian_term_record:record(term_value, 
+                                         record_info(fields, term_value)),
+        Table = xapian_term_qlc:spelling_table(Server, Meta),
+        Records = qlc:e(Table),
+        io:format(user, "~n~p~n", [Records]),
 
         P1  = #x_query_parser{},
         %% CP is a compiled query parser (as a resource).

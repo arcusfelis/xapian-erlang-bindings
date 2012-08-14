@@ -8,7 +8,8 @@
 
 
 
-table(Server, MSet, Meta) ->
+table(Server, MSet, Meta)
+    when is_reference(MSet) ->
     EncoderFun = fun(DrvState, Bin) ->
         Name2Slot  = xapian_server:name_to_slot(DrvState),
         Value2Type = xapian_server:slot_to_type(DrvState),

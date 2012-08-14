@@ -22,6 +22,7 @@
          docid_order_type_id/1,
          spy_type_id/1,
          query_parser_type_id/1,
+         db_term_iter_type_id/1,
          term_field_id/1,
          document_field_id/1,
          parser_type_id/1,
@@ -87,7 +88,9 @@ open_mode_id(write_open)                -> 4.
 
 qlc_type_id(mset)                 -> 0;
 qlc_type_id(terms)                -> 1;
-qlc_type_id(spy_terms)            -> 2.
+qlc_type_id(spy_terms)            -> 2;
+qlc_type_id(query_parser_terms)   -> 3;
+qlc_type_id(database_terms)       -> 4.
 
 
 %% Identificators for C++ tests
@@ -388,6 +391,9 @@ spy_type_id(top_values) -> 1.
 query_parser_type_id(unstem)    -> 0;
 query_parser_type_id(stop_list) -> 1.
 
+db_term_iter_type_id(synonyms)  -> 0;
+db_term_iter_type_id(spelling)  -> 1.
+
 term_field_id(stop)            -> 0;
 term_field_id(value)           -> 1;
 term_field_id(wdf)             -> 2;
@@ -412,7 +418,8 @@ document_field_id(db_name)     -> document_field_id(db_number).
 
 
 resource_encoding_schema_id(reference)    -> 56;
-resource_encoding_schema_id(constructor)  -> 97.
+resource_encoding_schema_id(constructor)  -> 97;
+resource_encoding_schema_id(undefined)    -> 61.
 
 parse_string_field_id(stop)                     -> 0;
 parse_string_field_id(query_resource)           -> 1;

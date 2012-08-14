@@ -578,7 +578,7 @@ class Driver
     /*! \name Private static helpers. */
     /*! \{ */
     
-    TermIteratorGenerator*
+    TermGenerator::Iterator*
     termGenerator(ParamDecoder& params, 
         int8_t qlc_type, int8_t resource_type, uint32_t resource_num);
 

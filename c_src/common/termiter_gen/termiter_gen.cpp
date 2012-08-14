@@ -1,39 +1,45 @@
 #include <stdint.h>
 #include <xapian.h>
 
+#include "termiter_gen.h"
+
 #include "termiter_qp_gen.h"
 #include "termiter_spy_gen.h"
 #include "termiter_doc_gen.h"
+#include "termiter_db_gen.h"
 #include "xapian_exception.h"
 #include "param_decoder.h"
 
 #include "xapian_config.h"
-XAPIAN_ERLANG_NS_BEGIN
+XAPIAN_TERM_GEN_NS_BEGIN
 
 enum ObjectType
 {
     VALUES           = 0,
     TOP_VALUES       = 1,
     UNSTEM           = 0,
-    STOP_LIST        = 1
+    STOP_LIST        = 1,
+    SYNONYMS         = 0,
+    SPELLING         = 1
 };
 
-TermIteratorGenerator*
-TermIteratorGenerator::create(
+Iterator*
+Iterator::create(
         ParamDecoder& params,
         Xapian::ValueCountMatchSpy& spy)
 {
     switch (uint8_t type = params)
     {
         case VALUES:
-            return new SpyValueIteratorGenerator(spy);
+            return new ValueCountMatchSpy::Values(spy);
 
         case TOP_VALUES:
         {
             const uint32_t max_values = params;
             if (!max_values)
                 throw BadArgumentDriverError();
-            return new TopSpyValueIteratorGenerator(spy, max_values);
+            return new ValueCountMatchSpy::
+                        TopValues(spy, max_values);
         }
 
         default:
@@ -42,14 +48,15 @@ TermIteratorGenerator::create(
 }
 
 
-TermIteratorGenerator*
-TermIteratorGenerator::create(Xapian::Document& doc)
+Iterator*
+Iterator::create(Xapian::Document& doc)
 {
-    return new DocumentTermIteratorGenerator(doc);
+    return new Document::Terms(doc);
 }
 
-TermIteratorGenerator*
-TermIteratorGenerator::create(
+
+Iterator*
+Iterator::create(
         ParamDecoder& params,
         Xapian::QueryParser& qp)
 {
@@ -58,12 +65,12 @@ TermIteratorGenerator::create(
         case UNSTEM:
         {
             std::string term = params;
-            return new UnstemQueryParserIteratorGenerator(qp, term);
+            return new QueryParser::Unstem(qp, term);
         }
 
         case STOP_LIST:
         {
-            return new StopListQueryParserIteratorGenerator(qp);
+            return new QueryParser::StopList(qp);
         }
 
         default:
@@ -71,4 +78,28 @@ TermIteratorGenerator::create(
     }
 }
 
-XAPIAN_ERLANG_NS_END
+
+Iterator*
+Iterator::create(
+        ParamDecoder& params,
+        Xapian::Database& db)
+{
+    switch (uint8_t type = params)
+    {
+        case SYNONYMS:
+        {
+            const std::string& term = params;
+            return new Database::Synonyms(db, term);
+        }
+
+        case SPELLING:
+        {
+            return new Database::Spelling(db);
+        }
+
+        default:
+            throw BadCommandDriverError(type);
+    }
+}
+
+XAPIAN_TERM_GEN_NS_END

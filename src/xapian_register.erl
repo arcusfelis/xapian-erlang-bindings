@@ -4,6 +4,7 @@
     new/0,
     put/3,
     get/3,
+    maybe_get/3,
     fetch/3,
     erase/3,
     delete/3]).
@@ -103,6 +104,11 @@ get(Store, ClientPid, ResRef)
         none ->
             {error, empty_context}
     end.
+
+maybe_get(_Store, _ClientPid, undefined) ->
+    {ok, undefined};
+maybe_get(Store, ClientPid, ResRef) ->
+    get(Store, ClientPid, ResRef).
 
 
 %% @doc Try get or throw an exception.

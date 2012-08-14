@@ -5,15 +5,15 @@
 #include <stdint.h>
 
 #include "xapian_config.h"
-XAPIAN_ERLANG_NS_BEGIN
+XAPIAN_VC_SPY_GEN_NS_BEGIN
 
-class SpyValueIteratorGenerator : public TermIteratorGenerator
+class Values : public Iterator
 {
     protected:
     Xapian::ValueCountMatchSpy* mp_spy;
 
     public:
-    SpyValueIteratorGenerator(Xapian::ValueCountMatchSpy& spy) 
+    Values(Xapian::ValueCountMatchSpy& spy) 
     {
         mp_spy = &spy;
     }
@@ -30,14 +30,14 @@ class SpyValueIteratorGenerator : public TermIteratorGenerator
 };
 
 
-class TopSpyValueIteratorGenerator : public SpyValueIteratorGenerator
+class TopValues : public Values
 {
     const uint32_t m_maxvalues;
 
     public:
-    TopSpyValueIteratorGenerator(
+    TopValues(
         Xapian::ValueCountMatchSpy& spy, uint32_t maxvalues) 
-            : SpyValueIteratorGenerator(spy), m_maxvalues(maxvalues)
+            : Values(spy), m_maxvalues(maxvalues)
     {}
 
     Xapian::TermIterator begin()
@@ -51,6 +51,6 @@ class TopSpyValueIteratorGenerator : public SpyValueIteratorGenerator
     }
 };
 
-XAPIAN_ERLANG_NS_END
+XAPIAN_VC_SPY_GEN_NS_END
 
 #endif

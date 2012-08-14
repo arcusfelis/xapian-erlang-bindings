@@ -74,6 +74,33 @@ extract(ParamDecoder& params)
     }
 }
 
+void
+Factory::
+skip(ParamDecoder& params)
+{
+    switch(uint8_t schema_type = params)
+    {
+        case SCHEMA_TYPE_REFERENCE:
+        {
+            uint32_t element_num = params;
+            (void) element_num;
+            break;
+        }
+
+        case SCHEMA_TYPE_CONSTRUCTOR:
+        {
+            m_generator.create(m_register, params);
+            break;
+        }
+
+        case SCHEMA_UNDEFINED:
+            break;
+
+        default:
+            throw BadCommandDriverError(schema_type);
+    }
+}
+
 /**
  * Get a metadata about constructors.
  * It is called from `xapian_server:init/2`.

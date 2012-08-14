@@ -5,29 +5,29 @@
 #include <stdint.h>
 
 #include "xapian_config.h"
-XAPIAN_ERLANG_NS_BEGIN
+XAPIAN_QP_GEN_NS_BEGIN
 
-class QueryParserIteratorGenerator : public TermIteratorGenerator
+class QueryParser : public Iterator
 {
     protected:
     Xapian::QueryParser* mp_qp;
 
     public:
-    QueryParserIteratorGenerator(Xapian::QueryParser& qp) 
+    QueryParser(Xapian::QueryParser& qp) 
     {
         mp_qp = &qp;
     }
 };
 
 
-class UnstemQueryParserIteratorGenerator : public QueryParserIteratorGenerator
+class Unstem : public QueryParser
 {
     const std::string m_term;
 
     public:
-    UnstemQueryParserIteratorGenerator(
+    Unstem(
         Xapian::QueryParser& qp, std::string term) 
-            : QueryParserIteratorGenerator(qp), m_term(term) {}
+            : QueryParser(qp), m_term(term) {}
 
     Xapian::TermIterator begin()
     {
@@ -41,11 +41,11 @@ class UnstemQueryParserIteratorGenerator : public QueryParserIteratorGenerator
 };
 
 
-class StopListQueryParserIteratorGenerator : public QueryParserIteratorGenerator
+class StopList : public QueryParser
 {
     public:
-    StopListQueryParserIteratorGenerator(Xapian::QueryParser& qp) 
-            : QueryParserIteratorGenerator(qp) {}
+    StopList(Xapian::QueryParser& qp) 
+            : QueryParser(qp) {}
 
     Xapian::TermIterator begin()
     {
@@ -58,6 +58,6 @@ class StopListQueryParserIteratorGenerator : public QueryParserIteratorGenerator
     }
 };
 
-XAPIAN_ERLANG_NS_END
+XAPIAN_QP_GEN_NS_END
 
 #endif
