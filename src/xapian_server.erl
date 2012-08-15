@@ -524,8 +524,7 @@ add_document(Server, Document) ->
 %% as with the `add_document/2' function.
 -spec add_spelling(Server, Spelling) -> no_return() when
     Server :: x_server(),
-    Spelling :: [Term],
-    Term ::xapian_type:x_term().
+    Spelling :: xapian_type:x_spelling_constructor().
 
 add_spelling(Server, Spelling) ->
     call(Server, {add_spelling, Spelling}).

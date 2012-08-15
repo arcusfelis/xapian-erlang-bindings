@@ -31,12 +31,13 @@
     x_stemmer/0,
     x_language_code/0,
     x_document_constructor/0,
+    x_spelling_constructor/0,
     x_port/0,
     x_database_name/0,
     x_wdf_difference/0]).
 
 -type x_document_constructor() :: [x_document_index_part()].
-
+-type x_spelling_constructor() :: [x_spelling_index_part()].
 
 -type x_string()           :: unicode:chardata().
 -type x_non_empty_string() :: unicode:chardata().
@@ -60,20 +61,28 @@
 
 -include_lib("xapian/include/xapian.hrl").
 
--type x_term()          :: #x_term{}.
--type x_value()         :: #x_value{}.
--type x_data()          :: #x_data{}.
--type x_text()          :: #x_text{}.
--type x_delta()         :: #x_delta{}.
--type x_query_parser()  :: #x_query_parser{}.
--type x_stemmer()       :: #x_stemmer{}.
--type x_prefix_name()   :: #x_prefix_name{}.
+-type x_term()           :: #x_term{}.
+-type x_value()          :: #x_value{}.
+-type x_data()           :: #x_data{}.
+-type x_text()           :: #x_text{}.
+-type x_delta()          :: #x_delta{}.
+-type x_query_parser()   :: #x_query_parser{}.
+-type x_stemmer()        :: #x_stemmer{}.
+-type x_prefix_name()    :: #x_prefix_name{}.
+-type x_term_generator() :: #x_term_generator{}.
 
 -type x_document_index_part() :: x_term() 
     | x_value() 
     | x_data() 
     | x_delta() 
-    | x_text().
+    | x_text()
+    | x_stemmer()
+    | x_term_generator().
+
+-type x_spelling_index_part() :: x_term() 
+    | x_text()
+    | x_stemmer()
+    | x_term_generator().
 
 -type x_server() :: pid().
 -type x_transaction() :: fun(([x_server()]) -> term()).
