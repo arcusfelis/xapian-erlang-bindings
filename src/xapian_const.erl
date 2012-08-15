@@ -247,12 +247,13 @@ generator_feature_id(positions) -> 51.
 %% Document
 %% ------------------------------------------------------------
 
-document_part_id(stop)            -> 0;
-document_part_id(stemmer)         -> 1;
-document_part_id(data)            -> 2;
-document_part_id(delta)           -> 3;
-document_part_id(text)            -> 4;
-document_part_id(term_generator)  -> 5;
+document_part_id(stop)              -> 0;
+document_part_id(stemmer)           -> 1;
+document_part_id(data)              -> 2;
+document_part_id(delta)             -> 3;
+document_part_id(text)              -> 4;
+document_part_id(term_generator)    -> 5;
+document_part_id(set_term_gen_pos)  -> 6;
 
 document_part_id(set_posting)       -> 15;
 document_part_id(add_posting)       -> 25;

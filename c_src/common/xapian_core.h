@@ -139,6 +139,7 @@ class Driver
         DELTA                       = 3,  /// Add delta.
         TEXT                        = 4,  /// Set text.
         TERM_GENERATOR              = 5,  /// Select TermGenerator.
+        SET_TERM_GEN_POS            = 6,  /// TermGenerator.set_termpos/1
                                            
         SET_POSTING                 = 15, /// Add posting term.
         ADD_POSTING                 = 25,

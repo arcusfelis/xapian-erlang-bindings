@@ -13,6 +13,7 @@
     append_string/2,
     append_slot/2,
     append_int/2,
+    append_uint/2,
     append_uint8/2,
     append_boolean/2,
     slot_id/2,
@@ -103,9 +104,9 @@ enc([#x_value{} = H|T], _, Bin) ->
 enc([#x_delta{position = Pos}|T], _, Bin) ->
     me(T, _, append_delta(Pos, Bin));
 
-enc([#x_text{value = Value, frequency = WDF, prefix = Prefix, 
+enc([#x_text{value = Value, frequency = WDF, prefix = Prefix, position = Pos,
              features = Features}|T], _, Bin) ->
-    me(T, _, append_text(Value, WDF, Prefix, Features, Bin));
+    me(T, _, append_text(Value, WDF, Prefix, Pos, Features, Bin));
 
 enc([#x_term_generator{}=H|T], RA, Bin@) ->
     Bin@ = append_type(term_generator, Bin@),
@@ -184,13 +185,17 @@ append_delta(Pos, Bin) ->
     append_int(Pos, append_type(delta, Bin)).
 
 
-append_text(Value, WDF, Prefix, Features, Bin@) ->
+append_text(Value, WDF, Prefix, Features, undefined, Bin@) ->
     Bin@ = append_type(text, Bin@),
     Bin@ = append_string(Value, Bin@),
-    Bin@ = append_int(WDF, Bin@),
+    Bin@ = append_uint(WDF, Bin@),
     Bin@ = append_string(Prefix, Bin@),
     Bin@ = append_features(Features, Bin@),
-    Bin@.
+    Bin@;
+append_text(Value, WDF, Prefix, Features, Pos, Bin@) ->
+    Bin@ = append_type(set_term_gen_pos, Bin@),
+    Bin@ = append_uint(Pos, Bin@),
+    append_text(Value, WDF, Prefix, Features, undefined, Bin@).
 
 
 append_features(undefined, Bin) ->

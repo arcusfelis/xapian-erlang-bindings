@@ -106,6 +106,8 @@
 
     %% The wdf increment (or decriment, if it is below 0).
     frequency = 1 :: xapian_type:x_wdf_difference(),
+    %% Set the current term position. 
+    position :: xapian_type:x_position(),
 
     %% The term prefix to use (default is no prefix). 
     prefix = <<>> :: xapian_type:x_string(),

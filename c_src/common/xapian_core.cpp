@@ -186,6 +186,13 @@ Driver::addSpelling(ParamDecoder& params)
                 break;
             }
 
+            case SET_TERM_GEN_POS:
+            {
+                const uint32_t         position = params; // pos
+                tg.set_termpos(static_cast<Xapian::termcount>(position));
+                break;
+            }
+
             case TEXT:
             {
                 // see xapian_document:append_delta
