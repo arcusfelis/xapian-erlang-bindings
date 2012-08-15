@@ -90,14 +90,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="qlc_8h_source.html">qlc.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for TermQlcTable:</div>
 <div class="dyncontent">
  <div class="center">
   <img src="classTermQlcTable.png" usemap="#TermQlcTable_map" alt=""/>
   <map id="TermQlcTable_map" name="TermQlcTable_map">
-<area href="classQlcTable.html" alt="QlcTable" shape="rect" coords="0,0,91,24"/>
+<area href="classQlcTable.html" alt="QlcTable" shape="rect" coords="0,56,91,80"/>
+<area href="classBase.html" alt="Base" shape="rect" coords="0,0,91,24"/>
 </map>
  </div></div>
 
@@ -105,28 +106,57 @@ Inheritance diagram for TermQlcTable:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ab62b323477465333dc203dbb8722ecc9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#ab62b323477465333dc203dbb8722ecc9">TermQlcTable</a> (<a class="el" href="classDriver.html">Driver</a> &amp;driver, <a class="el" href="classTermIteratorGenerator.html">TermIteratorGenerator</a> *gen, const <a class="el" href="classParamDecoderController.html">ParamDecoderController</a> &amp;controller)</td></tr>
+<tr class="memitem:ada0734ad55be8d66dbcf44598e1ef9c9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#ada0734ad55be8d66dbcf44598e1ef9c9">TermQlcTable</a> (<a class="el" href="classDriver.html">Driver</a> &amp;driver, TermGenerator::Iterator *gen, const <a class="el" href="classParamDecoderController.html">ParamDecoderController</a> &amp;controller)</td></tr>
 <tr class="memitem:a6a200a39fcb7e2677a960fa6c8745e31"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a6a200a39fcb7e2677a960fa6c8745e31">~TermQlcTable</a> ()</td></tr>
-<tr class="memitem:a27a6673a0aa3a268d408b2cc9680c9c1"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a27a6673a0aa3a268d408b2cc9680c9c1">numOfObjects</a> ()</td></tr>
-<tr class="memitem:a5ce2ce86289a3e57f254e720cdd48e6d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a5ce2ce86289a3e57f254e720cdd48e6d">getPage</a> (uint32_t from, uint32_t count)</td></tr>
-<tr class="memitem:aa15a7254e7048fc7aa277b1781004173"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#aa15a7254e7048fc7aa277b1781004173">lookup</a> (<a class="el" href="classParamDecoder.html">ParamDecoder</a> &amp;driver_params)</td></tr>
+<tr class="memitem:a4fb67fe90ccdb057ee739b9a0ca713f7"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a4fb67fe90ccdb057ee739b9a0ca713f7">size</a> ()</td></tr>
+<tr class="memitem:a3d047351bb7f76605cbe467cf7d0a6f3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a3d047351bb7f76605cbe467cf7d0a6f3">getPage</a> (<a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;, uint32_t from, uint32_t count)</td></tr>
+<tr class="memitem:a7607a52303efb99e0564834dc66f4be2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a7607a52303efb99e0564834dc66f4be2">lookup</a> (<a class="el" href="xapian__config_8h.html#a088f4c3612d1ab1c9f6f139234ae533b">PR</a>)</td></tr>
 <tr class="inherit_header pub_methods_classQlcTable"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classQlcTable')"><img src="closed.png" alt="-"/>&nbsp;Public Member Functions inherited from <a class="el" href="classQlcTable.html">QlcTable</a></td></tr>
 <tr class="memitem:a7c5ca1919a9e5add6d9783573fe22822 inherit pub_methods_classQlcTable"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a7c5ca1919a9e5add6d9783573fe22822">QlcTable</a> (<a class="el" href="classDriver.html">Driver</a> &amp;driver)</td></tr>
 <tr class="memitem:ad6ab27cc97c264bac45184717de3446d inherit pub_methods_classQlcTable"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#ad6ab27cc97c264bac45184717de3446d">~QlcTable</a> ()</td></tr>
+<tr class="memitem:af72979243d0b14ce71f2a6385e9a2e35 inherit pub_methods_classQlcTable"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#af72979243d0b14ce71f2a6385e9a2e35">QlcTable</a> (XAPIAN_ERLANG_NS::QlcTable *p_table)</td></tr>
+<tr class="memitem:ad6ab27cc97c264bac45184717de3446d inherit pub_methods_classQlcTable"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#ad6ab27cc97c264bac45184717de3446d">~QlcTable</a> ()</td></tr>
+<tr class="memitem:ac30025aa0e3c245cf8f9c0ce362e62a5 inherit pub_methods_classQlcTable"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#ac30025aa0e3c245cf8f9c0ce362e62a5">operator XAPIAN_ERLANG_NS::QlcTable &amp;</a> ()</td></tr>
+<tr class="memitem:a0120f656b8fe1e81a5a40af95c6c617d inherit pub_methods_classQlcTable"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a0120f656b8fe1e81a5a40af95c6c617d">type</a> ()</td></tr>
+<tr class="inherit_header pub_methods_classBase"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classBase')"><img src="closed.png" alt="-"/>&nbsp;Public Member Functions inherited from <a class="el" href="classBase.html">Base</a></td></tr>
+<tr class="memitem:a5ffe0568374d8b9b4c4ec32953fd6453 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a5ffe0568374d8b9b4c4ec32953fd6453">Base</a> ()</td></tr>
+<tr class="memitem:a9c3e236ef414e648e48e250a3e43a880 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a9c3e236ef414e648e48e250a3e43a880">~Base</a> ()</td></tr>
+<tr class="memitem:acea092c1284309796c535e8d6c8e95f0 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#acea092c1284309796c535e8d6c8e95f0">incref</a> ()</td></tr>
+<tr class="memitem:a49d5c1a23e2bfb130a9ada4a64cf8746 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a49d5c1a23e2bfb130a9ada4a64cf8746">decref</a> ()</td></tr>
+<tr class="memitem:a31fd9f9cf8718597a4da947c4970446f inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a31fd9f9cf8718597a4da947c4970446f">attach</a> (<a class="el" href="classElement.html">Element</a> &amp;child)</td></tr>
+<tr class="memitem:aa572f66735b150cbdb157a53b9c09c60 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#aa572f66735b150cbdb157a53b9c09c60">attachContext</a> (<a class="el" href="classElement.html">Element</a> &amp;context)</td></tr>
+<tr class="memitem:a23c34c0ec1a22ca6d201c0ec44224623 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a23c34c0ec1a22ca6d201c0ec44224623">operator Xapian::MSet &amp;</a> ()</td></tr>
+<tr class="memitem:a37a12c7a2c2d6d47320a8780fdcf2fac inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a37a12c7a2c2d6d47320a8780fdcf2fac">operator Xapian::KeyMaker &amp;</a> ()</td></tr>
+<tr class="memitem:a4572eb2bd3ab4a731f992105c79b7652 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a4572eb2bd3ab4a731f992105c79b7652">operator Xapian::Enquire &amp;</a> ()</td></tr>
+<tr class="memitem:a4c331023a7c2afcabcf689064a5ac2cb inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a4c331023a7c2afcabcf689064a5ac2cb">operator QlcTable &amp;</a> ()</td></tr>
+<tr class="memitem:a20fb8ee648c45b01f5fad025ec563ceb inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a20fb8ee648c45b01f5fad025ec563ceb">operator Xapian::Weight &amp;</a> ()</td></tr>
+<tr class="memitem:a5b757ca0d2689e527ad0ea6148f3b809 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a5b757ca0d2689e527ad0ea6148f3b809">operator Xapian::Query &amp;</a> ()</td></tr>
+<tr class="memitem:ac3f5731995c121e4a8ed38203ee858d9 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#ac3f5731995c121e4a8ed38203ee858d9">operator Xapian::MatchDecider &amp;</a> ()</td></tr>
+<tr class="memitem:ab6a4a1d9ea073914f1e93d6567df15df inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#ab6a4a1d9ea073914f1e93d6567df15df">operator Xapian::ExpandDecider &amp;</a> ()</td></tr>
+<tr class="memitem:a97077713effa5047ce64d2dc4399150f inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a97077713effa5047ce64d2dc4399150f">operator Xapian::ValueRangeProcessor &amp;</a> ()</td></tr>
+<tr class="memitem:a17e08bc881a20dad2b362c764edab126 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a17e08bc881a20dad2b362c764edab126">operator Xapian::QueryParser &amp;</a> ()</td></tr>
+<tr class="memitem:aa1c778f1f57dbeb9bf81252843174418 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#aa1c778f1f57dbeb9bf81252843174418">operator Xapian::Stopper &amp;</a> ()</td></tr>
+<tr class="memitem:a25228ed807b04fc40c45f3004c826253 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a25228ed807b04fc40c45f3004c826253">operator Xapian::Stem &amp;</a> ()</td></tr>
+<tr class="memitem:a0e3904f83a13a4408f821d122e9e71c4 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a0e3904f83a13a4408f821d122e9e71c4">operator Xapian::ValueCountMatchSpy &amp;</a> ()</td></tr>
+<tr class="memitem:a533e3ed3fade1f1681fd5369831879ee inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a533e3ed3fade1f1681fd5369831879ee">operator Xapian::MatchSpy &amp;</a> ()</td></tr>
+<tr class="memitem:ab422f9d8a5a959f3bc70af46e0163a6b inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#ab422f9d8a5a959f3bc70af46e0163a6b">operator Xapian::Document &amp;</a> ()</td></tr>
+<tr class="memitem:aaf780152359c57e3f765c4ebd26b9d2b inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#aaf780152359c57e3f765c4ebd26b9d2b">operator Extension::ValueCountMatchSpy &amp;</a> ()</td></tr>
+<tr class="memitem:aec479b36be200be46f34a0c1a3ed0163 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#aec479b36be200be46f34a0c1a3ed0163">finalize</a> ()</td></tr>
+<tr class="memitem:a2c9c304a398091f428cd5760c412101e inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a2c9c304a398091f428cd5760c412101e">is_finalized</a> ()</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
 <tr class="memitem:a493e9d1a5b87f4a0982939e9da27c735"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a493e9d1a5b87f4a0982939e9da27c735">goToAndCheckBorder</a> (const uint32_t skip)</td></tr>
 <tr class="memdesc:a493e9d1a5b87f4a0982939e9da27c735"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks out of border.  <a href="#a493e9d1a5b87f4a0982939e9da27c735"></a><br/></td></tr>
 <tr class="memitem:a95f78924848ed563fc1260355d7e0745"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a95f78924848ed563fc1260355d7e0745">goTo</a> (const uint32_t skip)</td></tr>
-<tr class="memitem:adf7a30c3fb0c6d14980da6792142e078"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#adf7a30c3fb0c6d14980da6792142e078">getPageKnownSize</a> (const uint32_t skip, const uint32_t count)</td></tr>
-<tr class="memitem:adc1c8cac7c25e1044b2a780b44a7cb53"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#adc1c8cac7c25e1044b2a780b44a7cb53">getPageUnknownSize</a> (const uint32_t skip, const uint32_t count)</td></tr>
+<tr class="memitem:acabcae36ffc5b5eaa9b8cc8d943f0eda"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#acabcae36ffc5b5eaa9b8cc8d943f0eda">getPageKnownSize</a> (<a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;, const uint32_t skip, const uint32_t count)</td></tr>
+<tr class="memitem:a9385b998ba9c67ca5dac9171e105ecd6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a9385b998ba9c67ca5dac9171e105ecd6">getPageUnknownSize</a> (<a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;, const uint32_t skip, const uint32_t count)</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
 <tr class="memitem:a5ae5fbae84c3f405a086253df7631f92"><td class="memItemLeft" align="right" valign="top">Xapian::TermIterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a5ae5fbae84c3f405a086253df7631f92">m_iter</a></td></tr>
 <tr class="memitem:ad2082846acb9ec32585aa9dba29eb5a5"><td class="memItemLeft" align="right" valign="top">Xapian::TermIterator&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#ad2082846acb9ec32585aa9dba29eb5a5">m_end</a></td></tr>
-<tr class="memitem:a7036d00cca6efc85b4883a674963d5e5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTermIteratorGenerator.html">TermIteratorGenerator</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a7036d00cca6efc85b4883a674963d5e5">mp_gen</a></td></tr>
+<tr class="memitem:a2508da422f8581397136daa4cbf5a053"><td class="memItemLeft" align="right" valign="top">TermGenerator::Iterator *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a2508da422f8581397136daa4cbf5a053">mp_gen</a></td></tr>
 <tr class="memitem:a3156fce874c4abcef9f0f0f62681a8f9"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a3156fce874c4abcef9f0f0f62681a8f9">m_current_pos</a></td></tr>
 <tr class="memitem:a1c116f288326b36eb93b777b70335c50"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#a1c116f288326b36eb93b777b70335c50">m_size</a></td></tr>
 <tr class="memitem:aafef54043649e701e44f3ebf10be4f90"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classParamDecoderController.html">ParamDecoderController</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTermQlcTable.html#aafef54043649e701e44f3ebf10be4f90">m_controller</a></td></tr>
@@ -142,10 +172,11 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:a0d7663daaad3cede4497a752ad233e48 inherit pro_attribs_classQlcTable"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classDriver.html">Driver</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a0d7663daaad3cede4497a752ad233e48">m_driver</a></td></tr>
 </table>
 <hr/><a name="details" id="details"></a><h2>Detailed Description</h2>
-<div class="textblock">
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00072">72</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<div class="textblock"><p>This table is base on TermGenerator::Iterator. This table is used for iterating terms in a document or for iterating values in <a class="el" href="classMatchSpy.html">MatchSpy</a>. TermGenerator::Iterator knows how to init Xapian::TermIterator iterators. </p>
+
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00116">116</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 </div><hr/><h2>Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="ab62b323477465333dc203dbb8722ecc9"></a>
+<a class="anchor" id="ada0734ad55be8d66dbcf44598e1ef9c9"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -158,7 +189,7 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classTermIteratorGenerator.html">TermIteratorGenerator</a> *&#160;</td>
+          <td class="paramtype">TermGenerator::Iterator *&#160;</td>
           <td class="paramname"><em>gen</em>, </td>
         </tr>
         <tr>
@@ -174,20 +205,17 @@ Additional Inherited Members</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>gen variable will be deallocated by system (not a programmer!). </p>
+<p><em>gen</em> variable will be deallocated by the system (not by a programmer!). <em>gen</em> and the new object have the same live-time. </p>
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00103">103</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00139">139</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
-<p>References <a class="el" href="classTermIteratorGenerator.html#a73e6c11de4c5442668119abf35cdff61">TermIteratorGenerator::begin()</a>, <a class="el" href="termiter__gen_8h_source.html#l00032">TermIteratorGenerator::empty()</a>, <a class="el" href="classTermIteratorGenerator.html#abadc542a4cf79555c1666f712ef006ca">TermIteratorGenerator::end()</a>, <a class="el" href="qlc__table_8h_source.html#l00077">m_current_pos</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_end</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_iter</a>, <a class="el" href="qlc__table_8h_source.html#l00077">m_size</a>, <a class="el" href="qlc__table_8h_source.html#l00076">mp_gen</a>, and <a class="el" href="termiter__gen_8h_source.html#l00028">TermIteratorGenerator::size()</a>.</p>
+<p>References <a class="el" href="qlc_8h_source.html#l00121">m_current_pos</a>, <a class="el" href="qlc_8h_source.html#l00119">m_end</a>, <a class="el" href="qlc_8h_source.html#l00119">m_iter</a>, <a class="el" href="qlc_8h_source.html#l00121">m_size</a>, and <a class="el" href="qlc_8h_source.html#l00120">mp_gen</a>.</p>
 
 </div>
 </div>
 <a class="anchor" id="a6a200a39fcb7e2677a960fa6c8745e31"></a>
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">TermQlcTable::~TermQlcTable </td>
@@ -196,21 +224,16 @@ Additional Inherited Members</h2></td></tr>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00091">91</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00310">310</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
-<p>References <a class="el" href="qlc__table_8h_source.html#l00076">mp_gen</a>.</p>
+<p>References <a class="el" href="qlc_8h_source.html#l00120">mp_gen</a>.</p>
 
 </div>
 </div>
 <hr/><h2>Member Function Documentation</h2>
-<a class="anchor" id="a5ce2ce86289a3e57f254e720cdd48e6d"></a>
+<a class="anchor" id="a3d047351bb7f76605cbe467cf7d0a6f3"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -220,6 +243,12 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">void TermQlcTable::getPage </td>
           <td>(</td>
+          <td class="paramtype"><a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;&#160;</td>
+          <td class="paramname"><em>result</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">uint32_t&#160;</td>
           <td class="paramname"><em>from</em>, </td>
         </tr>
@@ -243,15 +272,15 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 <p>Skip "skip" documents. Read not more then "count" documents. </p>
 
-<p>Implements <a class="el" href="classQlcTable.html#a06a2baa10d95cd25d8cdd011122a29ae">QlcTable</a>.</p>
+<p>Implements <a class="el" href="classQlcTable.html#a082afcadd1e73ad100ca150fb8820265">QlcTable</a>.</p>
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00132">132</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00168">168</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
-<p>References <a class="el" href="qlc__table_8cpp_source.html#l00192">getPageKnownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00157">getPageUnknownSize()</a>, and <a class="el" href="qlc__table_8h_source.html#l00077">m_size</a>.</p>
+<p>References <a class="el" href="qlc_8cpp_source.html#l00230">getPageKnownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00194">getPageUnknownSize()</a>, and <a class="el" href="qlc_8h_source.html#l00121">m_size</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="adf7a30c3fb0c6d14980da6792142e078"></a>
+<a class="anchor" id="acabcae36ffc5b5eaa9b8cc8d943f0eda"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -261,6 +290,12 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">void TermQlcTable::getPageKnownSize </td>
           <td>(</td>
+          <td class="paramtype"><a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;&#160;</td>
+          <td class="paramname"><em>result</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">const uint32_t&#160;</td>
           <td class="paramname"><em>skip</em>, </td>
         </tr>
@@ -282,16 +317,17 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Skip <em>skip</em> objects from the beginning and return objects. Maximum <em>count</em> object will be returned. It is used, when the total size of objects is not yet known. </p>
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00192">192</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00230">230</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
-<p>References <a class="el" href="qlc__table_8cpp_source.html#l00230">goTo()</a>, <a class="el" href="qlc__table_8h_source.html#l00037">QlcTable::KNOWN_SIZE</a>, <a class="el" href="qlc__table_8h_source.html#l00079">m_controller</a>, <a class="el" href="qlc__table_8h_source.html#l00077">m_current_pos</a>, <a class="el" href="qlc__table_8h_source.html#l00032">QlcTable::m_driver</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_end</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_iter</a>, <a class="el" href="xapian__core_8h_source.html#l00038">Driver::m_result</a>, <a class="el" href="qlc__table_8h_source.html#l00077">m_size</a>, and <a class="el" href="xapian__core_8cpp_source.html#l01855">Driver::retrieveTerm()</a>.</p>
+<p>References <a class="el" href="qlc_8cpp_source.html#l00269">goTo()</a>, <a class="el" href="qlc_8h_source.html#l00059">QlcTable::KNOWN_SIZE</a>, <a class="el" href="qlc_8h_source.html#l00123">m_controller</a>, <a class="el" href="qlc_8h_source.html#l00121">m_current_pos</a>, <a class="el" href="qlc_8h_source.html#l00043">QlcTable::m_driver</a>, <a class="el" href="qlc_8h_source.html#l00119">m_end</a>, <a class="el" href="qlc_8h_source.html#l00119">m_iter</a>, <a class="el" href="qlc_8h_source.html#l00121">m_size</a>, <a class="el" href="xapian__core_8cpp_source.html#l02520">Driver::retrieveTerm()</a>, and <a class="el" href="qlc_8cpp_source.html#l00157">size()</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00132">getPage()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00168">getPage()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="adc1c8cac7c25e1044b2a780b44a7cb53"></a>
+<a class="anchor" id="a9385b998ba9c67ca5dac9171e105ecd6"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -301,6 +337,12 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">void TermQlcTable::getPageUnknownSize </td>
           <td>(</td>
+          <td class="paramtype"><a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;&#160;</td>
+          <td class="paramname"><em>result</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">const uint32_t&#160;</td>
           <td class="paramname"><em>skip</em>, </td>
         </tr>
@@ -322,12 +364,13 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Skip <em>skip</em> objects from the beginning and return objects. Maximum <em>count</em> object will be returned. It is used, when the total size of objects is known. </p>
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00157">157</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00194">194</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
-<p>References <a class="el" href="qlc__table_8cpp_source.html#l00253">goToAndCheckBorder()</a>, <a class="el" href="qlc__table_8h_source.html#l00079">m_controller</a>, <a class="el" href="qlc__table_8h_source.html#l00077">m_current_pos</a>, <a class="el" href="qlc__table_8h_source.html#l00032">QlcTable::m_driver</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_end</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_iter</a>, <a class="el" href="xapian__core_8h_source.html#l00038">Driver::m_result</a>, <a class="el" href="qlc__table_8h_source.html#l00077">m_size</a>, <a class="el" href="qlc__table_8h_source.html#l00036">QlcTable::MORE</a>, <a class="el" href="xapian__core_8cpp_source.html#l01855">Driver::retrieveTerm()</a>, <a class="el" href="qlc__table_8h_source.html#l00036">QlcTable::STOP</a>, and <a class="el" href="qlc__table_8h_source.html#l00037">QlcTable::UNKNOWN_SIZE</a>.</p>
+<p>References <a class="el" href="qlc_8cpp_source.html#l00292">goToAndCheckBorder()</a>, <a class="el" href="qlc_8h_source.html#l00123">m_controller</a>, <a class="el" href="qlc_8h_source.html#l00121">m_current_pos</a>, <a class="el" href="qlc_8h_source.html#l00043">QlcTable::m_driver</a>, <a class="el" href="qlc_8h_source.html#l00119">m_end</a>, <a class="el" href="qlc_8h_source.html#l00119">m_iter</a>, <a class="el" href="qlc_8h_source.html#l00121">m_size</a>, <a class="el" href="qlc_8h_source.html#l00049">QlcTable::MORE</a>, <a class="el" href="xapian__core_8cpp_source.html#l02520">Driver::retrieveTerm()</a>, <a class="el" href="qlc_8h_source.html#l00049">QlcTable::STOP</a>, and <a class="el" href="qlc_8h_source.html#l00059">QlcTable::UNKNOWN_SIZE</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00132">getPage()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00168">getPage()</a>.</p>
 
 </div>
 </div>
@@ -352,12 +395,13 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Skip <em>skip</em> objects from the beginning. It is used, when the total size of objects is known. </p>
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00230">230</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00269">269</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
-<p>References <a class="el" href="classTermIteratorGenerator.html#a73e6c11de4c5442668119abf35cdff61">TermIteratorGenerator::begin()</a>, <a class="el" href="qlc__table_8h_source.html#l00077">m_current_pos</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_end</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_iter</a>, and <a class="el" href="qlc__table_8h_source.html#l00076">mp_gen</a>.</p>
+<p>References <a class="el" href="qlc_8h_source.html#l00121">m_current_pos</a>, <a class="el" href="qlc_8h_source.html#l00119">m_end</a>, <a class="el" href="qlc_8h_source.html#l00119">m_iter</a>, and <a class="el" href="qlc_8h_source.html#l00120">mp_gen</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00192">getPageKnownSize()</a>, and <a class="el" href="qlc__table_8cpp_source.html#l00253">goToAndCheckBorder()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00230">getPageKnownSize()</a>, and <a class="el" href="qlc_8cpp_source.html#l00292">goToAndCheckBorder()</a>.</p>
 
 </div>
 </div>
@@ -384,16 +428,17 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Checks out of border. </p>
+<p>Skip <em>skip</em> objects from the beginning. It is used, when the total size of objects is not yet known. </p>
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00253">253</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00292">292</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
-<p>References <a class="el" href="qlc__table_8cpp_source.html#l00230">goTo()</a>, <a class="el" href="qlc__table_8h_source.html#l00077">m_current_pos</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_end</a>, and <a class="el" href="qlc__table_8h_source.html#l00075">m_iter</a>.</p>
+<p>References <a class="el" href="qlc_8cpp_source.html#l00269">goTo()</a>, <a class="el" href="qlc_8h_source.html#l00121">m_current_pos</a>, <a class="el" href="qlc_8h_source.html#l00119">m_end</a>, and <a class="el" href="qlc_8h_source.html#l00119">m_iter</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00157">getPageUnknownSize()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00194">getPageUnknownSize()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="aa15a7254e7048fc7aa277b1781004173"></a>
+<a class="anchor" id="a7607a52303efb99e0564834dc66f4be2"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -403,8 +448,8 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">void TermQlcTable::lookup </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classParamDecoder.html">ParamDecoder</a> &amp;&#160;</td>
-          <td class="paramname"><em>driver_params</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="xapian__config_8h.html#a088f4c3612d1ab1c9f6f139234ae533b">PR</a>&#160;</td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -414,16 +459,17 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Select objects by a key (by an index). </p>
 
-<p>Implements <a class="el" href="classQlcTable.html#a40b1be712b37917eff1d1e33241de686">QlcTable</a>.</p>
+<p>Implements <a class="el" href="classQlcTable.html#a7df74186a1df0078cf6bede8b2f04572">QlcTable</a>.</p>
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00141">141</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00178">178</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
-<p>References <a class="el" href="classTermIteratorGenerator.html#a73e6c11de4c5442668119abf35cdff61">TermIteratorGenerator::begin()</a>, <a class="el" href="qlc__table_8h_source.html#l00079">m_controller</a>, <a class="el" href="qlc__table_8h_source.html#l00032">QlcTable::m_driver</a>, <a class="el" href="qlc__table_8h_source.html#l00075">m_end</a>, <a class="el" href="xapian__core_8h_source.html#l00038">Driver::m_result</a>, <a class="el" href="qlc__table_8h_source.html#l00076">mp_gen</a>, and <a class="el" href="xapian__core_8cpp_source.html#l02346">Driver::qlcTermIteratorLookup()</a>.</p>
+<p>References <a class="el" href="qlc_8h_source.html#l00123">m_controller</a>, <a class="el" href="qlc_8h_source.html#l00119">m_end</a>, <a class="el" href="qlc_8h_source.html#l00120">mp_gen</a>, and <a class="el" href="xapian__core_8cpp_source.html#l03045">Driver::qlcTermIteratorLookup()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a27a6673a0aa3a268d408b2cc9680c9c1"></a>
+<a class="anchor" id="a4fb67fe90ccdb057ee739b9a0ca713f7"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -431,7 +477,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">uint32_t TermQlcTable::numOfObjects </td>
+          <td class="memname">uint32_t TermQlcTable::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -443,15 +489,15 @@ Additional Inherited Members</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Return zero if unknown. </p>
+<p>Calculate, how many objects in the set. Return zero if unknown. </p>
 
-<p>Implements <a class="el" href="classQlcTable.html#a954228c2c3457a1ace25158d2310b9da">QlcTable</a>.</p>
+<p>Implements <a class="el" href="classQlcTable.html#a331529d1b65c29b605420783e090e7ce">QlcTable</a>.</p>
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00121">121</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00157">157</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
-<p>References <a class="el" href="qlc__table_8h_source.html#l00077">m_size</a>.</p>
+<p>References <a class="el" href="qlc_8h_source.html#l00121">m_size</a>.</p>
 
-<p>Referenced by <a class="el" href="xapian__core_8cpp_source.html#l00536">Driver::qlcInit()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00230">getPageKnownSize()</a>, and <a class="el" href="xapian__core_8cpp_source.html#l00766">Driver::qlcInit()</a>.</p>
 
 </div>
 </div>
@@ -474,9 +520,9 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00079">79</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00123">123</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00192">getPageKnownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00157">getPageUnknownSize()</a>, and <a class="el" href="qlc__table_8cpp_source.html#l00141">lookup()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00230">getPageKnownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00194">getPageUnknownSize()</a>, and <a class="el" href="qlc_8cpp_source.html#l00178">lookup()</a>.</p>
 
 </div>
 </div>
@@ -498,9 +544,9 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00077">77</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00121">121</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00192">getPageKnownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00157">getPageUnknownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00230">goTo()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00253">goToAndCheckBorder()</a>, and <a class="el" href="qlc__table_8cpp_source.html#l00103">TermQlcTable()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00230">getPageKnownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00194">getPageUnknownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00269">goTo()</a>, <a class="el" href="qlc_8cpp_source.html#l00292">goToAndCheckBorder()</a>, and <a class="el" href="qlc_8cpp_source.html#l00139">TermQlcTable()</a>.</p>
 
 </div>
 </div>
@@ -522,9 +568,9 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00075">75</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00119">119</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00192">getPageKnownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00157">getPageUnknownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00230">goTo()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00253">goToAndCheckBorder()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00141">lookup()</a>, and <a class="el" href="qlc__table_8cpp_source.html#l00103">TermQlcTable()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00230">getPageKnownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00194">getPageUnknownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00269">goTo()</a>, <a class="el" href="qlc_8cpp_source.html#l00292">goToAndCheckBorder()</a>, <a class="el" href="qlc_8cpp_source.html#l00178">lookup()</a>, and <a class="el" href="qlc_8cpp_source.html#l00139">TermQlcTable()</a>.</p>
 
 </div>
 </div>
@@ -546,9 +592,9 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00075">75</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00119">119</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00192">getPageKnownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00157">getPageUnknownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00230">goTo()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00253">goToAndCheckBorder()</a>, and <a class="el" href="qlc__table_8cpp_source.html#l00103">TermQlcTable()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00230">getPageKnownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00194">getPageUnknownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00269">goTo()</a>, <a class="el" href="qlc_8cpp_source.html#l00292">goToAndCheckBorder()</a>, and <a class="el" href="qlc_8cpp_source.html#l00139">TermQlcTable()</a>.</p>
 
 </div>
 </div>
@@ -570,13 +616,13 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00077">77</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00121">121</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00132">getPage()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00192">getPageKnownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00157">getPageUnknownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00121">numOfObjects()</a>, and <a class="el" href="qlc__table_8cpp_source.html#l00103">TermQlcTable()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00168">getPage()</a>, <a class="el" href="qlc_8cpp_source.html#l00230">getPageKnownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00194">getPageUnknownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00157">size()</a>, and <a class="el" href="qlc_8cpp_source.html#l00139">TermQlcTable()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a7036d00cca6efc85b4883a674963d5e5"></a>
+<a class="anchor" id="a2508da422f8581397136daa4cbf5a053"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -584,7 +630,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classTermIteratorGenerator.html">TermIteratorGenerator</a>* TermQlcTable::mp_gen</td>
+          <td class="memname">TermGenerator::Iterator* TermQlcTable::mp_gen</td>
         </tr>
       </table>
   </td>
@@ -594,20 +640,20 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00076">76</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00120">120</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00230">goTo()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00141">lookup()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00103">TermQlcTable()</a>, and <a class="el" href="qlc__table_8h_source.html#l00091">~TermQlcTable()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00269">goTo()</a>, <a class="el" href="qlc_8cpp_source.html#l00178">lookup()</a>, <a class="el" href="qlc_8cpp_source.html#l00139">TermQlcTable()</a>, and <a class="el" href="qlc_8cpp_source.html#l00310">~TermQlcTable()</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>c_src/<a class="el" href="qlc__table_8h_source.html">qlc_table.h</a></li>
-<li>c_src/<a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a></li>
+<li>c_src/common/<a class="el" href="qlc_8h_source.html">qlc.h</a></li>
+<li>c_src/common/<a class="el" href="qlc_8cpp_source.html">qlc.cpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:12 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:31 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

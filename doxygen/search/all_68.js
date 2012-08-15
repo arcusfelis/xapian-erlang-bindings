@@ -1,10 +1,12 @@
 var searchData=
 [
-  ['handleposting',['handlePosting',['../classDriver.html#a9dea30cf534ef36d04c63c1aaca8f15f',1,'Driver']]],
-  ['handleterm',['handleTerm',['../classDriver.html#afe235a0cb148a90b7862452a15b7e817',1,'Driver']]],
-  ['handlevalue',['handleValue',['../classDriver.html#abd69051e33f3f80c33ceea2bcaaedc8c',1,'Driver']]],
-  ['hash',['Hash',['../classObjectRegister.html#a8d97ce41847c9c00c96961c529980fb3',1,'ObjectRegister']]],
-  ['hash_5ftpl',['HASH_TPL',['../object__register_8h.html#ac3316d620ed5b952ba146bb7948be108',1,'object_register.h']]],
-  ['hell_5fpos',['HELL_POS',['../classHellTermPosition.html#a2801a26108b5f6ff8d35e25e3128ffcc',1,'HellTermPosition']]],
-  ['helltermposition',['HellTermPosition',['../classHellTermPosition.html',1,'HellTermPosition'],['../classDriver.html#a0ebe94c7d85582b59407a9cce38375b6',1,'Driver::HellTermPosition()'],['../classHellTermPosition.html#ae2c02b5fcaf4068dedf223106d62199c',1,'HellTermPosition::HellTermPosition()']]]
+  ['handlecommand',['handleCommand',['../classDriver.html#ac35f2bb0d3e85da6783f51a9a1cf2069',1,'Driver']]],
+  ['handleposting',['handlePosting',['../classDriver.html#a4055fd56c9e2911f36a93fd7c87d6c36',1,'Driver']]],
+  ['handlespelling',['handleSpelling',['../classDriver.html#ad03e65e282e722070961f77d06aab3f0',1,'Driver']]],
+  ['handleterm',['handleTerm',['../classDriver.html#ac3c89929c79c4c85602f4e5b04d22d10',1,'Driver']]],
+  ['handlevalue',['handleValue',['../classDriver.html#ace296d5d74a3dd5746eb557f4f20d290',1,'Driver']]],
+  ['hash',['Hash',['../classRegister.html#a81ba898ba7c72c0d44e74986a1a12976',1,'Register']]],
+  ['hash_5fmap',['HASH_MAP',['../register_8h.html#a6d8f64cb3f4987808577e3867b0f784b',1,'register.h']]],
+  ['hash_5ftpl',['HASH_TPL',['../register_8h.html#ac3316d620ed5b952ba146bb7948be108',1,'register.h']]],
+  ['helpers',['Helpers',['../classHelpers.html',1,'']]]
 ];

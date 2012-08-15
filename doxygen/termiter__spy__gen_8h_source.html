@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>Xapian Erlang Binding: c_src/termiter_spy_gen.h Source File</title>
+<title>Xapian Erlang Binding: c_src/common/termiter_gen/termiter_spy_gen.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -79,7 +79,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li><li class="navelem"><a class="el" href="dir_34530ba5038879b0547f25c62bbad39e.html">common</a></li><li class="navelem"><a class="el" href="dir_9b2deb0afb7f1e4a5c5e3a23e61f0aaa.html">termiter_gen</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -91,65 +91,62 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_TERM_SPY_ITER_GEN_H</span></div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="preprocessor"></span></div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="termiter__gen_8h.html">termiter_gen.h</a>&quot;</span></div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="spy__ctrl_8h.html">spy_ctrl.h</a>&quot;</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &lt;stdint.h&gt;</span></div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;</div>
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="xapian__config_8h.html">xapian_config.h</a>&quot;</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<a class="code" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<a class="code" href="xapian__config_8h.html#ac64672c46413e0dd263771134503c3be">XAPIAN_VC_SPY_GEN_NS_BEGIN</a></div>
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
-<div class="line"><a name="l00010"></a><span class="lineno"><a class="code" href="classSpyValueIteratorGenerator.html">   10</a></span>&#160;<span class="keyword">class </span><a class="code" href="classSpyValueIteratorGenerator.html">SpyValueIteratorGenerator</a> : <span class="keyword">public</span> <a class="code" href="classTermIteratorGenerator.html" title="Contains functions for iterator creation and retrieving information.">TermIteratorGenerator</a></div>
+<div class="line"><a name="l00010"></a><span class="lineno"><a class="code" href="classValues.html">   10</a></span>&#160;<span class="keyword">class </span><a class="code" href="classValues.html">Values</a> : <span class="keyword">public</span> <a class="code" href="classIterator.html" title="Contains functions for iterator creation and retrieving information.">Iterator</a></div>
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;{</div>
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00013"></a><span class="lineno"><a class="code" href="classSpyValueIteratorGenerator.html#a80c6da464f7c19d60f998dff692c42fb">   13</a></span>&#160;    <a class="code" href="classSpyController.html" title="Controller of Xapian::MatchSet.">SpyController</a> <a class="code" href="classSpyValueIteratorGenerator.html#a80c6da464f7c19d60f998dff692c42fb">m_controller</a>;</div>
-<div class="line"><a name="l00014"></a><span class="lineno"><a class="code" href="classSpyValueIteratorGenerator.html#ad49a14ee97eddbc4a95ef6468cff1f10">   14</a></span>&#160;    Xapian::ValueCountMatchSpy* <a class="code" href="classSpyValueIteratorGenerator.html#ad49a14ee97eddbc4a95ef6468cff1f10">mp_spy</a>;</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00017"></a><span class="lineno"><a class="code" href="classSpyValueIteratorGenerator.html#a1f0fb1407abb1f655317bc037891d5cb">   17</a></span>&#160;    <a class="code" href="classSpyValueIteratorGenerator.html#a1f0fb1407abb1f655317bc037891d5cb">SpyValueIteratorGenerator</a>(<a class="code" href="classSpyController.html" title="Controller of Xapian::MatchSet.">SpyController</a>&amp; controller) </div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;        : <a class="code" href="classSpyValueIteratorGenerator.html#a80c6da464f7c19d60f998dff692c42fb">m_controller</a>(controller)</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    {</div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;        <a class="code" href="classSpyValueIteratorGenerator.html#ad49a14ee97eddbc4a95ef6468cff1f10">mp_spy</a> = </div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;        <span class="keyword">static_cast&lt;</span>Xapian::ValueCountMatchSpy*<span class="keyword">&gt;</span>(<a class="code" href="classSpyValueIteratorGenerator.html#a80c6da464f7c19d60f998dff692c42fb">m_controller</a>.<a class="code" href="classSpyController.html#acbdf399239811f13097716d35843f2c0">getSpy</a>());</div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    }</div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;</div>
-<div class="line"><a name="l00024"></a><span class="lineno"><a class="code" href="classSpyValueIteratorGenerator.html#aae95cfa999b5cf4bf61e837072a3cdb3">   24</a></span>&#160;    Xapian::TermIterator <a class="code" href="classSpyValueIteratorGenerator.html#aae95cfa999b5cf4bf61e837072a3cdb3">begin</a>()</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    {</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classSpyValueIteratorGenerator.html#ad49a14ee97eddbc4a95ef6468cff1f10">mp_spy</a>-&gt;values_begin();</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;    }</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;</div>
-<div class="line"><a name="l00029"></a><span class="lineno"><a class="code" href="classSpyValueIteratorGenerator.html#aa45e48c370e60621d3f12d1e19839362">   29</a></span>&#160;    Xapian::TermIterator <a class="code" href="classSpyValueIteratorGenerator.html#aa45e48c370e60621d3f12d1e19839362">end</a>()</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    {</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classSpyValueIteratorGenerator.html#ad49a14ee97eddbc4a95ef6468cff1f10">mp_spy</a>-&gt;values_end();</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    }</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;};</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;</div>
-<div class="line"><a name="l00036"></a><span class="lineno"><a class="code" href="classTopSpyValueIteratorGenerator.html">   36</a></span>&#160;<span class="keyword">class </span><a class="code" href="classTopSpyValueIteratorGenerator.html">TopSpyValueIteratorGenerator</a> : <span class="keyword">public</span> <a class="code" href="classSpyValueIteratorGenerator.html">SpyValueIteratorGenerator</a></div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;{</div>
-<div class="line"><a name="l00038"></a><span class="lineno"><a class="code" href="classTopSpyValueIteratorGenerator.html#a06f6021145ec9168c8bc09ea3bf84770">   38</a></span>&#160;    <span class="keyword">const</span> uint32_t <a class="code" href="classTopSpyValueIteratorGenerator.html#a06f6021145ec9168c8bc09ea3bf84770">m_maxvalues</a>;</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00041"></a><span class="lineno"><a class="code" href="classTopSpyValueIteratorGenerator.html#afcc6bda9a08b01cd165bfc8aa6e234ad">   41</a></span>&#160;    <a class="code" href="classTopSpyValueIteratorGenerator.html#afcc6bda9a08b01cd165bfc8aa6e234ad">TopSpyValueIteratorGenerator</a>(</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        <a class="code" href="classSpyController.html" title="Controller of Xapian::MatchSet.">SpyController</a>&amp; controller, uint32_t maxvalues) </div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;            : <a class="code" href="classSpyValueIteratorGenerator.html">SpyValueIteratorGenerator</a>(controller), <a class="code" href="classTopSpyValueIteratorGenerator.html#a06f6021145ec9168c8bc09ea3bf84770">m_maxvalues</a>(maxvalues)</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    {}</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;</div>
-<div class="line"><a name="l00046"></a><span class="lineno"><a class="code" href="classTopSpyValueIteratorGenerator.html#a83c68b1df8dc6bdf57710d66ba3515e3">   46</a></span>&#160;    Xapian::TermIterator <a class="code" href="classTopSpyValueIteratorGenerator.html#a83c68b1df8dc6bdf57710d66ba3515e3">begin</a>()</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    {</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classSpyValueIteratorGenerator.html#ad49a14ee97eddbc4a95ef6468cff1f10">mp_spy</a>-&gt;top_values_begin(<a class="code" href="classTopSpyValueIteratorGenerator.html#a06f6021145ec9168c8bc09ea3bf84770">m_maxvalues</a>);</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;    }</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;</div>
-<div class="line"><a name="l00051"></a><span class="lineno"><a class="code" href="classTopSpyValueIteratorGenerator.html#a574a7817b30083db87339b4476e9974b">   51</a></span>&#160;    Xapian::TermIterator <a class="code" href="classTopSpyValueIteratorGenerator.html#a574a7817b30083db87339b4476e9974b">end</a>()</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    {</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classSpyValueIteratorGenerator.html#ad49a14ee97eddbc4a95ef6468cff1f10">mp_spy</a>-&gt;top_values_end(<a class="code" href="classTopSpyValueIteratorGenerator.html#a06f6021145ec9168c8bc09ea3bf84770">m_maxvalues</a>);</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    }</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;};</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a></div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00013"></a><span class="lineno"><a class="code" href="classValues.html#ae26ce7298a2a3a87a5036f8763f97ac0">   13</a></span>&#160;    Xapian::ValueCountMatchSpy* <a class="code" href="classValues.html#ae26ce7298a2a3a87a5036f8763f97ac0">mp_spy</a>;</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00016"></a><span class="lineno"><a class="code" href="classValues.html#af5d2372b668ef0ef88d19aea5da285bd">   16</a></span>&#160;    <a class="code" href="classValues.html#af5d2372b668ef0ef88d19aea5da285bd">Values</a>(Xapian::ValueCountMatchSpy&amp; spy) </div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    {</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;        <a class="code" href="classValues.html#ae26ce7298a2a3a87a5036f8763f97ac0">mp_spy</a> = &amp;spy;</div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;    }</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;</div>
+<div class="line"><a name="l00021"></a><span class="lineno"><a class="code" href="classValues.html#af9b042f6cba8bb09ed8b96d1231e7474">   21</a></span>&#160;    Xapian::TermIterator <a class="code" href="classValues.html#af9b042f6cba8bb09ed8b96d1231e7474">begin</a>()</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    {</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classValues.html#ae26ce7298a2a3a87a5036f8763f97ac0">mp_spy</a>-&gt;values_begin();</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    }</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
+<div class="line"><a name="l00026"></a><span class="lineno"><a class="code" href="classValues.html#a57313259741fad1c96fc90e7d17cd6ab">   26</a></span>&#160;    Xapian::TermIterator <a class="code" href="classValues.html#a57313259741fad1c96fc90e7d17cd6ab">end</a>()</div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;    {</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classValues.html#ae26ce7298a2a3a87a5036f8763f97ac0">mp_spy</a>-&gt;values_end();</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    }</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;};</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;</div>
+<div class="line"><a name="l00033"></a><span class="lineno"><a class="code" href="classTopValues.html">   33</a></span>&#160;<span class="keyword">class </span><a class="code" href="classTopValues.html">TopValues</a> : <span class="keyword">public</span> <a class="code" href="classValues.html">Values</a></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;{</div>
+<div class="line"><a name="l00035"></a><span class="lineno"><a class="code" href="classTopValues.html#ad632305d3e216d12be24397e8b53dd32">   35</a></span>&#160;    <span class="keyword">const</span> uint32_t <a class="code" href="classTopValues.html#ad632305d3e216d12be24397e8b53dd32">m_maxvalues</a>;</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00038"></a><span class="lineno"><a class="code" href="classTopValues.html#aa6e994ea795e2217d197a432ec934df6">   38</a></span>&#160;    <a class="code" href="classTopValues.html#aa6e994ea795e2217d197a432ec934df6">TopValues</a>(</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        Xapian::ValueCountMatchSpy&amp; spy, uint32_t maxvalues) </div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;            : <a class="code" href="classValues.html">Values</a>(spy), <a class="code" href="classTopValues.html#ad632305d3e216d12be24397e8b53dd32">m_maxvalues</a>(maxvalues)</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    {}</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;</div>
+<div class="line"><a name="l00043"></a><span class="lineno"><a class="code" href="classTopValues.html#a35dd10f5ddcbea7cb96087fafe410d8f">   43</a></span>&#160;    Xapian::TermIterator <a class="code" href="classTopValues.html#a35dd10f5ddcbea7cb96087fafe410d8f">begin</a>()</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    {</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classValues.html#ae26ce7298a2a3a87a5036f8763f97ac0">mp_spy</a>-&gt;top_values_begin(<a class="code" href="classTopValues.html#ad632305d3e216d12be24397e8b53dd32">m_maxvalues</a>);</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    }</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;</div>
+<div class="line"><a name="l00048"></a><span class="lineno"><a class="code" href="classTopValues.html#a5a878b23b46d3608be6a40294b319b32">   48</a></span>&#160;    Xapian::TermIterator <a class="code" href="classTopValues.html#a5a878b23b46d3608be6a40294b319b32">end</a>()</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;    {</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;        <span class="keywordflow">return</span> <a class="code" href="classValues.html#ae26ce7298a2a3a87a5036f8763f97ac0">mp_spy</a>-&gt;top_values_end(<a class="code" href="classTopValues.html#ad632305d3e216d12be24397e8b53dd32">m_maxvalues</a>);</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;    }</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;};</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;<a class="code" href="xapian__config_8h.html#adf8b91c88a3d8db1288c8a8c20237169">XAPIAN_VC_SPY_GEN_NS_END</a></div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:11 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:29 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

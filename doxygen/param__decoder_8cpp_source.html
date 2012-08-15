@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>Xapian Erlang Binding: c_src/param_decoder.cpp Source File</title>
+<title>Xapian Erlang Binding: c_src/common/param_decoder.cpp Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -79,7 +79,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li><li class="navelem"><a class="el" href="dir_34530ba5038879b0547f25c62bbad39e.html">common</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -147,26 +147,30 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="param__decoder_8cpp.html#a491d9064f7b148013c2afe2944c30b67">READ_TYPE</a>(uint32_t);</div>
 <div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;}</div>
 <div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
-<div class="line"><a name="l00080"></a><span class="lineno"><a class="code" href="classParamDecoder.html#af3b2b934dfcba8a80c2703f091cae85c">   80</a></span>&#160;ParamDecoder::operator double() {</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="param__decoder_8cpp.html#a491d9064f7b148013c2afe2944c30b67">READ_TYPE</a>(<span class="keywordtype">double</span>);</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;}</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;</div>
-<div class="line"><a name="l00084"></a><span class="lineno"><a class="code" href="classParamDecoder.html#af39ae84e2da258678b918100dfa7316e">   84</a></span>&#160;ParamDecoder::operator <span class="keyword">const</span> Xapian::Stem()</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;{</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    <span class="keyword">const</span> std::string&amp;   language = *<span class="keyword">this</span>;</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    <span class="keywordflow">return</span> Xapian::Stem(language);</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;}</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;</div>
-<div class="line"><a name="l00090"></a><span class="lineno"><a class="code" href="classParamDecoder.html#a3c9dd668349b863d343a0d03d5f71b3d">   90</a></span>&#160;<span class="keywordtype">char</span>* <a class="code" href="classParamDecoder.html#a3c9dd668349b863d343a0d03d5f71b3d">ParamDecoder::currentPosition</a>()</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;{</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="classParamDecoder.html#a279d02176385816b1a1775dadcf09653">m_buf</a>;</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;}</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;<a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a></div>
+<div class="line"><a name="l00083"></a><span class="lineno"><a class="code" href="classParamDecoder.html#af9e4adce759413f25e7484ffcaadf6f6">   83</a></span>&#160;ParamDecoder::operator uint16_t() {</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="param__decoder_8cpp.html#a491d9064f7b148013c2afe2944c30b67">READ_TYPE</a>(uint16_t);</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;}</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;</div>
+<div class="line"><a name="l00087"></a><span class="lineno"><a class="code" href="classParamDecoder.html#af3b2b934dfcba8a80c2703f091cae85c">   87</a></span>&#160;ParamDecoder::operator double() {</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="param__decoder_8cpp.html#a491d9064f7b148013c2afe2944c30b67">READ_TYPE</a>(<span class="keywordtype">double</span>);</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;}</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
+<div class="line"><a name="l00091"></a><span class="lineno"><a class="code" href="classParamDecoder.html#af39ae84e2da258678b918100dfa7316e">   91</a></span>&#160;ParamDecoder::operator <span class="keyword">const</span> Xapian::Stem()</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;{</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    <span class="keyword">const</span> std::string&amp;   language = *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    <span class="keywordflow">return</span> Xapian::Stem(language);</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;}</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;</div>
+<div class="line"><a name="l00097"></a><span class="lineno"><a class="code" href="classParamDecoder.html#a3c9dd668349b863d343a0d03d5f71b3d">   97</a></span>&#160;<span class="keywordtype">char</span>* <a class="code" href="classParamDecoder.html#a3c9dd668349b863d343a0d03d5f71b3d">ParamDecoder::currentPosition</a>()</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;{</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="classParamDecoder.html#a279d02176385816b1a1775dadcf09653">m_buf</a>;</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;}</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;<a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:11 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:28 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>Xapian Erlang Binding: c_src/xapian_config.h Source File</title>
+<title>Xapian Erlang Binding: c_src/common/xapian_config.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -79,7 +79,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li><li class="navelem"><a class="el" href="dir_34530ba5038879b0547f25c62bbad39e.html">common</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -88,12 +88,44 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 <a href="xapian__config_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;</div>
-<div class="line"><a name="l00002"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">    2</a></span>&#160;<span class="preprocessor">#define XAPIAN_ERLANG_NS_BEGIN namespace XapianErlang { </span></div>
-<div class="line"><a name="l00003"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">    3</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_ERLANG_NS_END   }</span></div>
+<div class="line"><a name="l00002"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a9a09e6327690b37a50cada8c501ae258">    2</a></span>&#160;<span class="preprocessor">#define XAPIAN_ERLANG_NS XapianErlang </span></div>
+<div class="line"><a name="l00003"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">    3</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_ERLANG_NS_BEGIN namespace XAPIAN_ERLANG_NS { </span></div>
+<div class="line"><a name="l00004"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">    4</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_ERLANG_NS_END   }</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00006"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a732c75b4c7edfa0b41bf7b142090f5e2">    6</a></span>&#160;<span class="preprocessor">#define XAPIAN_RESOURCE_NS_BEGIN XAPIAN_ERLANG_NS_BEGIN namespace Resource { </span></div>
+<div class="line"><a name="l00007"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a04d561ad3e7ebabbd3bee6e9ffdeba47">    7</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_RESOURCE_NS_END   XAPIAN_ERLANG_NS_END }</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00009"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#afd27e6cef564cbf3d7cd6a0b9bd87df2">    9</a></span>&#160;<span class="preprocessor">#define XAPIAN_RESOURCE_CTRL_NS_BEGIN XAPIAN_RESOURCE_NS_BEGIN namespace Controller { </span></div>
+<div class="line"><a name="l00010"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a376e89776b5f45a9043dacce1b533f59">   10</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_RESOURCE_CTRL_NS_END   XAPIAN_RESOURCE_NS_END }</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00012"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">   12</a></span>&#160;<span class="preprocessor">#define XAPIAN_TERM_GEN_NS_BEGIN XAPIAN_ERLANG_NS_BEGIN namespace TermGenerator { </span></div>
+<div class="line"><a name="l00013"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">   13</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_TERM_GEN_NS_END   XAPIAN_ERLANG_NS_END }</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00015"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#ab786c38cd90e4399de18450520427bf8">   15</a></span>&#160;<span class="preprocessor">#define XAPIAN_DOC_GEN_NS_BEGIN XAPIAN_TERM_GEN_NS_BEGIN namespace Document { </span></div>
+<div class="line"><a name="l00016"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a85040f57312dbe5ca324399262671235">   16</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_DOC_GEN_NS_END   XAPIAN_TERM_GEN_NS_END }</span></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00018"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a29d589a84093cbc5ebaa77f467efe560">   18</a></span>&#160;<span class="preprocessor">#define XAPIAN_DB_GEN_NS_BEGIN XAPIAN_TERM_GEN_NS_BEGIN namespace Database { </span></div>
+<div class="line"><a name="l00019"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a0bddcbd3e23c4ab18054fab7b18d1bb9">   19</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_DB_GEN_NS_END   XAPIAN_TERM_GEN_NS_END }</span></div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00021"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#af5ff286a3baee81750d5eb2e6f38d304">   21</a></span>&#160;<span class="preprocessor">#define XAPIAN_QP_GEN_NS_BEGIN XAPIAN_TERM_GEN_NS_BEGIN namespace QueryParser { </span></div>
+<div class="line"><a name="l00022"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a950c4c906331ee200b38f1255ac2d5e1">   22</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_QP_GEN_NS_END   XAPIAN_TERM_GEN_NS_END }</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00024"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#ac64672c46413e0dd263771134503c3be">   24</a></span>&#160;<span class="preprocessor">#define XAPIAN_VC_SPY_GEN_NS_BEGIN XAPIAN_TERM_GEN_NS_BEGIN namespace ValueCountMatchSpy { </span></div>
+<div class="line"><a name="l00025"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#adf8b91c88a3d8db1288c8a8c20237169">   25</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_VC_SPY_GEN_NS_END   XAPIAN_TERM_GEN_NS_END }</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00027"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a4ab6e622fca6742c2e0b28de440ae6c1">   27</a></span>&#160;<span class="preprocessor">#define XAPIAN_EXT_NS_BEGIN XAPIAN_ERLANG_NS_BEGIN namespace Extension { </span></div>
+<div class="line"><a name="l00028"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a072d924fbe1c3cef4101603caee3517d">   28</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define XAPIAN_EXT_NS_END   XAPIAN_ERLANG_NS_END }</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00030"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a088f4c3612d1ab1c9f6f139234ae533b">   30</a></span>&#160;<span class="preprocessor">#define PR ParamDecoder&amp; params, ResultEncoder&amp; result </span></div>
+<div class="line"><a name="l00031"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a6594e57d1fff186da0a254a3742dcff7">   31</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define CP Resource::Element&amp; con, ParamDecoder&amp; params</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#ad8f1771d4051eafad228df4d397d7e47">   32</a></span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define CPR Resource::Element&amp; con, ParamDecoder&amp; params, ResultEncoder&amp; result</span></div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="comment">// Clone of params</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno"><a class="code" href="xapian__config_8h.html#a8a3c07f76b4fd3e46327644dade6f2b9">   35</a></span>&#160;<span class="preprocessor">#define PCR ParamDecoder params, ResultEncoder&amp; result </span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:11 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:29 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

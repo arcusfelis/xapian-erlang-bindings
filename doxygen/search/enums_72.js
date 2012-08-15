@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['resourcevalidobjecttype',['ResourceValidObjectType',['../classResourceType.html#a231de668a4ef2213e7ebba161277401d',1,'ResourceType']]]
+  ['resourceschematype',['ResourceSchemaType',['../classFactory.html#a931b111bf261902de400cd8e7adb41c2',1,'Factory']]]
 ];

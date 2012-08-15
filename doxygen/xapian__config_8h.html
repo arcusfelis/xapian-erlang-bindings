@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>Xapian Erlang Binding: c_src/xapian_config.h File Reference</title>
+<title>Xapian Erlang Binding: c_src/common/xapian_config.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -79,7 +79,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li><li class="navelem"><a class="el" href="dir_34530ba5038879b0547f25c62bbad39e.html">common</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -94,21 +94,168 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:af115ee557ce829e9be0a2904941ea66c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a>&#160;&#160;&#160;namespace XapianErlang {</td></tr>
+<tr class="memitem:a9a09e6327690b37a50cada8c501ae258"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a9a09e6327690b37a50cada8c501ae258">XAPIAN_ERLANG_NS</a>&#160;&#160;&#160;XapianErlang</td></tr>
+<tr class="memitem:af115ee557ce829e9be0a2904941ea66c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a>&#160;&#160;&#160;namespace <a class="el" href="xapian__config_8h.html#a9a09e6327690b37a50cada8c501ae258">XAPIAN_ERLANG_NS</a> {</td></tr>
 <tr class="memitem:a9f6f2f68b5494d5a6e48e7beec1f4d5c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a>&#160;&#160;&#160;}</td></tr>
+<tr class="memitem:a732c75b4c7edfa0b41bf7b142090f5e2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a732c75b4c7edfa0b41bf7b142090f5e2">XAPIAN_RESOURCE_NS_BEGIN</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a> namespace Resource {</td></tr>
+<tr class="memitem:a04d561ad3e7ebabbd3bee6e9ffdeba47"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a04d561ad3e7ebabbd3bee6e9ffdeba47">XAPIAN_RESOURCE_NS_END</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a> }</td></tr>
+<tr class="memitem:afd27e6cef564cbf3d7cd6a0b9bd87df2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#afd27e6cef564cbf3d7cd6a0b9bd87df2">XAPIAN_RESOURCE_CTRL_NS_BEGIN</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a732c75b4c7edfa0b41bf7b142090f5e2">XAPIAN_RESOURCE_NS_BEGIN</a> namespace Controller {</td></tr>
+<tr class="memitem:a376e89776b5f45a9043dacce1b533f59"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a376e89776b5f45a9043dacce1b533f59">XAPIAN_RESOURCE_CTRL_NS_END</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a04d561ad3e7ebabbd3bee6e9ffdeba47">XAPIAN_RESOURCE_NS_END</a> }</td></tr>
+<tr class="memitem:a6f3cedcf1c9c514b140b9abc094fff58"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">XAPIAN_TERM_GEN_NS_BEGIN</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a> namespace TermGenerator {</td></tr>
+<tr class="memitem:a98ef210f676a353db649a7b0a6ce1e51"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">XAPIAN_TERM_GEN_NS_END</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a> }</td></tr>
+<tr class="memitem:ab786c38cd90e4399de18450520427bf8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#ab786c38cd90e4399de18450520427bf8">XAPIAN_DOC_GEN_NS_BEGIN</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">XAPIAN_TERM_GEN_NS_BEGIN</a> namespace <a class="el" href="classDocument.html">Document</a> {</td></tr>
+<tr class="memitem:a85040f57312dbe5ca324399262671235"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a85040f57312dbe5ca324399262671235">XAPIAN_DOC_GEN_NS_END</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">XAPIAN_TERM_GEN_NS_END</a> }</td></tr>
+<tr class="memitem:a29d589a84093cbc5ebaa77f467efe560"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a29d589a84093cbc5ebaa77f467efe560">XAPIAN_DB_GEN_NS_BEGIN</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">XAPIAN_TERM_GEN_NS_BEGIN</a> namespace <a class="el" href="classDatabase.html">Database</a> {</td></tr>
+<tr class="memitem:a0bddcbd3e23c4ab18054fab7b18d1bb9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a0bddcbd3e23c4ab18054fab7b18d1bb9">XAPIAN_DB_GEN_NS_END</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">XAPIAN_TERM_GEN_NS_END</a> }</td></tr>
+<tr class="memitem:af5ff286a3baee81750d5eb2e6f38d304"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#af5ff286a3baee81750d5eb2e6f38d304">XAPIAN_QP_GEN_NS_BEGIN</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">XAPIAN_TERM_GEN_NS_BEGIN</a> namespace <a class="el" href="classQueryParser.html">QueryParser</a> {</td></tr>
+<tr class="memitem:a950c4c906331ee200b38f1255ac2d5e1"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a950c4c906331ee200b38f1255ac2d5e1">XAPIAN_QP_GEN_NS_END</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">XAPIAN_TERM_GEN_NS_END</a> }</td></tr>
+<tr class="memitem:ac64672c46413e0dd263771134503c3be"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#ac64672c46413e0dd263771134503c3be">XAPIAN_VC_SPY_GEN_NS_BEGIN</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">XAPIAN_TERM_GEN_NS_BEGIN</a> namespace <a class="el" href="classValueCountMatchSpy.html">ValueCountMatchSpy</a> {</td></tr>
+<tr class="memitem:adf8b91c88a3d8db1288c8a8c20237169"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#adf8b91c88a3d8db1288c8a8c20237169">XAPIAN_VC_SPY_GEN_NS_END</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">XAPIAN_TERM_GEN_NS_END</a> }</td></tr>
+<tr class="memitem:a4ab6e622fca6742c2e0b28de440ae6c1"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a4ab6e622fca6742c2e0b28de440ae6c1">XAPIAN_EXT_NS_BEGIN</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a> namespace Extension {</td></tr>
+<tr class="memitem:a072d924fbe1c3cef4101603caee3517d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a072d924fbe1c3cef4101603caee3517d">XAPIAN_EXT_NS_END</a>&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a> }</td></tr>
+<tr class="memitem:a088f4c3612d1ab1c9f6f139234ae533b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a088f4c3612d1ab1c9f6f139234ae533b">PR</a>&#160;&#160;&#160;<a class="el" href="classParamDecoder.html">ParamDecoder</a>&amp; params, <a class="el" href="classResultEncoder.html">ResultEncoder</a>&amp; result</td></tr>
+<tr class="memitem:a6594e57d1fff186da0a254a3742dcff7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a6594e57d1fff186da0a254a3742dcff7">CP</a>&#160;&#160;&#160;Resource::Element&amp; con, <a class="el" href="classParamDecoder.html">ParamDecoder</a>&amp; params</td></tr>
+<tr class="memitem:ad8f1771d4051eafad228df4d397d7e47"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#ad8f1771d4051eafad228df4d397d7e47">CPR</a>&#160;&#160;&#160;Resource::Element&amp; con, <a class="el" href="classParamDecoder.html">ParamDecoder</a>&amp; params, <a class="el" href="classResultEncoder.html">ResultEncoder</a>&amp; result</td></tr>
+<tr class="memitem:a8a3c07f76b4fd3e46327644dade6f2b9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__config_8h.html#a8a3c07f76b4fd3e46327644dade6f2b9">PCR</a>&#160;&#160;&#160;<a class="el" href="classParamDecoder.html">ParamDecoder</a> params, <a class="el" href="classResultEncoder.html">ResultEncoder</a>&amp; result</td></tr>
 </table>
 <hr/><h2>Macro Definition Documentation</h2>
-<a class="anchor" id="af115ee557ce829e9be0a2904941ea66c"></a>
+<a class="anchor" id="a6594e57d1fff186da0a254a3742dcff7"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define XAPIAN_ERLANG_NS_BEGIN&#160;&#160;&#160;namespace XapianErlang {</td>
+          <td class="memname">#define CP&#160;&#160;&#160;Resource::Element&amp; con, <a class="el" href="classParamDecoder.html">ParamDecoder</a>&amp; params</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00031">31</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ad8f1771d4051eafad228df4d397d7e47"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CPR&#160;&#160;&#160;Resource::Element&amp; con, <a class="el" href="classParamDecoder.html">ParamDecoder</a>&amp; params, <a class="el" href="classResultEncoder.html">ResultEncoder</a>&amp; result</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00032">32</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a8a3c07f76b4fd3e46327644dade6f2b9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define PCR&#160;&#160;&#160;<a class="el" href="classParamDecoder.html">ParamDecoder</a> params, <a class="el" href="classResultEncoder.html">ResultEncoder</a>&amp; result</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00035">35</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a088f4c3612d1ab1c9f6f139234ae533b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define PR&#160;&#160;&#160;<a class="el" href="classParamDecoder.html">ParamDecoder</a>&amp; params, <a class="el" href="classResultEncoder.html">ResultEncoder</a>&amp; result</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00030">30</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a29d589a84093cbc5ebaa77f467efe560"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_DB_GEN_NS_BEGIN&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">XAPIAN_TERM_GEN_NS_BEGIN</a> namespace <a class="el" href="classDatabase.html">Database</a> {</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00018">18</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a0bddcbd3e23c4ab18054fab7b18d1bb9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_DB_GEN_NS_END&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">XAPIAN_TERM_GEN_NS_END</a> }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00019">19</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ab786c38cd90e4399de18450520427bf8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_DOC_GEN_NS_BEGIN&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">XAPIAN_TERM_GEN_NS_BEGIN</a> namespace <a class="el" href="classDocument.html">Document</a> {</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00015">15</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a85040f57312dbe5ca324399262671235"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_DOC_GEN_NS_END&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">XAPIAN_TERM_GEN_NS_END</a> }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00016">16</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a9a09e6327690b37a50cada8c501ae258"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_ERLANG_NS&#160;&#160;&#160;XapianErlang</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00002">2</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="af115ee557ce829e9be0a2904941ea66c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_ERLANG_NS_BEGIN&#160;&#160;&#160;namespace <a class="el" href="xapian__config_8h.html#a9a09e6327690b37a50cada8c501ae258">XAPIAN_ERLANG_NS</a> {</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00003">3</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
 
 </div>
 </div>
@@ -122,14 +269,182 @@ Macros</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00003">3</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00004">4</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a4ab6e622fca6742c2e0b28de440ae6c1"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_EXT_NS_BEGIN&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a> namespace Extension {</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00027">27</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a072d924fbe1c3cef4101603caee3517d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_EXT_NS_END&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a> }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00028">28</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="af5ff286a3baee81750d5eb2e6f38d304"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_QP_GEN_NS_BEGIN&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">XAPIAN_TERM_GEN_NS_BEGIN</a> namespace <a class="el" href="classQueryParser.html">QueryParser</a> {</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00021">21</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a950c4c906331ee200b38f1255ac2d5e1"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_QP_GEN_NS_END&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">XAPIAN_TERM_GEN_NS_END</a> }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00022">22</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="afd27e6cef564cbf3d7cd6a0b9bd87df2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_RESOURCE_CTRL_NS_BEGIN&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a732c75b4c7edfa0b41bf7b142090f5e2">XAPIAN_RESOURCE_NS_BEGIN</a> namespace Controller {</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00009">9</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a376e89776b5f45a9043dacce1b533f59"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_RESOURCE_CTRL_NS_END&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a04d561ad3e7ebabbd3bee6e9ffdeba47">XAPIAN_RESOURCE_NS_END</a> }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00010">10</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a732c75b4c7edfa0b41bf7b142090f5e2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_RESOURCE_NS_BEGIN&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a> namespace Resource {</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00006">6</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a04d561ad3e7ebabbd3bee6e9ffdeba47"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_RESOURCE_NS_END&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a> }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00007">7</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a6f3cedcf1c9c514b140b9abc094fff58"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_TERM_GEN_NS_BEGIN&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a> namespace TermGenerator {</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00012">12</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a98ef210f676a353db649a7b0a6ce1e51"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_TERM_GEN_NS_END&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a> }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00013">13</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ac64672c46413e0dd263771134503c3be"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_VC_SPY_GEN_NS_BEGIN&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a6f3cedcf1c9c514b140b9abc094fff58">XAPIAN_TERM_GEN_NS_BEGIN</a> namespace <a class="el" href="classValueCountMatchSpy.html">ValueCountMatchSpy</a> {</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00024">24</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="adf8b91c88a3d8db1288c8a8c20237169"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define XAPIAN_VC_SPY_GEN_NS_END&#160;&#160;&#160;<a class="el" href="xapian__config_8h.html#a98ef210f676a353db649a7b0a6ce1e51">XAPIAN_TERM_GEN_NS_END</a> }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="xapian__config_8h_source.html#l00025">25</a> of file <a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>.</p>
 
 </div>
 </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:11 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:30 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

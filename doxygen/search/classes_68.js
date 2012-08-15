@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['helltermposition',['HellTermPosition',['../classHellTermPosition.html',1,'']]]
+  ['helpers',['Helpers',['../classHelpers.html',1,'']]]
 ];

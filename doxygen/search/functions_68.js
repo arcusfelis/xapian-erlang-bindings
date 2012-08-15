@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['handleposting',['handlePosting',['../classDriver.html#a9dea30cf534ef36d04c63c1aaca8f15f',1,'Driver']]],
-  ['handleterm',['handleTerm',['../classDriver.html#afe235a0cb148a90b7862452a15b7e817',1,'Driver']]],
-  ['handlevalue',['handleValue',['../classDriver.html#abd69051e33f3f80c33ceea2bcaaedc8c',1,'Driver']]],
-  ['helltermposition',['HellTermPosition',['../classHellTermPosition.html#ae2c02b5fcaf4068dedf223106d62199c',1,'HellTermPosition']]]
+  ['handlecommand',['handleCommand',['../classDriver.html#ac35f2bb0d3e85da6783f51a9a1cf2069',1,'Driver']]],
+  ['handleposting',['handlePosting',['../classDriver.html#a4055fd56c9e2911f36a93fd7c87d6c36',1,'Driver']]],
+  ['handlespelling',['handleSpelling',['../classDriver.html#ad03e65e282e722070961f77d06aab3f0',1,'Driver']]],
+  ['handleterm',['handleTerm',['../classDriver.html#ac3c89929c79c4c85602f4e5b04d22d10',1,'Driver']]],
+  ['handlevalue',['handleValue',['../classDriver.html#ace296d5d74a3dd5746eb557f4f20d290',1,'Driver']]]
 ];

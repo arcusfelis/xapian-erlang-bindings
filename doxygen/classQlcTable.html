@@ -84,21 +84,23 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a>  </div>
+<a href="#pro-attribs">Protected Attributes</a> &#124;
+<a href="#pri-attribs">Private Attributes</a>  </div>
   <div class="headertitle">
 <div class="title">QlcTable Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="qlc_8h_source.html">qlc.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for QlcTable:</div>
 <div class="dyncontent">
  <div class="center">
   <img src="classQlcTable.png" usemap="#QlcTable_map" alt=""/>
   <map id="QlcTable_map" name="QlcTable_map">
-<area href="classMSetQlcTable.html" alt="MSetQlcTable" shape="rect" coords="0,56,92,80"/>
-<area href="classTermQlcTable.html" alt="TermQlcTable" shape="rect" coords="102,56,194,80"/>
+<area href="classBase.html" alt="Base" shape="rect" coords="51,0,143,24"/>
+<area href="classMSetQlcTable.html" alt="MSetQlcTable" shape="rect" coords="0,112,92,136"/>
+<area href="classTermQlcTable.html" alt="TermQlcTable" shape="rect" coords="102,112,194,136"/>
 </map>
  </div></div>
 
@@ -108,9 +110,38 @@ Inheritance diagram for QlcTable:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a7c5ca1919a9e5add6d9783573fe22822"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a7c5ca1919a9e5add6d9783573fe22822">QlcTable</a> (<a class="el" href="classDriver.html">Driver</a> &amp;driver)</td></tr>
 <tr class="memitem:ad6ab27cc97c264bac45184717de3446d"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#ad6ab27cc97c264bac45184717de3446d">~QlcTable</a> ()</td></tr>
-<tr class="memitem:a954228c2c3457a1ace25158d2310b9da"><td class="memItemLeft" align="right" valign="top">virtual uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a954228c2c3457a1ace25158d2310b9da">numOfObjects</a> ()=0</td></tr>
-<tr class="memitem:a06a2baa10d95cd25d8cdd011122a29ae"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a06a2baa10d95cd25d8cdd011122a29ae">getPage</a> (uint32_t from, uint32_t count)=0</td></tr>
-<tr class="memitem:a40b1be712b37917eff1d1e33241de686"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a40b1be712b37917eff1d1e33241de686">lookup</a> (<a class="el" href="classParamDecoder.html">ParamDecoder</a> &amp;driver_params)=0</td></tr>
+<tr class="memitem:a331529d1b65c29b605420783e090e7ce"><td class="memItemLeft" align="right" valign="top">virtual uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a331529d1b65c29b605420783e090e7ce">size</a> ()=0</td></tr>
+<tr class="memitem:a082afcadd1e73ad100ca150fb8820265"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a082afcadd1e73ad100ca150fb8820265">getPage</a> (<a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;, uint32_t from, uint32_t count)=0</td></tr>
+<tr class="memitem:a7df74186a1df0078cf6bede8b2f04572"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a7df74186a1df0078cf6bede8b2f04572">lookup</a> (<a class="el" href="xapian__config_8h.html#a088f4c3612d1ab1c9f6f139234ae533b">PR</a>)=0</td></tr>
+<tr class="memitem:af72979243d0b14ce71f2a6385e9a2e35"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#af72979243d0b14ce71f2a6385e9a2e35">QlcTable</a> (XAPIAN_ERLANG_NS::QlcTable *p_table)</td></tr>
+<tr class="memitem:ad6ab27cc97c264bac45184717de3446d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#ad6ab27cc97c264bac45184717de3446d">~QlcTable</a> ()</td></tr>
+<tr class="memitem:ac30025aa0e3c245cf8f9c0ce362e62a5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#ac30025aa0e3c245cf8f9c0ce362e62a5">operator XAPIAN_ERLANG_NS::QlcTable &amp;</a> ()</td></tr>
+<tr class="memitem:a0120f656b8fe1e81a5a40af95c6c617d"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a0120f656b8fe1e81a5a40af95c6c617d">type</a> ()</td></tr>
+<tr class="inherit_header pub_methods_classBase"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classBase')"><img src="closed.png" alt="-"/>&nbsp;Public Member Functions inherited from <a class="el" href="classBase.html">Base</a></td></tr>
+<tr class="memitem:a5ffe0568374d8b9b4c4ec32953fd6453 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a5ffe0568374d8b9b4c4ec32953fd6453">Base</a> ()</td></tr>
+<tr class="memitem:a9c3e236ef414e648e48e250a3e43a880 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a9c3e236ef414e648e48e250a3e43a880">~Base</a> ()</td></tr>
+<tr class="memitem:acea092c1284309796c535e8d6c8e95f0 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#acea092c1284309796c535e8d6c8e95f0">incref</a> ()</td></tr>
+<tr class="memitem:a49d5c1a23e2bfb130a9ada4a64cf8746 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a49d5c1a23e2bfb130a9ada4a64cf8746">decref</a> ()</td></tr>
+<tr class="memitem:a31fd9f9cf8718597a4da947c4970446f inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a31fd9f9cf8718597a4da947c4970446f">attach</a> (<a class="el" href="classElement.html">Element</a> &amp;child)</td></tr>
+<tr class="memitem:aa572f66735b150cbdb157a53b9c09c60 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#aa572f66735b150cbdb157a53b9c09c60">attachContext</a> (<a class="el" href="classElement.html">Element</a> &amp;context)</td></tr>
+<tr class="memitem:a23c34c0ec1a22ca6d201c0ec44224623 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a23c34c0ec1a22ca6d201c0ec44224623">operator Xapian::MSet &amp;</a> ()</td></tr>
+<tr class="memitem:a37a12c7a2c2d6d47320a8780fdcf2fac inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a37a12c7a2c2d6d47320a8780fdcf2fac">operator Xapian::KeyMaker &amp;</a> ()</td></tr>
+<tr class="memitem:a4572eb2bd3ab4a731f992105c79b7652 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a4572eb2bd3ab4a731f992105c79b7652">operator Xapian::Enquire &amp;</a> ()</td></tr>
+<tr class="memitem:a4c331023a7c2afcabcf689064a5ac2cb inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a4c331023a7c2afcabcf689064a5ac2cb">operator QlcTable &amp;</a> ()</td></tr>
+<tr class="memitem:a20fb8ee648c45b01f5fad025ec563ceb inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a20fb8ee648c45b01f5fad025ec563ceb">operator Xapian::Weight &amp;</a> ()</td></tr>
+<tr class="memitem:a5b757ca0d2689e527ad0ea6148f3b809 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a5b757ca0d2689e527ad0ea6148f3b809">operator Xapian::Query &amp;</a> ()</td></tr>
+<tr class="memitem:ac3f5731995c121e4a8ed38203ee858d9 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#ac3f5731995c121e4a8ed38203ee858d9">operator Xapian::MatchDecider &amp;</a> ()</td></tr>
+<tr class="memitem:ab6a4a1d9ea073914f1e93d6567df15df inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#ab6a4a1d9ea073914f1e93d6567df15df">operator Xapian::ExpandDecider &amp;</a> ()</td></tr>
+<tr class="memitem:a97077713effa5047ce64d2dc4399150f inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a97077713effa5047ce64d2dc4399150f">operator Xapian::ValueRangeProcessor &amp;</a> ()</td></tr>
+<tr class="memitem:a17e08bc881a20dad2b362c764edab126 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a17e08bc881a20dad2b362c764edab126">operator Xapian::QueryParser &amp;</a> ()</td></tr>
+<tr class="memitem:aa1c778f1f57dbeb9bf81252843174418 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#aa1c778f1f57dbeb9bf81252843174418">operator Xapian::Stopper &amp;</a> ()</td></tr>
+<tr class="memitem:a25228ed807b04fc40c45f3004c826253 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a25228ed807b04fc40c45f3004c826253">operator Xapian::Stem &amp;</a> ()</td></tr>
+<tr class="memitem:a0e3904f83a13a4408f821d122e9e71c4 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a0e3904f83a13a4408f821d122e9e71c4">operator Xapian::ValueCountMatchSpy &amp;</a> ()</td></tr>
+<tr class="memitem:a533e3ed3fade1f1681fd5369831879ee inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a533e3ed3fade1f1681fd5369831879ee">operator Xapian::MatchSpy &amp;</a> ()</td></tr>
+<tr class="memitem:ab422f9d8a5a959f3bc70af46e0163a6b inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#ab422f9d8a5a959f3bc70af46e0163a6b">operator Xapian::Document &amp;</a> ()</td></tr>
+<tr class="memitem:aaf780152359c57e3f765c4ebd26b9d2b inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#aaf780152359c57e3f765c4ebd26b9d2b">operator Extension::ValueCountMatchSpy &amp;</a> ()</td></tr>
+<tr class="memitem:aec479b36be200be46f34a0c1a3ed0163 inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#aec479b36be200be46f34a0c1a3ed0163">finalize</a> ()</td></tr>
+<tr class="memitem:a2c9c304a398091f428cd5760c412101e inherit pub_methods_classBase"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBase.html#a2c9c304a398091f428cd5760c412101e">is_finalized</a> ()</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -122,10 +153,15 @@ Static Public Attributes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
 <tr class="memitem:a0d7663daaad3cede4497a752ad233e48"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classDriver.html">Driver</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a0d7663daaad3cede4497a752ad233e48">m_driver</a></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2><a name="pri-attribs"></a>
+Private Attributes</h2></td></tr>
+<tr class="memitem:a4a165ee79be797bd1bce346d2218c2f1"><td class="memItemLeft" align="right" valign="top">XAPIAN_ERLANG_NS::QlcTable *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQlcTable.html#a4a165ee79be797bd1bce346d2218c2f1">mp_table</a></td></tr>
 </table>
 <hr/><a name="details" id="details"></a><h2>Detailed Description</h2>
-<div class="textblock">
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00028">28</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<div class="textblock"><p>QLCTables provide data for QLC. QLC is an Erlang interface for iteration trough a set of objects. </p>
+
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00039">39</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 </div><hr/><h2>Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a7c5ca1919a9e5add6d9783573fe22822"></a>
 <div class="memitem">
@@ -141,7 +177,7 @@ Protected Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00014">14</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00015">15</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
 
 </div>
 </div>
@@ -165,13 +201,67 @@ Protected Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>It is virtual, because other methods are virtual. </p>
 
-<p>Definition at line <a class="el" href="qlc__table_8cpp_source.html#l00018">18</a> of file <a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8cpp_source.html#l00019">19</a> of file <a class="el" href="qlc_8cpp_source.html">qlc.cpp</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="af72979243d0b14ce71f2a6385e9a2e35"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QlcTable::QlcTable </td>
+          <td>(</td>
+          <td class="paramtype">XAPIAN_ERLANG_NS::QlcTable *&#160;</td>
+          <td class="paramname"><em>p_table</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00016">16</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ad6ab27cc97c264bac45184717de3446d"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">QlcTable::~QlcTable </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00017">17</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+
+<p>References <a class="el" href="qlc__table_8h_source.html#l00013">mp_table</a>.</p>
 
 </div>
 </div>
 <hr/><h2>Member Function Documentation</h2>
-<a class="anchor" id="a06a2baa10d95cd25d8cdd011122a29ae"></a>
+<a class="anchor" id="a082afcadd1e73ad100ca150fb8820265"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -181,6 +271,12 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname">virtual void QlcTable::getPage </td>
           <td>(</td>
+          <td class="paramtype"><a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">uint32_t&#160;</td>
           <td class="paramname"><em>from</em>, </td>
         </tr>
@@ -202,14 +298,15 @@ Protected Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>It allows paganation. </p>
 
-<p>Implemented in <a class="el" href="classTermQlcTable.html#a5ce2ce86289a3e57f254e720cdd48e6d">TermQlcTable</a>, and <a class="el" href="classMSetQlcTable.html#aad6a8775f92ca66ac162dd21aa5fe3e7">MSetQlcTable</a>.</p>
+<p>Implemented in <a class="el" href="classTermQlcTable.html#a3d047351bb7f76605cbe467cf7d0a6f3">TermQlcTable</a>, and <a class="el" href="classMSetQlcTable.html#ae5647cb08c94c44387edcf714949838e">MSetQlcTable</a>.</p>
 
-<p>Referenced by <a class="el" href="xapian__core_8cpp_source.html#l00614">Driver::qlcNext()</a>.</p>
+<p>Referenced by <a class="el" href="xapian__core_8cpp_source.html#l00907">Driver::qlcNext()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a40b1be712b37917eff1d1e33241de686"></a>
+<a class="anchor" id="a7df74186a1df0078cf6bede8b2f04572"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -219,8 +316,8 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname">virtual void QlcTable::lookup </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classParamDecoder.html">ParamDecoder</a> &amp;&#160;</td>
-          <td class="paramname"><em>driver_params</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="xapian__config_8h.html#a088f4c3612d1ab1c9f6f139234ae533b">PR</a>&#160;</td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -230,14 +327,15 @@ Protected Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Select objects by a key (by an index). </p>
 
-<p>Implemented in <a class="el" href="classTermQlcTable.html#aa15a7254e7048fc7aa277b1781004173">TermQlcTable</a>, and <a class="el" href="classMSetQlcTable.html#a4f6e88bddefbbb306c984a4ab6cd3680">MSetQlcTable</a>.</p>
+<p>Implemented in <a class="el" href="classTermQlcTable.html#a7607a52303efb99e0564834dc66f4be2">TermQlcTable</a>, and <a class="el" href="classMSetQlcTable.html#a302a9c8fdedf02d4e0c6d43a599163ee">MSetQlcTable</a>.</p>
 
-<p>Referenced by <a class="el" href="xapian__core_8cpp_source.html#l00627">Driver::qlcLookup()</a>.</p>
+<p>Referenced by <a class="el" href="xapian__core_8cpp_source.html#l00917">Driver::qlcLookup()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a954228c2c3457a1ace25158d2310b9da"></a>
+<a class="anchor" id="ac30025aa0e3c245cf8f9c0ce362e62a5"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -245,7 +343,34 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual uint32_t QlcTable::numOfObjects </td>
+          <td class="memname">QlcTable::operator XAPIAN_ERLANG_NS::QlcTable &amp; </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00019">19</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+
+<p>References <a class="el" href="qlc__table_8h_source.html#l00013">mp_table</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a331529d1b65c29b605420783e090e7ce"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual uint32_t QlcTable::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -257,8 +382,38 @@ Protected Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>It counts the total count of objects in the set (in the table). </p>
 
-<p>Implemented in <a class="el" href="classTermQlcTable.html#a27a6673a0aa3a268d408b2cc9680c9c1">TermQlcTable</a>, and <a class="el" href="classMSetQlcTable.html#adf0ccb1f8259908149566a0a627625e4">MSetQlcTable</a>.</p>
+<p>Implemented in <a class="el" href="classTermQlcTable.html#a4fb67fe90ccdb057ee739b9a0ca713f7">TermQlcTable</a>, and <a class="el" href="classMSetQlcTable.html#a487c194120a549beb44b2d70f2f89bf3">MSetQlcTable</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a0120f656b8fe1e81a5a40af95c6c617d"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string QlcTable::type </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classBase.html#a88ad92427e4fe0973cdbfe329e7b9cd8">Base</a>.</p>
+
+<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00024">24</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+
+<p>Referenced by <a class="el" href="xapian__exception_8cpp_source.html#l00019">DriverRuntimeError::DriverRuntimeError()</a>.</p>
 
 </div>
 </div>
@@ -281,9 +436,9 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00037">37</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00059">59</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00192">TermQlcTable::getPageKnownSize()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00230">TermQlcTable::getPageKnownSize()</a>.</p>
 
 </div>
 </div>
@@ -305,9 +460,9 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00032">32</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00043">43</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00044">MSetQlcTable::getPage()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00192">TermQlcTable::getPageKnownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00157">TermQlcTable::getPageUnknownSize()</a>, <a class="el" href="qlc__table_8cpp_source.html#l00073">MSetQlcTable::lookup()</a>, and <a class="el" href="qlc__table_8cpp_source.html#l00141">TermQlcTable::lookup()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00045">MSetQlcTable::getPage()</a>, <a class="el" href="qlc_8cpp_source.html#l00230">TermQlcTable::getPageKnownSize()</a>, <a class="el" href="qlc_8cpp_source.html#l00194">TermQlcTable::getPageUnknownSize()</a>, and <a class="el" href="qlc_8cpp_source.html#l00073">MSetQlcTable::lookup()</a>.</p>
 
 </div>
 </div>
@@ -328,10 +483,35 @@ Protected Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Flags, that signal about the end of the list. </p>
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00036">36</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00049">49</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00157">TermQlcTable::getPageUnknownSize()</a>, and <a class="el" href="qlc__table_8cpp_source.html#l00073">MSetQlcTable::lookup()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00194">TermQlcTable::getPageUnknownSize()</a>, and <a class="el" href="qlc_8cpp_source.html#l00073">MSetQlcTable::lookup()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a4a165ee79be797bd1bce346d2218c2f1"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">XAPIAN_ERLANG_NS::QlcTable* QlcTable::mp_table</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00013">13</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+
+<p>Referenced by <a class="el" href="qlc__table_8h_source.html#l00019">operator XAPIAN_ERLANG_NS::QlcTable &amp;()</a>, and <a class="el" href="qlc__table_8h_source.html#l00017">~QlcTable()</a>.</p>
 
 </div>
 </div>
@@ -353,9 +533,9 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00036">36</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00049">49</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00157">TermQlcTable::getPageUnknownSize()</a>, and <a class="el" href="qlc__table_8cpp_source.html#l00073">MSetQlcTable::lookup()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00194">TermQlcTable::getPageUnknownSize()</a>, and <a class="el" href="qlc_8cpp_source.html#l00073">MSetQlcTable::lookup()</a>.</p>
 
 </div>
 </div>
@@ -376,21 +556,27 @@ Protected Attributes</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Objects can use 2 encoding schemas:</p>
+<ul>
+<li>With known size: Objects are coded as <code>Size(3) Obj1 Obj2 Obj3</code>;</li>
+<li>With unknown size: Objects are coded as <code>Obj1 MORE Obj2 MORE Obj3 STOP</code>. </li>
+</ul>
 
-<p>Definition at line <a class="el" href="qlc__table_8h_source.html#l00037">37</a> of file <a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>.</p>
+<p>Definition at line <a class="el" href="qlc_8h_source.html#l00059">59</a> of file <a class="el" href="qlc_8h_source.html">qlc.h</a>.</p>
 
-<p>Referenced by <a class="el" href="qlc__table_8cpp_source.html#l00157">TermQlcTable::getPageUnknownSize()</a>.</p>
+<p>Referenced by <a class="el" href="qlc_8cpp_source.html#l00194">TermQlcTable::getPageUnknownSize()</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>c_src/<a class="el" href="qlc__table_8h_source.html">qlc_table.h</a></li>
-<li>c_src/<a class="el" href="qlc__table_8cpp_source.html">qlc_table.cpp</a></li>
+<li>c_src/common/<a class="el" href="qlc_8h_source.html">qlc.h</a></li>
+<li>c_src/common/resource/controller/<a class="el" href="qlc__table_8h_source.html">qlc_table.h</a></li>
+<li>c_src/common/<a class="el" href="qlc_8cpp_source.html">qlc.cpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:12 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:31 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

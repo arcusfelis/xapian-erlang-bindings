@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['hash',['Hash',['../classObjectRegister.html#a8d97ce41847c9c00c96961c529980fb3',1,'ObjectRegister']]]
+  ['hash',['Hash',['../classRegister.html#a81ba898ba7c72c0d44e74986a1a12976',1,'Register']]]
 ];

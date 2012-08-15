@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>Xapian Erlang Binding: c_src/xapian_core.cpp File Reference</title>
+<title>Xapian Erlang Binding: c_src/common/xapian_core.cpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -79,13 +79,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li><li class="navelem"><a class="el" href="dir_34530ba5038879b0547f25c62bbad39e.html">common</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
-  <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">xapian_core.cpp File Reference</div>  </div>
 </div><!--header-->
@@ -94,49 +91,18 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <code>#include &quot;<a class="el" href="param__decoder__controller_8h_source.html">param_decoder_controller.h</a>&quot;</code><br/>
 <code>#include &quot;<a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>&quot;</code><br/>
 <code>#include &quot;<a class="el" href="xapian__exception_8h_source.html">xapian_exception.h</a>&quot;</code><br/>
-<code>#include &quot;<a class="el" href="qlc__table_8h_source.html">qlc_table.h</a>&quot;</code><br/>
-<code>#include &quot;<a class="el" href="object__register_8h_source.html">object_register.h</a>&quot;</code><br/>
-<code>#include &quot;<a class="el" href="user__resources_8h_source.html">user_resources.h</a>&quot;</code><br/>
-<code>#include &quot;<a class="el" href="spy__ctrl_8h_source.html">spy_ctrl.h</a>&quot;</code><br/>
-<code>#include &quot;<a class="el" href="termiter__doc__gen_8h_source.html">termiter_doc_gen.h</a>&quot;</code><br/>
+<code>#include &quot;<a class="el" href="xapian__helpers_8h_source.html">xapian_helpers.h</a>&quot;</code><br/>
+<code>#include &quot;<a class="el" href="qlc_8h_source.html">qlc.h</a>&quot;</code><br/>
+<code>#include &quot;<a class="el" href="extension_2value__count__mspy_8h_source.html">extension/value_count_mspy.h</a>&quot;</code><br/>
 <code>#include &lt;assert.h&gt;</code><br/>
 <code>#include &lt;cstdlib&gt;</code><br/>
 <code>#include &quot;<a class="el" href="xapian__core_8h_source.html">xapian_core.h</a>&quot;</code><br/>
-<code>#include &quot;<a class="el" href="xapian__config_8h_source.html">xapian_config.h</a>&quot;</code><br/>
 </div>
 <p><a href="xapian__core_8cpp_source.html">Go to the source code of this file.</a></p>
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classHellTermPosition.html">HellTermPosition</a></td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2><a name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:af23122e210f270cc6bcd2144878c8bb0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a> <br class="typebreak"/>
-<a class="el" href="classResourceGenerator.html">ResourceGenerator</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="xapian__core_8cpp.html#af23122e210f270cc6bcd2144878c8bb0">gp_generator</a> = NULL</td></tr>
-</table>
-<hr/><h2>Variable Documentation</h2>
-<a class="anchor" id="af23122e210f270cc6bcd2144878c8bb0"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a> <a class="el" href="classResourceGenerator.html">ResourceGenerator</a>* gp_generator = NULL</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Prefix m_ (member) for properties means that property is private. </p>
-
-<p>Definition at line <a class="el" href="xapian__core_8cpp_source.html#l00040">40</a> of file <a class="el" href="xapian__core_8cpp_source.html">xapian_core.cpp</a>.</p>
-
-<p>Referenced by <a class="el" href="xapian__core_8cpp_source.html#l00099">Driver::finish()</a>.</p>
-
-</div>
-</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:11 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:30 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

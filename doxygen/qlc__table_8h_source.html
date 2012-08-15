@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>Xapian Erlang Binding: c_src/qlc_table.h Source File</title>
+<title>Xapian Erlang Binding: c_src/common/resource/controller/qlc_table.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -79,7 +79,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li><li class="navelem"><a class="el" href="dir_34530ba5038879b0547f25c62bbad39e.html">common</a></li><li class="navelem"><a class="el" href="dir_faccbe3dae8076e071ed52d4652f64ea.html">resource</a></li><li class="navelem"><a class="el" href="dir_beba0874790b84cbaec414835b9518eb.html">controller</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -87,118 +87,41 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="title">qlc_table.h</div>  </div>
 </div><!--header-->
 <div class="contents">
-<a href="qlc__table_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#ifndef QLC_TABLE_H</span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define QLC_TABLE_H</span></div>
+<a href="qlc__table_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#ifndef QLC_TABLE_RCTRL_H</span></div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define QLC_TABLE_RCTRL_H</span></div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="param__decoder_8h.html">param_decoder.h</a>&quot;</span></div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="param__decoder__controller_8h.html">param_decoder_controller.h</a>&quot;</span></div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="base_8h.html">resource/controller/base.h</a>&quot;</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="qlc_8h.html">qlc.h</a>&quot;</span></div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &lt;xapian.h&gt;</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="preprocessor">#include &lt;cstring&gt;</span></div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="termiter__gen_8h.html">termiter_gen.h</a>&quot;</span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="xapian__config_8h.html">xapian_config.h</a>&quot;</span></div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<a class="code" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a></div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="xapian__config_8h.html">xapian_config.h</a>&quot;</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;</div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<a class="code" href="xapian__config_8h.html#afd27e6cef564cbf3d7cd6a0b9bd87df2">XAPIAN_RESOURCE_CTRL_NS_BEGIN</a></div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;</div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="keyword">class </span><a class="code" href="classQlcTable.html">QlcTable</a> : <span class="keyword">public</span> <a class="code" href="classBase.html">Base</a></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;{</div>
+<div class="line"><a name="l00013"></a><span class="lineno"><a class="code" href="classQlcTable.html#a4a165ee79be797bd1bce346d2218c2f1">   13</a></span>&#160;    XAPIAN_ERLANG_NS::QlcTable* <a class="code" href="classQlcTable.html#a4a165ee79be797bd1bce346d2218c2f1">mp_table</a>;</div>
 <div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="keyword">class </span><a class="code" href="classDriver.html">Driver</a>;</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;</div>
-<div class="line"><a name="l00017"></a><span class="lineno"><a class="code" href="classQlcType.html">   17</a></span>&#160;<span class="keyword">class </span><a class="code" href="classQlcType.html">QlcType</a></div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;{</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00020"></a><span class="lineno"><a class="code" href="classQlcType.html#aa1abde9fd08dd0ea62c490b1536296b9">   20</a></span>&#160;    <span class="keyword">enum</span> <a class="code" href="classQlcType.html#aa1abde9fd08dd0ea62c490b1536296b9">QlcValidObjectType</a></div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;    {</div>
-<div class="line"><a name="l00022"></a><span class="lineno"><a class="code" href="classQlcType.html#aa1abde9fd08dd0ea62c490b1536296b9a7b16ee6706d1b6abcf85383cf1d163c4">   22</a></span>&#160;        <a class="code" href="classQlcType.html#aa1abde9fd08dd0ea62c490b1536296b9a7b16ee6706d1b6abcf85383cf1d163c4">MSET</a>            = 0,</div>
-<div class="line"><a name="l00023"></a><span class="lineno"><a class="code" href="classQlcType.html#aa1abde9fd08dd0ea62c490b1536296b9a7930f56eff2ff5289c851a8d68b178af">   23</a></span>&#160;        <a class="code" href="classQlcType.html#aa1abde9fd08dd0ea62c490b1536296b9a7930f56eff2ff5289c851a8d68b178af">TERMS</a>           = 1,</div>
-<div class="line"><a name="l00024"></a><span class="lineno"><a class="code" href="classQlcType.html#aa1abde9fd08dd0ea62c490b1536296b9afdb37e40ea6b26f5969eec7d9ea39718">   24</a></span>&#160;        <a class="code" href="classQlcType.html#aa1abde9fd08dd0ea62c490b1536296b9afdb37e40ea6b26f5969eec7d9ea39718">SPY_TERMS</a>       = 2</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    };</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;};</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
-<div class="line"><a name="l00028"></a><span class="lineno"><a class="code" href="classQlcTable.html">   28</a></span>&#160;<span class="keyword">class </span><a class="code" href="classQlcTable.html">QlcTable</a></div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;{</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00032"></a><span class="lineno"><a class="code" href="classQlcTable.html#a0d7663daaad3cede4497a752ad233e48">   32</a></span>&#160;    <a class="code" href="classDriver.html">Driver</a>&amp; <a class="code" href="classQlcTable.html#a0d7663daaad3cede4497a752ad233e48">m_driver</a>;</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    <span class="comment">// Flags, that signal about end of list.</span></div>
-<div class="line"><a name="l00036"></a><span class="lineno"><a class="code" href="classQlcTable.html#ad85851f1b12466523d7404fd963efded">   36</a></span>&#160;    <span class="keyword">static</span> <span class="keyword">const</span> uint8_t <a class="code" href="classQlcTable.html#ab41e900fa7f0b8e1202815a3f1ced253">MORE</a> = 1, <a class="code" href="classQlcTable.html#ad85851f1b12466523d7404fd963efded">STOP</a> = 0;</div>
-<div class="line"><a name="l00037"></a><span class="lineno"><a class="code" href="classQlcTable.html#accf52d680460c6f6804ddd3b2107b239">   37</a></span>&#160;    <span class="keyword">static</span> <span class="keyword">const</span> uint8_t <a class="code" href="classQlcTable.html#accf52d680460c6f6804ddd3b2107b239">UNKNOWN_SIZE</a> = 0, <a class="code" href="classQlcTable.html#a0621c3f2cdb78f92e111acedac52360e">KNOWN_SIZE</a> = 1;</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;    <a class="code" href="classQlcTable.html#a7c5ca1919a9e5add6d9783573fe22822">QlcTable</a>(<a class="code" href="classDriver.html">Driver</a>&amp; driver);</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    <span class="keyword">virtual</span></div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;    <a class="code" href="classQlcTable.html#ad6ab27cc97c264bac45184717de3446d">~QlcTable</a>();</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    </div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    <span class="keyword">virtual</span> uint32_t</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    <a class="code" href="classQlcTable.html#a954228c2c3457a1ace25158d2310b9da">numOfObjects</a>() = 0;</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <span class="keyword">virtual</span> <span class="keywordtype">void</span></div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;    <a class="code" href="classQlcTable.html#a06a2baa10d95cd25d8cdd011122a29ae">getPage</a>(uint32_t from, uint32_t count) = 0;</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    <span class="keyword">virtual</span> <span class="keywordtype">void</span></div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;    <a class="code" href="classQlcTable.html#a40b1be712b37917eff1d1e33241de686">lookup</a>(<a class="code" href="classParamDecoder.html">ParamDecoder</a>&amp; driver_params) = 0;</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;};</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
-<div class="line"><a name="l00055"></a><span class="lineno"><a class="code" href="classMSetQlcTable.html">   55</a></span>&#160;<span class="keyword">class </span><a class="code" href="classMSetQlcTable.html">MSetQlcTable</a> : <span class="keyword">public</span> <a class="code" href="classQlcTable.html">QlcTable</a></div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;{</div>
-<div class="line"><a name="l00057"></a><span class="lineno"><a class="code" href="classMSetQlcTable.html#a74c5297b9a0dd426a83bc8b7aa7001a9">   57</a></span>&#160;    Xapian::MSet <a class="code" href="classMSetQlcTable.html#a74c5297b9a0dd426a83bc8b7aa7001a9">m_mset</a>;</div>
-<div class="line"><a name="l00058"></a><span class="lineno"><a class="code" href="classMSetQlcTable.html#a5deea4891cb5d6bac7647567f57a4683">   58</a></span>&#160;    <span class="keyword">const</span> <a class="code" href="classParamDecoderController.html">ParamDecoderController</a> <a class="code" href="classMSetQlcTable.html#a5deea4891cb5d6bac7647567f57a4683">m_controller</a>;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    <a class="code" href="classMSetQlcTable.html#ae49bd4b02e25b7f5cfb1714341e80b48">MSetQlcTable</a>(<a class="code" href="classDriver.html">Driver</a>&amp; driver, </div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;        Xapian::MSet&amp; mset, <span class="keyword">const</span> <a class="code" href="classParamDecoderController.html">ParamDecoderController</a>&amp; controller);</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    uint32_t <a class="code" href="classMSetQlcTable.html#adf0ccb1f8259908149566a0a627625e4">numOfObjects</a>();</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classMSetQlcTable.html#aad6a8775f92ca66ac162dd21aa5fe3e7">getPage</a>(uint32_t from, uint32_t count);</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classMSetQlcTable.html#a4f6e88bddefbbb306c984a4ab6cd3680">lookup</a>(<a class="code" href="classParamDecoder.html">ParamDecoder</a>&amp; driver_params);</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;};</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
-<div class="line"><a name="l00072"></a><span class="lineno"><a class="code" href="classTermQlcTable.html">   72</a></span>&#160;<span class="keyword">class </span><a class="code" href="classTermQlcTable.html">TermQlcTable</a> : <span class="keyword">public</span> <a class="code" href="classQlcTable.html">QlcTable</a></div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;{</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="comment">// Don&#39;t change m_end value</span></div>
-<div class="line"><a name="l00075"></a><span class="lineno"><a class="code" href="classTermQlcTable.html#a5ae5fbae84c3f405a086253df7631f92">   75</a></span>&#160;    Xapian::TermIterator <a class="code" href="classTermQlcTable.html#a5ae5fbae84c3f405a086253df7631f92">m_iter</a>, <a class="code" href="classTermQlcTable.html#ad2082846acb9ec32585aa9dba29eb5a5">m_end</a>;</div>
-<div class="line"><a name="l00076"></a><span class="lineno"><a class="code" href="classTermQlcTable.html#a7036d00cca6efc85b4883a674963d5e5">   76</a></span>&#160;    <a class="code" href="classTermIteratorGenerator.html" title="Contains functions for iterator creation and retrieving information.">TermIteratorGenerator</a>* <a class="code" href="classTermQlcTable.html#a7036d00cca6efc85b4883a674963d5e5">mp_gen</a>;</div>
-<div class="line"><a name="l00077"></a><span class="lineno"><a class="code" href="classTermQlcTable.html#a1c116f288326b36eb93b777b70335c50">   77</a></span>&#160;    uint32_t <a class="code" href="classTermQlcTable.html#a3156fce874c4abcef9f0f0f62681a8f9">m_current_pos</a>, <a class="code" href="classTermQlcTable.html#a1c116f288326b36eb93b777b70335c50">m_size</a>;</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;    </div>
-<div class="line"><a name="l00079"></a><span class="lineno"><a class="code" href="classTermQlcTable.html#aafef54043649e701e44f3ebf10be4f90">   79</a></span>&#160;    <span class="keyword">const</span> <a class="code" href="classParamDecoderController.html">ParamDecoderController</a> <a class="code" href="classTermQlcTable.html#aafef54043649e701e44f3ebf10be4f90">m_controller</a>;</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;                     </div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    <a class="code" href="classTermQlcTable.html#ab62b323477465333dc203dbb8722ecc9">TermQlcTable</a>(<a class="code" href="classDriver.html">Driver</a>&amp; driver, </div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        <a class="code" href="classTermIteratorGenerator.html" title="Contains functions for iterator creation and retrieving information.">TermIteratorGenerator</a>* gen, </div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;        <span class="keyword">const</span> <a class="code" href="classParamDecoderController.html">ParamDecoderController</a>&amp; controller);</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;    </div>
-<div class="line"><a name="l00091"></a><span class="lineno"><a class="code" href="classTermQlcTable.html#a6a200a39fcb7e2677a960fa6c8745e31">   91</a></span>&#160;    <a class="code" href="classTermQlcTable.html#a6a200a39fcb7e2677a960fa6c8745e31">~TermQlcTable</a>() </div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;    {</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;        <span class="keyword">delete</span> <a class="code" href="classTermQlcTable.html#a7036d00cca6efc85b4883a674963d5e5">mp_gen</a>;</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    }</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;    uint32_t <a class="code" href="classTermQlcTable.html#a27a6673a0aa3a268d408b2cc9680c9c1">numOfObjects</a>();</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classTermQlcTable.html#a5ce2ce86289a3e57f254e720cdd48e6d">getPage</a>(uint32_t from, uint32_t count);</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classTermQlcTable.html#aa15a7254e7048fc7aa277b1781004173">lookup</a>(<a class="code" href="classParamDecoder.html">ParamDecoder</a>&amp; driver_params);</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    <span class="comment">// Helpers</span></div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    <span class="keyword">private</span>:</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classTermQlcTable.html#a493e9d1a5b87f4a0982939e9da27c735" title="Checks out of border.">goToAndCheckBorder</a>(<span class="keyword">const</span> uint32_t skip);</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classTermQlcTable.html#a95f78924848ed563fc1260355d7e0745">goTo</a>(<span class="keyword">const</span> uint32_t skip);</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classTermQlcTable.html#adf7a30c3fb0c6d14980da6792142e078">getPageKnownSize</a>(<span class="keyword">const</span> uint32_t skip, <span class="keyword">const</span> uint32_t count);</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classTermQlcTable.html#adc1c8cac7c25e1044b2a780b44a7cb53">getPageUnknownSize</a>(<span class="keyword">const</span> uint32_t skip, <span class="keyword">const</span> uint32_t count);</div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;};</div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;<a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a></div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00016"></a><span class="lineno"><a class="code" href="classQlcTable.html#af72979243d0b14ce71f2a6385e9a2e35">   16</a></span>&#160;    <a class="code" href="classQlcTable.html#af72979243d0b14ce71f2a6385e9a2e35">QlcTable</a>(XAPIAN_ERLANG_NS::QlcTable* p_table) : <a class="code" href="classQlcTable.html#a4a165ee79be797bd1bce346d2218c2f1">mp_table</a>(p_table) {}</div>
+<div class="line"><a name="l00017"></a><span class="lineno"><a class="code" href="classQlcTable.html#ad6ab27cc97c264bac45184717de3446d">   17</a></span>&#160;    <a class="code" href="classQlcTable.html#ad6ab27cc97c264bac45184717de3446d">~QlcTable</a>() { <span class="keyword">delete</span> <a class="code" href="classQlcTable.html#a4a165ee79be797bd1bce346d2218c2f1">mp_table</a>; }</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;</div>
+<div class="line"><a name="l00019"></a><span class="lineno"><a class="code" href="classQlcTable.html#ac30025aa0e3c245cf8f9c0ce362e62a5">   19</a></span>&#160;    <span class="keyword">operator</span> XAPIAN_ERLANG_NS::QlcTable&amp;()</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;    {</div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;        <span class="keywordflow">return</span> *<a class="code" href="classQlcTable.html#a4a165ee79be797bd1bce346d2218c2f1">mp_table</a>;</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    }</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;</div>
+<div class="line"><a name="l00024"></a><span class="lineno"><a class="code" href="classQlcTable.html#a0120f656b8fe1e81a5a40af95c6c617d">   24</a></span>&#160;    std::string <a class="code" href="classQlcTable.html#a0120f656b8fe1e81a5a40af95c6c617d">type</a>()</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;    {</div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;        <span class="keywordflow">return</span> <span class="stringliteral">&quot;Resource::QlcTable&quot;</span>;</div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;    }</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;};</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<a class="code" href="xapian__config_8h.html#a376e89776b5f45a9043dacce1b533f59">XAPIAN_RESOURCE_CTRL_NS_END</a></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:11 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:28 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

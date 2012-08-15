@@ -83,6 +83,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a>  </div>
   <div class="headertitle">
 <div class="title">ResultEncoder Class Reference</div>  </div>
@@ -95,11 +96,16 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af43bdd0b0af125cbca7ff9dd816f47bf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#af43bdd0b0af125cbca7ff9dd816f47bf">setBuffer</a> (char **rbuf, const size_t rlen)</td></tr>
-<tr class="memitem:a80b40b689012a55c78c1e94246de93a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structDataSegment.html">DataSegment</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a80b40b689012a55c78c1e94246de93a8">alloc</a> (size_t size)</td></tr>
+<tr class="memitem:a3deffb91d4218871560cf5b19d10eeac"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a3deffb91d4218871560cf5b19d10eeac">ResultEncoder</a> (<a class="el" href="classMemoryManager.html">MemoryManager</a> &amp;mm)</td></tr>
+<tr class="memitem:a02f1b2b0b557ffc17c00bb011d428d4d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a02f1b2b0b557ffc17c00bb011d428d4d">setBuffer</a> (char *rbuf, const size_t rlen)</td></tr>
+<tr class="memitem:ae2929610f2d024c90fb9d68d90512abf"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#ae2929610f2d024c90fb9d68d90512abf">ResultEncoder</a> (<a class="el" href="classMemoryManager.html">MemoryManager</a> &amp;mm, char *rbuf, const size_t rlen)</td></tr>
+<tr class="memitem:abef7bba8273a587fb95dbe912482cb87"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#abef7bba8273a587fb95dbe912482cb87">maybe</a> (bool is_exists)</td></tr>
 <tr class="memitem:a4f65526253e395144ba6158cc4669784"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a4f65526253e395144ba6158cc4669784">put</a> (const char *term, const size_t term_len)</td></tr>
-<tr class="memitem:a27c19af5e458b4cac880b2f2548b1488"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a27c19af5e458b4cac880b2f2548b1488">operator size_t</a> ()</td></tr>
+<tr class="memitem:aff902318572f9f7bc0fbc08a29064b44"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#aff902318572f9f7bc0fbc08a29064b44">finalize</a> (char *)</td></tr>
+<tr class="memitem:a700026ec2750fb1a3415cbcace72f3b8"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a700026ec2750fb1a3415cbcace72f3b8">finalSize</a> () const </td></tr>
+<tr class="memitem:a65f3b40dd00f820a1ffda8f3da78244a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a65f3b40dd00f820a1ffda8f3da78244a">isExtended</a> () const </td></tr>
 <tr class="memitem:a7806397c049e32072f477d3949670ce1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a7806397c049e32072f477d3949670ce1">clear</a> ()</td></tr>
+<tr class="memitem:a287322eb84a105adae72092e23a68423"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a287322eb84a105adae72092e23a68423">reset</a> ()</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Appends variables to the buffer.</div></td></tr>
 <tr class="memitem:a847943738509483350dd5ca5880cebea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a> (const std::string str)</td></tr>
 <tr class="memitem:afc6fd3d164ca2fd80dc520dbc2d79e7d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#afc6fd3d164ca2fd80dc520dbc2d79e7d">operator&lt;&lt;</a> (const char *str)</td></tr>
@@ -107,12 +113,17 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aeafe4f391506f5cff8ff56808eb9594c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#aeafe4f391506f5cff8ff56808eb9594c">operator&lt;&lt;</a> (uint8_t value)</td></tr>
 <tr class="memitem:a84abd0bd03c5e2d1bb60623134af4258"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classResultEncoder.html">ResultEncoder</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a84abd0bd03c5e2d1bb60623134af4258">operator&lt;&lt;</a> (double value)</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2><a name="pri-methods"></a>
+Private Member Functions</h2></td></tr>
+<tr class="memitem:a80b40b689012a55c78c1e94246de93a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structDataSegment.html">DataSegment</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a80b40b689012a55c78c1e94246de93a8">alloc</a> (size_t size)</td></tr>
+<tr class="memitem:a6710087913a6426b9aa94737e905a50c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a6710087913a6426b9aa94737e905a50c">free</a> (<a class="el" href="structDataSegment.html">DataSegment</a> *&amp;pos)</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:a0d475fd057e4b2b9a0d6cc4e4ebd7767"><td class="memItemLeft" align="right" valign="top">char **&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a0d475fd057e4b2b9a0d6cc4e4ebd7767">m_result_buf</a></td></tr>
-<tr class="memitem:a0fa6f94e310106b8d6a3a2d587b7c5c9"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a0fa6f94e310106b8d6a3a2d587b7c5c9">m_result_len</a></td></tr>
-<tr class="memitem:ad6ce691c904abf27f6a0373c64641828"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#ad6ce691c904abf27f6a0373c64641828">m_default_buf</a></td></tr>
+<tr class="memitem:ad276f77ebc6c26d79206cd5522c77578"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMemoryManager.html">MemoryManager</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#ad276f77ebc6c26d79206cd5522c77578">m_mm</a></td></tr>
 <tr class="memitem:a7b1f48e94b96dff472b594e33881425c"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a7b1f48e94b96dff472b594e33881425c">m_current_buf</a></td></tr>
+<tr class="memitem:a1a813dd4e165a79cd62788821d74ded8"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a1a813dd4e165a79cd62788821d74ded8">m_current_len</a></td></tr>
+<tr class="memitem:ad6ce691c904abf27f6a0373c64641828"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#ad6ce691c904abf27f6a0373c64641828">m_default_buf</a></td></tr>
 <tr class="memitem:a3145cd45ffc3a3cd8360078286be4965"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a3145cd45ffc3a3cd8360078286be4965">m_default_len</a></td></tr>
 <tr class="memitem:aff3492e4582bc11818f909cadd67e82a"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#aff3492e4582bc11818f909cadd67e82a">m_left_len</a></td></tr>
 <tr class="memitem:a1e615fb702208389c4db76d6f5bc526b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structDataSegment.html">DataSegment</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classResultEncoder.html#a1e615fb702208389c4db76d6f5bc526b">m_first_segment</a></td></tr>
@@ -121,11 +132,85 @@ Private Attributes</h2></td></tr>
 <hr/><a name="details" id="details"></a><h2>Detailed Description</h2>
 <div class="textblock"><p>If the driver wants to return data, it should return it in rbuf. When control is called, *rbuf points to a default buffer of rlen bytes, which can be used to return data. Data is returned different depending on the port control flags (those that are set with set_port_control_flags). </p>
 
-<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00024">24</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
-</div><hr/><h2>Member Function Documentation</h2>
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00027">27</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+</div><hr/><h2>Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="a3deffb91d4218871560cf5b19d10eeac"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">ResultEncoder::ResultEncoder </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMemoryManager.html">MemoryManager</a> &amp;&#160;</td>
+          <td class="paramname"><em>mm</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00066">66</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ae2929610f2d024c90fb9d68d90512abf"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">ResultEncoder::ResultEncoder </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMemoryManager.html">MemoryManager</a> &amp;&#160;</td>
+          <td class="paramname"><em>mm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>rbuf</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const size_t&#160;</td>
+          <td class="paramname"><em>rlen</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00076">76</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00055">setBuffer()</a>.</p>
+
+</div>
+</div>
+<hr/><h2>Member Function Documentation</h2>
 <a class="anchor" id="a80b40b689012a55c78c1e94246de93a8"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="structDataSegment.html">DataSegment</a> * ResultEncoder::alloc </td>
@@ -135,13 +220,19 @@ Private Attributes</h2></td></tr>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
+<p>Allocate a new data segment and return a pointer on it. </p>
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00112">112</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00113">113</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
 
-<p>References <a class="el" href="result__encoder_8cpp_source.html#l00033">SIZE_OF_SEGMENT</a>.</p>
+<p>References <a class="el" href="memory__manager_8cpp_source.html#l00008">MemoryManager::alloc()</a>, <a class="el" href="result__encoder_8h_source.html#l00030">m_mm</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00032">SIZE_OF_SEGMENT</a>.</p>
 
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>.</p>
 
 </div>
 </div>
@@ -159,29 +250,130 @@ Private Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Clear the state of the object. </p>
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00190">190</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00197">197</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
 
-<p>References <a class="el" href="result__encoder_8h_source.html#l00037">m_default_len</a>, <a class="el" href="result__encoder_8h_source.html#l00041">m_first_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00042">m_last_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00028">m_result_len</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00047">DataSegment::next</a>.</p>
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00123">free()</a>, <a class="el" href="result__encoder_8h_source.html#l00033">m_current_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00036">m_current_len</a>, <a class="el" href="result__encoder_8h_source.html#l00041">m_default_len</a>, <a class="el" href="result__encoder_8h_source.html#l00048">m_first_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00051">m_last_segment</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00046">DataSegment::next</a>.</p>
 
-<p>Referenced by <a class="el" href="xapian__core_8cpp_source.html#l01045">Driver::control()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00229">reset()</a>, and <a class="el" href="xapian__port_8cpp_source.html#l00068">run()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a27c19af5e458b4cac880b2f2548b1488"></a>
+<a class="anchor" id="aff902318572f9f7bc0fbc08a29064b44"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">ResultEncoder::operator size_t </td>
+          <td class="memname">void ResultEncoder::finalize </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>dest</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Returns result </p>
+<p>Merge all segments together. Data will be reseted. <em>buf</em> is used to copy data. </p>
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00217">217</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00256">256</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00050">DataSegment::data</a>, <a class="el" href="result__encoder_8cpp_source.html#l00123">free()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00241">isExtended()</a>, <a class="el" href="result__encoder_8h_source.html#l00033">m_current_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00036">m_current_len</a>, <a class="el" href="result__encoder_8h_source.html#l00039">m_default_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00041">m_default_len</a>, <a class="el" href="result__encoder_8h_source.html#l00048">m_first_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00051">m_last_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00044">m_left_len</a>, <a class="el" href="result__encoder_8cpp_source.html#l00046">DataSegment::next</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00048">DataSegment::size</a>.</p>
+
+<p>Referenced by <a class="el" href="xapian__drvctrl_8cpp_source.html#l00073">DriverController::control()</a>, and <a class="el" href="xapian__port_8cpp_source.html#l00068">run()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a700026ec2750fb1a3415cbcace72f3b8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t ResultEncoder::finalSize </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns the result's length. </p>
+
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00302">302</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+
+<p>References <a class="el" href="result__encoder_8h_source.html#l00036">m_current_len</a>.</p>
+
+<p>Referenced by <a class="el" href="xapian__drvctrl_8cpp_source.html#l00073">DriverController::control()</a>, and <a class="el" href="xapian__port_8cpp_source.html#l00068">run()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a6710087913a6426b9aa94737e905a50c"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ResultEncoder::free </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structDataSegment.html">DataSegment</a> *&amp;&#160;</td>
+          <td class="paramname"><em>pos</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Deallocate the data segment. </p>
+
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00123">123</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+
+<p>References <a class="el" href="memory__manager_8cpp_source.html#l00014">MemoryManager::free()</a>, and <a class="el" href="result__encoder_8h_source.html#l00030">m_mm</a>.</p>
+
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00197">clear()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00256">finalize()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a65f3b40dd00f820a1ffda8f3da78244a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ResultEncoder::isExtended </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns true, if the existed buffer is too small.</p>
+<p>Return true, if this class allocated memory. </p>
+
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00241">241</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+
+<p>References <a class="el" href="result__encoder_8h_source.html#l00036">m_current_len</a>, and <a class="el" href="result__encoder_8h_source.html#l00041">m_default_len</a>.</p>
+
+<p>Referenced by <a class="el" href="xapian__drvctrl_8cpp_source.html#l00073">DriverController::control()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00256">finalize()</a>, and <a class="el" href="xapian__port_8cpp_source.html#l00068">run()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="abef7bba8273a587fb95dbe912482cb87"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ResultEncoder::maybe </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>is_exists</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00307">307</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00036">PUT_VALUE</a>.</p>
 
 </div>
 </div>
@@ -199,9 +391,9 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00068">68</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00069">69</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
 
-<p>References <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00037">PUT_VALUE</a>.</p>
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00036">PUT_VALUE</a>.</p>
 
 </div>
 </div>
@@ -219,9 +411,9 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00078">78</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00079">79</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
 
-<p>References <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00037">PUT_VALUE</a>.</p>
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00036">PUT_VALUE</a>.</p>
 
 </div>
 </div>
@@ -239,9 +431,9 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00088">88</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00089">89</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
 
-<p>References <a class="el" href="result__encoder_8cpp_source.html#l00037">PUT_VALUE</a>.</p>
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00036">PUT_VALUE</a>.</p>
 
 </div>
 </div>
@@ -259,9 +451,9 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00096">96</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00097">97</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
 
-<p>References <a class="el" href="result__encoder_8cpp_source.html#l00037">PUT_VALUE</a>.</p>
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00036">PUT_VALUE</a>.</p>
 
 </div>
 </div>
@@ -279,9 +471,9 @@ Private Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00104">104</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00105">105</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
 
-<p>References <a class="el" href="result__encoder_8cpp_source.html#l00037">PUT_VALUE</a>.</p>
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00036">PUT_VALUE</a>.</p>
 
 </div>
 </div>
@@ -308,24 +500,44 @@ Private Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Copy termLen bytes from term. </p>
+<p>It is used by <code>&lt;&lt;</code> operators. Appends a block of data of size <em>term_len</em> to the result. </p>
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00126">126</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00131">131</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
 
-<p>References <a class="el" href="result__encoder_8cpp_source.html#l00112">alloc()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00051">DataSegment::data</a>, <a class="el" href="result__encoder_8h_source.html#l00034">m_current_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00031">m_default_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00037">m_default_len</a>, <a class="el" href="result__encoder_8h_source.html#l00041">m_first_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00042">m_last_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00038">m_left_len</a>, <a class="el" href="result__encoder_8h_source.html#l00028">m_result_len</a>, <a class="el" href="result__encoder_8cpp_source.html#l00047">DataSegment::next</a>, <a class="el" href="result__encoder_8cpp_source.html#l00030">RESERVED_LEN</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00049">DataSegment::size</a>.</p>
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00113">alloc()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00050">DataSegment::data</a>, <a class="el" href="result__encoder_8h_source.html#l00033">m_current_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00036">m_current_len</a>, <a class="el" href="result__encoder_8h_source.html#l00039">m_default_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00041">m_default_len</a>, <a class="el" href="result__encoder_8h_source.html#l00048">m_first_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00051">m_last_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00044">m_left_len</a>, <a class="el" href="result__encoder_8cpp_source.html#l00046">DataSegment::next</a>, <a class="el" href="result__encoder_8cpp_source.html#l00029">RESERVED_LEN</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00048">DataSegment::size</a>.</p>
 
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00068">operator&lt;&lt;()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00069">operator&lt;&lt;()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="af43bdd0b0af125cbca7ff9dd816f47bf"></a>
+<a class="anchor" id="a287322eb84a105adae72092e23a68423"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ResultEncoder::reset </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Reset to the state after the <a class="el" href="classResultEncoder.html#a02f1b2b0b557ffc17c00bb011d428d4d">setBuffer</a> call. </p>
+
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00229">229</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+
+<p>References <a class="el" href="result__encoder_8cpp_source.html#l00197">clear()</a>, <a class="el" href="result__encoder_8h_source.html#l00039">m_default_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00041">m_default_len</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00055">setBuffer()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a02f1b2b0b557ffc17c00bb011d428d4d"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void ResultEncoder::setBuffer </td>
           <td>(</td>
-          <td class="paramtype">char **&#160;</td>
+          <td class="paramtype">char *&#160;</td>
           <td class="paramname"><em>rbuf</em>, </td>
         </tr>
         <tr>
@@ -341,12 +553,13 @@ Private Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Set the internal pointer on the client-managed block of data. </p>
 
-<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00056">56</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8cpp_source.html#l00055">55</a> of file <a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a>.</p>
 
-<p>References <a class="el" href="result__encoder_8h_source.html#l00034">m_current_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00031">m_default_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00037">m_default_len</a>, <a class="el" href="result__encoder_8h_source.html#l00041">m_first_segment</a>, <a class="el" href="result__encoder_8h_source.html#l00038">m_left_len</a>, <a class="el" href="result__encoder_8h_source.html#l00027">m_result_buf</a>, and <a class="el" href="result__encoder_8h_source.html#l00028">m_result_len</a>.</p>
+<p>References <a class="el" href="result__encoder_8h_source.html#l00033">m_current_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00036">m_current_len</a>, <a class="el" href="result__encoder_8h_source.html#l00039">m_default_buf</a>, <a class="el" href="result__encoder_8h_source.html#l00041">m_default_len</a>, <a class="el" href="result__encoder_8h_source.html#l00048">m_first_segment</a>, and <a class="el" href="result__encoder_8h_source.html#l00044">m_left_len</a>.</p>
 
-<p>Referenced by <a class="el" href="xapian__core_8cpp_source.html#l01045">Driver::control()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00229">reset()</a>, <a class="el" href="result__encoder_8h_source.html#l00076">ResultEncoder()</a>, and <a class="el" href="xapian__port_8cpp_source.html#l00068">run()</a>.</p>
 
 </div>
 </div>
@@ -369,9 +582,33 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00034">34</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00033">33</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
 
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00056">setBuffer()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00197">clear()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00256">finalize()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00055">setBuffer()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a1a813dd4e165a79cd62788821d74ded8"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t ResultEncoder::m_current_len</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00036">36</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00197">clear()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00256">finalize()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00302">finalSize()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00241">isExtended()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00055">setBuffer()</a>.</p>
 
 </div>
 </div>
@@ -393,9 +630,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00031">31</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00039">39</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
 
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00056">setBuffer()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00256">finalize()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00229">reset()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00055">setBuffer()</a>.</p>
 
 </div>
 </div>
@@ -417,9 +654,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00037">37</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00041">41</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
 
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00190">clear()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00056">setBuffer()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00197">clear()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00256">finalize()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00241">isExtended()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00229">reset()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00055">setBuffer()</a>.</p>
 
 </div>
 </div>
@@ -441,9 +678,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00041">41</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00048">48</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
 
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00190">clear()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00056">setBuffer()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00197">clear()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00256">finalize()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00055">setBuffer()</a>.</p>
 
 </div>
 </div>
@@ -465,9 +702,9 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00042">42</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00051">51</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
 
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00190">clear()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00197">clear()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00256">finalize()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>.</p>
 
 </div>
 </div>
@@ -489,13 +726,13 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00038">38</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00044">44</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
 
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00056">setBuffer()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00256">finalize()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00131">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00055">setBuffer()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a0d475fd057e4b2b9a0d6cc4e4ebd7767"></a>
+<a class="anchor" id="ad276f77ebc6c26d79206cd5522c77578"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -503,7 +740,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">char** ResultEncoder::m_result_buf</td>
+          <td class="memname"><a class="el" href="classMemoryManager.html">MemoryManager</a>&amp; ResultEncoder::m_mm</td>
         </tr>
       </table>
   </td>
@@ -513,44 +750,20 @@ Private Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00027">27</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
+<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00030">30</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
 
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00056">setBuffer()</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a0fa6f94e310106b8d6a3a2d587b7c5c9"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">size_t ResultEncoder::m_result_len</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Definition at line <a class="el" href="result__encoder_8h_source.html#l00028">28</a> of file <a class="el" href="result__encoder_8h_source.html">result_encoder.h</a>.</p>
-
-<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00190">clear()</a>, <a class="el" href="result__encoder_8cpp_source.html#l00126">put()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00056">setBuffer()</a>.</p>
+<p>Referenced by <a class="el" href="result__encoder_8cpp_source.html#l00113">alloc()</a>, and <a class="el" href="result__encoder_8cpp_source.html#l00123">free()</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>c_src/<a class="el" href="result__encoder_8h_source.html">result_encoder.h</a></li>
-<li>c_src/<a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a></li>
+<li>c_src/common/<a class="el" href="result__encoder_8h_source.html">result_encoder.h</a></li>
+<li>c_src/common/<a class="el" href="result__encoder_8cpp_source.html">result_encoder.cpp</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:12 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:31 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

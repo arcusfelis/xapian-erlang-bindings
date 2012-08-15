@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>Xapian Erlang Binding: c_src/result_encoder.h Source File</title>
+<title>Xapian Erlang Binding: c_src/common/result_encoder.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -79,7 +79,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li><li class="navelem"><a class="el" href="dir_34530ba5038879b0547f25c62bbad39e.html">common</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -90,74 +90,101 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <a href="result__encoder_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#ifndef RESULT_ENCODER_H</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RESULT_ENCODER_H</span></div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &lt;stdint.h&gt;</span></div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="xapian__config_8h.html">xapian_config.h</a>&quot;</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<a class="code" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a></div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
-<div class="line"><a name="l00010"></a><span class="lineno"><a class="code" href="result__encoder_8h.html#aeb43c584506264cc58ee6ea3330ce91b">   10</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a> <a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>;</div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="keyword">struct </span><a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>;</div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">// External imports</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="preprocessor">#include &lt;stdint.h&gt;</span></div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;</div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="comment">// Internal imports</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="xapian__config_8h.html">xapian_config.h</a>&quot;</span></div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="memory__manager_8h.html">memory_manager.h</a>&quot;</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<a class="code" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a></div>
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="comment">// -------------------------------------------------------------------</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="comment">// Result encoder: appends variables to the buffer</span></div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="comment">// -------------------------------------------------------------------</span></div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;</div>
-<div class="line"><a name="l00024"></a><span class="lineno"><a class="code" href="classResultEncoder.html">   24</a></span>&#160;<span class="keyword">class </span><a class="code" href="classResultEncoder.html">ResultEncoder</a></div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;{</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    <span class="comment">/* Here will be a pointer on data after all operations */</span></div>
-<div class="line"><a name="l00027"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a0d475fd057e4b2b9a0d6cc4e4ebd7767">   27</a></span>&#160;    <span class="keywordtype">char</span>**  <a class="code" href="classResultEncoder.html#a0d475fd057e4b2b9a0d6cc4e4ebd7767">m_result_buf</a>;</div>
-<div class="line"><a name="l00028"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a0fa6f94e310106b8d6a3a2d587b7c5c9">   28</a></span>&#160;    <span class="keywordtype">size_t</span>  <a class="code" href="classResultEncoder.html#a0fa6f94e310106b8d6a3a2d587b7c5c9">m_result_len</a>;</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    <span class="comment">/* Preallocated */</span></div>
-<div class="line"><a name="l00031"></a><span class="lineno"><a class="code" href="classResultEncoder.html#ad6ce691c904abf27f6a0373c64641828">   31</a></span>&#160;    <span class="keywordtype">char</span>*   <a class="code" href="classResultEncoder.html#ad6ce691c904abf27f6a0373c64641828">m_default_buf</a>;</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    <span class="comment">/* Where to write now */</span></div>
-<div class="line"><a name="l00034"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a7b1f48e94b96dff472b594e33881425c">   34</a></span>&#160;    <span class="keywordtype">char</span>*   <a class="code" href="classResultEncoder.html#a7b1f48e94b96dff472b594e33881425c">m_current_buf</a>;</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    <span class="comment">/* Len of buffer, allocated by a port */</span></div>
-<div class="line"><a name="l00037"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a3145cd45ffc3a3cd8360078286be4965">   37</a></span>&#160;    <span class="keywordtype">size_t</span>  <a class="code" href="classResultEncoder.html#a3145cd45ffc3a3cd8360078286be4965">m_default_len</a>;</div>
-<div class="line"><a name="l00038"></a><span class="lineno"><a class="code" href="classResultEncoder.html#aff3492e4582bc11818f909cadd67e82a">   38</a></span>&#160;    <span class="keywordtype">size_t</span>  <a class="code" href="classResultEncoder.html#aff3492e4582bc11818f909cadd67e82a">m_left_len</a>;</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    <span class="comment">/* Next segment */</span></div>
-<div class="line"><a name="l00041"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a1e615fb702208389c4db76d6f5bc526b">   41</a></span>&#160;    <a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>* <a class="code" href="classResultEncoder.html#a1e615fb702208389c4db76d6f5bc526b">m_first_segment</a>;</div>
-<div class="line"><a name="l00042"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a162a84e5d024489614eddfca59dc0340">   42</a></span>&#160;    <a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>* <a class="code" href="classResultEncoder.html#a162a84e5d024489614eddfca59dc0340">m_last_segment</a>;</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00013"></a><span class="lineno"><a class="code" href="result__encoder_8h.html#aeb43c584506264cc58ee6ea3330ce91b">   13</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a> <a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>;</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="keyword">struct </span><a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>;</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="comment">// -------------------------------------------------------------------</span></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="comment">// Result encoder: appends variables to the buffer</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="comment">// -------------------------------------------------------------------</span></div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;</div>
+<div class="line"><a name="l00027"></a><span class="lineno"><a class="code" href="classResultEncoder.html">   27</a></span>&#160;<span class="keyword">class </span><a class="code" href="classResultEncoder.html">ResultEncoder</a></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;{</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    <span class="comment">/* It knows, how to allocate/deallocate memory. */</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno"><a class="code" href="classResultEncoder.html#ad276f77ebc6c26d79206cd5522c77578">   30</a></span>&#160;    <a class="code" href="classMemoryManager.html">MemoryManager</a>&amp; <a class="code" href="classResultEncoder.html#ad276f77ebc6c26d79206cd5522c77578">m_mm</a>;</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    <span class="comment">/* Where to write now */</span></div>
+<div class="line"><a name="l00033"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a7b1f48e94b96dff472b594e33881425c">   33</a></span>&#160;    <span class="keywordtype">char</span>*   <a class="code" href="classResultEncoder.html#a7b1f48e94b96dff472b594e33881425c">m_current_buf</a>;</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    <span class="comment">/* Current size of filled data in bytes */</span></div>
+<div class="line"><a name="l00036"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a1a813dd4e165a79cd62788821d74ded8">   36</a></span>&#160;    <span class="keywordtype">size_t</span>  <a class="code" href="classResultEncoder.html#a1a813dd4e165a79cd62788821d74ded8">m_current_len</a>;</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    <span class="comment">/* Preallocated */</span></div>
+<div class="line"><a name="l00039"></a><span class="lineno"><a class="code" href="classResultEncoder.html#ad6ce691c904abf27f6a0373c64641828">   39</a></span>&#160;    <span class="keywordtype">char</span>*   <a class="code" href="classResultEncoder.html#ad6ce691c904abf27f6a0373c64641828">m_default_buf</a>;</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    <span class="comment">/* Len of buffer, allocated by a port */</span></div>
+<div class="line"><a name="l00041"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a3145cd45ffc3a3cd8360078286be4965">   41</a></span>&#160;    <span class="keywordtype">size_t</span>  <a class="code" href="classResultEncoder.html#a3145cd45ffc3a3cd8360078286be4965">m_default_len</a>;</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    <span class="comment">/* How many bytes were allocated, but not used. */</span></div>
+<div class="line"><a name="l00044"></a><span class="lineno"><a class="code" href="classResultEncoder.html#aff3492e4582bc11818f909cadd67e82a">   44</a></span>&#160;    <span class="keywordtype">size_t</span>  <a class="code" href="classResultEncoder.html#aff3492e4582bc11818f909cadd67e82a">m_left_len</a>;</div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    <span class="keywordtype">void</span></div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <a class="code" href="classResultEncoder.html#af43bdd0b0af125cbca7ff9dd816f47bf">setBuffer</a>(<span class="keywordtype">char</span>** rbuf, <span class="keyword">const</span> <span class="keywordtype">size_t</span> rlen);</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(<span class="keyword">const</span> std::string str);</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    <span class="comment">/* Next segment */</span></div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <span class="comment">/* NULL, if no memory was allocated. */</span></div>
+<div class="line"><a name="l00048"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a1e615fb702208389c4db76d6f5bc526b">   48</a></span>&#160;    <a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>* <a class="code" href="classResultEncoder.html#a1e615fb702208389c4db76d6f5bc526b">m_first_segment</a>;</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    <span class="comment">/* Can has undefined value, if no memory was allocated. */</span></div>
+<div class="line"><a name="l00051"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a162a84e5d024489614eddfca59dc0340">   51</a></span>&#160;    <a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>* <a class="code" href="classResultEncoder.html#a162a84e5d024489614eddfca59dc0340">m_last_segment</a>;</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * str);</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(uint32_t value);</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    <a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>* </div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <a class="code" href="classResultEncoder.html#a80b40b689012a55c78c1e94246de93a8">alloc</a>(<span class="keywordtype">size_t</span> size);</div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(uint8_t value);</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(<span class="keywordtype">double</span> value);</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    <a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>* </div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    <a class="code" href="classResultEncoder.html#a80b40b689012a55c78c1e94246de93a8">alloc</a>(<span class="keywordtype">size_t</span> size);</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classResultEncoder.html#a6710087913a6426b9aa94737e905a50c">free</a>(<a class="code" href="structDataSegment.html" title="A structure with a variable length.">DataSegment</a>*&amp; pos);</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00066"></a><span class="lineno"><a class="code" href="classResultEncoder.html#a3deffb91d4218871560cf5b19d10eeac">   66</a></span>&#160;    <a class="code" href="classResultEncoder.html#a3deffb91d4218871560cf5b19d10eeac">ResultEncoder</a>(<a class="code" href="classMemoryManager.html">MemoryManager</a>&amp; mm) </div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;        : <a class="code" href="classResultEncoder.html#ad276f77ebc6c26d79206cd5522c77578">m_mm</a>(mm), <a class="code" href="classResultEncoder.html#a7b1f48e94b96dff472b594e33881425c">m_current_buf</a>(NULL)</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    {}</div>
 <div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classResultEncoder.html#a4f65526253e395144ba6158cc4669784">put</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* term, <span class="keyword">const</span> <span class="keywordtype">size_t</span> term_len);</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    <span class="keyword">operator</span> size_t();</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classResultEncoder.html#a7806397c049e32072f477d3949670ce1">clear</a>();</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;};</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;<a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a></div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    <span class="keywordtype">void</span></div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <a class="code" href="classResultEncoder.html#a02f1b2b0b557ffc17c00bb011d428d4d">setBuffer</a>(<span class="keywordtype">char</span>* rbuf, <span class="keyword">const</span> <span class="keywordtype">size_t</span> rlen);</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;</div>
+<div class="line"><a name="l00076"></a><span class="lineno"><a class="code" href="classResultEncoder.html#ae2929610f2d024c90fb9d68d90512abf">   76</a></span>&#160;    <a class="code" href="classResultEncoder.html#a3deffb91d4218871560cf5b19d10eeac">ResultEncoder</a>(<a class="code" href="classMemoryManager.html">MemoryManager</a>&amp; mm, <span class="keywordtype">char</span>* rbuf, <span class="keyword">const</span> <span class="keywordtype">size_t</span> rlen) </div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;        : <a class="code" href="classResultEncoder.html#ad276f77ebc6c26d79206cd5522c77578">m_mm</a>(mm)</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;    {</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;        <a class="code" href="classResultEncoder.html#a02f1b2b0b557ffc17c00bb011d428d4d">setBuffer</a>(rbuf, rlen);</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;    }</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(<span class="keyword">const</span> std::string str);</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> * str);</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(uint32_t value);</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(uint8_t value);</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    <a class="code" href="classResultEncoder.html">ResultEncoder</a>&amp; </div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;    <a class="code" href="classResultEncoder.html#a847943738509483350dd5ca5880cebea">operator&lt;&lt;</a>(<span class="keywordtype">double</span> value);</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classResultEncoder.html#abef7bba8273a587fb95dbe912482cb87">maybe</a>(<span class="keywordtype">bool</span> is_exists);</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classResultEncoder.html#a4f65526253e395144ba6158cc4669784">put</a>(<span class="keyword">const</span> <span class="keywordtype">char</span>* term, <span class="keyword">const</span> <span class="keywordtype">size_t</span> term_len);</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classResultEncoder.html#aff902318572f9f7bc0fbc08a29064b44">finalize</a>(<span class="keywordtype">char</span>*);</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classResultEncoder.html#a700026ec2750fb1a3415cbcace72f3b8">finalSize</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classResultEncoder.html#a65f3b40dd00f820a1ffda8f3da78244a">isExtended</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classResultEncoder.html#a7806397c049e32072f477d3949670ce1">clear</a>();</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classResultEncoder.html#a287322eb84a105adae72092e23a68423">reset</a>();</div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;};</div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;</div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;<a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a></div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:11 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:28 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>

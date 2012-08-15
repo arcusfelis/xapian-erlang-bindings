@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>Xapian Erlang Binding: c_src/param_decoder_controller.h Source File</title>
+<title>Xapian Erlang Binding: c_src/common/param_decoder_controller.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -79,7 +79,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_0fb97dd43959fc0896d7b78e5ef47194.html">c_src</a></li><li class="navelem"><a class="el" href="dir_34530ba5038879b0547f25c62bbad39e.html">common</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -90,36 +90,46 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <a href="param__decoder__controller_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#ifndef PARAM_DECODER_CONTROLLER_H</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define PARAM_DECODER_CONTROLLER_H</span></div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &lt;cstring&gt;</span></div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="param__decoder_8h.html">param_decoder.h</a>&quot;</span></div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">// External imports</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &lt;cstring&gt;</span></div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;</div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="xapian__config_8h.html">xapian_config.h</a>&quot;</span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<a class="code" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a></div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;</div>
-<div class="line"><a name="l00013"></a><span class="lineno"><a class="code" href="classParamDecoderController.html">   13</a></span>&#160;<span class="keyword">class </span><a class="code" href="classParamDecoderController.html">ParamDecoderController</a></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;{</div>
-<div class="line"><a name="l00015"></a><span class="lineno"><a class="code" href="classParamDecoderController.html#a57b0665647b1e46c2d93aac41b0b13db">   15</a></span>&#160;    <span class="keywordtype">char</span> *<a class="code" href="classParamDecoderController.html#a57b0665647b1e46c2d93aac41b0b13db">m_buf</a>; </div>
-<div class="line"><a name="l00016"></a><span class="lineno"><a class="code" href="classParamDecoderController.html#a541105a9ebff1eef1b2d4570de098fb3">   16</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classParamDecoderController.html#a541105a9ebff1eef1b2d4570de098fb3">m_len</a>;</div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;</div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classParamDecoderController.html#a65502eea1c4a16eb9a0eac181188fd4c">init</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *buf, <span class="keyword">const</span> <span class="keywordtype">size_t</span> len);</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;</div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    <a class="code" href="classParamDecoderController.html#aad0d030177d115185c6d10fb76698a80">ParamDecoderController</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *buf, <span class="keyword">const</span> <span class="keywordtype">size_t</span> len);</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    <a class="code" href="classParamDecoderController.html#aad0d030177d115185c6d10fb76698a80">ParamDecoderController</a>(<span class="keyword">const</span> <a class="code" href="classParamDecoderController.html">ParamDecoderController</a>&amp; prototype);</div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="comment">// Internal imports</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="param__decoder_8h.html">param_decoder.h</a>&quot;</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="memory__manager_8h.html">memory_manager.h</a>&quot;</span></div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="xapian__config_8h.html">xapian_config.h</a>&quot;</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<a class="code" href="xapian__config_8h.html#af115ee557ce829e9be0a2904941ea66c">XAPIAN_ERLANG_NS_BEGIN</a></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
+<div class="line"><a name="l00016"></a><span class="lineno"><a class="code" href="classParamDecoderController.html">   16</a></span>&#160;<span class="keyword">class </span><a class="code" href="classParamDecoderController.html">ParamDecoderController</a></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;{</div>
+<div class="line"><a name="l00018"></a><span class="lineno"><a class="code" href="classParamDecoderController.html#aadbb16d99f6fc7e7174231ed6c5dd422">   18</a></span>&#160;    <a class="code" href="classMemoryManager.html">MemoryManager</a>&amp; <a class="code" href="classParamDecoderController.html#aadbb16d99f6fc7e7174231ed6c5dd422">m_mm</a>;</div>
+<div class="line"><a name="l00019"></a><span class="lineno"><a class="code" href="classParamDecoderController.html#a57b0665647b1e46c2d93aac41b0b13db">   19</a></span>&#160;    <span class="keywordtype">char</span> *<a class="code" href="classParamDecoderController.html#a57b0665647b1e46c2d93aac41b0b13db">m_buf</a>; </div>
+<div class="line"><a name="l00020"></a><span class="lineno"><a class="code" href="classParamDecoderController.html#a541105a9ebff1eef1b2d4570de098fb3">   20</a></span>&#160;    <span class="keywordtype">size_t</span> <a class="code" href="classParamDecoderController.html#a541105a9ebff1eef1b2d4570de098fb3">m_len</a>;</div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;    <span class="keyword">static</span> <a class="code" href="classMemoryManager.html">MemoryManager</a>&amp; </div>
+<div class="line"><a name="l00023"></a><span class="lineno"><a class="code" href="classParamDecoderController.html#a6f3d41a068ad622b38eba670cca7c567">   23</a></span>&#160;    <a class="code" href="classParamDecoderController.html#a6f3d41a068ad622b38eba670cca7c567">getMemoryManager</a>(<span class="keyword">const</span> <a class="code" href="classParamDecoderController.html">ParamDecoderController</a>&amp; ctrl)</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;    {</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;        <span class="keywordflow">return</span> ctrl.<a class="code" href="classParamDecoderController.html#aadbb16d99f6fc7e7174231ed6c5dd422">m_mm</a>;</div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;    }</div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    <a class="code" href="classParamDecoderController.html#a8d8e35bb3ce0aaeb29aa82ca7da61815">~ParamDecoderController</a>();</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    <span class="keywordtype">void</span> <a class="code" href="classParamDecoderController.html#a65502eea1c4a16eb9a0eac181188fd4c">init</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *buf, <span class="keyword">const</span> <span class="keywordtype">size_t</span> len);</div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    <span class="keyword">operator</span> <a class="code" href="classParamDecoder.html">ParamDecoder</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;};</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a></div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    <a class="code" href="classParamDecoderController.html#ab7d61ca7f838b2a59ba446a5b54e7b05">ParamDecoderController</a>(<a class="code" href="classMemoryManager.html">MemoryManager</a>&amp; mm, <span class="keyword">const</span> <span class="keywordtype">char</span> *buf, <span class="keyword">const</span> <span class="keywordtype">size_t</span> len);</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    <a class="code" href="classParamDecoderController.html#ab7d61ca7f838b2a59ba446a5b54e7b05">ParamDecoderController</a>(<span class="keyword">const</span> <a class="code" href="classParamDecoderController.html">ParamDecoderController</a>&amp; prototype);</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;    <a class="code" href="classParamDecoderController.html#a8d8e35bb3ce0aaeb29aa82ca7da61815">~ParamDecoderController</a>();</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    <span class="keyword">operator</span> <a class="code" href="classParamDecoder.html">ParamDecoder</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;};</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<a class="code" href="xapian__config_8h.html#a9f6f2f68b5494d5a6e48e7beec1f4d5c">XAPIAN_ERLANG_NS_END</a></div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon May 21 2012 20:04:11 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Aug 15 2012 15:55:28 for Xapian Erlang Binding by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1
 </small></address>
