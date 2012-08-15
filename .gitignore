@@ -8,8 +8,6 @@ deps/*
 *.dll
 .eunit
 .emark
-doc/README.md
-doc/doxygen/*
 *.gcov
 *.gcda
 *.gcno
@@ -19,3 +17,4 @@ priv/xapian_port*
 *.un~
 c_cov
 fprof.trace
+doc

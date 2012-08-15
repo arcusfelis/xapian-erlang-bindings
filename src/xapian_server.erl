@@ -515,9 +515,10 @@ add_document(Server, Document) ->
 %% @doc Mass manipulations with spelling information.
 %%
 %% `Term' is:
+%%
 %% ```
 %% #xterm{ value = x_string()}
-%% ```
+%% '''
 %%
 %% The position field is meaningless.
 %% `action', `ignore', `frequency' can be used in the same manner,
