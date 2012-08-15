@@ -24,7 +24,10 @@
          transaction/3,
          transaction/2,
          set_metadata/3,
-         add_spelling/2]).
+         add_spelling/2,
+         add_synonym/3,
+         remove_synonym/3,
+         clear_synonyms/2]).
 
 %% Queries
 -export([query_page/5]). 
@@ -529,6 +532,32 @@ add_document(Server, Document) ->
 
 add_spelling(Server, Spelling) ->
     call(Server, {add_spelling, Spelling}).
+
+
+-spec add_synonym(Server, Term, Synonym) -> no_return() when
+    Server :: x_server(),
+    Term :: x_string(), 
+    Synonym :: x_string().
+
+add_synonym(Server, Term, Synonym) ->
+    call(Server, {add_synonym, Term, Synonym}).
+
+
+-spec remove_synonym(Server, Term, Synonym) -> no_return() when
+    Server :: x_server(),
+    Term :: x_string(), 
+    Synonym :: x_string().
+
+remove_synonym(Server, Term, Synonym) ->
+    call(Server, {remove_synonym, Term, Synonym}).
+
+
+-spec clear_synonyms(Server, Term) -> no_return() when
+    Server :: x_server(),
+    Term :: x_string().
+
+clear_synonyms(Server, Term) ->
+    call(Server, {clear_synonyms, Term}).
 
 
 %% @doc Replace all matched documents with the new version.
@@ -1256,6 +1285,21 @@ handle_call({add_spelling, Spelling}, From, State) ->
     Reply = port_add_spelling(Port, EncodedSpelling),
     {reply, Reply, State};
 
+handle_call({clear_synonyms, Term}, _From, State) ->
+    #state{ port = Port } = State,
+    Reply = port_clear_synonyms(Port, Term),
+    {reply, Reply, State};
+
+handle_call({remove_synonym, Term, Synonym}, _From, State) ->
+    #state{ port = Port } = State,
+    Reply = port_remove_synonym(Port, Term, Synonym),
+    {reply, Reply, State};
+
+handle_call({add_synonym, Term, Synonym}, _From, State) ->
+    #state{ port = Port } = State,
+    Reply = port_add_synonym(Port, Term, Synonym),
+    {reply, Reply, State};
+
 handle_call({replace_or_create_document, Id, Document}, From, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, From, State),
@@ -1816,6 +1860,19 @@ port_add_document(Port, EncodedDocument) ->
 port_add_spelling(Port, EncodedSpelling) ->
     control(Port, add_spelling, EncodedSpelling).
 
+port_remove_synonym(Port, Term, Synonym) ->
+    Bin@ = append_string(Term, <<>>),
+    Bin@ = append_string(Synonym, Bin@), 
+    control(Port, remove_synonym, Bin@).
+
+port_add_synonym(Port, Term, Synonym) ->
+    Bin@ = append_string(Term, <<>>),
+    Bin@ = append_string(Synonym, Bin@), 
+    control(Port, add_synonym, Bin@).
+
+port_clear_synonyms(Port, Term) ->
+    Bin@ = append_string(Term, <<>>),
+    control(Port, clear_synonyms, Bin@).
 
 port_update_document(Port, Id, EncodedDocument, Create) ->
     Action = 

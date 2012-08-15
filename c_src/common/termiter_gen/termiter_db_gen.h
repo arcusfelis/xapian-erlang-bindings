@@ -58,6 +58,66 @@ class Synonyms : public Database
 };
 
 
+class SynonymKeys : public Database
+{
+    const std::string m_prefix;
+    public:
+    SynonymKeys(Xapian::Database& db, const std::string& prefix) 
+            : Database(db), m_prefix(prefix)
+    {}
+
+    Xapian::TermIterator begin()
+    {
+        return mp_db->synonym_keys_begin(m_prefix);
+    }
+
+    Xapian::TermIterator end()
+    {
+        return mp_db->synonym_keys_end(m_prefix);
+    }
+};
+
+
+class MetadataKeys : public Database
+{
+    const std::string m_prefix;
+    public:
+    MetadataKeys(Xapian::Database& db, const std::string& prefix) 
+            : Database(db), m_prefix(prefix)
+    {}
+
+    Xapian::TermIterator begin()
+    {
+        return mp_db->metadata_keys_begin(m_prefix);
+    }
+
+    Xapian::TermIterator end()
+    {
+        return mp_db->metadata_keys_end(m_prefix);
+    }
+};
+
+
+class AllTerms : public Database
+{
+    const std::string m_prefix;
+    public:
+    AllTerms(Xapian::Database& db, const std::string& prefix) 
+            : Database(db), m_prefix(prefix)
+    {}
+
+    Xapian::TermIterator begin()
+    {
+        return mp_db->allterms_begin(m_prefix);
+    }
+
+    Xapian::TermIterator end()
+    {
+        return mp_db->allterms_end(m_prefix);
+    }
+};
+
+
 XAPIAN_DB_GEN_NS_END
 
 #endif

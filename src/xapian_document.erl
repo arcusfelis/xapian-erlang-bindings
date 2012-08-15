@@ -106,7 +106,7 @@ enc([#x_delta{position = Pos}|T], _, Bin) ->
 
 enc([#x_text{value = Value, frequency = WDF, prefix = Prefix, position = Pos,
              features = Features}|T], _, Bin) ->
-    me(T, _, append_text(Value, WDF, Prefix, Pos, Features, Bin));
+    me(T, _, append_text(Value, WDF, Prefix, Features, Pos, Bin));
 
 enc([#x_term_generator{}=H|T], RA, Bin@) ->
     Bin@ = append_type(term_generator, Bin@),

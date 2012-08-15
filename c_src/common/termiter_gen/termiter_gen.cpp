@@ -20,7 +20,10 @@ enum ObjectType
     UNSTEM           = 0,
     STOP_LIST        = 1,
     SYNONYMS         = 0,
-    SPELLINGS        = 1
+    SPELLINGS        = 1,
+    SYNONYM_KEYS     = 2,
+    ALL_TERMS        = 3,
+    METADATA_KEYS    = 4
 };
 
 Iterator*
@@ -95,6 +98,24 @@ Iterator::create(
         case SPELLINGS:
         {
             return new Database::Spellings(db);
+        }
+
+        case SYNONYM_KEYS:
+        {
+            const std::string& prefix = params;
+            return new Database::SynonymKeys(db, prefix);
+        }
+
+        case ALL_TERMS:
+        {
+            const std::string& prefix = params;
+            return new Database::AllTerms(db, prefix);
+        }
+
+        case METADATA_KEYS:
+        {
+            const std::string& prefix = params;
+            return new Database::MetadataKeys(db, prefix);
         }
 
         default:

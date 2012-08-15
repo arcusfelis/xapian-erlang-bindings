@@ -248,7 +248,6 @@ Driver::addSpelling(ParamDecoder& params)
     }
 }
 
-
 // REP_CRT_DOC_MARK
 void
 Driver::replaceOrCreateDocument(PR)
@@ -718,6 +717,39 @@ void
 Driver::releaseResources(ParamDecoder& params)
 {
     m_store.multiRelease(params);
+}
+
+
+void
+Driver::addSynonym(ParamDecoder& params)
+{
+    assertWriteable();
+
+    const std::string& term   = params;
+    const std::string& synonym = params;
+
+    m_wdb.add_synonym(term, synonym);
+}
+
+void
+Driver::removeSynonym(ParamDecoder& params)
+{
+    assertWriteable();
+
+    const std::string& term   = params;
+    const std::string& synonym = params;
+
+    m_wdb.remove_synonym(term, synonym);
+}
+
+void
+Driver::clearSynonyms(ParamDecoder& params)
+{
+    assertWriteable();
+
+    const std::string& term   = params;
+
+    m_wdb.clear_synonyms(term);
 }
 
 
@@ -1690,6 +1722,18 @@ Driver::handleCommand(PR,
 
         case ADD_SPELLING:
             addSpelling(params);
+            break;
+
+        case ADD_SYNONYM:
+            addSynonym(params);
+            break;
+
+        case REMOVE_SYNONYM:
+            removeSynonym(params);
+            break;
+
+        case CLEAR_SYNONYMS:
+            clearSynonyms(params);
             break;
 
         case UPDATE_DOCUMENT:

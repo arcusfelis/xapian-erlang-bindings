@@ -449,6 +449,7 @@ term_actions_test() ->
 
 
 -record(term, {value, wdf}).
+-record(term_value, {value}).
 -record(term_ext, {value, positions, position_count, freq, wdf}).
 -record(term_pos, {value, positions, position_count}).
 -record(short_term, {wdf}).
@@ -1178,8 +1179,8 @@ add_spelling_gen() ->
 
         Meta = xapian_term_record:record(term_freq, 
                                          record_info(fields, term_freq)),
-        Table = xapian_term_qlc:spelling_table(Server, Meta),
-        Records1 = qlc:e(Table),
+        Table1 = xapian_term_qlc:spelling_table(Server, Meta),
+        Records1 = qlc:e(Table1),
         Spelling = [#x_term{value = "cat",   frequency = 1}
                    ,#x_term{value = "dog",   frequency = 1}
                    ,#x_term{value = "fox",   frequency = {cur, -1}}
@@ -1187,6 +1188,7 @@ add_spelling_gen() ->
                    ,#x_term{value = "lazy",  frequency = {cur, 5}}
                    ,#x_term{value = "over",  frequency = {abs, 5}}
                    ,#x_term{value = "quick", frequency = -5}
+                   ,#x_term{value = "jumps", action = remove}
                    ],
         ?SRV:add_spelling(Server, Spelling),
         Table2 = xapian_term_qlc:spelling_table(Server, Meta),
@@ -1204,11 +1206,43 @@ add_spelling_gen() ->
         ,?_assertEqual(Records2, [#term_freq{value = <<"brown">>, freq = 1}
                                  ,#term_freq{value = <<"cat">>,   freq = 1}
                                  ,#term_freq{value = <<"dog">>,   freq = 2}
-                                 ,#term_freq{value = <<"jumps">>, freq = 1}
                                  ,#term_freq{value = <<"lazy">>,  freq = 6}
                                  ,#term_freq{value = <<"over">>,  freq = 5}
                                  ,#term_freq{value = <<"the">>,   freq = 1}
                                  ])
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
+
+synonym_gen() ->
+    Path = testdb_path(synonym),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        Synonyms = ["trial", "examination", "exam", "proof", 
+                    "evaluation", "assay", "check"],
+        ExpectedRecords2 = 
+           [#term_value{value = list_to_binary(X)} 
+                || X <- lists:sort(Synonyms)],
+        ExpectedRecords3 = 
+           ExpectedRecords2 -- [#term_value{value = <<"check">>}],
+        [?SRV:add_synonym(Server, "test", Synonym)
+         || Synonym <- Synonyms],
+        Meta = xapian_term_record:record(term_value, 
+                                         record_info(fields, term_value)),
+        Table1 = xapian_term_qlc:synonym_key_table(Server, "", Meta),
+        Records1 = qlc:e(Table1),
+        Table2 = xapian_term_qlc:synonym_table(Server, "test", Meta),
+        Records2 = qlc:e(Table2),
+        ?SRV:remove_synonym(Server, "test", "check"),
+        Table3 = xapian_term_qlc:synonym_table(Server, "test", Meta),
+        Records3 = qlc:e(Table3),
+        io:format(user, "~n~p~n", [Records2]),
+        [?_assertEqual(Records1, [#term_value{value = <<"test">>}])
+        ,?_assertEqual(Records2, ExpectedRecords2)
+        ,?_assertEqual(Records3, ExpectedRecords3)
         ]
     after
         ?SRV:close(Server)

@@ -13,7 +13,13 @@
     spelling_table/2,
     spelling_table/3,
     synonym_table/3,
-    synonym_table/4
+    synonym_table/4,
+    synonym_key_table/3,
+    synonym_key_table/4,
+    metadata_key_table/3,
+    metadata_key_table/4,
+    term_table/3,
+    term_table/4
     ]).
 
 -include_lib("stdlib/include/qlc.hrl").
@@ -52,6 +58,7 @@ synonym_table(Server, Term, Meta) ->
     synonym_table(Server, Term, Meta, []).
 
 
+%% @doc An iterator which returns all the synonyms for a given term. 
 synonym_table(Server, Term, Meta, UserParams) ->
     EncoderFun = fun(Bin@) ->
         Bin@ = append_db_term_iter_type(synonyms, Bin@),
@@ -59,7 +66,61 @@ synonym_table(Server, Term, Meta, UserParams) ->
         xapian_term_record:encode(Meta, Bin@)
         end,
     %% TODO: check, if sorted or not
-    UserParams2 = [{is_sorted_value, false} | UserParams],
+    UserParams2 = [{is_sorted_value, true} | UserParams],
+    table_int(Server, database_terms, EncoderFun, undefined, 
+              Meta, UserParams2).
+
+
+
+synonym_key_table(Server, Prefix, Meta) ->
+    synonym_key_table(Server, Prefix, Meta, []).
+
+
+%% @doc An iterator which returns all terms which have synonyms. 
+%%
+%% Only value field is meaningful.
+synonym_key_table(Server, Prefix, Meta, UserParams) ->
+    EncoderFun = fun(Bin@) ->
+        Bin@ = append_db_term_iter_type(synonym_keys, Bin@),
+        Bin@ = append_string(Prefix, Bin@),
+        xapian_term_record:encode(Meta, Bin@)
+        end,
+    %% TODO: check, if sorted or not
+    UserParams2 = [{is_sorted_value, true} | UserParams],
+    table_int(Server, database_terms, EncoderFun, undefined, 
+              Meta, UserParams2).
+
+
+metadata_key_table(Server, Prefix, Meta) ->
+    metadata_key_table(Server, Prefix, Meta, []).
+
+
+%% @doc An iterator which returns all user-specified metadata keys. 
+metadata_key_table(Server, Prefix, Meta, UserParams) ->
+    EncoderFun = fun(Bin@) ->
+        Bin@ = append_db_term_iter_type(metadata_keys, Bin@),
+        Bin@ = append_string(Prefix, Bin@),
+        xapian_term_record:encode(Meta, Bin@)
+        end,
+    %% TODO: check, if sorted or not
+    UserParams2 = [{is_sorted_value, true} | UserParams],
+    table_int(Server, database_terms, EncoderFun, undefined, 
+              Meta, UserParams2).
+
+
+term_table(Server, Prefix, Meta) ->
+    term_table(Server, Prefix, Meta, []).
+
+
+%% @doc An iterator which runs across all terms with a given prefix. 
+term_table(Server, Prefix, Meta, UserParams) ->
+    EncoderFun = fun(Bin@) ->
+        Bin@ = append_db_term_iter_type(all_terms, Bin@),
+        Bin@ = append_string(Prefix, Bin@),
+        xapian_term_record:encode(Meta, Bin@)
+        end,
+    %% TODO: check, if sorted or not
+    UserParams2 = [{is_sorted_value, true} | UserParams],
     table_int(Server, database_terms, EncoderFun, undefined, 
               Meta, UserParams2).
 

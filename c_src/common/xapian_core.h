@@ -104,7 +104,10 @@ class Driver
         MATCH_SPY_INFO              = 35,
         CREATE_QUERY_PARSER         = 36,
         PARSE_STRING                = 37,
-        ADD_SPELLING                = 38
+        ADD_SPELLING                = 38,
+        ADD_SYNONYM                 = 39,
+        REMOVE_SYNONYM              = 40,
+        CLEAR_SYNONYMS              = 41
     };
 
 
@@ -407,6 +410,9 @@ class Driver
 
     void addDocument(PR);
     void addSpelling(ParamDecoder&);
+    void addSynonym(ParamDecoder& params);
+    void removeSynonym(ParamDecoder& params);
+    void clearSynonyms(ParamDecoder& params);
     void replaceDocument(PR);
     void replaceOrCreateDocument(PR);
     void updateDocument(PR, bool create);
