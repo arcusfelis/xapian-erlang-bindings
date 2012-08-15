@@ -272,3 +272,10 @@ Code examples
 =============
 
 * [escripts](https://github.com/freeakk/xapian-examples)
+
+Documentation
+=============
+
+* [Sphinx Manual](http://freeakk.github.com/xapian-docsprint/index.html)
+* [Sphinx raws](https://github.com/freeakk/xapian-docsprint)
+
