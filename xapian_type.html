@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Module xapian_type</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module xapian_type</h1>
+<ul class="index"><li><a href="#types">Data Types</a></li></ul>
+
+
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-x_data">x_data()</a></h3>
+<p><tt>x_data() = #x_data{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_database_name">x_database_name()</a></h3>
+<p><tt>x_database_name() = atom()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_delta">x_delta()</a></h3>
+<p><tt>x_delta() = #x_delta{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_document_constructor">x_document_constructor()</a></h3>
+<p><tt>x_document_constructor() = [<a href="#type-x_document_index_part">x_document_index_part()</a>]</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_document_id">x_document_id()</a></h3>
+<p><tt>x_document_id() = non_neg_integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_document_index_part">x_document_index_part()</a></h3>
+<p><tt>x_document_index_part() = <a href="#type-x_term">x_term()</a> | <a href="#type-x_value">x_value()</a> | <a href="#type-x_data">x_data()</a> | <a href="#type-x_delta">x_delta()</a> | <a href="#type-x_text">x_text()</a> | <a href="#type-x_stemmer">x_stemmer()</a> | <a href="#type-x_term_generator">x_term_generator()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_generator_feature">x_generator_feature()</a></h3>
+<p><tt>x_generator_feature() = spelling | positions</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_inet_address">x_inet_address()</a></h3>
+<p><tt>x_inet_address() = <a href="#type-x_string">x_string()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_inet_port">x_inet_port()</a></h3>
+<p><tt>x_inet_port() = 0..65535</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_language_code">x_language_code()</a></h3>
+<p><tt>x_language_code() = none | &lt;&lt;&gt;&gt; | en | english | da | danish | nl | dutch | fi | finnish | fr | french | de | german | german2 | hu | hungarian | it | italian | nb | nn | no | norwegian | pt | portuguese | ro | romanian | ru | russian | es | spanish | sv | swedish | tr | turkish | lovins | porter | kraaij_pohlmann</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_meta">x_meta()</a></h3>
+<p><tt>x_meta() = [atom()]</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_non_empty_string">x_non_empty_string()</a></h3>
+<p><tt>x_non_empty_string() = <a href="unicode.html#type-chardata">unicode:chardata()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_operator">x_operator()</a></h3>
+<p><tt>x_operator() = 'AND' | 'OR' | 'AND NOT' | 'XOR' | 'AND MAYBE' | 'FILTER' | 'NEAR' | 'PHRASE' | 'VALUE RANGE' | 'SCALE WEIGHT' | 'ELITE SET' | 'VALUE GE' | 'VALUE LE' | 'SYNONYM' | greater | lower | less</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_order_type">x_order_type()</a></h3>
+<p><tt>x_order_type() = key | value | key_relevance | relevance_key | relevance_value | value_relevance</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_parser_feature">x_parser_feature()</a></h3>
+<p><tt>x_parser_feature() = 'BOOLEAN' | 'PHRASE' | 'LOVEHATE' | 'BOOLEAN ANY CASE' | 'WILDCARD' | 'PURE NOT' | 'PARTIAL' | 'SPELLING CORRECTION' | 'SYNONYM' | 'AUTO SYNONYMS' | 'AUTO MULTIWORD SYNONYMS' | 'DEFAULT' | 'SYNONYMS' | boolean | phrase | lovehate | boolean_any_case | wildcard | pure_not | partial | spelling_correction | synonym | synonyms | auto_synonyms | default</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_port">x_port()</a></h3>
+<p><tt>x_port() = <a href="xapian_port.html#type-x_port">xapian_port:x_port()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_position">x_position()</a></h3>
+<p><tt>x_position() = non_neg_integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_prefix_name">x_prefix_name()</a></h3>
+<p><tt>x_prefix_name() = #x_prefix_name{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_query_parser">x_query_parser()</a></h3>
+<p><tt>x_query_parser() = #x_query_parser{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_record">x_record()</a></h3>
+<p><tt>x_record() = tuple()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_resource">x_resource()</a></h3>
+<p><tt>x_resource() = reference()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_server">x_server()</a></h3>
+<p><tt>x_server() = pid()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_slot">x_slot()</a></h3>
+<p><tt>x_slot() = non_neg_integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_slot_name">x_slot_name()</a></h3>
+<p><tt>x_slot_name() = atom()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_slot_type">x_slot_type()</a></h3>
+<p><tt>x_slot_type() = float | string</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_slot_value">x_slot_value()</a></h3>
+<p><tt>x_slot_value() = <a href="#type-x_slot">x_slot()</a> | <a href="#type-x_slot_name">x_slot_name()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_spelling_constructor">x_spelling_constructor()</a></h3>
+<p><tt>x_spelling_constructor() = [<a href="#type-x_spelling_index_part">x_spelling_index_part()</a>]</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_spelling_index_part">x_spelling_index_part()</a></h3>
+<p><tt>x_spelling_index_part() = <a href="#type-x_term">x_term()</a> | <a href="#type-x_text">x_text()</a> | <a href="#type-x_stemmer">x_stemmer()</a> | <a href="#type-x_term_generator">x_term_generator()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_stemmer">x_stemmer()</a></h3>
+<p><tt>x_stemmer() = #x_stemmer{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_string">x_string()</a></h3>
+<p><tt>x_string() = <a href="unicode.html#type-chardata">unicode:chardata()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_sub_query">x_sub_query()</a></h3>
+<p><tt>x_sub_query() = #x_query{} | #x_query_value{} | #x_query_value_range{} | #x_query_term{} | #x_query_string{} | #x_query_scale_weight{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_table">x_table()</a></h3>
+<p><tt>x_table() = <a href="qlc.html#type-query_handle">qlc:query_handle()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_term">x_term()</a></h3>
+<p><tt>x_term() = #x_term{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_term_count">x_term_count()</a></h3>
+<p><tt>x_term_count() = non_neg_integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_term_generator">x_term_generator()</a></h3>
+<p><tt>x_term_generator() = #x_term_generator{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_text">x_text()</a></h3>
+<p><tt>x_text() = #x_text{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_timeout">x_timeout()</a></h3>
+<p><tt>x_timeout() = non_neg_integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_transaction">x_transaction()</a></h3>
+<p><tt>x_transaction() = fun(([<a href="#type-x_server">x_server()</a>]) -&gt; term())</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_unique_document_id">x_unique_document_id()</a></h3>
+<p><tt>x_unique_document_id() = <a href="#type-x_document_id">x_document_id()</a> | <a href="#type-x_string">x_string()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_value">x_value()</a></h3>
+<p><tt>x_value() = #x_value{}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_wdf_difference">x_wdf_difference()</a></h3>
+<p><tt>x_wdf_difference() = integer() | {abs, non_neg_integer()} | {cur, integer()}</tt></p>
+
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Aug 15 2012, 15:38:54.</i></p>
+</body>
+</html>

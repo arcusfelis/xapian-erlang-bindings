@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Module xapian_resource</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module xapian_resource</h1>
+<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+
+
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-x_resource_con">x_resource_con()</a></h3>
+<p><tt>x_resource_con() = <a href="xapian_type.html#type-x_resource_con">xapian_type:x_resource_con()</a></tt></p>
+
+
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#bm25_weight-1">bm25_weight/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#bm25_weight-5">bm25_weight/5</a></td><td></td></tr>
+<tr><td valign="top"><a href="#bool_weight-0">bool_weight/0</a></td><td></td></tr>
+<tr><td valign="top"><a href="#compile-3">compile/3</a></td><td>Append the second parameter as a binary.</td></tr>
+<tr><td valign="top"><a href="#create-2">create/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#date_value_range_processor-3">date_value_range_processor/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#date_value_range_processor-5">date_value_range_processor/5</a></td><td></td></tr>
+<tr><td valign="top"><a href="#multi_value_key_maker-1">multi_value_key_maker/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#number_value_range_processor-1">number_value_range_processor/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#number_value_range_processor-3">number_value_range_processor/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#simple_stopper-1">simple_stopper/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#string_value_range_processor-1">string_value_range_processor/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#string_value_range_processor-3">string_value_range_processor/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#trad_weight-0">trad_weight/0</a></td><td></td></tr>
+<tr><td valign="top"><a href="#trad_weight-1">trad_weight/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#value_count_match_spy-1">value_count_match_spy/1</a></td><td></td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="bm25_weight-1">bm25_weight/1</a></h3>
+<div class="spec">
+<p><tt>bm25_weight(X_bm25_weight) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="bm25_weight-5">bm25_weight/5</a></h3>
+<div class="spec">
+<p><tt>bm25_weight(K1, K2, K3, B, MinNormLen) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="bool_weight-0">bool_weight/0</a></h3>
+<div class="spec">
+<p><tt>bool_weight() -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="compile-3">compile/3</a></h3>
+<div class="spec">
+<p><tt>compile(State, Resourse_const, Bin) -&gt; any()</tt></p>
+</div><p>Append the second parameter as a binary.</p>
+<p><b>See also:</b> <a href="xapian_server.html#compile_resource-3">xapian_server:compile_resource/3</a>.</p>
+
+<h3 class="function"><a name="create-2">create/2</a></h3>
+<div class="spec">
+<p><tt>create(Server, Resourse_const) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="date_value_range_processor-3">date_value_range_processor/3</a></h3>
+<div class="spec">
+<p><tt>date_value_range_processor(Slot, EpochYear, PreferMDY) -&gt; <a href="#type-x_resource_con">x_resource_con()</a></tt>
+<ul class="definitions"><li><tt>Slot = <a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a></tt></li><li><tt>EpochYear = integer()</tt></li><li><tt>PreferMDY = boolean()</tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="date_value_range_processor-5">date_value_range_processor/5</a></h3>
+<div class="spec">
+<p><tt>date_value_range_processor(Slot, Str, Prefix, EpochYear, PreferMDY) -&gt; <a href="#type-x_resource_con">x_resource_con()</a></tt>
+<ul class="definitions"><li><tt>Slot = <a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a></tt></li><li><tt>Str = <a href="xapian_type.html#type-x_string">xapian_type:x_string()</a></tt></li><li><tt>EpochYear = integer()</tt></li><li><tt>PreferMDY = boolean()</tt></li><li><tt>Prefix = boolean() | prefix | suffix</tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="multi_value_key_maker-1">multi_value_key_maker/1</a></h3>
+<div class="spec">
+<p><tt>multi_value_key_maker(Slots) -&gt; <a href="#type-x_resource_con">x_resource_con()</a></tt>
+<ul class="definitions"><li><tt>Slots = [<a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a> | ValueWithReversedOrder]</tt></li><li><tt>ValueWithReversedOrder = {reverse, <a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a>}</tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="number_value_range_processor-1">number_value_range_processor/1</a></h3>
+<div class="spec">
+<p><tt>number_value_range_processor(Slot) -&gt; <a href="#type-x_resource_con">x_resource_con()</a></tt>
+<ul class="definitions"><li><tt>Slot = <a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a></tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="number_value_range_processor-3">number_value_range_processor/3</a></h3>
+<div class="spec">
+<p><tt>number_value_range_processor(Slot, Str, Prefix) -&gt; <a href="#type-x_resource_con">x_resource_con()</a></tt>
+<ul class="definitions"><li><tt>Slot = <a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a></tt></li><li><tt>Str = <a href="xapian_type.html#type-x_string">xapian_type:x_string()</a></tt></li><li><tt>Prefix = boolean() | prefix | suffix</tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="simple_stopper-1">simple_stopper/1</a></h3>
+<div class="spec">
+<p><tt>simple_stopper(Strings) -&gt; Stopper</tt>
+<ul class="definitions"><li><tt>Strings = [<a href="xapian_type.html#type-x_string">xapian_type:x_string()</a>]</tt></li><li><tt>Stopper = <a href="xapian_type.html#type-x_resource_con">xapian_type:x_resource_con()</a></tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="string_value_range_processor-1">string_value_range_processor/1</a></h3>
+<div class="spec">
+<p><tt>string_value_range_processor(Slot) -&gt; <a href="#type-x_resource_con">x_resource_con()</a></tt>
+<ul class="definitions"><li><tt>Slot = <a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a></tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="string_value_range_processor-3">string_value_range_processor/3</a></h3>
+<div class="spec">
+<p><tt>string_value_range_processor(Slot, Str, Prefix) -&gt; <a href="#type-x_resource_con">x_resource_con()</a></tt>
+<ul class="definitions"><li><tt>Slot = <a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a></tt></li><li><tt>Str = <a href="xapian_type.html#type-x_string">xapian_type:x_string()</a></tt></li><li><tt>Prefix = boolean() | prefix | suffix</tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="trad_weight-0">trad_weight/0</a></h3>
+<div class="spec">
+<p><tt>trad_weight() -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="trad_weight-1">trad_weight/1</a></h3>
+<div class="spec">
+<p><tt>trad_weight(K) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="value_count_match_spy-1">value_count_match_spy/1</a></h3>
+<div class="spec">
+<p><tt>value_count_match_spy(Slot) -&gt; Spy</tt>
+<ul class="definitions"><li><tt>Slot = <a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a></tt></li><li><tt>Spy = <a href="xapian_type.html#type-x_resource_con">xapian_type:x_resource_con()</a></tt></li></ul></p>
+</div>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Aug 15 2012, 15:38:53.</i></p>
+</body>
+</html>

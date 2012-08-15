@@ -1,0 +1,639 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Module xapian_server</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module xapian_server</h1>
+<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+
+<p><b>Behaviours:</b> <a href="gen_server.html"><tt>gen_server</tt></a>.</p>
+
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-database_info_param">database_info_param()</a></h3>
+<p><tt>database_info_param() = <a href="#type-database_info_param1">database_info_param1()</a> | <a href="#type-database_info_param2">database_info_param2()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-database_info_param1">database_info_param1()</a></h3>
+<p><tt>database_info_param1() = has_positions | document_count | last_document_id | average_length | document_length_lower_bound | document_length_upper_bound | uuid</tt></p>
+
+
+<h3 class="typedecl"><a name="type-database_info_param2">database_info_param2()</a></h3>
+<p><tt>database_info_param2() = <a href="#type-database_info_param_2">database_info_param_2</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_slot_value">x_slot_value()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-x_string">x_string()</a>)</tt></p>
+
+
+<h3 class="typedecl"><a name="type-database_info_param_2">database_info_param_2()</a></h3>
+<p><tt>database_info_param_2(Term, Value, DocId, Key) = {term_exists, Term} | {term_freq, Term} | {collection_freq, Term} | {value_freq, Value} | {value_lower_bound, Value} | {value_upper_bound, Value} | {wdf_upper_bound, Term} | {document_length, DocId} | {metadata, Key}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-database_info_result_pair">database_info_result_pair()</a></h3>
+<p><tt>database_info_result_pair() = <a href="#type-database_info_result_pair1">database_info_result_pair1()</a> | <a href="#type-database_info_result_pair2">database_info_result_pair2()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-database_info_result_pair1">database_info_result_pair1()</a></h3>
+<p><tt>database_info_result_pair1() = <a href="#type-database_info_result_pair_1">database_info_result_pair_1</a>(<a href="#type-doc_count">doc_count()</a>, <a href="#type-doc_length">doc_length()</a>)</tt></p>
+
+
+<h3 class="typedecl"><a name="type-database_info_result_pair2">database_info_result_pair2()</a></h3>
+<p><tt>database_info_result_pair2() = <a href="#type-database_info_result_pair_2">database_info_result_pair_2</a>(<a href="#type-x_string">x_string()</a>, <a href="#type-x_document_id">x_document_id()</a>, <a href="#type-x_slot_value">x_slot_value()</a>, <a href="#type-string_term">string_term()</a>, <a href="#type-term_count">term_count()</a>, <a href="#type-doc_count">doc_count()</a>, <a href="#type-doc_length">doc_length()</a>)</tt></p>
+
+
+<h3 class="typedecl"><a name="type-database_info_result_pair_1">database_info_result_pair_1()</a></h3>
+<p><tt>database_info_result_pair_1(C, L) = {has_positions, boolean()} | {document_count, C} | {last_document_id, C} | {average_length, L} | {document_length_lower_bound, L} | {document_length_upper_bound, L}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-database_info_result_pair_2">database_info_result_pair_2()</a></h3>
+<p><tt>database_info_result_pair_2(S, I, V, T, TC, DC, L) = {uuid, S} | {{term_exists, T}, boolean()} | {{term_freq, T}, DC} | {{collection_freq, T}, TC} | {{value_freq, V}, DC} | {{value_lower_bound, V}, S} | {{value_upper_bound, V}, S} | {{wdf_upper_bound, T}, TC} | {{document_length, I}, L} | {{metadata, S}, S | undefined}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-db_path">db_path()</a></h3>
+<p><tt>db_path() = <a href="#type-x_string">x_string()</a> | <a href="#type-multi_db_path">multi_db_path()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-doc_count">doc_count()</a></h3>
+<p><tt>doc_count() = non_neg_integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-doc_length">doc_length()</a></h3>
+<p><tt>doc_length() = float()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-mset_info_parameter">mset_info_parameter()</a></h3>
+<p><tt>mset_info_parameter() = matches_lower_bound | matches_estimated | matches_upper_bound | uncollapsed_matches_lower_bound | uncollapsed_matches_estimated | uncollapsed_matches_upper_bound | size | max_possible | max_attained | {term_weight, <a href="#type-string_term">string_term()</a>} | {term_freq, <a href="#type-string_term">string_term()</a>}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-mset_info_result_pair">mset_info_result_pair()</a></h3>
+<p><tt>mset_info_result_pair() = <a href="#type-mset_info_result_pair1">mset_info_result_pair1()</a> | <a href="#type-mset_info_result_pair2">mset_info_result_pair2()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-mset_info_result_pair1">mset_info_result_pair1()</a></h3>
+<p><tt>mset_info_result_pair1() = <a href="#type-mset_info_result_pair_1">mset_info_result_pair_1</a>(<a href="#type-doc_count">doc_count()</a>, <a href="#type-weight">weight()</a>)</tt></p>
+
+
+<h3 class="typedecl"><a name="type-mset_info_result_pair2">mset_info_result_pair2()</a></h3>
+<p><tt>mset_info_result_pair2() = <a href="#type-mset_info_result_pair_2">mset_info_result_pair_2</a>(<a href="#type-doc_count">doc_count()</a>, <a href="#type-weight">weight()</a>, <a href="#type-string_term">string_term()</a>)</tt></p>
+
+
+<h3 class="typedecl"><a name="type-mset_info_result_pair_1">mset_info_result_pair_1()</a></h3>
+<p><tt>mset_info_result_pair_1(C, W) = {matches_lower_bound, C} | {matches_estimated, C} | {matches_upper_bound, C} | {uncollapsed_matches_lower_bound, C} | {uncollapsed_matches_estimated, C} | {uncollapsed_matches_upper_bound, C} | {size, C} | {max_possible, W} | {max_attained, W}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-mset_info_result_pair_2">mset_info_result_pair_2()</a></h3>
+<p><tt>mset_info_result_pair_2(C, W, T) = {{term_weight, T}, W | undefined} | {{term_freq, T}, C | undefined}</tt></p>
+
+
+<h3 class="typedecl"><a name="type-multi_db_path">multi_db_path()</a></h3>
+<p><tt>multi_db_path() = [#x_database{} | #x_prog_database{} | #x_tcp_database{}]</tt></p>
+
+
+<h3 class="typedecl"><a name="type-string_term">string_term()</a></h3>
+<p><tt>string_term() = <a href="#type-x_string">x_string()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-term_count">term_count()</a></h3>
+<p><tt>term_count() = non_neg_integer()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-weight">weight()</a></h3>
+<p><tt>weight() = float()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_database_name">x_database_name()</a></h3>
+<p><tt>x_database_name() = <a href="xapian_type.html#type-x_document_constructor">xapian_type:x_document_constructor()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_document_constructor">x_document_constructor()</a></h3>
+<p><tt>x_document_constructor() = <a href="xapian_type.html#type-x_document_constructor">xapian_type:x_document_constructor()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_document_id">x_document_id()</a></h3>
+<p><tt>x_document_id() = <a href="xapian_type.html#type-x_document_id">xapian_type:x_document_id()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_meta">x_meta()</a></h3>
+<p><tt>x_meta() = <a href="xapian_type.html#type-x_meta">xapian_type:x_meta()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_record">x_record()</a></h3>
+<p><tt>x_record() = <a href="xapian_type.html#type-x_record">xapian_type:x_record()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_resource">x_resource()</a></h3>
+<p><tt>x_resource() = <a href="xapian_type.html#type-x_resource">xapian_type:x_resource()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_server">x_server()</a></h3>
+<p><tt>x_server() = <a href="xapian_type.html#type-x_server">xapian_type:x_server()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_slot_type">x_slot_type()</a></h3>
+<p><tt>x_slot_type() = <a href="xapian_type.html#type-x_slot_type">xapian_type:x_slot_type()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_slot_value">x_slot_value()</a></h3>
+<p><tt>x_slot_value() = <a href="xapian_type.html#type-x_slot_value">xapian_type:x_slot_value()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_string">x_string()</a></h3>
+<p><tt>x_string() = <a href="xapian_type.html#type-x_string">xapian_type:x_string()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_sub_query">x_sub_query()</a></h3>
+<p><tt>x_sub_query() = <a href="xapian_type.html#type-x_sub_query">xapian_type:x_sub_query()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_table">x_table()</a></h3>
+<p><tt>x_table() = <a href="xapian_type.html#type-x_table">xapian_type:x_table()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_transaction">x_transaction()</a></h3>
+<p><tt>x_transaction() = <a href="xapian_type.html#type-x_transaction">xapian_type:x_transaction()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_unique_document_id">x_unique_document_id()</a></h3>
+<p><tt>x_unique_document_id() = <a href="xapian_type.html#type-x_unique_document_id">xapian_type:x_unique_document_id()</a></tt></p>
+
+
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td>Write a new document, return its id.</td></tr>
+<tr><td valign="top"><a href="#add_spelling-2">add_spelling/2</a></td><td>Mass manipulations with spelling information.</td></tr>
+<tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr>
+<tr><td valign="top"><a href="#compile_resource-3">compile_resource/3</a></td><td>Create the <code>fun(Bin)</code> function.</td></tr>
+<tr><td valign="top"><a href="#create_resource-2">create_resource/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td>Returns the orddict of all properties.</td></tr>
+<tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td>Returns the list of selected properties and wanted values.</td></tr>
+<tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td>Delete documents.</td></tr>
+<tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document as a resource.</td></tr>
+<tr><td valign="top"><a href="#document_info-3">document_info/3</a></td><td>Read document info, without putting it into database.</td></tr>
+<tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr>
+<tr><td valign="top"><a href="#execute_generator-4">execute_generator/4</a></td><td>Form the binary string:
+  <code>&lt;&lt;Bin, ResTypeConstructorNum, GenParam&gt;&gt;</code>.</td></tr>
+<tr><td valign="top"><a href="#is_document_exist-2">is_document_exist/2</a></td><td>Return <code>true</code>, if the document with a specified id exists.</td></tr>
+<tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr>
+<tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr>
+<tr><td valign="top"><a href="#match_spy_info-3">match_spy_info/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td>Returns the list of all properties.</td></tr>
+<tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td>Returns the list of selected properties and wanted values.</td></tr>
+<tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td>Calculate a syntatic document ID from the real document ID and its DB name.</td></tr>
+<tr><td valign="top"><a href="#name_to_slot-1">name_to_slot/1</a></td><td>Returns orddict.</td></tr>
+<tr><td valign="top"><a href="#name_to_slot-2">name_to_slot/2</a></td><td>Convert a value slot name to its slot number.</td></tr>
+<tr><td valign="top"><a href="#open-2">open/2</a></td><td>Open the database with params.</td></tr>
+<tr><td valign="top"><a href="#parse_string-3">parse_string/3</a></td><td>Run a query parser for getting a Query object or a corrected       
+query string.</td></tr>
+<tr><td valign="top"><a href="#qlc_table_to_reference-2">qlc_table_to_reference/2</a></td><td>Convert a QLC handler, allocated with help of
+       any of <code>xapian_*_qlc:table/?</code> functions, to its resource.</td></tr>
+<tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr>
+<tr><td valign="top"><a href="#query_parser-2">query_parser/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
+       defined by <code>RecordMetaDefinition</code>.</td></tr>
+<tr><td valign="top"><a href="#release_resource-2">release_resource/2</a></td><td>Release a resource.</td></tr>
+<tr><td valign="top"><a href="#release_table-2">release_table/2</a></td><td>Clean resources allocated by the QLC table.</td></tr>
+<tr><td valign="top"><a href="#replace_document-3">replace_document/3</a></td><td>Replace all matched documents with the new version.</td></tr>
+<tr><td valign="top"><a href="#replace_or_create_document-3">replace_or_create_document/3</a></td><td>Replace all matched documents with the new version.</td></tr>
+<tr><td valign="top"><a href="#set_metadata-3">set_metadata/3</a></td><td>Save a key-value pair into the database dictionary.</td></tr>
+<tr><td valign="top"><a href="#slot_to_type-1">slot_to_type/1</a></td><td>Returns an array for conversation from <code>x_slot()</code> to its type.</td></tr>
+<tr><td valign="top"><a href="#slot_to_type-2">slot_to_type/2</a></td><td>Convert a slot number or a slot name to its type (<code>float</code> or <code>string</code>).</td></tr>
+<tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#subdb_names-1">subdb_names/1</a></td><td>Return an tuple of the database names.</td></tr>
+<tr><td valign="top"><a href="#transaction-2">transaction/2</a></td><td>Run a transaction with 5-second timeout.</td></tr>
+<tr><td valign="top"><a href="#transaction-3">transaction/3</a></td><td>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.</td></tr>
+<tr><td valign="top"><a href="#update_document-3">update_document/3</a></td><td>Extend (edit) the document with data.</td></tr>
+<tr><td valign="top"><a href="#update_or_create_document-3">update_or_create_document/3</a></td><td>Update documents or create the new document.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="add_document-2">add_document/2</a></h3>
+<div class="spec">
+<p><tt>add_document(Server::<a href="#type-x_server">x_server()</a>, Document::<a href="#type-x_document_constructor">x_document_constructor()</a>) -&gt; <a href="#type-x_document_id">x_document_id()</a></tt><br></p>
+</div><p>Write a new document, return its id.</p>
+
+<h3 class="function"><a name="add_spelling-2">add_spelling/2</a></h3>
+<div class="spec">
+<p><tt>add_spelling(Server, Spelling) -&gt; no_return()</tt>
+<ul class="definitions"><li><tt>Server = <a href="#type-x_server">x_server()</a></tt></li><li><tt>Spelling = <a href="xapian_type.html#type-x_spelling_constructor">xapian_type:x_spelling_constructor()</a></tt></li></ul></p>
+</div><p><p>Mass manipulations with spelling information.</p>
+ 
+  <p><code>Term</code> is:</p>
+ 
+  <pre>  #xterm{ value = x_string()}</pre>
+ 
+  The position field is meaningless.
+  <code>action</code>, <code>ignore</code>, <code>frequency</code> can be used in the same manner,
+  as with the <code>add_document/2</code> function.</p>
+
+<h3 class="function"><a name="close-1">close/1</a></h3>
+<div class="spec">
+<p><tt>close(Server) -&gt; any()</tt></p>
+</div><p><p>Close the database and kill a control process (aka Server).       
+Database will be automaticly close, when a supervised server       
+process is dead.</p>
+ 
+       This function is used for flushing changes of the writable database.
+       The caller will be blocked while all changes will not flushed.</p>
+
+<h3 class="function"><a name="compile_resource-3">compile_resource/3</a></h3>
+<div class="spec">
+<p><tt>compile_resource(State, ResRef, ClientPid) -&gt; any()</tt></p>
+</div><p>Create the <code>fun(Bin)</code> function.</p>
+
+<h3 class="function"><a name="create_resource-2">create_resource/2</a></h3>
+<div class="spec">
+<p><tt>create_resource(Server, Con) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="database_info-1">database_info/1</a></h3>
+<div class="spec">
+<p><tt>database_info(Server::<a href="#type-x_server">x_server()</a>) -&gt; [<a href="#type-database_info_result_pair1">database_info_result_pair1()</a>]</tt><br></p>
+</div><p>Returns the orddict of all properties.</p>
+
+<h3 class="function"><a name="database_info-2">database_info/2</a></h3>
+<div class="spec">
+<p><tt>database_info(Server::<a href="#type-x_server">x_server()</a>, Params) -&gt; Result</tt>
+<ul class="definitions"><li><tt>Params = [Param]</tt></li><li><tt>Param = <a href="#type-database_info_param">database_info_param()</a></tt></li><li><tt>Result = [ResultPair]</tt></li><li><tt>ResultPair = <a href="#type-database_info_result_pair">database_info_result_pair()</a></tt></li></ul></p>
+</div><p><p>Returns the list of selected properties and wanted values.
+  Properties:
+  * <code>has_positions</code>
+       Does this database have any positional information?;
+  * <code>document_count</code>
+       Get the number of documents in the database;
+  * <code>last_document_id</code>
+       Get the highest document id which has been used in the database.
+       <a href="#last_document_id-1"><code>last_document_id/1</code></a>;
+  * <code>average_length</code>
+       Get the average length of the documents in the database;
+  * <code>document_length_lower_bound</code>
+       Get a lower bound on the length of a document in this DB;
+  * <code>document_length_upper_bound</code>
+       Get an upper bound on the length of a document in this DB;
+  * <code>uuid</code>
+       Get a UUID for the database;
+  * <code>{term_exists, Term}</code>
+       Check if a given term exists in the database;
+  * <code>{term_freq, Term}</code>
+       Get the number of documents in the database indexed by a given term;
+  * <code>{collection_freq, Term}</code>
+       Return the total number of occurrences of the given term;
+  * <code>{value_freq, Value}</code>
+       Return the frequency of a given value slot;
+  * <code>{value_lower_bound, Value}</code>
+       Get a lower bound on the values stored in the given value slot;
+  * <code>{value_upper_bound, Value}</code>
+       Get an upper bound on the values stored in the given value slot;
+  * <code>{wdf_upper_bound, Term}</code>
+       Get an upper bound on the wdf of the term;
+  * <code>{document_length, DocId}</code>
+       Get the length of a document;
+  * <code>{metadata, Key}</code>       
+Get the user-specified metadata associated with a given key.</p>
+ 
+  <p>If <code>DocId</code> or <code>Term</code> does not exist, <code>undefined</code> value is returned.</p>
+ 
+  <p>For example,</p>
+ 
+  <pre>  database_info(Server, [{term_exists, "erlang"}, {term_freq, "erlang"}]).
+  [{{term_exists, "erlang"}, false}, {{term_freq, "erlang"}, undefined}]</pre>
+ </p>
+
+<h3 class="function"><a name="delete_document-2">delete_document/2</a></h3>
+<div class="spec">
+<p><tt>delete_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>) -&gt; IsDocumentExist</tt>
+<ul class="definitions"><li><tt>IsDocumentExist = boolean()</tt></li></ul></p>
+</div><p><p>Delete documents.</p>
+ 
+  <p>If a document id was passed, then this function deletes the document.</p>
+ 
+  <p>If a term was passed, then any documents indexed by the specified term  
+from the database will be deleted.</p>
+ 
+  <p>A major use is for convenience when UIDs from another system are mapped to  
+terms in Xapian, although this method has other uses  
+(for example, you could add a "deletion date" term to documents at index   
+time and use this method to delete all documents due for deletion on a   
+particular date).</p>
+ 
+  <p>Returns <code>true</code>, if at least one document was deleted.
+  Returns <code>false</code>, if nothing was deleted.</p>
+ 
+  <note>This function catches the
+  <code>#x_error{type = &lt;&lt;"DocNotFoundError"&gt;&gt;}</code> error and returns <code>false</code>, if
+  the document was not found.</note></p>
+
+<h3 class="function"><a name="document-2">document/2</a></h3>
+<div class="spec">
+<p><tt>document(Server::<a href="#type-x_server">x_server()</a>, UniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a> | <a href="#type-x_document_constructor">x_document_constructor()</a>) -&gt; <a href="#type-x_resource">x_resource()</a></tt><br></p>
+</div><p><p>Return a document as a resource.  
+The second document can be:  
+* A document id or an unique term;  
+* A document constructor.</p>
+ 
+  <p>If the second argument is the empty list, then the <code>badarg</code> error will  
+occure.</p>
+ 
+  <p>It is an undefined behaviour.  
+Two cases can be here:</p>
+ 
+  1. You cannot use an empty term as an id (all documents will be selected).
+       Solution: Use other ways to traverse the documents.
+  2. Why do you need a document resource, defined with an empty constructor?
+       Solution: pass <code>[#x_text{value=""}]</code>.</p>
+
+<h3 class="function"><a name="document_info-3">document_info/3</a></h3>
+<div class="spec">
+<p><tt>document_info(Server::<a href="#type-x_server">x_server()</a>, DocumentConstructor::<a href="#type-x_document_constructor">x_document_constructor()</a>, RecordMetaDefinition::<a href="#type-x_meta">x_meta()</a>) -&gt; <a href="#type-x_record">x_record()</a></tt><br></p>
+</div><p>Read document info, without putting it into database.</p>
+
+<h3 class="function"><a name="enquire-2">enquire/2</a></h3>
+<div class="spec">
+<p><tt>enquire(Server::<a href="#type-x_server">x_server()</a>, Query::<a href="#type-x_sub_query">x_sub_query()</a>) -&gt; <a href="#type-x_resource">x_resource()</a></tt><br></p>
+</div><p>Return an enquire.</p>
+
+<h3 class="function"><a name="execute_generator-4">execute_generator/4</a></h3>
+<div class="spec">
+<p><tt>execute_generator(State, ResourceTypeName, Gen, Bin) -&gt; any()</tt></p>
+</div><p>Form the binary string:
+  <code>&lt;&lt;Bin, ResTypeConstructorNum, GenParam&gt;&gt;</code>.
+  This data allows to create a resource using a user object constructor
+  (see user_object).</p>
+
+<h3 class="function"><a name="is_document_exist-2">is_document_exist/2</a></h3>
+<div class="spec">
+<p><tt>is_document_exist(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>) -&gt; boolean()</tt><br></p>
+</div><p>Return <code>true</code>, if the document with a specified id exists.</p>
+
+<h3 class="function"><a name="last_document_id-1">last_document_id/1</a></h3>
+<div class="spec">
+<p><tt>last_document_id(Server::<a href="#type-x_server">x_server()</a>) -&gt; <a href="#type-x_document_id">x_document_id()</a> | undefined</tt><br></p>
+</div><p>Return an identifier of the last added document.
+       If the database is empty, returns <code>undefined</code>.</p>
+
+<h3 class="function"><a name="match_set-2">match_set/2</a></h3>
+<div class="spec">
+<p><tt>match_set(Server::<a href="#type-x_server">x_server()</a>, X_match_set::#x_match_set{} | Enquire) -&gt; <a href="#type-x_resource">x_resource()</a></tt>
+<ul class="definitions"><li><tt>Enquire = <a href="#type-x_resource">x_resource()</a></tt></li></ul></p>
+</div><p><p>Return a match set (M-Set).
+  A match set can be created from:
+  * an enquire (<code>x_resource()</code> type);
+  * from record <code>#x_match_set{}</code>, which contains an enquire and    
+addition parameters.</p>
+ 
+  <p>Match set record is:</p>
+ 
+   <pre>   #x_match_set{
+       enquire = EnquireResource,
+       offset = Offset,
+       max_items = MaxItems,
+       check_at_least = CheckAtLeast,
+       spies = Spies
+   }</pre>
+ 
+   where
+       * <code>EnquireResource</code> contains the result of the search.</p>
+<p><b>See also:</b> <a href="xapian_mset_qlc.html">xapian_mset_qlc</a>, <a href="#enquire-2">It is required;
+       * <code>Offset</code> means how many elements to skip. It is 0 by default;
+       * <code>MaxItems</code> means how many elements to return.
+               Not more than <code>MaxItems</code> elements will be return.
+               It is <code>undefined</code> by default,
+               that means all items will be selected;
+       * <code>Spies</code> is a list of MatchSpy resources (@see xapian_match_spy).
+ </a>, <a href="#mset_info-3">mset_info/3</a>.</p>
+
+<h3 class="function"><a name="match_spy_info-3">match_spy_info/3</a></h3>
+<div class="spec">
+<p><tt>match_spy_info(Server::<a href="#type-x_server">x_server()</a>, MatchSpyRes::<a href="#type-x_resource">x_resource()</a>, Params::Params | Param) -&gt; term()</tt>
+<ul class="definitions"><li><tt>Params = [Param]</tt></li><li><tt>Param = ValueCountMatchSpyParam</tt></li><li><tt>ValueCountMatchSpyParam = value_slot | document_count</tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="mset_info-2">mset_info/2</a></h3>
+<div class="spec">
+<p><tt>mset_info(Server::<a href="#type-x_server">x_server()</a>, MSetResource::<a href="#type-x_resource">x_resource()</a>) -&gt; <a href="#type-mset_info_result_pair1">mset_info_result_pair1()</a></tt><br></p>
+</div><p>Equivalent to <a href="#mset_info-3"><tt>mset_info(Server, MSetResource,
+	  xapian_mset_info:properties())</tt></a>.</p>
+<p>Returns the list of all properties.</p>
+
+<h3 class="function"><a name="mset_info-3">mset_info/3</a></h3>
+<div class="spec">
+<p><tt>mset_info(Server::<a href="#type-x_server">x_server()</a>, MSetResource::<a href="#type-x_resource">x_resource()</a>, Params) -&gt; Result</tt>
+<ul class="definitions"><li><tt>Params = [Param]</tt></li><li><tt>Param = <a href="#type-mset_info_parameter">mset_info_parameter()</a></tt></li><li><tt>Result = [ResultPair]</tt></li><li><tt>ResultPair = <a href="#type-mset_info_result_pair">mset_info_result_pair()</a></tt></li></ul></p>
+</div><p>Returns the list of selected properties and wanted values.
+  Properties:
+  * <code>matches_lower_bound</code>;
+  * <code>matches_estimated</code>;
+  * <code>matches_upper_bound</code>;
+  * <code>uncollapsed_matches_lower_bound</code>;
+  * <code>uncollapsed_matches_estimated</code>;
+  * <code>uncollapsed_matches_upper_bound</code>;
+  * <code>size</code>;
+  * <code>max_possible</code>;
+  * <code>max_attained</code>;
+  * <code>{term_weight, Term}</code>;
+  * <code>{term_freq, Term}</code>.</p>
+
+<h3 class="function"><a name="multi_docid-3">multi_docid/3</a></h3>
+<div class="spec">
+<p><tt>multi_docid(State::#state{} | <a href="#type-x_server">x_server()</a>, RealDocId, SubDbName) -&gt; MultiDocId</tt>
+<ul class="definitions"><li><tt>RealDocId = <a href="#type-x_document_id">x_document_id()</a></tt></li><li><tt>MultiDocId = <a href="#type-x_document_id">x_document_id()</a></tt></li><li><tt>SubDbName = <a href="#type-x_database_name">x_database_name()</a></tt></li></ul></p>
+</div><p>Calculate a syntatic document ID from the real document ID and its DB name.</p>
+
+<h3 class="function"><a name="name_to_slot-1">name_to_slot/1</a></h3>
+<div class="spec">
+<p><tt>name_to_slot(State::#state{} | <a href="#type-x_server">x_server()</a>) -&gt; [{<a href="xapian_type.html#type-x_slot_name">xapian_type:x_slot_name()</a>, <a href="xapian_type.html#type-x_slot">xapian_type:x_slot()</a>}]</tt><br></p>
+</div><p>Returns orddict.</p>
+
+<h3 class="function"><a name="name_to_slot-2">name_to_slot/2</a></h3>
+<div class="spec">
+<p><tt>name_to_slot(ServerOrState::#state{} | <a href="#type-x_server">x_server()</a>, Slot::<a href="#type-x_slot_value">x_slot_value()</a>) -&gt; <a href="xapian_type.html#type-x_slot">xapian_type:x_slot()</a></tt><br></p>
+</div><p>Convert a value slot name to its slot number.</p>
+
+<h3 class="function"><a name="open-2">open/2</a></h3>
+<div class="spec">
+<p><tt>open(Path::<a href="#type-db_path">db_path()</a>, Params::[term()]) -&gt; {ok, <a href="#type-x_server">x_server()</a>}</tt><br></p>
+</div><p><p>Open the database with params.
+  <code>Path</code> is a directory name of the database.  
+For opening multiple databases you can pass a list of:</p>
+ 
+  <p>* <code>#x_database{}</code>;
+  * <code>#x_prog_database{}</code>;
+  * <code>#x_tcp_database{}</code>.</p>
+ 
+  <p>See the description of these records for more information.</p>
+ 
+  <p><code>Params</code> is a list of:</p>
+ 
+  * Modes: read, write, overwrite, create, open:
+       The <code>read</code> mode is only for reading.
+       The <code>write</code> mode is for reading and for writing.
+       Write mode can be combined with:
+           <code>open</code> (default), <code>create</code>, <code>overwrite</code>.
+  * Names for values and for prefixes:
+       <code>#x_value_name{slot = 1, name = slotname}</code>
+       <code>#x_prefix_name{name = author, prefix = &lt;&lt;$A&gt;&gt;}</code>;
+  * The default stemmer. It will be used in <code>TermGenerator</code> and in the
+       default query parser:
+       <code>#x_stemmer{language="english"}</code>;
+  * An interface to work: <code>port</code> (or <code>driver</code> by default).
+  * <code>{name, Atom}</code> allows to register the server under the local name <code>Atom</code>;
+  * <code>{name, {local, Atom}}</code> does the same;
+  * <code>{name, {global, Atom}}</code> registers the process under the global name.</p>
+
+<h3 class="function"><a name="parse_string-3">parse_string/3</a></h3>
+<div class="spec">
+<p><tt>parse_string(Server::<a href="#type-x_server">x_server()</a>, X_query_string::#x_query_string{}, Fields) -&gt; Result</tt>
+<ul class="definitions"><li><tt>Fields = [Key]</tt></li><li><tt>Key = query_resource | corrected_query_string</tt></li><li><tt>Result = [Pair] | Value</tt></li><li><tt>Pair = {Key, Value}</tt></li><li><tt>Value = <a href="#type-x_resource">x_resource()</a> | <a href="#type-x_string">x_string()</a></tt></li></ul></p>
+</div><p><p>Run a query parser for getting a Query object or a corrected       
+query string.</p>
+ 
+       Corrected query string is used for syntax checking.</p>
+
+<h3 class="function"><a name="qlc_table_to_reference-2">qlc_table_to_reference/2</a></h3>
+<div class="spec">
+<p><tt>qlc_table_to_reference(ServerOrState::#state{} | <a href="#type-x_server">x_server()</a>, Table::<a href="#type-x_table">x_table()</a>) -&gt; <a href="#type-x_resource">x_resource()</a></tt><br></p>
+</div><p>Convert a QLC handler, allocated with help of
+       any of <code>xapian_*_qlc:table/?</code> functions, to its resource.</p>
+<p><b>See also:</b> <a href="#release_table-2">release_table/2</a>.</p>
+
+<h3 class="function"><a name="query_page-5">query_page/5</a></h3>
+<div class="spec">
+<p><tt>query_page(Server::<a href="#type-x_server">x_server()</a>, Offset::non_neg_integer(), PageSize::non_neg_integer(), Query::<a href="#type-x_sub_query">x_sub_query()</a>, RecordMetaDefinition::<a href="#type-x_meta">x_meta()</a>) -&gt; [<a href="#type-x_record">x_record()</a>]</tt><br></p>
+</div><p>Return a list of records.</p>
+
+<h3 class="function"><a name="query_parser-2">query_parser/2</a></h3>
+<div class="spec">
+<p><tt>query_parser(Server::<a href="#type-x_server">x_server()</a>, X_query_parser::#x_query_parser{}) -&gt; <a href="#type-x_resource">x_resource()</a></tt><br></p>
+</div>
+
+<h3 class="function"><a name="read_document-3">read_document/3</a></h3>
+<div class="spec">
+<p><tt>read_document(Server, DocId, RecordMetaDefinition) -&gt; any()</tt></p>
+</div><p><p>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
+       defined by <code>RecordMetaDefinition</code>.</p>
+ 
+      <pre>       RecordMetaDefinition =
+           xapian_record:record(record_name, record_info(fields, record_fields)).</pre>
+ </p>
+
+<h3 class="function"><a name="release_resource-2">release_resource/2</a></h3>
+<div class="spec">
+<p><tt>release_resource(Server::<a href="#type-x_server">x_server()</a>, ResourceRef::<a href="#type-x_resource">x_resource()</a>) -&gt; ok</tt><br></p>
+</div><p>Release a resource.
+  It will be called automaticly, if the client process is died.
+  If a release constructor will be passed, then the error occurs.</p>
+
+<h3 class="function"><a name="release_table-2">release_table/2</a></h3>
+<div class="spec">
+<p><tt>release_table(Server::<a href="#type-x_server">x_server()</a>, Table::<a href="#type-x_table">x_table()</a>) -&gt; ok</tt><br></p>
+</div><p>Clean resources allocated by the QLC table.</p>
+
+<h3 class="function"><a name="replace_document-3">replace_document/3</a></h3>
+<div class="spec">
+<p><tt>replace_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::<a href="#type-x_document_constructor">x_document_constructor()</a>) -&gt; <a href="#type-x_document_id">x_document_id()</a></tt><br></p>
+</div><p><p>Replace all matched documents with the new version.</p>
+ 
+  <p>If nothing matches, then nothing will be changed.  
+If more then one documents matches, only one will left, the id of  
+this document will be returned.</p>
+ 
+  <p><note>This function and <code>Xapian::WritableDatabase::replace_document</code>
+  have the different behaviour.</note></p>
+ 
+  REP_DOC_MARK</p>
+
+<h3 class="function"><a name="replace_or_create_document-3">replace_or_create_document/3</a></h3>
+<div class="spec">
+<p><tt>replace_or_create_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::<a href="#type-x_document_constructor">x_document_constructor()</a>) -&gt; <a href="#type-x_document_id">x_document_id()</a></tt><br></p>
+</div><p><p>Replace all matched documents with the new version.</p>
+ 
+  <p>This method replaces the document with the specified document ID.  
+If the passed document ID isn't currently used, the document will be added  
+with the passed document ID.</p>
+ 
+  <p>If more then one documents matches, only one will left, the id of  
+this document will be returned.</p>
+ 
+  <p><note>This function and <code>Xapian::WritableDatabase::replace_document</code>
+  have the same behaviour.</note></p>
+ 
+  REP_CRT_DOC_MARK</p>
+
+<h3 class="function"><a name="set_metadata-3">set_metadata/3</a></h3>
+<div class="spec">
+<p><tt>set_metadata(Server::<a href="#type-x_server">x_server()</a>, Key::<a href="#type-x_string">x_string()</a>, Value::<a href="#type-x_string">x_string()</a>) -&gt; ok</tt><br></p>
+</div><p>Save a key-value pair into the database dictionary.</p>
+
+<h3 class="function"><a name="slot_to_type-1">slot_to_type/1</a></h3>
+<div class="spec">
+<p><tt>slot_to_type(State) -&gt; any()</tt></p>
+</div><p>Returns an array for conversation from <code>x_slot()</code> to its type.
+       If an element of the array is <code>undefined</code>, then its type is <code>string</code>.</p>
+
+<h3 class="function"><a name="slot_to_type-2">slot_to_type/2</a></h3>
+<div class="spec">
+<p><tt>slot_to_type(State::#state{} | <a href="#type-x_server">x_server()</a>, Slot::<a href="#type-x_slot_value">x_slot_value()</a>) -&gt; <a href="#type-x_slot_type">x_slot_type()</a></tt><br></p>
+</div><p>Convert a slot number or a slot name to its type (<code>float</code> or <code>string</code>).</p>
+
+<h3 class="function"><a name="start_link-2">start_link/2</a></h3>
+<div class="spec">
+<p><tt>start_link(Path::<a href="#type-db_path">db_path()</a>, Params::[term()]) -&gt; {ok, <a href="#type-x_server">x_server()</a>}</tt><br></p>
+</div>
+
+<h3 class="function"><a name="subdb_names-1">subdb_names/1</a></h3>
+<div class="spec">
+<p><tt>subdb_names(State::#state{} | <a href="#type-x_server">x_server()</a>) -&gt; tuple()</tt><br></p>
+</div><p>Return an tuple of the database names.
+  For example, 2 sub-databases were opened under names <code>db1_name</code> and
+  <code>db2z_name</code>, then <code>{db1_name, db2_name}</code> will be returned.</p>
+
+<h3 class="function"><a name="transaction-2">transaction/2</a></h3>
+<div class="spec">
+<p><tt>transaction(Servers, F) -&gt; any()</tt></p>
+</div><p>Run a transaction with 5-second timeout.</p>
+
+<h3 class="function"><a name="transaction-3">transaction/3</a></h3>
+<div class="spec">
+<p><tt>transaction(Servers::[<a href="#type-x_server">x_server()</a>], F::<a href="#type-x_transaction">x_transaction()</a>, Timeout::timeout()) -&gt; #x_transaction_result{}</tt><br></p>
+</div><p><p>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.       
+Transaction will stop other operations with selected databases.</p>
+ 
+  <p>This function runs a transaction on few servers.
+  <code>F</code> will be called as:</p>
+ 
+  <pre>  Servers = [Server1, Server2, Server3].
+   F([TransServer1, TransServer2, TransServer3]).</pre>
+ 
+  <p>Results (<code>#x_transaction_result.statuses</code>) from a server:</p>
+ 
+  <p>* <code>committed</code> - A transaction was pass on this server. Data is consistent;
+  * <code>aborted</code> - A transaction was canceled on this server. Data is consistent;
+  * <code>failed</code> - An exeption was occured. Data is inconsistent.</p>
+ 
+  If one of the servers crashed during transaction, the transaction process
+  will be killed using <code>cancel_transaction</code> with reason <code>crashed_server</code>.</p>
+
+<h3 class="function"><a name="update_document-3">update_document/3</a></h3>
+<div class="spec">
+<p><tt>update_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::<a href="#type-x_document_constructor">x_document_constructor()</a>) -&gt; <a href="#type-x_document_id">x_document_id()</a></tt><br></p>
+</div><p><p>Extend (edit) the document with data.</p>
+ 
+       If the document is not exist, the error
+       <code>#x_error{type = &lt;&lt;"BadArgumentDriverError"&gt;&gt;}</code> will occure.
+       UPD_DOC_BAD_ID_MARK</p>
+
+<h3 class="function"><a name="update_or_create_document-3">update_or_create_document/3</a></h3>
+<div class="spec">
+<p><tt>update_or_create_document(Server::<a href="#type-x_server">x_server()</a>, DocIdOrUniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a>, NewDocument::<a href="#type-x_document_constructor">x_document_constructor()</a>) -&gt; <a href="#type-x_document_id">x_document_id()</a></tt><br></p>
+</div><p><p>Update documents or create the new document.</p>
+ 
+  If <code>DocIdUniqueTerm</code> is a term and a document is not exist, new document will.
+  A unique term WILL NOT added automaticly.</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Aug 15 2012, 15:38:54.</i></p>
+</body>
+</html>
