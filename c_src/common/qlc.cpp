@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <vector>
 #include <set>
+#include <stdio.h>
 
 #include "xapian_config.h"
 XAPIAN_ERLANG_NS_BEGIN
@@ -141,15 +142,11 @@ TermQlcTable::TermQlcTable(Driver& driver,
         const ParamDecoderController& controller) 
     : QlcTable(driver), mp_gen(gen), m_controller(controller)
 {
-    m_iter = mp_gen->begin();
-    m_end = mp_gen->end();
+    reset();
 
     assert(!mp_gen->empty() || (m_iter == m_end));
     if (mp_gen->empty())
         throw EmptySetDriverError();
-
-    m_size = static_cast<uint32_t>(mp_gen->size());
-    m_current_pos = 0;
 }
 
 
@@ -179,9 +176,10 @@ TermQlcTable::lookup(ParamDecoder& driver_params, ResultEncoder& result)
 {
     ParamDecoder schema_params = m_controller;
 
+    // Allocate (begin()) new iterator.
+    // m_iter contains an old iterator.
     Driver::qlcTermIteratorLookup(
-        driver_params, schema_params, result,
-        mp_gen->begin(), m_end);
+        driver_params, schema_params, result, mp_gen->begin(), m_end);
 }
 
 
@@ -189,6 +187,15 @@ TermQlcTable::lookup(ParamDecoder& driver_params, ResultEncoder& result)
 // ------------------------------------------------------------------
 // Helpers
 // ------------------------------------------------------------------
+
+void
+TermQlcTable::reset()
+{
+    m_iter = mp_gen->begin();
+    m_end = mp_gen->end();
+    m_current_pos = 0;
+    m_size = static_cast<uint32_t>(mp_gen->size());
+}
         
 void
 TermQlcTable::getPageUnknownSize(
@@ -226,15 +233,28 @@ TermQlcTable::getPageUnknownSize(
 }
 
 
+/**
+ * @a skip      How many elements to skip from the beginning?
+ * @a count     Page size.
+ */
 void
 TermQlcTable::getPageKnownSize(
         ResultEncoder& result, const uint32_t skip, const uint32_t count)
 {
+    // Skip first elements
+    if (skip != m_current_pos)
+    {
+        goTo(skip);
+    }
+
+    if (!m_size)
+        // m_size was reseted.
+        return getPageUnknownSize(result, skip, count);
+
     uint32_t size = m_size;
     assert(skip <= size);
-    
 
-    /* Tail size */
+    /* Tail size - the count of elements, that can be interesting. */
     size -= skip;
 
     // Do while: 
@@ -246,17 +266,23 @@ TermQlcTable::getPageKnownSize(
     // Put count of elements
     result << left;
 
-    // Skip first elements
-    if (skip != m_current_pos)
-    {
-        goTo(skip);
-    }
-
     // While left > 0 and term is not last.
     for (uint32_t i = left; i; m_iter++, i--)
     {
+        if (m_iter == m_end)
+        {
+            std::cout 
+                << "m_size = "          << m_size
+                << ", m_current_pos = " << m_current_pos
+                << ", i = "             << i 
+                << ", left = "          << left 
+                << ", skip = "          << skip 
+                << ", count = "         << count
+                << ", real m_size = "   << static_cast<uint32_t>(mp_gen->size());
+        }
         assert(m_iter != m_end);
         ParamDecoder params = m_controller;
+        // m_iter will be on the same position.
         m_driver.retrieveTerm(params, result, m_iter);
     }
 
@@ -272,8 +298,7 @@ TermQlcTable::goTo(const uint32_t wanted_pos)
     if (wanted_pos < m_current_pos)
     {
         // Go backward
-
-        m_iter = mp_gen->begin();
+        reset();
         assert(m_iter != m_end);
         skip_from_cur = wanted_pos;
     } else 

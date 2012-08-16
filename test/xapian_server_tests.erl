@@ -493,6 +493,42 @@ term_qlc_gen() ->
     end.
 
 
+term_qlc_invalidation_gen() ->
+    Path = testdb_path(term_qlc_inv),
+    Params = [write, create, overwrite],
+
+    %% Create a document with terms
+    TermNames = 
+    ["cat", "dog"],
+
+    Fields    = [#x_term{value = Term} || Term <- TermNames], 
+
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        DocId = ?SRV:add_document(Server, Fields),
+        Meta = xapian_term_record:record(term, record_info(fields, term)),
+        Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
+        Records1 = qlc:e(Table),
+
+        %% Delete the term
+        ?SRV:update_document(Server, DocId, 
+                             [#x_term{value = "dog", action = remove}]),
+
+        %% The term list was changed.
+        %% The QLC must be the same.        - no
+        %% Can it be runned twice?          - yes. But values will be new.
+%       Records2 = qlc:e(Table),
+
+        [ ?_assertEqual(Records1, [#term{value = <<"cat">>, wdf = 1},
+                                   #term{value = <<"dog">>, wdf = 1}])
+          %% we lost one dog :(
+%       , ?_assertEqual(Records1, Records2)
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
+
 short_term_qlc_gen() ->
     Path = testdb_path(short_term_qlc),
     Params = [write, create, overwrite],
@@ -1237,7 +1273,8 @@ synonym_gen() ->
         Table2 = xapian_term_qlc:synonym_table(Server, "test", Meta),
         Records2 = qlc:e(Table2),
         ?SRV:remove_synonym(Server, "test", "check"),
-        Table3 = xapian_term_qlc:synonym_table(Server, "test", Meta),
+%       Table3 = xapian_term_qlc:synonym_table(Server, "test", Meta),
+        Table3 = Table2,
         Records3 = qlc:e(Table3),
         io:format(user, "~n~p~n", [Records2]),
         [?_assertEqual(Records1, [#term_value{value = <<"test">>}])

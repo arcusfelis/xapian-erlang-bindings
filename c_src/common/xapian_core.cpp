@@ -3091,6 +3091,8 @@ Driver::setMetadata(ParamDecoder& params)
  * @param result        A buffer for writing.
  * @param iter          First term for searching in.
  * @param end           Last term for searching in.
+ *
+ * TODO: Move this method into qlc.h.
  */
 void
 Driver::qlcTermIteratorLookup(

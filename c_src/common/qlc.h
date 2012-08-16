@@ -103,6 +103,7 @@ class MSetQlcTable : public QlcTable
     void getPage(ResultEncoder&, uint32_t from, uint32_t count);
 
     void lookup(PR);
+    void reset();
 };
 
 
@@ -145,8 +146,11 @@ class TermQlcTable : public QlcTable
 
     void lookup(PR);
 
+
     // Helpers
     private:
+    void reset();
+
     /**
      * Skip @a skip objects from the beginning.
      * It is used, when the total size of objects is not yet known.
