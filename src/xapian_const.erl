@@ -233,6 +233,9 @@ parser_feature_id(synonyms) ->
 parser_feature_id(auto_synonyms) -> 
     parser_feature_id('AUTO SYNONYMS');
 
+parser_feature_id(auto_multiword_synonyms) -> 
+    parser_feature_id('AUTO MULTIWORD SYNONYMS');
+
 parser_feature_id(default) -> 
     parser_feature_id('DEFAULT').
 
@@ -413,17 +416,20 @@ term_field_id(float_value)     -> 6.
 
    
 %% used with a record
-document_field_id(stop)        -> 0;
-document_field_id(value)       -> 1;
-document_field_id(float_value) -> 2;
-document_field_id(data)        -> 3;
-document_field_id(docid)       -> 4;
-document_field_id(weight)      -> 5;
-document_field_id(rank)        -> 6;
-document_field_id(percent)     -> 7;
-document_field_id(multi_docid) -> 8;
-document_field_id(db_number)   -> 9;
-document_field_id(db_name)     -> document_field_id(db_number).
+document_field_id(stop)           -> 0;
+document_field_id(value)          -> 1;
+document_field_id(float_value)    -> 2;
+document_field_id(data)           -> 3;
+document_field_id(docid)          -> 4;
+document_field_id(weight)         -> 5;
+document_field_id(rank)           -> 6;
+document_field_id(percent)        -> 7;
+document_field_id(multi_docid)    -> 8;
+document_field_id(db_number)      -> 9;
+%% db_name and db_number have the same nature.
+document_field_id(db_name)        -> document_field_id(db_number);
+document_field_id(collapse_key)   -> 10;
+document_field_id(collapse_count) -> 11.
 
 
 resource_encoding_schema_id(reference)    -> 56;

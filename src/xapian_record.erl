@@ -1,4 +1,5 @@
 %%% @doc It contains helpers for extracting information from a document.
+%%% It is used with MSet.
 -module(xapian_record).
 -export([record/2, 
          encode/4, 
@@ -9,6 +10,7 @@
          append_key_field/2,
          tuple/1]).
 
+-compile({parse_transform, gin}).
 -compile({parse_transform, seqbind}).
 -record(rec, {name, fields}).
 -import(xapian_common, [ 
@@ -40,6 +42,8 @@
 %% * weight
 %% * rank
 %% * percent
+%% * collapse_key
+%% * collapse_count
 record(TupleName, TupleFields) ->
     #rec{name=TupleName, fields=TupleFields}.
 
@@ -127,9 +131,14 @@ type(List) ->
 type(_,  true, true) ->
     {true, true};
 
+%% They are from MsetIterator.
+%% `multi_docid' is calculated using dereferencing. 
+%% Next fields are calculated from `multi_docid': 
+%% * `db_number' => `db_name';
+%% * `docid'.
 type([H  | T],  IsDoc, _IsIter) 
-    when H =:= weight; H =:= rank; H =:= percent; H =:= db_number; 
-         H =:= db_name; H =:= multi_docid ->
+    when in(H, [weight, rank, percent, db_number, db_name, multi_docid,
+                collapse_count, collapse_key]) ->
     type(T, IsDoc, true);
 
 %% Can be both
@@ -144,11 +153,13 @@ type([], IsDoc, IsIter) ->
     {IsDoc, IsIter}.
 
 
+%% Encode a field without parameters:
 enc([H  | T], N2S, V2T, Bin) 
-    when H =:= data; H =:= docid; H =:= weight; H =:= rank; H =:= percent;
-         H =:= multi_docid; H =:= db_number; H =:= db_name ->
+    when in(H, [data, docid, weight, rank, percent, multi_docid, 
+                db_number, db_name, collapse_count, collapse_key]) ->
     enc(T, N2S, V2T, append_type(H, Bin));
 
+%% ... with a parameter:
 enc([Name | T], N2S, V2T, Bin) ->
     SlotNum = orddict:fetch(Name, N2S),
     CmdType = slot_to_command_type(SlotNum, V2T),
@@ -190,15 +201,17 @@ append_value(Slot, Bin) ->
 dec([H|T], I2N, Bin, Acc) ->
     {Val, NewBin} =
         case H of
-            data        -> read_string(Bin);
-            docid       -> read_document_id(Bin);
-            weight      -> read_weight(Bin);  % double
-            rank        -> read_rank(Bin);    % unsigned
-            percent     -> read_percent(Bin); % int -> uint8_t
-            multi_docid -> read_document_id(Bin);
-            db_number   -> read_db_id(Bin);
-            db_name     -> read_db_name(Bin, I2N);
-            _ValueField -> read_unknown_type_value(Bin)
+            data             -> read_string(Bin);
+            docid            -> read_document_id(Bin);
+            weight           -> read_weight(Bin);  % double
+            rank             -> read_rank(Bin);    % unsigned
+            percent          -> read_percent(Bin); % int -> uint8_t
+            collapse_key     -> read_string(Bin); 
+            collapse_count   -> read_doccount(Bin); 
+            multi_docid      -> read_document_id(Bin);
+            db_number        -> read_db_id(Bin);
+            db_name          -> read_db_name(Bin, I2N);
+            _ValueField      -> read_unknown_type_value(Bin)
         end,
     dec(T, I2N, NewBin, [Val|Acc]);
 

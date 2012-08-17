@@ -2466,6 +2466,19 @@ Driver::retrieveDocument(PCR,
                 break;
             }
 
+            case GET_COLLAPSE_KEY:
+            {
+                const std::string& key = mset_iter.get_collapse_key();
+                result << key;
+                break;
+            }
+
+            case GET_COLLAPSE_COUNT:
+            {
+                result << static_cast<uint32_t>(mset_iter.get_collapse_count());
+                break;
+            }
+
             default:
                 throw BadCommandDriverError(command);
         }
@@ -2554,6 +2567,19 @@ Driver::retrieveDocument(PCR,
             case GET_DB_NUMBER:
             {
                 result << static_cast<uint32_t>(subdb_num(*mset_iter));
+                break;
+            }
+
+            case GET_COLLAPSE_KEY:
+            {
+                const std::string& key = mset_iter.get_collapse_key();
+                result << key;
+                break;
+            }
+
+            case GET_COLLAPSE_COUNT:
+            {
+                result << static_cast<uint32_t>(mset_iter.get_collapse_count());
                 break;
             }
 
@@ -2677,6 +2703,8 @@ Driver::retrieveDocumentSchema(
             case GET_PERCENT:
             case GET_MULTI_DOCID:
             case GET_DB_NUMBER:
+            case GET_COLLAPSE_KEY:
+            case GET_COLLAPSE_COUNT:
                 break;
 
             default:

@@ -179,7 +179,9 @@ class Driver
         GET_RANK                    = 6,
         GET_PERCENT                 = 7,
         GET_MULTI_DOCID             = 8,
-        GET_DB_NUMBER               = 9
+        GET_DB_NUMBER               = 9,
+        GET_COLLAPSE_KEY            = 10,
+        GET_COLLAPSE_COUNT          = 11
     };
 
     enum e_encodedValueType {
