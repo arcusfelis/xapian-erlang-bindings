@@ -33,7 +33,8 @@ for storing resources' ids.
 Here is a package name of this library in the Ubuntu repository
 `libsparsehash-dev`.
 
-The C++-predprocessor macro `GOOGLE_HASH_MAP` enables google hash map.
+The C++-predprocessor's macro `GOOGLE_HASH_MAP` enables google hash map as 
+a hash map.
 
 
 Using

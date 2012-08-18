@@ -80,8 +80,8 @@
          internal_transaction_cancel/2,
 
          internal_test_run/3,
-         execute_generator/4,
-         compile_resource/3,
+         internal_execute_generator/4,
+         internal_compile_resource/3,
 
          internal_create_resource/2,
          internal_create_resource/3
@@ -163,12 +163,12 @@ resource_reference_to_number(Register, ClientPid, ResRef) ->
     %% It contains matadata for controlling a linked-in port driver or a port.
     port :: x_port(),
 
-    %% Information was retrieved from #x_prefix_name{}.
+    %% Information was retrieved from `#x_prefix_name{}'.
     name_to_prefix :: orddict:orddict(),
 
     %% A value slot is an unsigned integer in C++.
     %% They are mapped into atoms in Erlang (it is optional).
-    %% Information was retrieved from #x_value_name{}.
+    %% Information was retrieved from `#x_value_name{}'.
     name_to_slot :: orddict:orddict(),
 
     %% It is used for float values. Usually, type is `string', it is the 
@@ -271,6 +271,7 @@ resource_reference_to_number(Register, ClientPid, ResRef) ->
 -type x_database_name() :: xapian_type:x_document_constructor().
 -type x_slot_value() :: xapian_type:x_slot_value().
 -type x_slot_type() :: xapian_type:x_slot_type().
+
 
 %% ------------------------------------------------------------------
 %% Internal types
@@ -653,6 +654,8 @@ replace_document(Server, DocIdOrUniqueTerm, NewDocument) ->
 %% have the same behaviour.</note>
 %%
 %% REP_CRT_DOC_MARK
+%% @see add_document/2
+%% @see replace_document/3
 -spec replace_or_create_document(x_server(), x_unique_document_id(), 
     x_document_constructor()) -> x_document_id().
 
@@ -1474,11 +1477,11 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
     #state{port = Port } = State,
     do_reply(State, do([error_m ||
         SpyRFs
-            <- check_all([compile_resource(State, SpyRef, FromPid) 
+            <- check_all([internal_compile_resource(State, SpyRef, FromPid) 
                     || SpyRef <- SpyRefs]),
         %% Resource function (RF): fun(Bin) -> Bin.
         EnquireRF
-            <- compile_resource(State, EnquireRef, FromPid),
+            <- internal_compile_resource(State, EnquireRef, FromPid),
 
         MSetNum <-
             port_match_set(Port, EnquireRF, Offset, 
@@ -1566,7 +1569,7 @@ handle_call({create_resource, ResourceConName, Gen},
     #state{ port = Port } = State,
     do_reply(State, do([error_m ||
         ParamBin <-
-                execute_generator(State, ResourceConName, Gen, <<>>),
+                internal_execute_generator(State, ResourceConName, Gen, <<>>),
 
         ResourceConNumber
             <- port_create_resource(Port, ParamBin),
@@ -1715,7 +1718,7 @@ maybe_append_resource_number(ResNum, Bin) ->
 
 
 %% @doc Create the `fun(Bin)' function.
-compile_resource(State, ResRef, ClientPid)
+internal_compile_resource(State, ResRef, ClientPid)
     when is_reference(ResRef), is_pid(ClientPid) ->
     #state{ register = Register } = State,
     Schema = xapian_const:resource_encoding_schema_id(reference),
@@ -1737,12 +1740,13 @@ compile_resource(State, ResRef, ClientPid)
 %% 1. extracts info from the `Res' record fields;
 %% 2. extracts info from `State'.
 %% @private
-compile_resource(State, Res, _ClientPid) when is_tuple(Res) ->
+internal_compile_resource(State, Res, _ClientPid) when is_tuple(Res) ->
     Schema = xapian_const:resource_encoding_schema_id(constructor),
     do([error_m ||
         CompiledConBin 
             <- xapian_resource:compile(State, Res, <<>>),
-               %% execute_generator is called
+               %% `internal_execute_generator' is called inside 
+               %% `xapian_resource:compile/3'.
         {ok, fun(Bin) -> append_binary(CompiledConBin, 
                                        append_uint8(Schema, Bin)) end}
        ]).
@@ -1753,7 +1757,7 @@ compile_resource(State, Res, _ClientPid) when is_tuple(Res) ->
 %% This data allows to create a resource using a user object constructor 
 %% (see user_object).
 %% @private
-execute_generator(State = #state{}, ResourceTypeName, Gen, Bin) ->
+internal_execute_generator(State = #state{}, ResourceTypeName, Gen, Bin) ->
     #state{ con_name_to_number = N2R } = State,
     do([error_m ||
         %% Info about a resource constructor

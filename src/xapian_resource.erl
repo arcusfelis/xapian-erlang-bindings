@@ -67,7 +67,7 @@ con(Name) ->
 %% @doc Append the second parameter as a binary.
 %% @see xapian_server:compile_resource/3
 compile(State, #resourse_const{name = ConName, generator = Gen}, Bin) ->
-    xapian_server:execute_generator(State, ConName, Gen, Bin).
+    xapian_server:internal_execute_generator(State, ConName, Gen, Bin).
 
 create(Server, #resourse_const{name = ConName, generator = Gen}) ->
     xapian_server:internal_create_resource(Server, ConName, Gen).

@@ -7,11 +7,14 @@
     append_param/2,
     append_stop/1,
     append_string/2,
+    append_double/2,
     read_document_count/1,
-    read_weight/1
+    read_weight/1,
+    read_percent/1
 ]).
 
 -import(xapian_const, [mset_info_param_id/1]).
+-compile({parse_transform, gin}).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -36,6 +39,10 @@ decode(Param, Bin) ->
 append_mset_info_param(Param, Bin) when is_atom(Param) ->
     true = lists:member(Param, properties()),
     append_param(mset_info_param_id(Param), Bin);
+
+append_mset_info_param({Param, Weight}, Bin) 
+    when in(Param, [weight_to_percent]) ->
+    append_double(Weight, append_param(mset_info_param_id(Param), Bin));
 
 append_mset_info_param({Param, Term}, Bin) when is_atom(Param) ->
     append_string(Term, append_param(mset_info_param_id(Param), Bin)).
@@ -106,4 +113,7 @@ decode_param(term_weight, Bin) ->
     read_weight(Bin);
 
 decode_param(term_freq, Bin) ->
-    read_document_count(Bin).
+    read_document_count(Bin);
+
+decode_param(weight_to_percent, Bin) ->
+    read_percent(Bin).

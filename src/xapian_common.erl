@@ -1,3 +1,4 @@
+%%% @doc This module contains functions, which are used by other modules.
 -module(xapian_common).
 -compile({parse_transform, seqbind}).
 
@@ -79,6 +80,12 @@
 
 
 
+%% @doc If the value is defined, then read it with `Fn' function.
+%% Otherwise, the value is `undefined'.
+-spec read_maybe(Fn, Bin) -> {Result, Bin} | {undefined, Bin} when
+    Fn     :: fun((Bin) -> Result),
+    Bin    :: binary(),
+    Result :: term().
 read_maybe(Fn, Bin) ->
     {IsDefined, Bin2} = read_uint8(Bin),
     case IsDefined of
@@ -87,16 +94,21 @@ read_maybe(Fn, Bin) ->
     end.
 
 
-%% Order of functions:
-%% * Append
-%% * Read
+%% Note: Order of the functions:
+%% * Append "something";
+%% * Read "something".
 
+%% @doc Split the binary on a string and a tail.
+-spec read_string(Bin) -> {Str, Bin} when
+    Bin :: binary(),
+    Str :: xapian_type:x_string().
 read_string(Bin) ->
     <<Num:32/native-unsigned-integer, Bin2/binary>> = Bin,  
     <<Str:Num/binary, Bin3/binary>> = Bin2,
     {Str, Bin3}.
 
 
+%% @doc Run `read_string'. Return `undefined' for empty strings.
 save_read_string(Bin) ->
     <<Num:32/native-unsigned-integer, Bin2/binary>> = Bin,  
     case Num of
@@ -106,26 +118,30 @@ save_read_string(Bin) ->
             {Str, Bin3}
     end.
 
-
+%% @doc Convert characters into a binary.
+-spec string_to_binary(Str) -> Bin when
+    Str :: unicode:chardata(),
+    Bin :: binary().
 string_to_binary(Str) ->
     StrBin = unicode:characters_to_binary(Str),
     [ erlang:error({not_unicode, StrBin}) || not is_binary(StrBin) ],
     StrBin.
 
-%% Append iolist as a string
+
+%% @doc Append iolist as a list of bytes.
 append_iolist(Str, Bin) ->
     StrBin = erlang:iolist_to_binary(Str),
     StrLen = erlang:byte_size(StrBin),
     <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
 
 
-%% Append characters as a string
+%% @doc Append characters as an unicode string.
 append_string(Str, Bin) ->
     StrBin = string_to_binary(Str),
     StrLen = erlang:byte_size(StrBin),
     <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
 
-
+%% @doc Append non-empty string or throw an `string_is_empty' error.
 append_non_empty_string(Str, Bin) ->
     StrBin = string_to_binary(Str),
     [erlang:error(string_is_empty) || Str =:= <<>>],
@@ -133,57 +149,69 @@ append_non_empty_string(Str, Bin) ->
     <<Bin/binary, StrLen:32/native-signed-integer, StrBin/binary>>.
 
 
-%% Encode to unsigned int32_t (for example, it is Xapian::valueno)
+%% @doc Encode to unsigned `int32_t' (for example, it is `Xapian::valueno').
 append_uint(Value, Bin) when is_integer(Value), is_binary(Bin) ->
     <<Bin/binary, Value:32/native-unsigned-integer>>.
 
 
-%% Encode to unsigned int16_t (for example, it is a tcp port)
+%% @doc Encode to unsigned `int16_t' (for example, it is a tcp port).
 append_uint16(Value, Bin) when is_integer(Value), is_binary(Bin) ->
     <<Bin/binary, Value:16/native-unsigned-integer>>.
 
-
+%% @doc Read an unsigned integer `int32_t'.
 read_uint(Bin) ->
     <<Value:32/native-unsigned-integer, Bin2/binary>> = Bin,  
     {Value, Bin2}.
 
 
+%% @doc Append a unsigned integer `int8_t'.
 append_int8(Num, Bin) ->
     <<Bin/binary, Num:8/native-signed-integer>>.
 
 
+%% @doc Append a signed integer `int32_t'.
 append_int(Num, Bin) ->
     <<Bin/binary, Num:32/native-signed-integer>>.
 
 
+%% @doc Append a signed integer `uint8_t'.
 append_uint8(Value, Bin) ->
     <<Bin/binary, Value:8/native-unsigned-integer>>.
 
 
+%% @doc Append a parameter or a field as `uint8_t'.
+%% It is used primarily for encoding command types, that are handled inside 
+%% `switch' constructings on the C++ side.
 append_param(0, _Bin) ->
     erlang:error(bad_field);
 append_param(Value, Bin) ->
     append_uint8(Value, Bin).
+
 
 %% @doc Append flags, used in `XapianErlangDriver::decodeParserFeatureFlags'.
 append_flags(Flags, Bin) ->
     FlagsBin = << <<X/native-signed-integer>> || X <- Flags, X =/= 0 >>,
     <<Bin/binary, FlagsBin/binary, 0>>.
 
-
+%% @doc Append a special parameter, which shows the end of the list of commands.
+%% Append 0, because it is easy to handle it inside the `while' construction.
 append_stop(Bin) ->
     <<Bin/binary, 0>>.
 
+
+% @doc Append an unsigned byte (`uint8_t').
 read_uint8(Bin) ->
     <<Value:8/native-unsigned-integer, Bin2/binary>> = Bin,  
     {Value, Bin2}.
 
 
+%% @doc Append a document identifier (as `uint32_t').
 append_document_id(Id, Bin) ->
     append_uint(Id, Bin).
 
 
-%% Appends a document id or a unique term.
+%% @doc Appends a document id or a unique term.
+%% Add a prefix tag (1,2) also.
 append_unique_document_id(Id, Bin) when is_integer(Id) ->
     append_document_id(Id, append_uint8(1, Bin));
 
@@ -191,7 +219,7 @@ append_unique_document_id(Term, Bin) ->
     append_iolist(Term, append_uint8(2, Bin)).
 
 
-%% Zero id will be replaced by `undefined'.
+%% @doc Zero id will be replaced by `undefined'.
 read_document_id(Bin) ->
     case read_uint(Bin) of
         {0, Bin1} -> {undefined, Bin1};
@@ -199,33 +227,46 @@ read_document_id(Bin) ->
     end.
 
 
+%% @doc Read a database number (uint32_t).
 read_db_id(Bin) ->
     read_uint(Bin).
 
 
+%% @doc Read a count of documents (uint32_t).
 read_document_count(Bin) ->
     read_uint(Bin).
 
 
+%% @doc Read a document length (double).
+%% This value is used as, for example, 
+%% "an average length of document in the list".
 read_document_length(Bin) ->
     read_double(Bin).
 
 
+%% @doc Read a term count (uint32_t).
 read_term_count(Bin) ->
     read_uint(Bin).
 
 
+%% @doc Read a term position (uint32_t, used with `#x_term.position').
 read_term_position(Bin) ->
     read_uint(Bin).
 
 
+%% @doc Append a value slot (uint32_t).
+%% Aliases are allowed (when `Slot' is an atom).
 append_slot(Slot, N2S, Bin) ->
     append_uint(slot_id(Slot, N2S), Bin).
 
 
+%% @doc Append a value slot (uint32_t).
+%% Aliases are not allowed (when `Slot' is an atom).
 append_slot(Slot, Bin) ->
     append_uint(Slot, Bin).
 
+
+%% @doc Append a list of slots.
 append_slots(N2S, Slots, Bin) ->
     Values = [ slot_id(Slot, N2S) || Slot <- Slots ],
     SlotsBin = 
@@ -234,6 +275,7 @@ append_slots(N2S, Slots, Bin) ->
     <<Bin/binary, SlotsBin/binary, BadValue/binary>>.
 
 
+%% @doc Append a list of slots. `{reverse, Slot}' is allowed.
 append_slots_with_order(N2S, Slots, Bin) ->
     ValueAndOrders = [ slot_id_and_order(Slot, N2S) || Slot <- Slots ],
     SlotsBin = 
@@ -249,27 +291,31 @@ slot_id_and_order({reverse, Value}, N2S) ->
 slot_id_and_order(Value, N2S) ->
     {slot_id(Value, N2S), 0}. %% reverse = false (default)
 
-bad_value() ->      
+
+%% @doc Append the maximum `uint32_t'.
+bad_value() ->     
     <<(bnot 0):32>>.
 
 
-
+%% @doc Append a float.
 append_double(Value, Bin) ->
-        %% `native-float' is `double' from C++.
+    %% `native-float' is `double' from C++.
     <<Bin/binary, Value/native-float>>.
 
 
+%% @doc Read a float.
 read_double(Bin) ->
     %% `native-float' is `double' from C++.
     <<W/native-float, Bin2/binary>> = Bin,  
     {W, Bin2}.
 
-
+%% @doc Read a float, don't crush, if this float is a malformed.
 save_read_double(Bin) ->
     %% `native-float' is `double' from C++.
     try
         read_double(Bin)
     catch error:{badmatch, _Bin} ->
+        %% It is `sizeof(double)' in C.
         BitCount = bit_size(<<0/native-float>>),
         <<_Skip:BitCount, Bin2/binary>> = Bin,  
         {undefined, Bin2}
@@ -281,7 +327,7 @@ append_binary(Value, Bin) ->
     <<Bin/binary, Value/binary>>.
 
 
-%% Append bool
+%% Append a bool.
 append_boolean(Value, Bin) ->
     append_uint8(boolean_to_integer(Value), Bin).
 
@@ -475,7 +521,7 @@ append_resource({State, ClientPid} = _RA, Res, Bin) ->
 
 %% @doc Append a resource reference or constructor.
 append_resource(State, Res, Bin, ClientPid) ->
-    {ok, F} = xapian_server:compile_resource(State, Res, ClientPid),
+    {ok, F} = xapian_server:internal_compile_resource(State, Res, ClientPid),
     F(Bin).
 
 
