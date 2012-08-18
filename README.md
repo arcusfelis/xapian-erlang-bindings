@@ -276,7 +276,7 @@ Code examples
 Documentation
 =============
 
-* [Eunit Reference](http://freeakk.github.com/xapian/index.html)
+* [Edoc Reference](http://freeakk.github.com/xapian/index.html)
 * [Sphinx Manual](http://freeakk.github.com/xapian-docsprint/index.html)
 * [C++ Doxygen Reference](http://freeakk.github.com/xapian/doxygen/index.html)
 * [Sphinx raws](https://github.com/freeakk/xapian-docsprint)
