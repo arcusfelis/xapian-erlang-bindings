@@ -40,13 +40,19 @@
 %% API
 %% ------------------------------------------------------------------
 
-%% For PoolParams see https://github.com/devinus/poolboy
+%% @doc Create a pool.
+%% For `PoolParams' see https://github.com/devinus/poolboy
 %%
-%% * `name': the pool name
-%% * `worker_module': the module that represents the workers
-%% * `size': maximum pool size
-%% * `max_overflow': maximum number of workers created if pool is empty
-
+%% <ul> <li>
+%% `name': the pool name
+%% </li><li>
+%% `worker_module': the module that represents the workers
+%% </li><li>
+%% `size': maximum pool size
+%% </li><li>
+%% `max_overflow': maximum number of workers created if pool is empty
+%% </li></ul>
+%% @see xapian_server:open/3
 -spec open([pool_param()], iolist(), [term()]) -> {ok, pid()} | {error, term}.
 
 open(PoolParams, Path, Params) ->
@@ -71,7 +77,13 @@ close(PoolName) ->
     poolboy:stop(PoolName).
 
 
-%% Gets poolers from the list and runs Fun with 
+%% @doc Call the function `Fun' with the list of servers from pools,
+%% regestered under the `PoolNames' names, as a parameter.
+-spec checkout(PoolNames, Fun) -> Result when
+    PoolNames :: [atom() | pid()],
+    Fun :: fun((Servers) -> Result),
+    Servers :: [xapian_type:x_server()],
+    Result :: term().
 checkout(PoolNames, Fun) ->
     PoolWorkers = 
     [poolboy:checkout(PoolName) || PoolName <- PoolNames],
@@ -84,7 +96,7 @@ checkout(PoolNames, Fun) ->
     end.
 
 
-%% Called by Poolboy
+%% @doc It is a callback for Poolboy.
 start_link(Args) ->
     [Path, Params] = proplists:get_value(worker_params, Args),
     ?SERVER:start_link(Path, Params).

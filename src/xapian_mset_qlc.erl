@@ -6,8 +6,9 @@
 
 -type x_document_id() :: xapian_type:x_document_id().
 
-
-
+%% @doc Create a QLC table from MSet, creating a record, described with Meta, 
+%% for each document.
+%% @see xapian_record:record/2
 table(Server, MSet, Meta)
     when is_reference(MSet) ->
     EncoderFun = fun(DrvState, Bin) ->

@@ -29,31 +29,51 @@
     index_of/2]).
 
 -import(xapian_const, [source_type_id/1, document_field_id/1]).
+-type document_meta() :: term().
 
 
 %% ------------------------------------------------------------------
 %% API
 %% ------------------------------------------------------------------
 
-%% @doc You can use special names for fields:
+%% @doc Create a term, that contains information about document fields.
+%% This information is used for building a record term for each document in
+%% the MSet.
+%% `TupleFields' is a list of special names for the record fields:
 %% 
-%% * docid
-%% * data
-%% * weight
-%% * rank
-%% * percent
-%% * collapse_key
-%% * collapse_count
+%% <ul><li>
+%% </li><li> docid
+%% </li><li> data
+%% </li><li> weight
+%% </li><li> rank
+%% </li><li> percent
+%% </li><li> collapse_key
+%% </li><li> collapse_count
+%% </li></ul>
+-spec record(TupleName, TupleFields) -> Meta when
+    TupleName :: atom(),
+    TupleFields :: [atom()],
+    Meta :: document_meta().
+
 record(TupleName, TupleFields) ->
     #rec{name=TupleName, fields=TupleFields}.
 
 
+%% @doc Return an index of the `Field' or `undefined' if there is no a key.
+-spec key_position(Meta, Field) -> Pos when
+    Meta :: document_meta(),
+    Field :: atom(),
+    Pos :: non_neg_integer() | undefined.
 key_position(#rec{fields=TupleFields}, Field) ->
     case index_of(Field, TupleFields) of
     not_found -> undefined;
     I -> I + 1
     end.
 
+%% @doc Convert `Meta' into a tuple, where fields are fields' names.
+-spec tuple(Meta) -> Rec when
+    Meta :: document_meta(),
+    Rec :: record().
 tuple(#rec{name=TupleName, fields=TupleFields}) ->
     list_to_tuple([TupleName | TupleFields]).
 
@@ -78,6 +98,7 @@ encoder_source_type([_|_] = TupleFields) ->
     end.
 
 
+%% @doc Read a record from binary.
 -spec decode(term(), orddict:orddict(), binary()) -> {term(), binary()}.
 
 decode(Meta, I2N, Bin) ->
@@ -85,6 +106,7 @@ decode(Meta, I2N, Bin) ->
     dec(TupleFields, I2N, Bin, [TupleName]).
 
 
+%% @doc Read a list of records from a binary.
 decode_list(Meta, I2N, Bin@) ->
     {Count, Bin@} = read_doccount(Bin@),
     decode_cycle(Count, Meta, I2N, Bin@, []).
@@ -100,7 +122,7 @@ decode_cycle(Count, Meta, I2N, Bin@, Acc)
 
 
 
-%% This encoding schema is used when a total size is unknown.
+%% @doc This encoding schema is used when a total size is unknown.
 decode_list2(Meta, I2N, Bin) ->
     decode_list2(Meta, I2N, Bin, []).
 

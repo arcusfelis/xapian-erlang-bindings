@@ -9,10 +9,20 @@
     erase/3,
     delete/3]).
 
+%% @doc Creat an empty store.
+-spec new() -> store().
 new() ->
     gb_trees:empty().
 
 -record(context, {mon_ref, resources}).
+-type store() :: gb_tree().
+
+%% @doc Save `Elem' inside `ClientPid''s context.
+-spec put(Store, ClientPid, Elem) -> {ok, {Store, ResRef}} when
+    Store :: store(),
+    ClientPid :: pid(),
+    Elem :: term(),
+    ResRef :: reference().
 
 put(Store, ClientPid, Elem) when is_pid(ClientPid) ->
     case gb_trees:lookup(ClientPid, Store) of
@@ -43,7 +53,16 @@ put(Store, ClientPid, Elem) when is_pid(ClientPid) ->
     end.
 
 
-%% @doc Delete resource
+%% @doc Delete a resource `ResRef' from the store.
+%% If exists, then `ResRef' must be inside `ClientPid''s context.
+-spec delete(Store, ClientPid, ResRef) -> {ok, {Store, Elem}} | {error, Reason}
+    when
+    Store :: store(),
+    ClientPid :: pid(),
+    Elem :: term(),
+    ResRef :: reference(),
+    Reason :: elem_not_found | empty_context.
+
 delete(Store, ClientPid, ResRef)
     when is_pid(ClientPid), is_reference(ResRef) ->
     case gb_trees:lookup(ClientPid, Store) of
@@ -78,6 +97,16 @@ delete(Store, ClientPid, ResRef)
 %% @doc Erase context: all resources, used by `ClientPid'.
 %%
 %% ClientPid is dead.
+-spec erase(Store, ClientPid, MonRef) -> 
+    {ok, {Store, Resources}} | {error, Reason} when 
+    Resources :: [{ResRef, Elem}],
+    Store :: store(),
+    ClientPid :: pid(),
+    Elem :: term(),
+    ResRef :: reference(),
+    MonRef :: reference(),
+    Reason :: empty_context.
+
 erase(Store, ClientPid, MonRef) 
     when is_pid(ClientPid), is_reference(MonRef) ->
     case gb_trees:lookup(ClientPid, Store) of
@@ -91,6 +120,14 @@ erase(Store, ClientPid, MonRef)
 
 
 %% @doc Get info about the resource with ResRef, used by ClientPid.
+-spec get(Store, ClientPid, ResRef) -> {ok, Elem} | {error, Reason}
+    when
+    Store :: store(),
+    ClientPid :: pid(),
+    Elem :: term(),
+    ResRef :: reference(),
+    Reason :: elem_not_found | empty_context.
+
 get(Store, ClientPid, ResRef)
     when is_pid(ClientPid), is_reference(ResRef) ->
     case gb_trees:lookup(ClientPid, Store) of
@@ -105,6 +142,15 @@ get(Store, ClientPid, ResRef)
             {error, empty_context}
     end.
 
+%% @doc If the ResRef is defined, the run `get()', otherwise do nothing.
+-spec maybe_get(Store, ClientPid, ResRef) -> {ok, Elem} | {error, Reason}
+    when
+    Store :: store(),
+    ClientPid :: pid(),
+    Elem :: term() | undefined,
+    ResRef :: reference() | undefined,
+    Reason :: elem_not_found | empty_context.
+
 maybe_get(_Store, _ClientPid, undefined) ->
     {ok, undefined};
 maybe_get(Store, ClientPid, ResRef) ->
@@ -112,6 +158,14 @@ maybe_get(Store, ClientPid, ResRef) ->
 
 
 %% @doc Try get or throw an exception.
+%% If an element is not found, the error `elem_not_found' will be thrown.
+%% If an client's context is not found, the error `empty_context' will be thrown.
+-spec fetch(Store, ClientPid, ResRef) -> Elem when
+    Store :: store(),
+    ClientPid :: pid(),
+    Elem :: term(),
+    ResRef :: reference().
+
 fetch(Store, ClientPid, ResRef) 
     when is_pid(ClientPid), is_reference(ResRef) ->
     #context{resources = Resources} = gb_trees:get(ClientPid, Store),

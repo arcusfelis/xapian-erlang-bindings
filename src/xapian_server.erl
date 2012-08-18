@@ -1,4 +1,4 @@
-% This module is a `gen_server' that handles a single port connection.
+%%% @doc This module is a `gen_server' that handles a single port connection.
 -module(xapian_server).
 -behaviour(gen_server).
 
@@ -289,35 +289,57 @@ resource_reference_to_number(Register, ClientPid, ResRef) ->
 %% `Path' is a directory name of the database.
 %% For opening multiple databases you can pass a list of:
 %%
-%% * `#x_database{}';
-%% * `#x_prog_database{}';
-%% * `#x_tcp_database{}'.
+%% <ul> <li> 
+%% `#x_database{}';
+%% </li><li>
+%% `#x_prog_database{}';
+%% </li><li>
+%% `#x_tcp_database{}'.
+%% </li></ul>
 %%
 %% See the description of these records for more information.
 %%
 %% `Params' is a list of:
 %%
-%% * Modes: read, write, overwrite, create, open:
-%%      The `read' mode is only for reading. 
-%%      The `write' mode is for reading and for writing.
-%%      Write mode can be combined with:
-%%          `open' (default), `create', `overwrite'.
-%% * Names for values and for prefixes:
-%%      `#x_value_name{slot = 1, name = slotname}'
-%%      `#x_prefix_name{name = author, prefix = <<$A>>}';
-%% * The default stemmer. It will be used in `TermGenerator' and in the 
-%%      default query parser:
-%%      `#x_stemmer{language="english"}';
-%% * An interface to work: `port' (or `driver' by default).
-%% * `{name, Atom}' allows to register the server under the local name `Atom';
-%% * `{name, {local, Atom}}' does the same;
-%% * `{name, {global, Atom}}' registers the process under the global name.
+%% <ul> <li> 
+%% Modes: read, write, overwrite, create, open:
+%%  <ul> <li> 
+%% The `read' mode is only for reading. 
+%%  </li><li>
+%% The `write' mode is for reading and for writing.
+%%  </li><li>
+%% Write mode can be combined with:
+%% `open' (default), `create', `overwrite'.
+%%  </li></ul>
+%% </li><li>
+%% Names for values and for prefixes:
+%%  <ul> <li> 
+%% `#x_value_name{slot = 1, name = slotname}'
+%%  </li><li>
+%% `#x_prefix_name{name = author, prefix = <<$A>>}';
+%%  </li></ul>
+%% </li><li>
+%% The default stemmer. It will be used in `TermGenerator' and in the 
+%% default query parser:
+%% `#x_stemmer{language="english"}';
+%% </li><li>
+%% An interface to work: `port' (or `driver' by default).
+%% </li><li>
+%% `{name, Atom}' allows to register the server under the local name `Atom';
+%% </li><li>
+%% `{name, {local, Atom}}' does the same;
+%% </li><li>
+%% `{name, {global, Atom}}' registers the process under the global name.
+%% </li></ul>
+%% @see close/2
+%% @see xapian_pool:open/3
 -spec open(db_path(), [term()]) -> {ok, x_server()}.
 
 open(Path, Params) ->
     xapian_server_sup:start_server(Path, Params).
 
 
+%% @doc Start a linked server without supervision.
 -spec start_link(db_path(), [term()]) -> {ok, x_server()}.
 
 start_link(Path, Params) ->
@@ -389,8 +411,11 @@ enquire(Server, Query) ->
 
 %% @doc Return a document as a resource.
 %% The second document can be:
-%% * A document id or an unique term;
-%% * A document constructor.
+%% <ul> <li>
+%% A document id or an unique term;
+%% </li><li> 
+%% A document constructor.
+%% </li></ul>
 %%
 %% If the second argument is the empty list, then the `badarg' error will
 %% occure.
@@ -398,10 +423,15 @@ enquire(Server, Query) ->
 %% It is an undefined behaviour.
 %% Two cases can be here:
 %%
-%% 1. You cannot use an empty term as an id (all documents will be selected).
-%%      Solution: Use other ways to traverse the documents.
-%% 2. Why do you need a document resource, defined with an empty constructor?
-%%      Solution: pass `[#x_text{value=""}]'.
+%% <ol> <li>
+%% You cannot use an empty term as an id (all documents will be selected).
+%%
+%% Solution: Use other ways to traverse the documents.
+%% </li><li> 
+%% Why do you need a document resource, defined with an empty constructor?
+%%
+%% Solution: pass `[#x_text{value=""}]'.
+%% </li></ol> 
 -spec document(x_server(), x_unique_document_id() 
                | x_document_constructor()) -> x_resource().
 document(_Server, []) ->
@@ -419,34 +449,46 @@ document(Server, DocId) -> %% DocId can be an unique term.
 
 %% @doc Return a match set (M-Set).
 %% A match set can be created from:
-%% * an enquire (`x_resource()' type);
-%% * from record `#x_match_set{}', which contains an enquire and 
-%%   addition parameters.
+%% <ul> <li>
+%% an enquire (`x_resource()' type);
+%% </li><li>
+%% from record `#x_match_set{}', which contains an enquire and 
+%% addition parameters.
+%% </li></ul>
 %%
 %% Match set record is:
 %%
-%%  ```
-%%  #x_match_set{
-%%      enquire = EnquireResource, 
-%%      offset = Offset, 
-%%      max_items = MaxItems, 
-%%      check_at_least = CheckAtLeast, 
-%%      spies = Spies
-%%  }
-%%  '''
+%% ```
+%% #x_match_set{
+%%     enquire = EnquireResource, 
+%%     offset = Offset, 
+%%     max_items = MaxItems, 
+%%     check_at_least = CheckAtLeast, 
+%%     spies = Spies
+%% }
+%% '''
 %%
 %%  where 
-%%      * `EnquireResource' contains the result of the search. 
-%%              @see enquire/2. It is required;
-%%      * `Offset' means how many elements to skip. It is 0 by default;
-%%      * `MaxItems' means how many elements to return. 
-%%              Not more than `MaxItems' elements will be return. 
-%%              It is `undefined' by default, 
-%%              that means all items will be selected;
-%%      * `Spies' is a list of MatchSpy resources (@see xapian_match_spy).
+%% <ul> <li>
+%% `EnquireResource' contains the result of the search. 
 %%
-%% @see xapian_mset_qlc
+%% This parameter is required {@link enquire/2};
+%% </li><li>
+%% `Offset' means how many elements to skip. It is 0 by default;
+%% </li><li>
+%% `MaxItems' means how many elements to return. 
+%%
+%% Not more than `MaxItems' elements will be return. 
+%% It is `undefined' by default, 
+%% that means all items will be selected;
+%% </li><li>
+%% `Spies' is a list of MatchSpy resources {@link xapian_match_spy}.
+%% </li></ul>
+%%
+%% @see enquire/2
+%% @see xapian_mset_qlc:table/3
 %% @see mset_info/3
+%% @see xapian_match_spy
 -spec match_set(x_server(), #x_match_set{} | Enquire) -> x_resource() when 
     Enquire :: x_resource().
 
@@ -459,6 +501,7 @@ match_set(Server, EnquireResource) ->
 
 
 
+%% @doc Create QueryParser as a resource.
 -spec query_parser(x_server(), #x_query_parser{}) -> x_resource().
 
 query_parser(Server, #x_query_parser{} = Rec) ->
@@ -482,10 +525,20 @@ parse_string(Server, #x_query_string{} = Rec, Fields) ->
 %% @doc Release a resource.
 %% It will be called automaticly, if the client process is died.
 %% If a release constructor will be passed, then the error occurs.
+%% @see create_resource/2
 -spec release_resource(x_server(), x_resource()) -> ok.
 release_resource(Server, ResourceRef) when is_reference(ResourceRef) ->
     call(Server, {release_resource, ResourceRef}).
 
+%% @doc Create a resource from the resource constructror `Con'.
+%% `Con' is created with the help of a function from a `xapian_resource' module.
+%% `ResRef' must be released with {@link release_resource/2}.
+%% `ResRef' will be released automaticly, when `Server' is dead.
+%% @see release_resource/2
+-spec create_resource(Server, Con) -> ResRef when
+    Server :: x_server(),
+    Con :: xapian_type:x_resource_constructor(),
+    ResRef :: x_resource().
 create_resource(Server, Con) ->
     xapian_resource:create(Server, Con).
 
@@ -508,6 +561,9 @@ internal_register_qlc_table(Server, ResRef, Table) ->
 %% ------------------------------------------------------------------
 
 %% @doc Write a new document, return its id.
+%% @see replace_document/3
+%% @see replace_or_create_document/3
+%% @see delete_document/2
 -spec add_document(x_server(), x_document_constructor()) -> 
     x_document_id().
 
@@ -534,6 +590,8 @@ add_spelling(Server, Spelling) ->
     call(Server, {add_spelling, Spelling}).
 
 
+%% @doc Add the synonym `Synonym' for the term `Term'.
+%% @see remove_synonym/3
 -spec add_synonym(Server, Term, Synonym) -> no_return() when
     Server :: x_server(),
     Term :: x_string(), 
@@ -543,6 +601,9 @@ add_synonym(Server, Term, Synonym) ->
     call(Server, {add_synonym, Term, Synonym}).
 
 
+%% @doc Remove the synonym `Synonym' for the term `Term'.
+%% @see clear_synonyms/2
+%% @see add_synonym/3
 -spec remove_synonym(Server, Term, Synonym) -> no_return() when
     Server :: x_server(),
     Term :: x_string(), 
@@ -552,6 +613,8 @@ remove_synonym(Server, Term, Synonym) ->
     call(Server, {remove_synonym, Term, Synonym}).
 
 
+%% @doc Remove all synonyms for the term `Term'.
+%% @see remove_synonym/3
 -spec clear_synonyms(Server, Term) -> no_return() when
     Server :: x_server(),
     Term :: x_string().
@@ -640,6 +703,7 @@ update_or_create_document(Server, DocIdOrUniqueTerm, NewDocument) ->
 %% <note>This function catches the 
 %% `#x_error{type = <<"DocNotFoundError">>}' error and returns `false', if 
 %% the document was not found.</note>
+%% @see add_document/2
 -spec delete_document(x_server(), x_unique_document_id()) -> IsDocumentExist 
         when IsDocumentExist :: boolean().
 
@@ -655,6 +719,7 @@ is_document_exist(Server, DocIdOrUniqueTerm) ->
 
 
 %% @doc Save a key-value pair into the database dictionary.
+%% @see database_info/2
 -spec set_metadata(x_server(), x_string(), x_string()) -> ok.
 
 set_metadata(Server, Key, Value) ->
@@ -693,9 +758,13 @@ transaction(Servers, F) ->
 %%
 %% Results (`#x_transaction_result.statuses') from a server:
 %%
-%% * `committed' - A transaction was pass on this server. Data is consistent;
-%% * `aborted' - A transaction was canceled on this server. Data is consistent;
-%% * `failed' - An exeption was occured. Data is inconsistent.
+%% <ul> <li>
+%% `committed' - A transaction was pass on this server. Data is consistent;
+%% </li><li>
+%% `aborted' - A transaction was canceled on this server. Data is consistent;
+%% </li><li>
+%% `failed' - An exeption was occured. Data is inconsistent.
+%% </li></ul>
 %% 
 %% If one of the servers crashed during transaction, the transaction process 
 %% will be killed using `cancel_transaction' with reason `crashed_server'.
@@ -777,17 +846,18 @@ mset_info(Server, MSetResource) ->
 
 %% @doc Returns the list of selected properties and wanted values.
 %% Properties:
-%% * `matches_lower_bound';
-%% * `matches_estimated';
-%% * `matches_upper_bound';
-%% * `uncollapsed_matches_lower_bound';
-%% * `uncollapsed_matches_estimated';
-%% * `uncollapsed_matches_upper_bound';
-%% * `size'; 
-%% * `max_possible'; 
-%% * `max_attained';
-%% * `{term_weight, Term}';
-%% * `{term_freq, Term}'.
+%% <ul> <li> `matches_lower_bound';
+%% </li><li> `matches_estimated';
+%% </li><li> `matches_upper_bound';
+%% </li><li> `uncollapsed_matches_lower_bound';
+%% </li><li> `uncollapsed_matches_estimated';
+%% </li><li> `uncollapsed_matches_upper_bound';
+%% </li><li> `size'; 
+%% </li><li> `max_possible'; 
+%% </li><li> `max_attained';
+%% </li><li> `{term_weight, Term}';
+%% </li><li> `{term_freq, Term}'.
+%% </li></ul>
 -spec mset_info(x_server(), x_resource(), Params) -> Result
     when
         Params :: [Param],
@@ -804,6 +874,8 @@ mset_info(Server, MSetResource, Params) ->
     call(Server, {mset_info, MSetResource, Params}).
 
 
+%% @doc Return info about MatchSpy.
+%% @see xapian_match_spy
 -spec match_spy_info(x_server(), x_resource(), Params | Param) -> term() when
     Params :: [Param],
     Param :: ValueCountMatchSpyParam,
@@ -890,14 +962,15 @@ database_info(Server) ->
 
 %% @doc Returns the list of selected properties and wanted values.
 %% Properties:
-%% * `has_positions'
-%%      Does this database have any positional information?;
-%% * `document_count'
-%%      Get the number of documents in the database;
-%% * `last_document_id'
-%%      Get the highest document id which has been used in the database. 
-%%      {@link last_document_id/1}; 
-%% * `average_length'
+%% <ul> <li>
+%% `has_positions' - Does this database have any positional information?;
+%% </li><li>
+%% `document_count' - Get the number of documents in the database;
+%% </li><li>
+%% `last_document_id' - Get the highest document id which has been 
+%% used in the database. {@link last_document_id/1}; 
+%% </li></ul>
+%% `average_length'
 %%      Get the average length of the documents in the database;
 %% * `document_length_lower_bound'
 %%      Get a lower bound on the length of a document in this DB;
@@ -1656,12 +1729,14 @@ compile_resource(State, ResRef, ClientPid)
                 end}
        ]);
 
+%% @doc Create a HOF for appending the resource as a binary.
 %% Res is a constructor record (returns by a function from xapian_resource).
 %% It will be passed to `xapian_resource:compile' (1), 
 %% that will pass it to `xapian_server' (2).
 %% 
 %% 1. extracts info from the `Res' record fields;
 %% 2. extracts info from `State'.
+%% @private
 compile_resource(State, Res, _ClientPid) when is_tuple(Res) ->
     Schema = xapian_const:resource_encoding_schema_id(constructor),
     do([error_m ||
@@ -1677,6 +1752,7 @@ compile_resource(State, Res, _ClientPid) when is_tuple(Res) ->
 %% `<<Bin, ResTypeConstructorNum, GenParam>>'.
 %% This data allows to create a resource using a user object constructor 
 %% (see user_object).
+%% @private
 execute_generator(State = #state{}, ResourceTypeName, Gen, Bin) ->
     #state{ con_name_to_number = N2R } = State,
     do([error_m ||
@@ -1693,10 +1769,15 @@ execute_generator(State = #state{}, ResourceTypeName, Gen, Bin) ->
        ]).
 
 
-%% * `ResouceType' - `match_spy' or `value_range_processor',
-%%      defines the big group of resources (used to select the QlcTable).
-%% * `UserResourceNumber' - the number of the user's object constructor.
-%% * `ParamBin' - data, used by the user's object consctructor.
+%% @doc Append a resource number.
+%% <ul> <li>
+%% `ResouceType' - `match_spy' or `value_range_processor',
+%% defines the big group of resources (used to select the QlcTable).
+%% </li><li>
+%% `UserResourceNumber' - the number of the user's object constructor.
+%% </li><li>
+%% `ParamBin' - data, used by the user's object consctructor.
+%% </li></ul>
 append_resource_access(UserResourceNumber, ParamBin, Bin@) ->
     Bin@ = append_uint(UserResourceNumber, Bin@),
     <<Bin@/binary, ParamBin/binary>>.
