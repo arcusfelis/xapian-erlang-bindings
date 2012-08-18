@@ -10,10 +10,11 @@
 <hr>
 
 <h1>Module xapian_server</h1>
-<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>This module is a <code>gen_server</code> that handles a single port connection.
 
 <p><b>Behaviours:</b> <a href="gen_server.html"><tt>gen_server</tt></a>.</p>
 
+<h2><a name="description">Description</a></h2>This module is a <code>gen_server</code> that handles a single port connection.
 <h2><a name="types">Data Types</a></h2>
 
 <h3 class="typedecl"><a name="type-database_info_param">database_info_param()</a></h3>
@@ -163,21 +164,21 @@
 <h2><a name="index">Function Index</a></h2>
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#add_document-2">add_document/2</a></td><td>Write a new document, return its id.</td></tr>
 <tr><td valign="top"><a href="#add_spelling-2">add_spelling/2</a></td><td>Mass manipulations with spelling information.</td></tr>
+<tr><td valign="top"><a href="#add_synonym-3">add_synonym/3</a></td><td>Add the synonym <code>Synonym</code> for the term <code>Term</code>.</td></tr>
+<tr><td valign="top"><a href="#clear_synonyms-2">clear_synonyms/2</a></td><td>Remove all synonyms for the term <code>Term</code>.</td></tr>
 <tr><td valign="top"><a href="#close-1">close/1</a></td><td>Close the database and kill a control process (aka Server).</td></tr>
 <tr><td valign="top"><a href="#compile_resource-3">compile_resource/3</a></td><td>Create the <code>fun(Bin)</code> function.</td></tr>
-<tr><td valign="top"><a href="#create_resource-2">create_resource/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#create_resource-2">create_resource/2</a></td><td>Create a resource from the resource constructror <code>Con</code>.</td></tr>
 <tr><td valign="top"><a href="#database_info-1">database_info/1</a></td><td>Returns the orddict of all properties.</td></tr>
 <tr><td valign="top"><a href="#database_info-2">database_info/2</a></td><td>Returns the list of selected properties and wanted values.</td></tr>
 <tr><td valign="top"><a href="#delete_document-2">delete_document/2</a></td><td>Delete documents.</td></tr>
 <tr><td valign="top"><a href="#document-2">document/2</a></td><td>Return a document as a resource.</td></tr>
 <tr><td valign="top"><a href="#document_info-3">document_info/3</a></td><td>Read document info, without putting it into database.</td></tr>
 <tr><td valign="top"><a href="#enquire-2">enquire/2</a></td><td>Return an enquire.</td></tr>
-<tr><td valign="top"><a href="#execute_generator-4">execute_generator/4</a></td><td>Form the binary string:
-  <code>&lt;&lt;Bin, ResTypeConstructorNum, GenParam&gt;&gt;</code>.</td></tr>
 <tr><td valign="top"><a href="#is_document_exist-2">is_document_exist/2</a></td><td>Return <code>true</code>, if the document with a specified id exists.</td></tr>
 <tr><td valign="top"><a href="#last_document_id-1">last_document_id/1</a></td><td>Return an identifier of the last added document.</td></tr>
 <tr><td valign="top"><a href="#match_set-2">match_set/2</a></td><td>Return a match set (M-Set).</td></tr>
-<tr><td valign="top"><a href="#match_spy_info-3">match_spy_info/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#match_spy_info-3">match_spy_info/3</a></td><td>Return info about MatchSpy.</td></tr>
 <tr><td valign="top"><a href="#mset_info-2">mset_info/2</a></td><td>Returns the list of all properties.</td></tr>
 <tr><td valign="top"><a href="#mset_info-3">mset_info/3</a></td><td>Returns the list of selected properties and wanted values.</td></tr>
 <tr><td valign="top"><a href="#multi_docid-3">multi_docid/3</a></td><td>Calculate a syntatic document ID from the real document ID and its DB name.</td></tr>
@@ -189,17 +190,18 @@ query string.</td></tr>
 <tr><td valign="top"><a href="#qlc_table_to_reference-2">qlc_table_to_reference/2</a></td><td>Convert a QLC handler, allocated with help of
        any of <code>xapian_*_qlc:table/?</code> functions, to its resource.</td></tr>
 <tr><td valign="top"><a href="#query_page-5">query_page/5</a></td><td>Return a list of records.</td></tr>
-<tr><td valign="top"><a href="#query_parser-2">query_parser/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#query_parser-2">query_parser/2</a></td><td>Create QueryParser as a resource.</td></tr>
 <tr><td valign="top"><a href="#read_document-3">read_document/3</a></td><td>Read the document with <code>DocId</code> from <code>Server</code> and put it into the record,
        defined by <code>RecordMetaDefinition</code>.</td></tr>
 <tr><td valign="top"><a href="#release_resource-2">release_resource/2</a></td><td>Release a resource.</td></tr>
 <tr><td valign="top"><a href="#release_table-2">release_table/2</a></td><td>Clean resources allocated by the QLC table.</td></tr>
+<tr><td valign="top"><a href="#remove_synonym-3">remove_synonym/3</a></td><td>Remove the synonym <code>Synonym</code> for the term <code>Term</code>.</td></tr>
 <tr><td valign="top"><a href="#replace_document-3">replace_document/3</a></td><td>Replace all matched documents with the new version.</td></tr>
 <tr><td valign="top"><a href="#replace_or_create_document-3">replace_or_create_document/3</a></td><td>Replace all matched documents with the new version.</td></tr>
 <tr><td valign="top"><a href="#set_metadata-3">set_metadata/3</a></td><td>Save a key-value pair into the database dictionary.</td></tr>
 <tr><td valign="top"><a href="#slot_to_type-1">slot_to_type/1</a></td><td>Returns an array for conversation from <code>x_slot()</code> to its type.</td></tr>
 <tr><td valign="top"><a href="#slot_to_type-2">slot_to_type/2</a></td><td>Convert a slot number or a slot name to its type (<code>float</code> or <code>string</code>).</td></tr>
-<tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td>Start a linked server without supervision.</td></tr>
 <tr><td valign="top"><a href="#subdb_names-1">subdb_names/1</a></td><td>Return an tuple of the database names.</td></tr>
 <tr><td valign="top"><a href="#transaction-2">transaction/2</a></td><td>Run a transaction with 5-second timeout.</td></tr>
 <tr><td valign="top"><a href="#transaction-3">transaction/3</a></td><td>Runs function <code>F</code> for writable <code>Servers</code> as a transaction.</td></tr>
@@ -213,6 +215,7 @@ query string.</td></tr>
 <div class="spec">
 <p><tt>add_document(Server::<a href="#type-x_server">x_server()</a>, Document::<a href="#type-x_document_constructor">x_document_constructor()</a>) -&gt; <a href="#type-x_document_id">x_document_id()</a></tt><br></p>
 </div><p>Write a new document, return its id.</p>
+<p><b>See also:</b> <a href="#delete_document-2">delete_document/2</a>, <a href="#replace_document-3">replace_document/3</a>, <a href="#replace_or_create_document-3">replace_or_create_document/3</a>.</p>
 
 <h3 class="function"><a name="add_spelling-2">add_spelling/2</a></h3>
 <div class="spec">
@@ -227,6 +230,20 @@ query string.</td></tr>
   The position field is meaningless.
   <code>action</code>, <code>ignore</code>, <code>frequency</code> can be used in the same manner,
   as with the <code>add_document/2</code> function.</p>
+
+<h3 class="function"><a name="add_synonym-3">add_synonym/3</a></h3>
+<div class="spec">
+<p><tt>add_synonym(Server, Term, Synonym) -&gt; no_return()</tt>
+<ul class="definitions"><li><tt>Server = <a href="#type-x_server">x_server()</a></tt></li><li><tt>Term = <a href="#type-x_string">x_string()</a></tt></li><li><tt>Synonym = <a href="#type-x_string">x_string()</a></tt></li></ul></p>
+</div><p>Add the synonym <code>Synonym</code> for the term <code>Term</code>.</p>
+<p><b>See also:</b> <a href="#remove_synonym-3">remove_synonym/3</a>.</p>
+
+<h3 class="function"><a name="clear_synonyms-2">clear_synonyms/2</a></h3>
+<div class="spec">
+<p><tt>clear_synonyms(Server, Term) -&gt; no_return()</tt>
+<ul class="definitions"><li><tt>Server = <a href="#type-x_server">x_server()</a></tt></li><li><tt>Term = <a href="#type-x_string">x_string()</a></tt></li></ul></p>
+</div><p>Remove all synonyms for the term <code>Term</code>.</p>
+<p><b>See also:</b> <a href="#remove_synonym-3">remove_synonym/3</a>.</p>
 
 <h3 class="function"><a name="close-1">close/1</a></h3>
 <div class="spec">
@@ -245,8 +262,13 @@ process is dead.</p>
 
 <h3 class="function"><a name="create_resource-2">create_resource/2</a></h3>
 <div class="spec">
-<p><tt>create_resource(Server, Con) -&gt; any()</tt></p>
-</div>
+<p><tt>create_resource(Server, Con) -&gt; ResRef</tt>
+<ul class="definitions"><li><tt>Server = <a href="#type-x_server">x_server()</a></tt></li><li><tt>Con = <a href="xapian_type.html#type-x_resource_constructor">xapian_type:x_resource_constructor()</a></tt></li><li><tt>ResRef = <a href="#type-x_resource">x_resource()</a></tt></li></ul></p>
+</div><p>Create a resource from the resource constructror <code>Con</code>.
+  <code>Con</code> is created with the help of a function from a <code>xapian_resource</code> module.
+  <code>ResRef</code> must be released with <a href="#release_resource-2"><code>release_resource/2</code></a>.
+  <code>ResRef</code> will be released automaticly, when <code>Server</code> is dead.</p>
+<p><b>See also:</b> <a href="#release_resource-2">release_resource/2</a>.</p>
 
 <h3 class="function"><a name="database_info-1">database_info/1</a></h3>
 <div class="spec">
@@ -257,16 +279,17 @@ process is dead.</p>
 <div class="spec">
 <p><tt>database_info(Server::<a href="#type-x_server">x_server()</a>, Params) -&gt; Result</tt>
 <ul class="definitions"><li><tt>Params = [Param]</tt></li><li><tt>Param = <a href="#type-database_info_param">database_info_param()</a></tt></li><li><tt>Result = [ResultPair]</tt></li><li><tt>ResultPair = <a href="#type-database_info_result_pair">database_info_result_pair()</a></tt></li></ul></p>
-</div><p><p>Returns the list of selected properties and wanted values.
+</div><p>Returns the list of selected properties and wanted values.
   Properties:
-  * <code>has_positions</code>
-       Does this database have any positional information?;
-  * <code>document_count</code>
-       Get the number of documents in the database;
-  * <code>last_document_id</code>
-       Get the highest document id which has been used in the database.
-       <a href="#last_document_id-1"><code>last_document_id/1</code></a>;
-  * <code>average_length</code>
+  <ul> <li>
+  <code>has_positions</code> - Does this database have any positional information?;
+  </li><li>
+  <code>document_count</code> - Get the number of documents in the database;
+  </li><li>
+  <code>last_document_id</code> - Get the highest document id which has been
+  used in the database. <a href="#last_document_id-1"><code>last_document_id/1</code></a>;
+  </li></ul><p>
+  <code>average_length</code>
        Get the average length of the documents in the database;
   * <code>document_length_lower_bound</code>
        Get a lower bound on the length of a document in this DB;
@@ -324,14 +347,18 @@ particular date).</p>
   <note>This function catches the
   <code>#x_error{type = &lt;&lt;"DocNotFoundError"&gt;&gt;}</code> error and returns <code>false</code>, if
   the document was not found.</note></p>
+<p><b>See also:</b> <a href="#add_document-2">add_document/2</a>.</p>
 
 <h3 class="function"><a name="document-2">document/2</a></h3>
 <div class="spec">
 <p><tt>document(Server::<a href="#type-x_server">x_server()</a>, UniqueTerm::<a href="#type-x_unique_document_id">x_unique_document_id()</a> | <a href="#type-x_document_constructor">x_document_constructor()</a>) -&gt; <a href="#type-x_resource">x_resource()</a></tt><br></p>
-</div><p><p>Return a document as a resource.  
-The second document can be:  
-* A document id or an unique term;  
-* A document constructor.</p>
+</div><p>Return a document as a resource.
+  The second document can be:
+  <ul> <li>
+  A document id or an unique term;
+  </li><li>
+  A document constructor.
+  </li></ul>
  
   <p>If the second argument is the empty list, then the <code>badarg</code> error will  
 occure.</p>
@@ -339,10 +366,15 @@ occure.</p>
   <p>It is an undefined behaviour.  
 Two cases can be here:</p>
  
-  1. You cannot use an empty term as an id (all documents will be selected).
-       Solution: Use other ways to traverse the documents.
-  2. Why do you need a document resource, defined with an empty constructor?
-       Solution: pass <code>[#x_text{value=""}]</code>.</p>
+  <ol> <li><p>  
+You cannot use an empty term as an id (all documents will be selected).</p>
+ 
+  Solution: Use other ways to traverse the documents.
+  </li><li><p>  
+Why do you need a document resource, defined with an empty constructor?</p>
+ 
+  Solution: pass <code>[#x_text{value=""}]</code>.
+  </li></ol></p>
 
 <h3 class="function"><a name="document_info-3">document_info/3</a></h3>
 <div class="spec">
@@ -353,14 +385,6 @@ Two cases can be here:</p>
 <div class="spec">
 <p><tt>enquire(Server::<a href="#type-x_server">x_server()</a>, Query::<a href="#type-x_sub_query">x_sub_query()</a>) -&gt; <a href="#type-x_resource">x_resource()</a></tt><br></p>
 </div><p>Return an enquire.</p>
-
-<h3 class="function"><a name="execute_generator-4">execute_generator/4</a></h3>
-<div class="spec">
-<p><tt>execute_generator(State, ResourceTypeName, Gen, Bin) -&gt; any()</tt></p>
-</div><p>Form the binary string:
-  <code>&lt;&lt;Bin, ResTypeConstructorNum, GenParam&gt;&gt;</code>.
-  This data allows to create a resource using a user object constructor
-  (see user_object).</p>
 
 <h3 class="function"><a name="is_document_exist-2">is_document_exist/2</a></h3>
 <div class="spec">
@@ -377,38 +401,50 @@ Two cases can be here:</p>
 <div class="spec">
 <p><tt>match_set(Server::<a href="#type-x_server">x_server()</a>, X_match_set::#x_match_set{} | Enquire) -&gt; <a href="#type-x_resource">x_resource()</a></tt>
 <ul class="definitions"><li><tt>Enquire = <a href="#type-x_resource">x_resource()</a></tt></li></ul></p>
-</div><p><p>Return a match set (M-Set).
+</div><p>Return a match set (M-Set).
   A match set can be created from:
-  * an enquire (<code>x_resource()</code> type);
-  * from record <code>#x_match_set{}</code>, which contains an enquire and    
-addition parameters.</p>
+  <ul> <li>
+  an enquire (<code>x_resource()</code> type);
+  </li><li>
+  from record <code>#x_match_set{}</code>, which contains an enquire and
+  addition parameters.
+  </li></ul>
  
   <p>Match set record is:</p>
  
-   <pre>   #x_match_set{
-       enquire = EnquireResource,
-       offset = Offset,
-       max_items = MaxItems,
-       check_at_least = CheckAtLeast,
-       spies = Spies
-   }</pre>
+  <pre>  #x_match_set{
+      enquire = EnquireResource,
+      offset = Offset,
+      max_items = MaxItems,
+      check_at_least = CheckAtLeast,
+      spies = Spies
+  }</pre>
  
    where
-       * <code>EnquireResource</code> contains the result of the search.</p>
-<p><b>See also:</b> <a href="xapian_mset_qlc.html">xapian_mset_qlc</a>, <a href="#enquire-2">It is required;
-       * <code>Offset</code> means how many elements to skip. It is 0 by default;
-       * <code>MaxItems</code> means how many elements to return.
-               Not more than <code>MaxItems</code> elements will be return.
-               It is <code>undefined</code> by default,
-               that means all items will be selected;
-       * <code>Spies</code> is a list of MatchSpy resources (@see xapian_match_spy).
- </a>, <a href="#mset_info-3">mset_info/3</a>.</p>
+  <ul> <li><p>
+  <code>EnquireResource</code> contains the result of the search.</p>
+ 
+  This parameter is required <a href="#enquire-2"><code>enquire/2</code></a>;
+  </li><li>
+  <code>Offset</code> means how many elements to skip. It is 0 by default;
+  </li><li><p>
+  <code>MaxItems</code> means how many elements to return.</p>
+ 
+  Not more than <code>MaxItems</code> elements will be return.
+  It is <code>undefined</code> by default,
+  that means all items will be selected;
+  </li><li>
+  <code>Spies</code> is a list of MatchSpy resources <a href="xapian_match_spy.html"><code>xapian_match_spy</code></a>.
+  </li></ul>
+ </p>
+<p><b>See also:</b> <a href="xapian_match_spy.html">xapian_match_spy</a>, <a href="#enquire-2">enquire/2</a>, <a href="#mset_info-3">mset_info/3</a>, <a href="xapian_mset_qlc.html#table-3">xapian_mset_qlc:table/3</a>.</p>
 
 <h3 class="function"><a name="match_spy_info-3">match_spy_info/3</a></h3>
 <div class="spec">
 <p><tt>match_spy_info(Server::<a href="#type-x_server">x_server()</a>, MatchSpyRes::<a href="#type-x_resource">x_resource()</a>, Params::Params | Param) -&gt; term()</tt>
 <ul class="definitions"><li><tt>Params = [Param]</tt></li><li><tt>Param = ValueCountMatchSpyParam</tt></li><li><tt>ValueCountMatchSpyParam = value_slot | document_count</tt></li></ul></p>
-</div>
+</div><p>Return info about MatchSpy.</p>
+<p><b>See also:</b> <a href="xapian_match_spy.html">xapian_match_spy</a>.</p>
 
 <h3 class="function"><a name="mset_info-2">mset_info/2</a></h3>
 <div class="spec">
@@ -423,17 +459,18 @@ addition parameters.</p>
 <ul class="definitions"><li><tt>Params = [Param]</tt></li><li><tt>Param = <a href="#type-mset_info_parameter">mset_info_parameter()</a></tt></li><li><tt>Result = [ResultPair]</tt></li><li><tt>ResultPair = <a href="#type-mset_info_result_pair">mset_info_result_pair()</a></tt></li></ul></p>
 </div><p>Returns the list of selected properties and wanted values.
   Properties:
-  * <code>matches_lower_bound</code>;
-  * <code>matches_estimated</code>;
-  * <code>matches_upper_bound</code>;
-  * <code>uncollapsed_matches_lower_bound</code>;
-  * <code>uncollapsed_matches_estimated</code>;
-  * <code>uncollapsed_matches_upper_bound</code>;
-  * <code>size</code>;
-  * <code>max_possible</code>;
-  * <code>max_attained</code>;
-  * <code>{term_weight, Term}</code>;
-  * <code>{term_freq, Term}</code>.</p>
+  <ul> <li> <code>matches_lower_bound</code>;
+  </li><li> <code>matches_estimated</code>;
+  </li><li> <code>matches_upper_bound</code>;
+  </li><li> <code>uncollapsed_matches_lower_bound</code>;
+  </li><li> <code>uncollapsed_matches_estimated</code>;
+  </li><li> <code>uncollapsed_matches_upper_bound</code>;
+  </li><li> <code>size</code>;
+  </li><li> <code>max_possible</code>;
+  </li><li> <code>max_attained</code>;
+  </li><li> <code>{term_weight, Term}</code>;
+  </li><li> <code>{term_freq, Term}</code>.
+  </li></ul></p>
 
 <h3 class="function"><a name="multi_docid-3">multi_docid/3</a></h3>
 <div class="spec">
@@ -458,29 +495,49 @@ addition parameters.</p>
   <code>Path</code> is a directory name of the database.  
 For opening multiple databases you can pass a list of:</p>
  
-  <p>* <code>#x_database{}</code>;
-  * <code>#x_prog_database{}</code>;
-  * <code>#x_tcp_database{}</code>.</p>
+  <ul> <li>
+  <code>#x_database{}</code>;
+  </li><li>
+  <code>#x_prog_database{}</code>;
+  </li><li>
+  <code>#x_tcp_database{}</code>.
+  </li></ul>
  
   <p>See the description of these records for more information.</p>
  
   <p><code>Params</code> is a list of:</p>
  
-  * Modes: read, write, overwrite, create, open:
-       The <code>read</code> mode is only for reading.
-       The <code>write</code> mode is for reading and for writing.
-       Write mode can be combined with:
-           <code>open</code> (default), <code>create</code>, <code>overwrite</code>.
-  * Names for values and for prefixes:
-       <code>#x_value_name{slot = 1, name = slotname}</code>
-       <code>#x_prefix_name{name = author, prefix = &lt;&lt;$A&gt;&gt;}</code>;
-  * The default stemmer. It will be used in <code>TermGenerator</code> and in the
-       default query parser:
-       <code>#x_stemmer{language="english"}</code>;
-  * An interface to work: <code>port</code> (or <code>driver</code> by default).
-  * <code>{name, Atom}</code> allows to register the server under the local name <code>Atom</code>;
-  * <code>{name, {local, Atom}}</code> does the same;
-  * <code>{name, {global, Atom}}</code> registers the process under the global name.</p>
+  <ul> <li>
+  Modes: read, write, overwrite, create, open:
+   <ul> <li>
+  The <code>read</code> mode is only for reading.
+   </li><li>
+  The <code>write</code> mode is for reading and for writing.
+   </li><li>
+  Write mode can be combined with:
+  <code>open</code> (default), <code>create</code>, <code>overwrite</code>.
+   </li></ul>
+  </li><li>
+  Names for values and for prefixes:
+   <ul> <li>
+  <code>#x_value_name{slot = 1, name = slotname}</code>
+   </li><li>
+  <code>#x_prefix_name{name = author, prefix = &lt;&lt;$A&gt;&gt;}</code>;
+   </li></ul>
+  </li><li>
+  The default stemmer. It will be used in <code>TermGenerator</code> and in the
+  default query parser:
+  <code>#x_stemmer{language="english"}</code>;
+  </li><li>
+  An interface to work: <code>port</code> (or <code>driver</code> by default).
+  </li><li>
+  <code>{name, Atom}</code> allows to register the server under the local name <code>Atom</code>;
+  </li><li>
+  <code>{name, {local, Atom}}</code> does the same;
+  </li><li>
+  <code>{name, {global, Atom}}</code> registers the process under the global name.
+  </li></ul></p>
+<p><b>See also:</b> <a href="#close-2">close/2</a>, <a href="xapian_pool.html#open-3">xapian_pool:open/3</a>.</p>
 
 <h3 class="function"><a name="parse_string-3">parse_string/3</a></h3>
 <div class="spec">
@@ -506,7 +563,7 @@ query string.</p>
 <h3 class="function"><a name="query_parser-2">query_parser/2</a></h3>
 <div class="spec">
 <p><tt>query_parser(Server::<a href="#type-x_server">x_server()</a>, X_query_parser::#x_query_parser{}) -&gt; <a href="#type-x_resource">x_resource()</a></tt><br></p>
-</div>
+</div><p>Create QueryParser as a resource.</p>
 
 <h3 class="function"><a name="read_document-3">read_document/3</a></h3>
 <div class="spec">
@@ -524,11 +581,19 @@ query string.</p>
 </div><p>Release a resource.
   It will be called automaticly, if the client process is died.
   If a release constructor will be passed, then the error occurs.</p>
+<p><b>See also:</b> <a href="#create_resource-2">create_resource/2</a>.</p>
 
 <h3 class="function"><a name="release_table-2">release_table/2</a></h3>
 <div class="spec">
 <p><tt>release_table(Server::<a href="#type-x_server">x_server()</a>, Table::<a href="#type-x_table">x_table()</a>) -&gt; ok</tt><br></p>
 </div><p>Clean resources allocated by the QLC table.</p>
+
+<h3 class="function"><a name="remove_synonym-3">remove_synonym/3</a></h3>
+<div class="spec">
+<p><tt>remove_synonym(Server, Term, Synonym) -&gt; no_return()</tt>
+<ul class="definitions"><li><tt>Server = <a href="#type-x_server">x_server()</a></tt></li><li><tt>Term = <a href="#type-x_string">x_string()</a></tt></li><li><tt>Synonym = <a href="#type-x_string">x_string()</a></tt></li></ul></p>
+</div><p>Remove the synonym <code>Synonym</code> for the term <code>Term</code>.</p>
+<p><b>See also:</b> <a href="#add_synonym-3">add_synonym/3</a>, <a href="#clear_synonyms-2">clear_synonyms/2</a>.</p>
 
 <h3 class="function"><a name="replace_document-3">replace_document/3</a></h3>
 <div class="spec">
@@ -565,6 +630,7 @@ this document will be returned.</p>
 <div class="spec">
 <p><tt>set_metadata(Server::<a href="#type-x_server">x_server()</a>, Key::<a href="#type-x_string">x_string()</a>, Value::<a href="#type-x_string">x_string()</a>) -&gt; ok</tt><br></p>
 </div><p>Save a key-value pair into the database dictionary.</p>
+<p><b>See also:</b> <a href="#database_info-2">database_info/2</a>.</p>
 
 <h3 class="function"><a name="slot_to_type-1">slot_to_type/1</a></h3>
 <div class="spec">
@@ -580,7 +646,7 @@ this document will be returned.</p>
 <h3 class="function"><a name="start_link-2">start_link/2</a></h3>
 <div class="spec">
 <p><tt>start_link(Path::<a href="#type-db_path">db_path()</a>, Params::[term()]) -&gt; {ok, <a href="#type-x_server">x_server()</a>}</tt><br></p>
-</div>
+</div><p>Start a linked server without supervision.</p>
 
 <h3 class="function"><a name="subdb_names-1">subdb_names/1</a></h3>
 <div class="spec">
@@ -608,9 +674,13 @@ Transaction will stop other operations with selected databases.</p>
  
   <p>Results (<code>#x_transaction_result.statuses</code>) from a server:</p>
  
-  <p>* <code>committed</code> - A transaction was pass on this server. Data is consistent;
-  * <code>aborted</code> - A transaction was canceled on this server. Data is consistent;
-  * <code>failed</code> - An exeption was occured. Data is inconsistent.</p>
+  <ul> <li>
+  <code>committed</code> - A transaction was pass on this server. Data is consistent;
+  </li><li>
+  <code>aborted</code> - A transaction was canceled on this server. Data is consistent;
+  </li><li>
+  <code>failed</code> - An exeption was occured. Data is inconsistent.
+  </li></ul>
  
   If one of the servers crashed during transaction, the transaction process
   will be killed using <code>cancel_transaction</code> with reason <code>crashed_server</code>.</p>
@@ -634,6 +704,6 @@ Transaction will stop other operations with selected databases.</p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Aug 15 2012, 15:38:54.</i></p>
+<p><i>Generated by EDoc, Aug 18 2012, 16:04:17.</i></p>
 </body>
 </html>

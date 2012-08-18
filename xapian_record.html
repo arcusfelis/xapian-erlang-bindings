@@ -10,19 +10,26 @@
 <hr>
 
 <h1>Module xapian_record</h1>
-<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>It contains helpers for extracting information from a document.
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>It contains helpers for extracting information from a document.
 
 
 <h2><a name="description">Description</a></h2>It contains helpers for extracting information from a document.
+   It is used with MSet.
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-document_meta">document_meta()</a></h3>
+<p><tt>document_meta() = term()</tt></p>
+
+
 <h2><a name="index">Function Index</a></h2>
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#append_key_field-2">append_key_field/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#decode-3">decode/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#decode_list-3">decode_list/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#decode_list2-3">decode_list2/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#decode-3">decode/3</a></td><td>Read a record from binary.</td></tr>
+<tr><td valign="top"><a href="#decode_list-3">decode_list/3</a></td><td>Read a list of records from a binary.</td></tr>
+<tr><td valign="top"><a href="#decode_list2-3">decode_list2/3</a></td><td>This encoding schema is used when a total size is unknown.</td></tr>
 <tr><td valign="top"><a href="#encode-4">encode/4</a></td><td></td></tr>
-<tr><td valign="top"><a href="#key_position-2">key_position/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#record-2">record/2</a></td><td>You can use special names for fields:.</td></tr>
-<tr><td valign="top"><a href="#tuple-1">tuple/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#key_position-2">key_position/2</a></td><td>Return an index of the <code>Field</code> or <code>undefined</code> if there is no a key.</td></tr>
+<tr><td valign="top"><a href="#record-2">record/2</a></td><td>Create a term, that contains information about document fields.</td></tr>
+<tr><td valign="top"><a href="#tuple-1">tuple/1</a></td><td>Convert <code>Meta</code> into a tuple, where fields are fields' names.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
@@ -35,17 +42,17 @@
 <h3 class="function"><a name="decode-3">decode/3</a></h3>
 <div class="spec">
 <p><tt>decode(Meta::term(), I2N::<a href="orddict.html#type-orddict">orddict:orddict()</a>, Bin::binary()) -&gt; {term(), binary()}</tt><br></p>
-</div>
+</div><p>Read a record from binary.</p>
 
 <h3 class="function"><a name="decode_list-3">decode_list/3</a></h3>
 <div class="spec">
 <p><tt>decode_list(Meta, I2N, Bin@) -&gt; any()</tt></p>
-</div>
+</div><p>Read a list of records from a binary.</p>
 
 <h3 class="function"><a name="decode_list2-3">decode_list2/3</a></h3>
 <div class="spec">
 <p><tt>decode_list2(Meta, I2N, Bin) -&gt; any()</tt></p>
-</div>
+</div><p>This encoding schema is used when a total size is unknown.</p>
 
 <h3 class="function"><a name="encode-4">encode/4</a></h3>
 <div class="spec">
@@ -54,27 +61,37 @@
 
 <h3 class="function"><a name="key_position-2">key_position/2</a></h3>
 <div class="spec">
-<p><tt>key_position(Rec, Field) -&gt; any()</tt></p>
-</div>
+<p><tt>key_position(Meta, Field) -&gt; Pos</tt>
+<ul class="definitions"><li><tt>Meta = <a href="#type-document_meta">document_meta()</a></tt></li><li><tt>Field = atom()</tt></li><li><tt>Pos = non_neg_integer() | undefined</tt></li></ul></p>
+</div><p>Return an index of the <code>Field</code> or <code>undefined</code> if there is no a key.</p>
 
 <h3 class="function"><a name="record-2">record/2</a></h3>
 <div class="spec">
-<p><tt>record(TupleName, TupleFields) -&gt; any()</tt></p>
-</div><p><p>You can use special names for fields:</p>
+<p><tt>record(TupleName, TupleFields) -&gt; Meta</tt>
+<ul class="definitions"><li><tt>TupleName = atom()</tt></li><li><tt>TupleFields = [atom()]</tt></li><li><tt>Meta = <a href="#type-document_meta">document_meta()</a></tt></li></ul></p>
+</div><p><p>Create a term, that contains information about document fields.
+  This information is used for building a record term for each document in
+  the MSet.
+  <code>TupleFields</code> is a list of special names for the record fields:</p>
  
-  * docid
-  * data
-  * weight
-  * rank
-  * percent</p>
+  <ul><li>
+  </li><li> docid
+  </li><li> data
+  </li><li> weight
+  </li><li> rank
+  </li><li> percent
+  </li><li> collapse_key
+  </li><li> collapse_count
+  </li></ul></p>
 
 <h3 class="function"><a name="tuple-1">tuple/1</a></h3>
 <div class="spec">
-<p><tt>tuple(Rec) -&gt; any()</tt></p>
-</div>
+<p><tt>tuple(Meta) -&gt; Rec</tt>
+<ul class="definitions"><li><tt>Meta = <a href="#type-document_meta">document_meta()</a></tt></li><li><tt>Rec = <a href="#type-record">record()</a></tt></li></ul></p>
+</div><p>Convert <code>Meta</code> into a tuple, where fields are fields' names.</p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Aug 15 2012, 15:38:54.</i></p>
+<p><i>Generated by EDoc, Aug 18 2012, 16:04:17.</i></p>
 </body>
 </html>

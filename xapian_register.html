@@ -10,60 +10,75 @@
 <hr>
 
 <h1>Module xapian_register</h1>
-<ul class="index"><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+
+
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-store">store()</a></h3>
+<p><tt>store() = gb_tree()</tt></p>
 
 
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#delete-3">delete/3</a></td><td>Delete resource.</td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#delete-3">delete/3</a></td><td>Delete a resource <code>ResRef</code> from the store.</td></tr>
 <tr><td valign="top"><a href="#erase-3">erase/3</a></td><td>Erase context: all resources, used by <code>ClientPid</code>.</td></tr>
 <tr><td valign="top"><a href="#fetch-3">fetch/3</a></td><td>Try get or throw an exception.</td></tr>
 <tr><td valign="top"><a href="#get-3">get/3</a></td><td>Get info about the resource with ResRef, used by ClientPid.</td></tr>
-<tr><td valign="top"><a href="#maybe_get-3">maybe_get/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#new-0">new/0</a></td><td></td></tr>
-<tr><td valign="top"><a href="#put-3">put/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#maybe_get-3">maybe_get/3</a></td><td>If the ResRef is defined, the run <code>get()</code>, otherwise do nothing.</td></tr>
+<tr><td valign="top"><a href="#new-0">new/0</a></td><td>Creat an empty store.</td></tr>
+<tr><td valign="top"><a href="#put-3">put/3</a></td><td>Save <code>Elem</code> inside <code>ClientPid</code>'s context.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
 <h3 class="function"><a name="delete-3">delete/3</a></h3>
 <div class="spec">
-<p><tt>delete(Store, ClientPid, ResRef) -&gt; any()</tt></p>
-</div><p>Delete resource</p>
+<p><tt>delete(Store, ClientPid, ResRef) -&gt; {ok, {Store, Elem}} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Store = <a href="#type-store">store()</a></tt></li><li><tt>ClientPid = pid()</tt></li><li><tt>Elem = term()</tt></li><li><tt>ResRef = reference()</tt></li><li><tt>Reason = elem_not_found | empty_context</tt></li></ul></p>
+</div><p>Delete a resource <code>ResRef</code> from the store.
+  If exists, then <code>ResRef</code> must be inside <code>ClientPid</code>'s context.</p>
 
 <h3 class="function"><a name="erase-3">erase/3</a></h3>
 <div class="spec">
-<p><tt>erase(Store, ClientPid, MonRef) -&gt; any()</tt></p>
+<p><tt>erase(Store, ClientPid, MonRef) -&gt; {ok, {Store, Resources}} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Resources = [{ResRef, Elem}]</tt></li><li><tt>Store = <a href="#type-store">store()</a></tt></li><li><tt>ClientPid = pid()</tt></li><li><tt>Elem = term()</tt></li><li><tt>ResRef = reference()</tt></li><li><tt>MonRef = reference()</tt></li><li><tt>Reason = empty_context</tt></li></ul></p>
 </div><p><p>Erase context: all resources, used by <code>ClientPid</code>.</p>
  
   ClientPid is dead.</p>
 
 <h3 class="function"><a name="fetch-3">fetch/3</a></h3>
 <div class="spec">
-<p><tt>fetch(Store, ClientPid, ResRef) -&gt; any()</tt></p>
-</div><p>Try get or throw an exception.</p>
+<p><tt>fetch(Store, ClientPid, ResRef) -&gt; Elem</tt>
+<ul class="definitions"><li><tt>Store = <a href="#type-store">store()</a></tt></li><li><tt>ClientPid = pid()</tt></li><li><tt>Elem = term()</tt></li><li><tt>ResRef = reference()</tt></li></ul></p>
+</div><p>Try get or throw an exception.
+  If an element is not found, the error <code>elem_not_found</code> will be thrown.
+  If an client's context is not found, the error <code>empty_context</code> will be thrown.</p>
 
 <h3 class="function"><a name="get-3">get/3</a></h3>
 <div class="spec">
-<p><tt>get(Store, ClientPid, ResRef) -&gt; any()</tt></p>
+<p><tt>get(Store, ClientPid, ResRef) -&gt; {ok, Elem} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Store = <a href="#type-store">store()</a></tt></li><li><tt>ClientPid = pid()</tt></li><li><tt>Elem = term()</tt></li><li><tt>ResRef = reference()</tt></li><li><tt>Reason = elem_not_found | empty_context</tt></li></ul></p>
 </div><p>Get info about the resource with ResRef, used by ClientPid.</p>
 
 <h3 class="function"><a name="maybe_get-3">maybe_get/3</a></h3>
 <div class="spec">
-<p><tt>maybe_get(Store, ClientPid, ResRef) -&gt; any()</tt></p>
-</div>
+<p><tt>maybe_get(Store, ClientPid, ResRef) -&gt; {ok, Elem} | {error, Reason}</tt>
+<ul class="definitions"><li><tt>Store = <a href="#type-store">store()</a></tt></li><li><tt>ClientPid = pid()</tt></li><li><tt>Elem = term() | undefined</tt></li><li><tt>ResRef = reference() | undefined</tt></li><li><tt>Reason = elem_not_found | empty_context</tt></li></ul></p>
+</div><p>If the ResRef is defined, the run <code>get()</code>, otherwise do nothing.</p>
 
 <h3 class="function"><a name="new-0">new/0</a></h3>
 <div class="spec">
-<p><tt>new() -&gt; any()</tt></p>
-</div>
+<p><tt>new() -&gt; <a href="#type-store">store()</a></tt><br></p>
+</div><p>Creat an empty store.</p>
 
 <h3 class="function"><a name="put-3">put/3</a></h3>
 <div class="spec">
-<p><tt>put(Store, ClientPid, Elem) -&gt; any()</tt></p>
-</div>
+<p><tt>put(Store, ClientPid, Elem) -&gt; {ok, {Store, ResRef}}</tt>
+<ul class="definitions"><li><tt>Store = <a href="#type-store">store()</a></tt></li><li><tt>ClientPid = pid()</tt></li><li><tt>Elem = term()</tt></li><li><tt>ResRef = reference()</tt></li></ul></p>
+</div><p>Save <code>Elem</code> inside <code>ClientPid</code>'s context.</p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Aug 15 2012, 15:38:54.</i></p>
+<p><i>Generated by EDoc, Aug 18 2012, 16:04:17.</i></p>
 </body>
 </html>
