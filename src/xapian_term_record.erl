@@ -70,12 +70,18 @@ value_to_float_value(value) -> float_value;
 value_to_float_value(Field) -> Field.
 
 
-%% @doc You can use special names for fields:
+%% @doc Create a record with information about the record for term QLC talbe.
+%% You can use special names for fields:
 %% 
-%% * wdf
-%% * freq
-%% * value
-%% * positions
+%% <ul> <li>
+%% wdf
+%% </li><li>
+%% freq
+%% </li><li>
+%% value
+%% </li><li>
+%% positions
+%% </li></ul>
 %%
 %% Only `freq' and `value' can be used with `Xapian::ValueCountMatchSpy'.
 record(TupleName, TupleFields) ->
