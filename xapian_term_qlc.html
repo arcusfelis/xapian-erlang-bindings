@@ -10,32 +10,66 @@
 <hr>
 
 <h1>Module xapian_term_qlc</h1>
-<ul class="index"><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+
+
+<h2><a name="types">Data Types</a></h2>
+
+<h3 class="typedecl"><a name="type-x_resource">x_resource()</a></h3>
+<p><tt>x_resource() = <a href="xapian_server.html#type-x_resource">xapian_server:x_resource()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_server">x_server()</a></h3>
+<p><tt>x_server() = <a href="xapian_server.html#type-x_server">xapian_server:x_server()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_string">x_string()</a></h3>
+<p><tt>x_string() = <a href="xapian_server.html#type-x_string">xapian_server:x_string()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_table">x_table()</a></h3>
+<p><tt>x_table() = <a href="xapian_server.html#type-x_table">xapian_server:x_table()</a></tt></p>
+
+
+<h3 class="typedecl"><a name="type-x_term_meta">x_term_meta()</a></h3>
+<p><tt>x_term_meta() = <a href="#type-record">record()</a></tt></p>
 
 
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#document_term_table-3">document_term_table/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#document_term_table-4">document_term_table/4</a></td><td></td></tr>
-<tr><td valign="top"><a href="#metadata_key_table-3">metadata_key_table/3</a></td><td></td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#document_term_table-3">document_term_table/3</a></td><td>Equivalent to <a href="#document_term_table-4"><tt>document_term_table(Server, DocRes, Meta, [])</tt></a>.
+</td></tr>
+<tr><td valign="top"><a href="#document_term_table-4">document_term_table/4</a></td><td>Iterator for the terms in this document.</td></tr>
+<tr><td valign="top"><a href="#metadata_key_table-3">metadata_key_table/3</a></td><td>Equivalent to <a href="#metadata_key_table-4"><tt>metadata_key_table(Server, Prefix, Meta, [])</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#metadata_key_table-4">metadata_key_table/4</a></td><td>An iterator which returns all user-specified metadata keys.</td></tr>
 <tr><td valign="top"><a href="#spelling_table-2">spelling_table/2</a></td><td>Equivalent to <a href="#spelling_table-3"><tt>spelling_table(Server, Meta, [])</tt></a>.
 </td></tr>
 <tr><td valign="top"><a href="#spelling_table-3">spelling_table/3</a></td><td>An iterator which returns all the spelling correction targets.</td></tr>
-<tr><td valign="top"><a href="#stop_list_query_parser_table-3">stop_list_query_parser_table/3</a></td><td></td></tr>
-<tr><td valign="top"><a href="#stop_list_query_parser_table-4">stop_list_query_parser_table/4</a></td><td></td></tr>
-<tr><td valign="top"><a href="#synonym_key_table-3">synonym_key_table/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#stop_list_query_parser_table-3">stop_list_query_parser_table/3</a></td><td>Equivalent to <a href="#stop_list_query_parser_table-4"><tt>stop_list_query_parser_table(Server, QueryParserRes,
+			     Meta, [])</tt></a>.
+</td></tr>
+<tr><td valign="top"><a href="#stop_list_query_parser_table-4">stop_list_query_parser_table/4</a></td><td>Iterate over terms omitted from the query as stopwords.</td></tr>
+<tr><td valign="top"><a href="#synonym_key_table-3">synonym_key_table/3</a></td><td>Equivalent to <a href="#synonym_key_table-4"><tt>synonym_key_table(Server, Prefix, Meta, [])</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#synonym_key_table-4">synonym_key_table/4</a></td><td>An iterator which returns all terms which have synonyms.</td></tr>
-<tr><td valign="top"><a href="#synonym_table-3">synonym_table/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#synonym_table-3">synonym_table/3</a></td><td>Equivalent to <a href="#synonym_table-4"><tt>synonym_table(Server, Term, Meta, [])</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#synonym_table-4">synonym_table/4</a></td><td>An iterator which returns all the synonyms for a given term.</td></tr>
-<tr><td valign="top"><a href="#term_table-3">term_table/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#term_table-3">term_table/3</a></td><td>Equivalent to <a href="#term_table-4"><tt>term_table(Server, Prefix, Meta, [])</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#term_table-4">term_table/4</a></td><td>An iterator which runs across all terms with a given prefix.</td></tr>
-<tr><td valign="top"><a href="#top_value_count_match_spy_table-4">top_value_count_match_spy_table/4</a></td><td></td></tr>
-<tr><td valign="top"><a href="#top_value_count_match_spy_table-5">top_value_count_match_spy_table/5</a></td><td></td></tr>
-<tr><td valign="top"><a href="#unstem_query_parser_table-4">unstem_query_parser_table/4</a></td><td></td></tr>
-<tr><td valign="top"><a href="#unstem_query_parser_table-5">unstem_query_parser_table/5</a></td><td></td></tr>
+<tr><td valign="top"><a href="#top_value_count_match_spy_table-4">top_value_count_match_spy_table/4</a></td><td>Equivalent to <a href="#top_value_count_match_spy_table-5"><tt>top_value_count_match_spy_table(Server, SpyRes, Limit,
+				Meta, [])</tt></a>.
+</td></tr>
+<tr><td valign="top"><a href="#top_value_count_match_spy_table-5">top_value_count_match_spy_table/5</a></td><td>Get an iterator over the most frequent values seen in the slot.</td></tr>
+<tr><td valign="top"><a href="#unstem_query_parser_table-4">unstem_query_parser_table/4</a></td><td>Equivalent to <a href="#unstem_query_parser_table-5"><tt>unstem_query_parser_table(Server, QueryParserRes, Term,
+			  Meta, [])</tt></a>.
+</td></tr>
+<tr><td valign="top"><a href="#unstem_query_parser_table-5">unstem_query_parser_table/5</a></td><td>Iterate over unstemmed forms of the given (stemmed) term used       
+in the query.</td></tr>
 <tr><td valign="top"><a href="#value_count_match_spy_table-3">value_count_match_spy_table/3</a></td><td>Equivalent to <a href="#value_count_match_spy_table-4"><tt>value_count_match_spy_table(Server, SpyRes, Meta, [])</tt></a>.
 </td></tr>
-<tr><td valign="top"><a href="#value_count_match_spy_table-4">value_count_match_spy_table/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#value_count_match_spy_table-4">value_count_match_spy_table/4</a></td><td>Get an iterator over the values seen in the slot.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
@@ -43,21 +77,26 @@
 <h3 class="function"><a name="document_term_table-3">document_term_table/3</a></h3>
 <div class="spec">
 <p><tt>document_term_table(Server, DocRes, Meta) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#document_term_table-4"><tt>document_term_table(Server, DocRes, Meta, [])</tt></a>.</p>
+
 
 <h3 class="function"><a name="document_term_table-4">document_term_table/4</a></h3>
 <div class="spec">
-<p><tt>document_term_table(Server, DocRes, Meta, UserParams) -&gt; any()</tt></p>
-</div>
+<p><tt>document_term_table(Server::<a href="#type-x_server">x_server()</a>, DocRes::<a href="#type-x_resource">x_resource()</a>, Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
+</div><p>Iterator for the terms in this document.
+  Records are sorted by <code>value</code> in ascending alphabetical order.
+  Second argument can be a resource of a document or a document.
+  Calls <code>Xapian::Document::termlist_begin ()</code>.</p>
 
 <h3 class="function"><a name="metadata_key_table-3">metadata_key_table/3</a></h3>
 <div class="spec">
 <p><tt>metadata_key_table(Server, Prefix, Meta) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#metadata_key_table-4"><tt>metadata_key_table(Server, Prefix, Meta, [])</tt></a>.</p>
+
 
 <h3 class="function"><a name="metadata_key_table-4">metadata_key_table/4</a></h3>
 <div class="spec">
-<p><tt>metadata_key_table(Server, Prefix, Meta, UserParams) -&gt; any()</tt></p>
+<p><tt>metadata_key_table(Server::<a href="#type-x_server">x_server()</a>, Prefix::<a href="#type-x_string">x_string()</a>, Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
 </div><p>An iterator which returns all user-specified metadata keys.</p>
 
 <h3 class="function"><a name="spelling_table-2">spelling_table/2</a></h3>
@@ -68,12 +107,15 @@
 
 <h3 class="function"><a name="spelling_table-3">spelling_table/3</a></h3>
 <div class="spec">
-<p><tt>spelling_table(Server, Meta, UserParams) -&gt; any()</tt></p>
+<p><tt>spelling_table(Server::<a href="#type-x_server">x_server()</a>, Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
 </div><p><p>An iterator which returns all the spelling correction targets.</p>
  
-  <p>Valid fields are:  
-* value;  
-* freq - The frequency of each word.</p>
+  Valid fields are:
+  <ul> <li>
+  value;
+  </li><li>
+  freq - The frequency of each word.
+  </li></ul>
  
   The <code>wdf</code> field isn't meaningful.
   The records are sorted by the value field.</p>
@@ -81,21 +123,26 @@
 <h3 class="function"><a name="stop_list_query_parser_table-3">stop_list_query_parser_table/3</a></h3>
 <div class="spec">
 <p><tt>stop_list_query_parser_table(Server, QueryParserRes, Meta) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#stop_list_query_parser_table-4"><tt>stop_list_query_parser_table(Server, QueryParserRes,
+			     Meta, [])</tt></a>.</p>
+
 
 <h3 class="function"><a name="stop_list_query_parser_table-4">stop_list_query_parser_table/4</a></h3>
 <div class="spec">
-<p><tt>stop_list_query_parser_table(Server, QueryParserRes, Meta, UserParams) -&gt; any()</tt></p>
-</div>
+<p><tt>stop_list_query_parser_table(Server::<a href="#type-x_server">x_server()</a>, QueryParserRes::<a href="#type-x_resource">x_resource()</a>, Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
+</div><p><p>Iterate over terms omitted from the query as stopwords.</p>
+ 
+  Calls <code>Xapian::QueryParser:toplist_begin()</code>.</p>
 
 <h3 class="function"><a name="synonym_key_table-3">synonym_key_table/3</a></h3>
 <div class="spec">
 <p><tt>synonym_key_table(Server, Prefix, Meta) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#synonym_key_table-4"><tt>synonym_key_table(Server, Prefix, Meta, [])</tt></a>.</p>
+
 
 <h3 class="function"><a name="synonym_key_table-4">synonym_key_table/4</a></h3>
 <div class="spec">
-<p><tt>synonym_key_table(Server, Prefix, Meta, UserParams) -&gt; any()</tt></p>
+<p><tt>synonym_key_table(Server::<a href="#type-x_server">x_server()</a>, Prefix::<a href="#type-x_string">x_string()</a>, Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
 </div><p><p>An iterator which returns all terms which have synonyms.</p>
  
   Only value field is meaningful.</p>
@@ -103,42 +150,53 @@
 <h3 class="function"><a name="synonym_table-3">synonym_table/3</a></h3>
 <div class="spec">
 <p><tt>synonym_table(Server, Term, Meta) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#synonym_table-4"><tt>synonym_table(Server, Term, Meta, [])</tt></a>.</p>
+
 
 <h3 class="function"><a name="synonym_table-4">synonym_table/4</a></h3>
 <div class="spec">
-<p><tt>synonym_table(Server, Term, Meta, UserParams) -&gt; any()</tt></p>
+<p><tt>synonym_table(Server::<a href="#type-x_server">x_server()</a>, Term::<a href="#type-x_string">x_string()</a>, Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
 </div><p>An iterator which returns all the synonyms for a given term.</p>
 
 <h3 class="function"><a name="term_table-3">term_table/3</a></h3>
 <div class="spec">
 <p><tt>term_table(Server, Prefix, Meta) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#term_table-4"><tt>term_table(Server, Prefix, Meta, [])</tt></a>.</p>
+
 
 <h3 class="function"><a name="term_table-4">term_table/4</a></h3>
 <div class="spec">
-<p><tt>term_table(Server, Prefix, Meta, UserParams) -&gt; any()</tt></p>
+<p><tt>term_table(Server::<a href="#type-x_server">x_server()</a>, Prefix::<a href="#type-x_string">x_string()</a>, Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
 </div><p>An iterator which runs across all terms with a given prefix.</p>
 
 <h3 class="function"><a name="top_value_count_match_spy_table-4">top_value_count_match_spy_table/4</a></h3>
 <div class="spec">
 <p><tt>top_value_count_match_spy_table(Server, SpyRes, Limit, Meta) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#top_value_count_match_spy_table-5"><tt>top_value_count_match_spy_table(Server, SpyRes, Limit,
+				Meta, [])</tt></a>.</p>
+
 
 <h3 class="function"><a name="top_value_count_match_spy_table-5">top_value_count_match_spy_table/5</a></h3>
 <div class="spec">
-<p><tt>top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams) -&gt; any()</tt></p>
-</div>
+<p><tt>top_value_count_match_spy_table(Server::<a href="#type-x_server">x_server()</a>, SpyRes::<a href="#type-x_resource">x_resource()</a>, Limit::non_neg_integer(), Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
+</div><p>Get an iterator over the most frequent values seen in the slot.
+  Calls <code>Xapian::ValueCountMatchSpy::top_values_begin (size_t maxvalues)</code>.
+  Records are sorted by <code>freq</code> in descending order.</p>
 
 <h3 class="function"><a name="unstem_query_parser_table-4">unstem_query_parser_table/4</a></h3>
 <div class="spec">
 <p><tt>unstem_query_parser_table(Server, QueryParserRes, Term, Meta) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#unstem_query_parser_table-5"><tt>unstem_query_parser_table(Server, QueryParserRes, Term,
+			  Meta, [])</tt></a>.</p>
+
 
 <h3 class="function"><a name="unstem_query_parser_table-5">unstem_query_parser_table/5</a></h3>
 <div class="spec">
-<p><tt>unstem_query_parser_table(Server, QueryParserRes, Term, Meta, UserParams) -&gt; any()</tt></p>
-</div>
+<p><tt>unstem_query_parser_table(Server::<a href="#type-x_server">x_server()</a>, QueryParserRes::<a href="#type-x_resource">x_resource()</a>, Term::<a href="#type-x_string">x_string()</a>, Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
+</div><p><p>Iterate over unstemmed forms of the given (stemmed) term used       
+in the query.</p>
+ 
+  Calls <code>Xapian::QueryParser::unstem_begin(const std::string &amp;term)</code>.</p>
 
 <h3 class="function"><a name="value_count_match_spy_table-3">value_count_match_spy_table/3</a></h3>
 <div class="spec">
@@ -148,11 +206,15 @@
 
 <h3 class="function"><a name="value_count_match_spy_table-4">value_count_match_spy_table/4</a></h3>
 <div class="spec">
-<p><tt>value_count_match_spy_table(Server, SpyRes, Meta, UserParams) -&gt; any()</tt></p>
-</div>
+<p><tt>value_count_match_spy_table(Server::<a href="#type-x_server">x_server()</a>, SpyRes::<a href="#type-x_resource">x_resource()</a>, Meta::<a href="#type-x_term_meta">x_term_meta()</a>, UserParams::[term()]) -&gt; <a href="#type-x_table">x_table()</a></tt><br></p>
+</div><p><p>Get an iterator over the values seen in the slot.
+   Calls <code>Xapian::ValueCountMatchSpy::values_begin()</code>.  
+Fields of the record are limited: value, freq.</p>
+ 
+   Records are sorted by <code>value</code> in ascending alphabetical order.</p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Aug 18 2012, 16:04:16.</i></p>
+<p><i>Generated by EDoc, Aug 18 2012, 22:29:02.</i></p>
 </body>
 </html>
