@@ -32,6 +32,12 @@
         db_term_iter_type_id/1]).
 -import(xapian_common, [append_string/2]).
 
+-type x_server()    :: xapian_server:x_server().
+-type x_table()     :: xapian_server:x_table().
+-type x_string()    :: xapian_server:x_string().
+-type x_resource()  :: xapian_server:x_resource().
+-type x_term_meta() :: record().
+
 %% @equiv spelling_table(Server, Meta, []) 
 spelling_table(Server, Meta) ->
     spelling_table(Server, Meta, []).
@@ -39,11 +45,15 @@ spelling_table(Server, Meta) ->
 %% @doc An iterator which returns all the spelling correction targets.
 %%
 %% Valid fields are:
-%% * value;
-%% * freq - The frequency of each word.
+%% <ul> <li>
+%% value;
+%% </li><li>
+%% freq - The frequency of each word.
+%% </li></ul>
 %%
 %% The `wdf' field isn't meaningful.
 %% The records are sorted by the value field.
+-spec spelling_table(x_server(), x_term_meta(), [term()]) -> x_table().
 spelling_table(Server, Meta, UserParams) ->
     EncoderFun = fun(Bin@) -> 
         Bin@ = append_db_term_iter_type(spellings, Bin@),
@@ -54,11 +64,14 @@ spelling_table(Server, Meta, UserParams) ->
               Meta, UserParams2).
 
 
+%% @equiv synonym_table(Server, Term, Meta, [])
 synonym_table(Server, Term, Meta) ->
     synonym_table(Server, Term, Meta, []).
 
 
 %% @doc An iterator which returns all the synonyms for a given term. 
+-spec synonym_table(x_server(), x_string(), x_term_meta(), 
+                    [term()]) -> x_table().
 synonym_table(Server, Term, Meta, UserParams) ->
     EncoderFun = fun(Bin@) ->
         Bin@ = append_db_term_iter_type(synonyms, Bin@),
@@ -71,7 +84,7 @@ synonym_table(Server, Term, Meta, UserParams) ->
               Meta, UserParams2).
 
 
-
+%% @equiv synonym_key_table(Server, Prefix, Meta, [])
 synonym_key_table(Server, Prefix, Meta) ->
     synonym_key_table(Server, Prefix, Meta, []).
 
@@ -79,6 +92,8 @@ synonym_key_table(Server, Prefix, Meta) ->
 %% @doc An iterator which returns all terms which have synonyms. 
 %%
 %% Only value field is meaningful.
+-spec synonym_key_table(x_server(), x_string(), x_term_meta(), 
+                        [term()]) -> x_table().
 synonym_key_table(Server, Prefix, Meta, UserParams) ->
     EncoderFun = fun(Bin@) ->
         Bin@ = append_db_term_iter_type(synonym_keys, Bin@),
@@ -91,11 +106,14 @@ synonym_key_table(Server, Prefix, Meta, UserParams) ->
               Meta, UserParams2).
 
 
+%% @equiv metadata_key_table(Server, Prefix, Meta, [])
 metadata_key_table(Server, Prefix, Meta) ->
     metadata_key_table(Server, Prefix, Meta, []).
 
 
 %% @doc An iterator which returns all user-specified metadata keys. 
+-spec metadata_key_table(x_server(), x_string(), x_term_meta(), 
+                         [term()]) -> x_table().
 metadata_key_table(Server, Prefix, Meta, UserParams) ->
     EncoderFun = fun(Bin@) ->
         Bin@ = append_db_term_iter_type(metadata_keys, Bin@),
@@ -108,11 +126,14 @@ metadata_key_table(Server, Prefix, Meta, UserParams) ->
               Meta, UserParams2).
 
 
+%% @equiv term_table(Server, Prefix, Meta, [])
 term_table(Server, Prefix, Meta) ->
     term_table(Server, Prefix, Meta, []).
 
 
 %% @doc An iterator which runs across all terms with a given prefix. 
+-spec term_table(x_server(), x_string(), x_term_meta(), 
+                [term()]) -> x_table().
 term_table(Server, Prefix, Meta, UserParams) ->
     EncoderFun = fun(Bin@) ->
         Bin@ = append_db_term_iter_type(all_terms, Bin@),
@@ -125,10 +146,16 @@ term_table(Server, Prefix, Meta, UserParams) ->
               Meta, UserParams2).
 
 
+%% @equiv stop_list_query_parser_table(Server, QueryParserRes, Meta, [])
 stop_list_query_parser_table(Server, QueryParserRes, Meta) ->
     stop_list_query_parser_table(Server, QueryParserRes, Meta, []).
 
 
+%% @doc Iterate over terms omitted from the query as stopwords. 
+%%
+%% Calls `Xapian::QueryParser:toplist_begin()'.
+-spec stop_list_query_parser_table(x_server(), x_resource(), x_term_meta(), 
+                                   [term()]) -> x_table().
 stop_list_query_parser_table(Server, QueryParserRes, Meta, UserParams)
     when is_reference(QueryParserRes) ->
     EncoderFun = fun(Bin@) ->
@@ -141,10 +168,17 @@ stop_list_query_parser_table(Server, QueryParserRes, Meta, UserParams)
               Meta, UserParams2).
 
 
+%% @equiv unstem_query_parser_table(Server, QueryParserRes, Term, Meta, [])
 unstem_query_parser_table(Server, QueryParserRes, Term, Meta) ->
     unstem_query_parser_table(Server, QueryParserRes, Term, Meta, []).
 
 
+%% @doc Iterate over unstemmed forms of the given (stemmed) term used 
+%%      in the query.
+%%
+%% Calls `Xapian::QueryParser::unstem_begin(const std::string &term)'.
+-spec unstem_query_parser_table(x_server(), x_resource(), x_string(), 
+                                x_term_meta(), [term()]) -> x_table().
 unstem_query_parser_table(Server, QueryParserRes, Term, Meta, UserParams)
     when is_reference(QueryParserRes) ->
     EncoderFun = fun(Bin@) ->
@@ -163,11 +197,13 @@ value_count_match_spy_table(Server, SpyRes, Meta) ->
     value_count_match_spy_table(Server, SpyRes, Meta, []).
 
 
-%% Fields of the record are limited:
-%%  * value
-%%  * freq
+%% @doc Get an iterator over the values seen in the slot. 
+%%  Calls `Xapian::ValueCountMatchSpy::values_begin()'.
+%% Fields of the record are limited: value, freq.
 %%
 %%  Records are sorted by `value' in ascending alphabetical order.
+-spec value_count_match_spy_table(x_server(), x_resource(), 
+                                  x_term_meta(), [term()]) -> x_table().
 value_count_match_spy_table(Server, SpyRes, Meta, UserParams)
     when is_reference(SpyRes) ->
     Meta1 = xapian_term_record:fix_spy_meta(Server, SpyRes, Meta),
@@ -179,11 +215,16 @@ value_count_match_spy_table(Server, SpyRes, Meta, UserParams)
     table_int(Server, spy_terms, EncoderFun, SpyRes, Meta1, UserParams2).
 
 
-%%  Records are sorted by `freq' in descending order.
+%% @equiv top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, [])
 top_value_count_match_spy_table(Server, SpyRes, Limit, Meta) ->
     top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, []).
 
 
+%% @doc Get an iterator over the most frequent values seen in the slot. 
+%% Calls `Xapian::ValueCountMatchSpy::top_values_begin (size_t maxvalues)'.
+%% Records are sorted by `freq' in descending order.
+-spec top_value_count_match_spy_table(x_server(), x_resource(), non_neg_integer(), 
+                                      x_term_meta(), [term()]) -> x_table().
 top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams)
     when is_reference(SpyRes) ->
     Meta1 = xapian_term_record:fix_spy_meta(Server, SpyRes, Meta),
@@ -196,12 +237,17 @@ top_value_count_match_spy_table(Server, SpyRes, Limit, Meta, UserParams)
     table_int(Server, spy_terms, EncoderFun, SpyRes, Meta1, UserParams2).
 
 
-%%  Records are sorted by `value' in ascending alphabetical order.
+%% @equiv document_term_table(Server, DocRes, Meta, [])
 document_term_table(Server, DocRes, Meta) ->
     document_term_table(Server, DocRes, Meta, []).
 
 
+%% @doc Iterator for the terms in this document. 
+%% Records are sorted by `value' in ascending alphabetical order.
 %% Second argument can be a resource of a document or a document.
+%% Calls `Xapian::Document::termlist_begin ()'.
+-spec document_term_table(x_server(), x_resource(), 
+                          x_term_meta(), [term()]) -> x_table().
 document_term_table(Server, DocRes, Meta, UserParams) 
     when is_reference(DocRes) ->
     EncoderFun = fun(Bin) ->
@@ -220,10 +266,16 @@ document_term_table(Server, DocId, Meta, UserParams) ->
     end.
 
 
+% ===================================================================
+
 %% User parameters are:
-%% * ignore_empty - catch an error, if term set is empty.
-%% * {page_size, non_neg_integer()}
-%% * {from, non_neg_integer()}
+%% <ul> <li>
+%% ignore_empty - catch an error, if term set is empty.
+%% </li><li>
+%% {page_size, non_neg_integer()}
+%% </li><li>
+%% {from, non_neg_integer()}
+%% </li></ul>
 %%
 %% IterRes stands for an iterable resource (Document or MatchSpy).
 table_int(Server, QlcType, EncFun, IterRes, Meta, UserParams) 

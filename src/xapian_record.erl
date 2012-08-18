@@ -29,7 +29,7 @@
     index_of/2]).
 
 -import(xapian_const, [source_type_id/1, document_field_id/1]).
--type document_meta() :: term().
+-type x_document_meta() :: term().
 
 
 %% ------------------------------------------------------------------
@@ -53,7 +53,7 @@
 -spec record(TupleName, TupleFields) -> Meta when
     TupleName :: atom(),
     TupleFields :: [atom()],
-    Meta :: document_meta().
+    Meta :: x_document_meta().
 
 record(TupleName, TupleFields) ->
     #rec{name=TupleName, fields=TupleFields}.
@@ -61,7 +61,7 @@ record(TupleName, TupleFields) ->
 
 %% @doc Return an index of the `Field' or `undefined' if there is no a key.
 -spec key_position(Meta, Field) -> Pos when
-    Meta :: document_meta(),
+    Meta :: x_document_meta(),
     Field :: atom(),
     Pos :: non_neg_integer() | undefined.
 key_position(#rec{fields=TupleFields}, Field) ->
@@ -72,7 +72,7 @@ key_position(#rec{fields=TupleFields}, Field) ->
 
 %% @doc Convert `Meta' into a tuple, where fields are fields' names.
 -spec tuple(Meta) -> Rec when
-    Meta :: document_meta(),
+    Meta :: x_document_meta(),
     Rec :: record().
 tuple(#rec{name=TupleName, fields=TupleFields}) ->
     list_to_tuple([TupleName | TupleFields]).
