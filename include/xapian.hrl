@@ -152,7 +152,7 @@
 -record(x_value_name, {
     name :: atom(),
     slot :: non_neg_integer(),
-    type = string :: float | string
+    type = string :: xapian_type:x_slot_type()
 }).
 
 

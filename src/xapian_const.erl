@@ -304,6 +304,7 @@ term_type(update)  -> update_term;
 term_type(remove)  -> remove_term.
 
 
+%% @doc Convert value <i>encoding</i> type name to its id.
 %% A value can be float. This prefix helps to define, which format is passed.
 value_type_id(string) -> 0;
 value_type_id(double) -> 1.
@@ -312,7 +313,8 @@ value_type_name(0) -> string;
 value_type_name(1) -> double.
 
 
-%% Defines the source of a document record used for retrieving information
+%% @doc Return an id of the term QLC iterator type.
+%% Defines the source of a document record used for retrieving information.
 source_type_id(document) -> 0;
 source_type_id(iterator) -> 1;
 source_type_id(both)     -> 2.

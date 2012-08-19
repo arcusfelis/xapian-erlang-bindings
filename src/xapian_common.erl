@@ -382,7 +382,7 @@ slot_id(Slot, _N2S) when is_integer(Slot) ->
 -spec slot_type(Slot, N2S | undefined) -> Type when
     Slot :: non_neg_integer(),
     N2S  :: term(),
-    Type :: string | float.
+    Type :: xapian_type:x_slot_type().
 slot_type(_Slot, undefined) -> 
     string;
 
@@ -483,7 +483,8 @@ append_floats(Nums, Bin@) ->
     Bin@.
 
 
-%% @doc Append a value of the slot.
+%% @doc Append a value of the slot. 
+%% `Type' is a user defined type (for example, `string', `float' or `bytes').
 %% See `XapianErlang::Driver::decodeValue'.
 -spec append_value(Type, Value, Bin) -> Bin when
     Type :: atom(),
@@ -499,7 +500,9 @@ append_value(bytes, Value, Bin) ->
     append_iolist(Value, append_uint8(xapian_const:value_type_id(string), Bin)).
 
 
+%% @doc Append a value `Value' of the slot `SlotId'.
 append_value(SlotId, Value, undefined, Bin) when is_integer(SlotId) ->
+    %% All values are strings.
     append_value(string, Value, Bin);
 
 append_value(SlotId, Value, S2T, Bin) when is_integer(SlotId) ->
@@ -507,6 +510,11 @@ append_value(SlotId, Value, S2T, Bin) when is_integer(SlotId) ->
     append_value(ExpectedType, Value, Bin).
 
 
+%% @doc Read a value from the binary.
+-spec read_value(Type, Bin) -> {Value, Bin} when
+    Bin   :: binary(),
+    Type  :: atom(),
+    Value :: float() | xapian_type:x_string() | undefined.
 read_value(string, Bin) ->
     save_read_string(Bin);
 
@@ -526,12 +534,17 @@ read_unknown_type_value(Bin1) ->
     State :: xapian_type:x_state(),
     Client :: pid() | {pid(), reference()}.
 
+%% @doc Create a resource appender.
 resource_appender(State, {ClientPid, _ClientRef}) ->
     {State, ClientPid};
 resource_appender(State, ClientPid) ->
     {State, ClientPid}.
 
 
+%% @doc Encode a resource `Res' using the resource appender `RA'.
+%% Concat it with `Bin'.
+%% @see resource_appender/2
+%% @see append_resource/4
 -spec append_resource(RA, Res, Bin) -> Bin when
     RA :: x_resource_appender(),
     Res :: xapian_type:x_resource(),
@@ -542,6 +555,7 @@ append_resource({State, ClientPid} = _RA, Res, Bin) ->
 
 
 %% @doc Append a resource reference or constructor.
+%% @see append_resource/3
 append_resource(State, Res, Bin, ClientPid) ->
     {ok, F} = xapian_server:internal_compile_resource(State, Res, ClientPid),
     F(Bin).
@@ -550,12 +564,17 @@ append_resource(State, Res, Bin, ClientPid) ->
 %% Resource Register State
 %% Used, while decoding.
 -record(rr_state, {client, register}).
+
+%% @doc Create a resource reader.
 resource_reader(Register, ClientPid) ->
     #rr_state{client = ClientPid, register = Register}.
 
 resource_register(#rr_state{register = Register}) ->
     Register.
 
+
+%% @doc Decode a resource from `Bin' using a resource reader `RR'.
+%% @see resource_reader/2
 read_resource(RR = #rr_state{client = ClientPid, register = Register}, Bin) ->
     {ResNum, Bin2} = read_uint(Bin),
     {ok, {NewRegister, ResRef}} 

@@ -42,7 +42,7 @@
 -type x_string()           :: unicode:chardata().
 -type x_non_empty_string() :: unicode:chardata().
 -type x_slot_name()     :: atom().
--type x_slot_type()     :: float | string.
+-type x_slot_type()     :: float | string | bytes.
 -type x_slot()          :: non_neg_integer().
 -type x_position()      :: non_neg_integer().
 -type x_term_count()    :: non_neg_integer().
