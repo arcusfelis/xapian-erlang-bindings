@@ -12,6 +12,7 @@
     append_flags/2,
     append_double/2,
     append_string/2,
+    append_value/4,
     slot_id/2]).
 
 -import(xapian_const, [
@@ -285,11 +286,6 @@ encode_features([]) ->
 toggle_group(Nums) ->
     [-N || N <- Nums].
 
-
-
-append_value(SlotId, Value, Slot2TypeArray, Bin) when is_integer(SlotId) -> 
-    CheckedValue = xapian_common:fix_value(SlotId, Value, Slot2TypeArray),
-    xapian_common:append_value(CheckedValue, Bin).
 
 
 -ifdef(TEST).

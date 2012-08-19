@@ -8,10 +8,11 @@
          parser_command_id/1,
          stem_strategy_id/1,
          document_part_id/1,
-         value_type/1,
+         action_type/1,
          posting_type/1,
          term_type/1,
          value_type_id/1,
+         value_type_name/1,
          source_type_id/1,
          db_info_param_id/1,
          mset_info_param_id/1,
@@ -285,10 +286,10 @@ document_part_id(remove_term_positions)     -> 106;
 document_part_id(remove_term_positions_save)-> 116.
 
 
-value_type(add)       -> add_value;
-value_type(set)       -> set_value;
-value_type(update)    -> update_value;
-value_type(remove)    -> remove_value.
+action_type(add)       -> add_value;
+action_type(set)       -> set_value;
+action_type(update)    -> update_value;
+action_type(remove)    -> remove_value.
 
 
 posting_type(add)     -> add_posting;
@@ -306,6 +307,9 @@ term_type(remove)  -> remove_term.
 %% A value can be float. This prefix helps to define, which format is passed.
 value_type_id(string) -> 0;
 value_type_id(double) -> 1.
+
+value_type_name(0) -> string;
+value_type_name(1) -> double.
 
 
 %% Defines the source of a document record used for retrieving information

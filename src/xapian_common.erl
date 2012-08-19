@@ -48,7 +48,8 @@
          append_slot/3,
          append_slots/3,
          append_slots_with_order/3,
-         append_value/2,
+         append_value/3,
+         append_value/4,
          append_terms/2,
          append_floats/2,
          append_stop/1,
@@ -62,7 +63,6 @@
          index_one_of/2,
          slot_id/2, 
          slot_type/2, 
-         fix_value/3,
          resource_appender/2,
          append_resource/3,
          append_resource/4,
@@ -327,7 +327,7 @@ append_binary(Value, Bin) ->
     <<Bin/binary, Value/binary>>.
 
 
-%% Append a bool.
+%% @doc Append a bool.
 append_boolean(Value, Bin) ->
     append_uint8(boolean_to_integer(Value), Bin).
 
@@ -336,6 +336,10 @@ boolean_to_integer(false) -> 0;
 boolean_to_integer(true) ->  1.
 
 
+%% @doc Read a bool. Return `true' or `false'.
+-spec read_boolean(Bin) -> {Bool, Bin} when
+    Bin :: binary(),
+    Bool :: boolean().
 read_boolean(Bin) ->
     case read_uint8(Bin) of
         {1, RemBin} -> {true, RemBin};
@@ -343,34 +347,42 @@ read_boolean(Bin) ->
     end.
 
 
+%% @doc Read weight as a double.
 read_weight(Bin) ->
     read_double(Bin).
 
-
+%% @doc Read a document rank (uint32_t).
 read_rank(Bin) ->
     read_uint(Bin).
 
-
+%% @doc Read a value slot (uint32_t).
 read_slot(Bin) ->
     read_uint(Bin).
 
-
+%% @doc Read a percent value (uint8_t).
+-spec read_percent(Bin) -> Percent when
+    Bin :: binary(),
+    Percent :: 0 .. 100.
 read_percent(Bin) ->
     read_uint8(Bin).
 
-
+%% @doc Read a document count (uint32_t).
 read_doccount(Bin) ->
     read_uint(Bin).
 
 
-%% Convert slot name to number.
+%% @doc Convert slot name to its number.
 slot_id(Name, N2S) when is_atom(Name) -> 
     orddict:fetch(Name, N2S);
 
 slot_id(Slot, _N2S) when is_integer(Slot) -> 
     Slot.
 
-
+%% @doc Convert a slot number (not name) into a slot type (`float' or `string').
+-spec slot_type(Slot, N2S | undefined) -> Type when
+    Slot :: non_neg_integer(),
+    N2S  :: term(),
+    Type :: string | float.
 slot_type(_Slot, undefined) -> 
     string;
 
@@ -381,6 +393,11 @@ slot_type(Slot, N2S) when is_integer(Slot) ->
     end.
 
 
+%% @doc Return a position of the element `Item' in the list `List'.
+-spec index_of(Item, List) -> Pos | not_found when
+    Pos :: non_neg_integer(),
+    Item :: term(),
+    List :: [Item].
 index_of(Item, List) -> index_of(Item, List, 1).
 
 index_of(_, [], _)  -> not_found;
@@ -388,6 +405,8 @@ index_of(Item, [Item|_], Index) -> Index;
 index_of(Item, [_|Tl], Index) -> index_of(Item, Tl, Index+1).
 
 
+%% @doc Search any term from `Items' inside `List'. 
+%% Return its position in `List'.
 -spec index_one_of([term()], [term()]) -> non_neg_integer() | not_found.
 
 index_one_of(Items, List) -> index_one_of(Items, List, 1).
@@ -419,6 +438,11 @@ index_one_of_test_() ->
 -endif.
 
 
+%% @doc Read a fixed count of positions from `Bin'.
+-spec read_position_list(Bin) -> {Positions, Bin} when
+    Positions :: [Pos],
+    Pos :: non_neg_integer(),
+    Bin :: binary().
 read_position_list(Bin@) ->
     {Count, Bin@} = read_uint(Bin@),
     read_position_list(Count, [], Bin@).
@@ -432,53 +456,55 @@ read_position_list(0, Acc, Bin@) ->
     {lists:reverse(Acc), Bin@}.
     
 
+%% @doc Append a list of document identifiers.
 append_docids(DocIds, Bin@) ->
     Bin@ = lists:foldl(fun append_document_id/2, Bin@, DocIds),
     Bin@ = append_document_id(0, Bin@),
     Bin@.
 
 
+%% @doc Append a list of terms.
+-spec append_terms(Terms, Bin) -> Bin when
+    Terms :: [xapian_type:x_non_empty_string()],
+    Bin :: binary().
 append_terms(Terms, Bin@) ->
     Bin@ = lists:foldl(fun append_non_empty_string/2, Bin@, Terms),
     Bin@ = append_iolist("", Bin@),
     Bin@.
 
 
+%% @doc Append a list of double numbers.
+-spec append_floats(Nums, Bin) -> Bin when
+    Nums :: [float()],
+    Bin :: binary().
 append_floats(Nums, Bin@) ->
     Bin@ = append_uint(length(Nums), Bin@),
     Bin@ = lists:foldl(fun append_double/2, Bin@, Nums),
     Bin@.
 
 
-%% see XapianErlang::Driver::decodeValue
-append_value(Value, Bin@) when is_number(Value) ->
-    append_double(Value, append_uint8(xapian_const:value_type_id(double), Bin@)); 
+%% @doc Append a value of the slot.
+%% See `XapianErlang::Driver::decodeValue'.
+-spec append_value(Type, Value, Bin) -> Bin when
+    Type :: atom(),
+    Value :: float(),
+    Bin :: binary().
+append_value(string, Value, Bin) ->
+    append_string(Value, append_uint8(xapian_const:value_type_id(string), Bin));
 
-append_value(Value, Bin@) ->
-    append_iolist(Value, append_uint8(xapian_const:value_type_id(string), Bin@)).
+append_value(float, Value, Bin) when is_number(Value) ->
+    append_double(Value, append_uint8(xapian_const:value_type_id(double), Bin)); 
+
+append_value(bytes, Value, Bin) ->
+    append_iolist(Value, append_uint8(xapian_const:value_type_id(string), Bin)).
 
 
+append_value(SlotId, Value, undefined, Bin) when is_integer(SlotId) ->
+    append_value(string, Value, Bin);
 
-%% @doc Returns the fixed value: float or string if all is ok.
-%%      Othervise, throws an error.
-%% @end 
-%% All slots has the string type.
-fix_value(_Slot, Value, undefined) ->
-    Value;
-
-fix_value(Slot, Value, Slot2TypeArray) 
-    when is_number(Value) -> 
-    %% The passed value has type `float'.
-    %% The field type must be `float' too.
-    ExpectedType = array:get(Slot, Slot2TypeArray),
-    %% If Type is not float, then throw an error.
-    [xapian_error:bad_slot_value_type_error(bad_value, Slot, Value, ExpectedType) 
-        || ExpectedType =/= float], 
-    %% No errors, continue.
-    Value;
-
-fix_value(_Slot, Value, _Slot2TypeArray) ->
-    Value.
+append_value(SlotId, Value, S2T, Bin) when is_integer(SlotId) ->
+    ExpectedType = array:get(SlotId, S2T),
+    append_value(ExpectedType, Value, Bin).
 
 
 read_value(string, Bin) ->
@@ -490,11 +516,7 @@ read_value(double, Bin) ->
 
 read_unknown_type_value(Bin1) ->
     {Type, Bin2} = read_uint8(Bin1), 
-    read_value(value_type(Type), Bin2).
-
-
-value_type(0) -> string;
-value_type(1) -> double.
+    read_value(xapian_const:value_type_name(Type), Bin2).
 
 
 %% It is a black box.

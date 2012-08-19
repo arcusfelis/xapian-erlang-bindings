@@ -1271,7 +1271,7 @@ init([Path, Params]) ->
     Slot2TypeArray = 
         if 
             Slot2Type =:= []   -> undefined; 
-            true                -> array:from_orddict(Slot2Type) 
+            true                -> array:from_orddict(Slot2Type, string) 
         end,
 
     Name2PrefixDict = orddict:from_list(Name2Prefix),
