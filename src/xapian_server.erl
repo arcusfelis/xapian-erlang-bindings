@@ -1242,7 +1242,11 @@ client_error_handler({ok, Result}) ->
     Result;
 
 client_error_handler({error, Reason}) -> 
-    erlang:error(Reason).
+    erlang:error(Reason);
+
+client_error_handler({exception_migration, Type, Reason, Trace}) -> 
+    ClientTrace = erlang:get_stacktrace(),
+    erlang:raise(Type, #x_server_error{reason=Reason, trace=Trace}, ClientTrace).
 
 
 %% ------------------------------------------------------------------
@@ -1325,18 +1329,32 @@ init([{from_state, State}]) ->
 
  
 %% @private
-handle_call({with_state, Fun}, _From, State) ->
+handle_call(Mess, From, State) ->
+    %% Handle errors.
+    %% Don't let the server die, bacause restart maybe be expensive.
+    %% TODO: maybe it want to be restarted, because of the bad code upgrade?
+    try
+        hc(Mess, From, State)
+    catch Type:Reason ->
+        %% Retranslate this error on the client.
+        Trace = erlang:get_stacktrace(),
+        Reply = {exception_migration, Type, Reason, Trace},
+        {reply, Reply, State}
+    end.
+
+
+hc({with_state, Fun}, _From, State) ->
     {reply, Fun(State), State};
 
-handle_call({with_state, Fun, Params}, _From, State) ->
+hc({with_state, Fun, Params}, _From, State) ->
     {reply, Fun(State, Params), State};
 
-handle_call(last_document_id, _From, State) ->
+hc(last_document_id, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_last_document_id(Port),
     {reply, Reply, State};
 
-handle_call(close, _From, State=#state{master=undefined}) ->
+hc(close, _From, State=#state{master=undefined}) ->
     #state{ port = Port } = State,
     %% Flush on disk, close DB.
     close_db_port(Port),
@@ -1346,81 +1364,81 @@ handle_call(close, _From, State=#state{master=undefined}) ->
     Reason = normal,
     {stop, Reason, Reply, State};
 
-handle_call(close, _From, State) ->
+hc(close, _From, State) ->
     {stop, normal, ok, State};
 
-handle_call({add_document, Document}, From, State) ->
+hc({add_document, Document}, From, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, From, State),
     Reply = port_add_document(Port, EncodedDocument),
     {reply, Reply, State};
 
-handle_call({add_spelling, Spelling}, From, State) ->
+hc({add_spelling, Spelling}, From, State) ->
     #state{ port = Port } = State,
     EncodedSpelling = document_encode(Spelling, From, State),
     Reply = port_add_spelling(Port, EncodedSpelling),
     {reply, Reply, State};
 
-handle_call({clear_synonyms, Term}, _From, State) ->
+hc({clear_synonyms, Term}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_clear_synonyms(Port, Term),
     {reply, Reply, State};
 
-handle_call({remove_synonym, Term, Synonym}, _From, State) ->
+hc({remove_synonym, Term, Synonym}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_remove_synonym(Port, Term, Synonym),
     {reply, Reply, State};
 
-handle_call({add_synonym, Term, Synonym}, _From, State) ->
+hc({add_synonym, Term, Synonym}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_add_synonym(Port, Term, Synonym),
     {reply, Reply, State};
 
-handle_call({replace_or_create_document, Id, Document}, From, State) ->
+hc({replace_or_create_document, Id, Document}, From, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, From, State),
     Reply = port_replace_or_create_document(Port, Id, EncodedDocument),
     {reply, Reply, State};
 
-handle_call({replace_document, Id, Document}, From, State) ->
+hc({replace_document, Id, Document}, From, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, From, State),
     Reply = port_replace_document(Port, Id, EncodedDocument),
     {reply, Reply, State};
 
-handle_call({update_document, Id, Document, Create}, From, State) ->
+hc({update_document, Id, Document, Create}, From, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, From, State),
     Reply = port_update_document(Port, Id, EncodedDocument, Create),
     {reply, Reply, State};
 
-handle_call({is_document_exist, Id}, _From, State) ->
+hc({is_document_exist, Id}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_is_document_exist(Port, Id),
     {reply, Reply, State};
 
-handle_call({delete_document, Id}, _From, State) ->
+hc({delete_document, Id}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_delete_document(Port, Id),
     {reply, Reply, State};
 
-handle_call({set_metadata, Key, Value}, _From, State) ->
+hc({set_metadata, Key, Value}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_set_metadata(Port, Key, Value),
     {reply, Reply, State};
 
-handle_call({test, TestName, Params}, _From, State) ->
+hc({test, TestName, Params}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_test(Port, TestName, Params),
     {reply, Reply, State};
 
-handle_call({document_info_resource, Document}, {FromPid, _FromRef}, State) ->
+hc({document_info_resource, Document}, {FromPid, _FromRef}, State) ->
     #state{ port = Port } = State,
     EncodedDocument = document_encode(Document, FromPid, State),
     Result = port_document_info_resource(Port, EncodedDocument),
     m_do_register_resource(State, FromPid, Result);
 
-handle_call({document_info, Document, Meta}, From, State) ->
+hc({document_info, Document, Meta}, From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
           subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
     EncodedDocument = document_encode(Document, From, State),
@@ -1428,14 +1446,14 @@ handle_call({document_info, Document, Meta}, From, State) ->
                                Meta, Name2Slot, Id2Name, Slot2Type),
     {reply, Reply, State};
 
-handle_call({read_document_by_id, Id, Meta}, _From, State) ->
+hc({read_document_by_id, Id, Meta}, _From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
           subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
     Reply = port_read_document_by_id(Port, Id, 
                                      Meta, Name2Slot, Id2Name, Slot2Type),
     {reply, Reply, State};
 
-handle_call({query_page, Offset, PageSize, Query, Meta}, From, State) ->
+hc({query_page, Offset, PageSize, Query, Meta}, From, State) ->
     #state{ port = Port, name_to_slot = Name2Slot,
         subdb_names = Id2Name, slot_to_type = Slot2Type } = State,
     RA = resource_appender(State, From),
@@ -1443,7 +1461,7 @@ handle_call({query_page, Offset, PageSize, Query, Meta}, From, State) ->
                             Meta, Name2Slot, Id2Name, Slot2Type, RA),
     {reply, Reply, State};
 
-handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
+hc({enquire, Query}, {FromPid, _FromRef}, State) ->
     #state{ 
         port = Port, 
         name_to_slot = Name2Slot, 
@@ -1453,20 +1471,20 @@ handle_call({enquire, Query}, {FromPid, _FromRef}, State) ->
     %% Special handling of errors
     m_do_register_resource(State, FromPid, PortAnswer);
 
-handle_call({document, DocId}, {FromPid, _FromRef}, State) ->
+hc({document, DocId}, {FromPid, _FromRef}, State) ->
     #state{ port = Port } = State,
     PortAnswer = port_document(Port, DocId),
     m_do_register_resource(State, FromPid, PortAnswer);
 
 
-handle_call(#x_query_parser{} = QP, {FromPid, _FromRef}, State) ->
+hc(#x_query_parser{} = QP, {FromPid, _FromRef}, State) ->
     #state{port = Port } = State,
     RA = resource_appender(State, FromPid),
     PortAnswer = port_create_query_parser(Port, RA, QP),
     m_do_register_resource(State, FromPid, PortAnswer);
 
 
-handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
+hc(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
     #x_match_set{
         enquire = EnquireRef, 
         offset = Offset, 
@@ -1489,7 +1507,7 @@ handle_call(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
 
         register_resource(State, FromPid, MSetNum)]));
 
-handle_call({parse_string, QS, Fields}, {FromPid, _FromRef}, State) ->
+hc({parse_string, QS, Fields}, {FromPid, _FromRef}, State) ->
     #state{register = Register, port = Port } = State,
     RA = resource_appender(State, FromPid),
     RR = resource_reader(Register, FromPid),
@@ -1506,7 +1524,7 @@ handle_call({parse_string, QS, Fields}, {FromPid, _FromRef}, State) ->
 %% If the error occures, we can throw an exception inside the client code.
 %%
 %% The return value is useless.
-handle_call({release_resource, Ref}, {FromPid, _FromRef}, State) ->
+hc({release_resource, Ref}, {FromPid, _FromRef}, State) ->
     case run_release_resource(Ref, FromPid, State) of
         {ok, NewState} ->
             {reply, {ok, ok}, NewState};
@@ -1514,10 +1532,10 @@ handle_call({release_resource, Ref}, {FromPid, _FromRef}, State) ->
             {reply, Error, State}
     end;
 
-handle_call({qlc_release_table, Hash}, From, State) ->
+hc({qlc_release_table, Hash}, From, State) ->
     case internal_qlc_table_hash_to_reference(State, Hash) of
         {ok, Ref} ->
-            handle_call({release_resource, Ref}, From, State);
+            hc({release_resource, Ref}, From, State);
         {error, _Reason} = Error ->
             {reply, Error, State}
     end;
@@ -1525,7 +1543,7 @@ handle_call({qlc_release_table, Hash}, From, State) ->
 %% Convert Res into QlcRes.
 %% ResRef is an iterable object.
 %% QlcRef, QlcResNum is for access for a QLC table.
-handle_call({qlc_init, QlcType, ResRef, EncFun}, {FromPid, _FromRef}, State) ->
+hc({qlc_init, QlcType, ResRef, EncFun}, {FromPid, _FromRef}, State) ->
     #state{register = Register } = State,
     do_reply(State, do([error_m ||
         %% Get an iterable resource by the reference.
@@ -1549,12 +1567,12 @@ handle_call({qlc_init, QlcType, ResRef, EncFun}, {FromPid, _FromRef}, State) ->
         end]));
     
 
-handle_call({qlc_lookup, EncoderFun, QlcResNum}, _From, State) ->
+hc({qlc_lookup, EncoderFun, QlcResNum}, _From, State) ->
     Reply = port_qlc_lookup(State, QlcResNum, EncoderFun),
     {reply, Reply, State};
     
 
-handle_call({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
+hc({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
     #state{port = Port } = State,
     Reply = port_qlc_next_portion(Port, QlcResNum, From, Count),
     {reply, Reply, State};
@@ -1564,7 +1582,7 @@ handle_call({qlc_next_portion, QlcResNum, From, Count}, _From, State) ->
 %% Create new resource object using the `ResourceConName' constructor
 %% with a number `ResourceConNumber'.
 %% Return an Erlang reference of new object.
-handle_call({create_resource, ResourceConName, Gen}, 
+hc({create_resource, ResourceConName, Gen}, 
     {FromPid, _FromRef}, State) ->
     #state{ port = Port } = State,
     do_reply(State, do([error_m ||
@@ -1577,7 +1595,7 @@ handle_call({create_resource, ResourceConName, Gen},
         register_resource(State, FromPid, ResourceConNumber)]));
 
 
-handle_call({mset_info, MSetRef, Params}, From, State) ->
+hc({mset_info, MSetRef, Params}, From, State) ->
     #state{port = Port, register = Register } = State,
     Reply = 
     do([error_m ||
@@ -1588,7 +1606,7 @@ handle_call({mset_info, MSetRef, Params}, From, State) ->
     ]),
     {reply, Reply, State};
 
-handle_call({match_spy_info, MatchSpyRef, Params}, From, State) ->
+hc({match_spy_info, MatchSpyRef, Params}, From, State) ->
     #state{port = Port, register = Register } = State,
     Reply = 
     do([error_m ||
@@ -1599,12 +1617,12 @@ handle_call({match_spy_info, MatchSpyRef, Params}, From, State) ->
     ]),
     {reply, Reply, State};
 
-handle_call({database_info, Params}, _From, State) ->
+hc({database_info, Params}, _From, State) ->
     #state{port = Port} = State,
     Reply = port_database_info(Port, Params),
     {reply, Reply, State};
 
-handle_call({transaction, Ref}, From, State) ->
+hc({transaction, Ref}, From, State) ->
     #state{ port = Port } = State,
     {FromPid, _FromRef} = From,
     case port_start_transaction(Port) of

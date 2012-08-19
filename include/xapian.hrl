@@ -193,6 +193,14 @@
     command
 }).
 
+-record(x_server_error, {
+    %% Reason
+    reason,
+
+    %% Error trace
+    trace
+}).
+
 
 
 % ----------------------------------------------------------

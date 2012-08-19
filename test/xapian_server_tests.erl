@@ -1558,6 +1558,39 @@ read_float_value_gen() ->
     end.
 
 
+append_bytes_value_gen() ->
+    % Open test
+    Path = testdb_path(bytes),
+    Params = [write, create, overwrite
+        , #x_value_name{slot = 1, name = slot1, type = string}
+        , #x_value_name{slot = 2, name = slot2, type = bytes}
+        ],
+    Document1 =
+        [ #x_data{value = "My test data as iolist"} 
+        , #x_value{slot = slot1, value = <<128>>} 
+        ],
+    Document2 =
+        [ #x_data{value = "My test data as iolist"} 
+        , #x_value{slot = slot2, value = <<128>>} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        ?assertError(#x_server_error{reason={not_unicode,{error,<<>>,<<128>>}}},
+                     ?SRV:add_document(Server, Document1)),
+        DocId1 = ?SRV:add_document(Server, Document2),
+
+        Meta = xapian_record:record(rec_test2, record_info(fields, rec_test2)),
+        Rec1 = ?SRV:read_document(Server, DocId1, Meta),
+
+        [ ?_assertEqual(Rec1#rec_test2.docid, 1)
+        , ?_assertEqual(Rec1#rec_test2.slot1, undefined)
+        , ?_assertEqual(Rec1#rec_test2.slot2, <<128>>)
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
+
 short_record_test() ->
     Path = testdb_path(short_rec_test),
     Params = [write, create, overwrite],

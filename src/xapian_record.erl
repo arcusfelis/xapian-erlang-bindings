@@ -14,21 +14,25 @@
 -compile({parse_transform, seqbind}).
 -record(rec, {name, fields}).
 -import(xapian_common, [ 
-    append_uint/2,
-    append_uint8/2,
-    read_doccount/1,
-    read_document_id/1,
-    read_db_id/1,
-    read_weight/1,
-    read_rank/1,
-    read_string/1,
-    read_percent/1,
-    read_uint8/1,
-    read_unknown_type_value/1,
-    slot_type/2,
-    index_of/2]).
+        append_uint/2,
+        append_uint8/2,
+        read_doccount/1,
+        read_document_id/1,
+        read_db_id/1,
+        read_weight/1,
+        read_rank/1,
+        read_string/1,
+        read_percent/1,
+        read_uint8/1,
+        read_unknown_type_value/1,
+        slot_type/2,
+        index_of/2]).
 
--import(xapian_const, [source_type_id/1, document_field_id/1]).
+-import(xapian_const, [
+        source_type_id/1, 
+        document_field_id/1, 
+        slot_type_to_command_type/1]).
+
 -type x_document_meta() :: term().
 
 
@@ -193,14 +197,6 @@ enc([], _N2S, _V2T, Bin) ->
 
 slot_to_command_type(SlotNum, V2T) ->
     slot_type_to_command_type(slot_type(SlotNum, V2T)).
-
-
-%% @doc Returns a name of a command for encoder.
-%% A command is a type of the record, not a type of the value.
-%% Types of the record are data, docid, value.
-%% Types of the value are string, float.
-slot_type_to_command_type(string) -> value;
-slot_type_to_command_type(float)  -> float_value.
 
 
 %% Type of the field

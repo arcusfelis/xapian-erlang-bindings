@@ -13,6 +13,7 @@
          term_type/1,
          value_type_id/1,
          value_type_name/1,
+         slot_type_to_command_type/1,
          source_type_id/1,
          db_info_param_id/1,
          mset_info_param_id/1,
@@ -311,6 +312,15 @@ value_type_id(double) -> 1.
 
 value_type_name(0) -> string;
 value_type_name(1) -> double.
+
+
+%% @doc Returns a name of a command for encoder.
+%% A command is a type of the record, not a type of the value.
+%% Types of the record are data, docid, value.
+%% Types of the value are string, float.
+slot_type_to_command_type(float)  -> float_value;
+slot_type_to_command_type(string) -> value;
+slot_type_to_command_type(bytes) -> value.
 
 
 %% @doc Return an id of the term QLC iterator type.
