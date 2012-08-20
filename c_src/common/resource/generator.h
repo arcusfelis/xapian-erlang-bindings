@@ -66,7 +66,7 @@ class Generator
     }
 
     void
-    registerCallbacks();
+    registerCallbacks(Driver& driver);
 
     typedef std::vector<Constructor*>::iterator constructor_iterator;
     typedef std::vector<Constructor*>::const_iterator const_constructor_iterator;

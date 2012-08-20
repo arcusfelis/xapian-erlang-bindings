@@ -10,6 +10,7 @@
 XAPIAN_ERLANG_NS_BEGIN
 class ParamDecoder;
 class ResultEncoder;
+class Driver;
 XAPIAN_ERLANG_NS_END
 
 XAPIAN_RESOURCE_NS_BEGIN
@@ -30,7 +31,7 @@ class Factory
     Register  m_register;
 
     public:
-    Factory();
+    Factory(Driver& driver);
 
     Element
     extract(ParamDecoder& params);

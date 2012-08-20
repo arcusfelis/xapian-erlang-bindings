@@ -5,9 +5,9 @@
 
 XAPIAN_RESOURCE_NS_BEGIN
 
-Factory::Factory()
+Factory::Factory(Driver& driver)
 {
-    m_generator.registerCallbacks();
+    m_generator.registerCallbacks(driver);
 }
 
 void

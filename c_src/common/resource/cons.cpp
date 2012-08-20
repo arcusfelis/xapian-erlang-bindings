@@ -3,6 +3,7 @@
 #include "resource/element.h"
 #include "resource/register.h"
 #include "param_decoder.h"
+#include "xapian_core.h"
 #include "xapian.h"
 
 /**
@@ -144,48 +145,68 @@ createSimpleStopper(Register& /*m*/, ParamDecoder& params)
 }
 
 
+Element
+createEnquire(Driver& driver, Register& /*m*/, ParamDecoder& params)
+{
+    // Use an Enquire object on the database to run the query.
+    // Create a new context.
+    Resource::Element elem =
+        Resource::Element::wrap(new Xapian::Enquire(driver.getDatabase()));
+    Xapian::Enquire& enquire = elem;
+
+    // Use elem as a context.
+    driver.fillEnquire(elem, params, enquire);
+
+    return elem;
+}
+
+
 void
-Generator::registerCallbacks()
+Generator::registerCallbacks(Driver& driver)
 {
     // Collect matadata about functions
-    add(new Constructor("bool_weight", 
-                        &createBoolWeight));
+    add(Constructor::create("bool_weight", 
+                            &createBoolWeight));
 
-    add(new Constructor(std::string("bm25_weight"), 
-                        &createBM25Weight));
+    add(Constructor::create(std::string("bm25_weight"), 
+                            &createBM25Weight));
 
-    add(new Constructor(std::string("trad_weight"), 
-                        &createTradWeight));
+    add(Constructor::create(std::string("trad_weight"), 
+                            &createTradWeight));
 
-    add(new Constructor(std::string("value_count_match_spy"), 
-                        &createValueCountMatchSpy));
+    add(Constructor::create(std::string("value_count_match_spy"), 
+                            &createValueCountMatchSpy));
 
-    add(new Constructor(std::string("value_count_match_spy"), 
-                        &createValueCountMatchSpy));
+    add(Constructor::create(std::string("value_count_match_spy"), 
+                            &createValueCountMatchSpy));
 
-    add(new Constructor(std::string("multi_value_key_maker"), 
-                        &createMultiValueKeyMaker));
+    add(Constructor::create(std::string("multi_value_key_maker"), 
+                            &createMultiValueKeyMaker));
 
-    add(new Constructor(std::string("date_value_range_processor3"), 
-                        &createDateValueRangeProcessor3));
+    add(Constructor::create(std::string("date_value_range_processor3"), 
+                            &createDateValueRangeProcessor3));
 
-    add(new Constructor(std::string("date_value_range_processor5"), 
-                        &createDateValueRangeProcessor5));
+    add(Constructor::create(std::string("date_value_range_processor5"), 
+                            &createDateValueRangeProcessor5));
 
-    add(new Constructor(std::string("number_value_range_processor1"), 
-                        &createNumberValueRangeProcessor1));
+    add(Constructor::create(std::string("number_value_range_processor1"), 
+                            &createNumberValueRangeProcessor1));
 
-    add(new Constructor(std::string("number_value_range_processor3"), 
-                        &createNumberValueRangeProcessor3));
+    add(Constructor::create(std::string("number_value_range_processor3"), 
+                            &createNumberValueRangeProcessor3));
 
-    add(new Constructor(std::string("string_value_range_processor1"), 
-                        &createStringValueRangeProcessor1));
+    add(Constructor::create(std::string("string_value_range_processor1"), 
+                            &createStringValueRangeProcessor1));
 
-    add(new Constructor(std::string("string_value_range_processor3"), 
-                        &createStringValueRangeProcessor3));
+    add(Constructor::create(std::string("string_value_range_processor3"), 
+                            &createStringValueRangeProcessor3));
 
-    add(new Constructor(std::string("simple_stopper"), 
-                        &createSimpleStopper));
+    add(Constructor::create(std::string("simple_stopper"), 
+                            &createSimpleStopper));
+
+    add(Constructor::create(driver,
+                            std::string("enquire"), 
+                            &createEnquire));
 }
 
 

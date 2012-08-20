@@ -32,6 +32,11 @@
     simple_stopper/1
     ]).
 
+%% Enquire 
+-export([
+    enquire/2
+    ]).
+
 -import(xapian_common, [
         append_double/2, 
         append_string/2, 
@@ -237,6 +242,27 @@ simple_stopper(Strings) ->
             {ok, xapian_common:append_terms(Strings, <<>>)}
         end,
     con(simple_stopper, GenFn).
+
+
+%% @doc Create an enquire constructor.
+%% `ClientPid' is used as an owner of the resource references, used inside 
+%% `EnquireDesc'.
+-spec enquire(EnquireDesc, ClientPid) -> EnquireCon
+    when EnquireDesc :: #x_enquire{},
+         EnquireCon  :: xapian_type:x_resource_con(),
+         ClientPid   :: pid().
+
+enquire(Enquire = #x_enquire{}, ClientPid) ->
+    GenFn = 
+        fun(State) ->
+            RA  = xapian_common:resource_appender(State, ClientPid),
+            N2S = xapian_server:name_to_slot(State),
+            S2T = xapian_server:slot_to_type(State),
+            Enc = xapian_enquire:encode(Enquire, N2S, S2T, RA, <<>>),
+            {ok, Enc}
+        end,
+    con(enquire, GenFn).
+
 
 %% ------------------------------------------------------------------
 %% Tests

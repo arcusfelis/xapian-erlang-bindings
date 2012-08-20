@@ -10,7 +10,8 @@
     append_uint/2,
     append_slot/3,
     append_boolean/2,
-    append_double/2]).
+    append_double/2,
+    bad_value/0]).
 
 -import(xapian_const, [
     sort_order_value_type/1,
@@ -129,9 +130,8 @@ append_cutoff(PercentCutoff, WeightCutoff, Bin@) ->
 append_collapse_key(undefined, 1, _N2S, Bin) ->
     Bin;
 
-%% TODO: Is Xapian::BAD_VALUENO 0?
 append_collapse_key(undefined, CollapseMax, N2S, Bin) ->
-    append_collapse_key(0, CollapseMax, N2S, Bin);
+    append_collapse_key(bad_value(), CollapseMax, N2S, Bin);
 
 append_collapse_key(CollapseKey, CollapseMax, N2S, Bin@) ->
     Bin@ = append_command(collapse_key, Bin@),

@@ -17,6 +17,7 @@
 -include_lib("stdlib/include/qlc.hrl").
 
 -record(document, {docid}).
+-record(collapsed, {docid, collapse_key, collapse_count}).
     
 
 %% ------------------------------------------------------------------
@@ -1600,6 +1601,61 @@ append_bytes_value_gen() ->
     end.
 
 
+collapse_key_gen() ->
+    % Open test
+    Path = testdb_path(collapse_key),
+    Params = [write, create, overwrite
+        , #x_value_name{slot = 0, name = slot0}
+        ],
+    Document1 =
+        [ #x_value{slot = slot0, value = "a"} 
+        ],
+    Document2 =
+        [ #x_value{slot = slot0, value = "a"} 
+        ],
+    Document3 =
+        [ #x_value{slot = slot0, value = "b"} 
+        ],
+    Document4 =
+        [ #x_value{slot = slot0, value = "b"} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        DocId1 = ?SRV:add_document(Server, Document1),
+        DocId2 = ?SRV:add_document(Server, Document2),
+        DocId3 = ?SRV:add_document(Server, Document3),
+        DocId4 = ?SRV:add_document(Server, Document4),
+
+        Query = "",
+        Enquire1 = #x_enquire{collapse_key = slot0, value=Query},
+        Enquire2 = #x_enquire{collapse_key = slot0, collapse_max=2, value=Query},
+        Records1 = collapsed_records(Server, Enquire1),
+        Records2 = collapsed_records(Server, Enquire2),
+        
+        [?_assertEqual(Records1, 
+       [#collapsed{docid = DocId1, collapse_key = <<"a">>, collapse_count = 1}
+       ,#collapsed{docid = DocId3, collapse_key = <<"b">>, collapse_count = 1}
+       ])
+        ,?_assertEqual(Records2, 
+       [#collapsed{docid = DocId1, collapse_key = <<"a">>, collapse_count = 0}
+       ,#collapsed{docid = DocId2, collapse_key = <<"a">>, collapse_count = 0}
+       ,#collapsed{docid = DocId3, collapse_key = <<"b">>, collapse_count = 0}
+       ,#collapsed{docid = DocId4, collapse_key = <<"b">>, collapse_count = 0}
+       ])
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
+
+collapsed_records(Server, Enquire) ->
+        MSet = #x_match_set{enquire = Enquire},
+        MSetResourceId = ?SRV:match_set(Server, MSet),
+        Meta = xapian_record:record(collapsed, record_info(fields, collapsed)),
+        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+        qlc:e(Table).
+
+
 short_record_test() ->
     Path = testdb_path(short_rec_test),
     Params = [write, create, overwrite],
@@ -1813,12 +1869,24 @@ enquire_sort_order_case(Server) ->
         %% Code = 2, Software = 1
         ?assertMatch([2, 1], AllIds),
 
-        %% The same case, but it is sorted in the reversed order
-        RevOrder = #x_sort_order{type=value, value=title, is_reversed = true},
-        RevEnquireDescriptor = #x_enquire{order=RevOrder, value=Query},
-        RevAllIds = all_record_ids(Server, RevEnquireDescriptor),
+        %% The same case, but it is sorted in the reversed order.
+        RevOrder1 = #x_sort_order{type=value, value=title, is_reversed = true},
+        RevEnquireDescriptor1 = #x_enquire{order=RevOrder1, value=Query},
+        RevAllIds1 = all_record_ids(Server, RevEnquireDescriptor1),
 
-        ?assertEqual(lists:reverse(RevAllIds), AllIds)
+        %% Test the default case.
+        RevOrder2 = #x_sort_order{type=relevance, is_reversed = false},
+        RevEnquireDescriptor2 = #x_enquire{order=RevOrder2, value=Query},
+        RevAllIds2 = all_record_ids(Server, RevEnquireDescriptor2),
+
+        %% Sorting by relevance in the reversed order is meaningless.
+        RevOrder3 = #x_sort_order{type=relevance, is_reversed = true},
+        RevEnquireDescriptor3 = #x_enquire{order=RevOrder3, value=Query},
+        ?assertError(#x_server_error{reason=badarg},
+                     all_record_ids(Server, RevEnquireDescriptor3)),
+
+        ?assertEqual(RevAllIds1, lists:reverse(AllIds)),
+        ?assertEqual(RevAllIds2, AllIds)
         end,
     {"Enquire with sorting", Case}.
 

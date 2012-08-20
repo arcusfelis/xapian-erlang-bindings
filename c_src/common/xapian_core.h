@@ -57,7 +57,8 @@ class Driver
 
     /// Copy constructor.
     /// Copy is not allowed.
-    Driver(const Driver & source) : m_mm(source.m_mm) { assert(false); }
+    Driver(const Driver & source) 
+    : m_store(*this), m_mm(source.m_mm) { assert(false); }
 
     public:
     friend class MSetQlcTable;
@@ -383,6 +384,9 @@ class Driver
     Driver(MemoryManager&);
 
     ~Driver();
+
+    Xapian::Database&
+    getDatabase() { return m_db; }
 
     /**
      * Read and execute one command from a client.

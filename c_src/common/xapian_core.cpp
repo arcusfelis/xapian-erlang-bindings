@@ -96,7 +96,7 @@ Driver::DOCID_ORDER_TYPES[DOCID_ORDER_TYPE_COUNT] = {
 
 
 Driver::Driver(MemoryManager& mm)
-: m_number_of_databases(0), m_mm(mm)
+: m_store(*this), m_number_of_databases(0), m_mm(mm)
 {
 }
 
@@ -1393,7 +1393,7 @@ Driver::fillEnquire(CP, Xapian::Enquire& enquire)
         uint32_t collapse_key = params;
         uint32_t collapse_max = params;
         enquire.set_collapse_key(
-            !collapse_key ? Xapian::BAD_VALUENO : collapse_key, 
+            collapse_key, 
             collapse_max);
         break;
         }

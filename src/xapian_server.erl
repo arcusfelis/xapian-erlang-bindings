@@ -577,7 +577,7 @@ add_document(Server, Document) ->
 %% `Term' is:
 %%
 %% ```
-%% #xterm{ value = x_string()}
+%% #xterm{ value = x_string() }
 %% '''
 %%
 %% The position field is meaningless.
@@ -615,6 +615,7 @@ remove_synonym(Server, Term, Synonym) ->
 
 
 %% @doc Remove all synonyms for the term `Term'.
+%% If there is no `Term' in the database, nothing will happen.
 %% @see remove_synonym/3
 -spec clear_synonyms(Server, Term) -> no_return() when
     Server :: x_server(),
@@ -1486,12 +1487,14 @@ hc(#x_query_parser{} = QP, {FromPid, _FromRef}, State) ->
 
 hc(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
     #x_match_set{
-        enquire = EnquireRef, 
+        enquire = Enquire, 
         offset = Offset, 
         max_items = MaxItems, 
         check_at_least = CheckAtLeast, 
         spies = SpyRefs
     } = Mess, 
+    %% Enquire is an enquire resource, its constructor, or just `#x_enquire{}'.
+    EnquireRes = maybe_convert_enquire_record_into_constructor(Enquire, FromPid),
     #state{port = Port } = State,
     do_reply(State, do([error_m ||
         SpyRFs
@@ -1499,7 +1502,7 @@ hc(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
                     || SpyRef <- SpyRefs]),
         %% Resource function (RF): fun(Bin) -> Bin.
         EnquireRF
-            <- internal_compile_resource(State, EnquireRef, FromPid),
+            <- internal_compile_resource(State, EnquireRes, FromPid),
 
         MSetNum <-
             port_match_set(Port, EnquireRF, Offset, 
@@ -2475,3 +2478,10 @@ run_resource_generator(State, Gen) when is_function(Gen) ->
 run_resource_generator(_State, undefined) ->
     {ok, <<>>}.
 
+
+%% @doc Decorate the `#x_enquire{}' record.
+maybe_convert_enquire_record_into_constructor(Enquire = #x_enquire{}, 
+                                              ClientPid) ->
+    xapian_resource:enquire(Enquire, ClientPid);
+maybe_convert_enquire_record_into_constructor(Enquire, _ClientPid) ->
+    Enquire.
