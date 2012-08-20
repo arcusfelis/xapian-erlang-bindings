@@ -2352,7 +2352,17 @@ database_info_case(Server) ->
         ?assert(is_integer(?SRV:database_info(Server, 
                                               {document_length, 1}))),
         ?assertEqual(undefined, ?SRV:database_info(Server, 
-                                           {document_length, 1000}))
+                                           {document_length, 1000})),
+        ?assertEqual(2, ?SRV:database_info(Server, 
+                                           {value_freq, 1})),
+        ?assertEqual(2, ?SRV:database_info(Server, 
+                                           {value_freq, author})),
+        ?assertEqual(<<"Joe Armstrong">>, 
+                     ?SRV:database_info(Server, 
+                                        {value_lower_bound, author})),
+        ?assertEqual(<<"Steve McConnell">>, 
+                     ?SRV:database_info(Server, 
+                                        {value_upper_bound, author}))
         
         end,
     {"Check database_info function.", Case}.

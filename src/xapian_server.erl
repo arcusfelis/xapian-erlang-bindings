@@ -1621,8 +1621,8 @@ hc({match_spy_info, MatchSpyRef, Params}, From, State) ->
     {reply, Reply, State};
 
 hc({database_info, Params}, _From, State) ->
-    #state{port = Port} = State,
-    Reply = port_database_info(Port, Params),
+    #state{port = Port, name_to_slot = N2S} = State,
+    Reply = port_database_info(Port, Params, N2S),
     {reply, Reply, State};
 
 hc({transaction, Ref}, From, State) ->
@@ -2214,9 +2214,9 @@ port_match_spy_info(Port, MatchSpyNum, Params) ->
     Bin@ = xapian_spy_info:encode(Params, Bin@),
     decode_spy_info_result(control(Port, match_spy_info, Bin@), Params).
 
-port_database_info(Port, Params) ->
+port_database_info(Port, Params, N2S) ->
     Bin@ = <<>>,
-    Bin@ = xapian_db_info:encode(Params, Bin@),
+    Bin@ = xapian_db_info:encode(Params, N2S, Bin@),
     decode_database_info_result(control(Port, database_info, Bin@), Params).
 
 

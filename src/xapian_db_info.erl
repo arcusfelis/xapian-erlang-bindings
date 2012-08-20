@@ -1,6 +1,6 @@
 %%% @doc Encodes and decodes information about the database.
 -module(xapian_db_info).
--export([encode/2,
+-export([encode/3,
          decode/2,
          properties/0]).
 
@@ -8,7 +8,7 @@
     append_param/2,
     append_stop/1,
     append_string/2,
-    append_slot/2,
+    append_slot/3,
     append_document_id/2,
     read_document_count/1,
     read_string/1,
@@ -26,11 +26,11 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
     
-encode(Params, Bin) when is_list(Params) ->
-    append_stop(lists:foldl(fun append_db_info_param/2, Bin, Params));
+encode(Params, N2S, Bin) when is_list(Params) ->
+    encode_params(Params, N2S, Bin);
 
-encode(Param, Bin) ->
-    append_stop(append_db_info_param(Param, Bin)).
+encode(Param, N2S, Bin) ->
+    append_stop(append_db_info_param(Param, N2S, Bin)).
 
     
 decode(Params, Bin) when is_list(Params) ->
@@ -41,13 +41,21 @@ decode(Params, Bin) when is_list(Params) ->
 decode(Param, Bin) ->
     decode_db_info_param2(Param, Bin).
 
+%% -------------------------------------------------------------------
 
-append_db_info_param(Param, Bin) when is_atom(Param) ->
+encode_params([Param|Params], N2S, Bin) ->
+    Bin2 = append_db_info_param(Param, N2S, Bin),
+    encode_params(Params, N2S, Bin2);
+encode_params([], _N2S, Bin) ->
+    append_stop(Bin).
+
+
+append_db_info_param(Param, _N2S, Bin) when is_atom(Param) ->
     true = lists:member(Param, properties()),
     append_param(db_info_param_id(Param), Bin);
 
-append_db_info_param({Param, Value}, Bin) when is_atom(Param) ->
-    encode_param(Param, Value, append_param(db_info_param_id(Param), Bin)).
+append_db_info_param({Param, Value}, N2S, Bin) when is_atom(Param) ->
+    encode_param(Param, Value, N2S, append_param(db_info_param_id(Param), Bin)).
 
 
 decode_db_info_param(Param, {Acc, Bin}) ->
@@ -132,30 +140,30 @@ decode_param(metadata, Bin) ->
     read_string(Bin).
 
 
-encode_param(term_exists, Value, Bin) ->
+encode_param(term_exists, Value, _N2S, Bin) ->
     append_string(Value, Bin);
 
-encode_param(term_freq, Value, Bin) ->
+encode_param(term_freq, Value, _N2S, Bin) ->
     append_string(Value, Bin);
 
-encode_param(collection_freq, Value, Bin) ->
+encode_param(collection_freq, Value, _N2S, Bin) ->
     append_string(Value, Bin);
 
-encode_param(value_freq, Value, Bin) ->
-    append_slot(Value, Bin);
+encode_param(value_freq, Value, N2S, Bin) ->
+    append_slot(Value, N2S, Bin);
 
-encode_param(value_lower_bound, Value, Bin) ->
-    append_slot(Value, Bin);
+encode_param(value_lower_bound, Value, N2S, Bin) ->
+    append_slot(Value, N2S, Bin);
 
-encode_param(value_upper_bound, Value, Bin) ->
-    append_slot(Value, Bin);
+encode_param(value_upper_bound, Value, N2S, Bin) ->
+    append_slot(Value, N2S, Bin);
 
-encode_param(wdf_upper_bound, Value, Bin) ->
+encode_param(wdf_upper_bound, Value, _N2S, Bin) ->
     append_string(Value, Bin);
 
-encode_param(document_length, Value, Bin) ->
+encode_param(document_length, Value, _N2S, Bin) ->
     append_document_id(Value, Bin);
 
-encode_param(metadata, Value, Bin) ->
+encode_param(metadata, Value, _N2S, Bin) ->
     append_string(Value, Bin).
 
