@@ -1628,6 +1628,7 @@ cutoff_gen() ->
         Enquire2 = #x_enquire{percent_cutoff = 50, value=Query},
         AllIds2  = all_record_ids(Server, Enquire2),
         
+        %% Show weights.
         Meta = xapian_record:record(doc_weight, 
                                     [docid, percent, weight]),
         MSetResourceId = ?SRV:match_set(Server, Enquire1),
@@ -1636,6 +1637,52 @@ cutoff_gen() ->
 
         [?_assertEqual(AllIds1, [DocId2, DocId1, DocId3])
         ,?_assertEqual(AllIds2, [DocId2, DocId1])
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
+
+docid_order_gen() ->
+    % Open test
+    Path = testdb_path(docid_order),
+    Params = [write, create, overwrite
+        , #x_value_name{slot = 0, name = slot0}
+        ],
+    Document1 =
+        [ #x_text{value = "cat dog penguin"}
+        ],
+    Document2 =
+        [ #x_text{value = "cat dog"}
+        ],
+    Document3 =
+        [ #x_text{value = "cat"}
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        DocId1 = ?SRV:add_document(Server, Document1),
+        DocId2 = ?SRV:add_document(Server, Document2),
+        DocId3 = ?SRV:add_document(Server, Document3),
+
+        Query = #x_query_string{value = "cat dog"},
+        Enquire1 = #x_enquire{weighting_scheme = xapian_resource:bool_weight(),
+                              value=Query,
+                              docid_order = desc},
+        AllIds1  = all_record_ids(Server, Enquire1),
+        Enquire2 = Enquire1#x_enquire{docid_order = asc},
+        AllIds2  = all_record_ids(Server, Enquire2),
+        
+        %% Show weights.
+        Meta = xapian_record:record(doc_weight, 
+                                    [docid, percent, weight]),
+        MSetResourceId = ?SRV:match_set(Server, Enquire1),
+        Table = xapian_mset_qlc:table(Server, MSetResourceId, Meta),
+        io:format(user, "~p~n", [ qlc:e(Table) ]),
+
+        [{"docic=desc weighting_scheme=bool"
+         ,?_assertEqual(AllIds1, [DocId3, DocId2, DocId1])}
+        ,{"docic=asc weighting_scheme=bool"
+         ,?_assertEqual(AllIds2, [DocId1, DocId2, DocId3])}
         ]
     after
         ?SRV:close(Server)

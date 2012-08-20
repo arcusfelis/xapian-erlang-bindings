@@ -11,8 +11,7 @@
     append_slot/3,
     append_boolean/2,
     append_percent/2,
-    append_weight/2,
-    bad_value/0]).
+    append_weight/2]).
 
 -import(xapian_const, [
     sort_order_value_type/1,
@@ -128,11 +127,9 @@ append_cutoff(PercentCutoff, WeightCutoff, Bin@) ->
     Bin@.
 
 
-append_collapse_key(undefined, 1, _N2S, Bin) ->
+%% `CollapseMax' is meaningful only when `CollapseKey' is defined.
+append_collapse_key(undefined, _CollapseMax, _N2S, Bin) ->
     Bin;
-
-append_collapse_key(undefined, CollapseMax, N2S, Bin) ->
-    append_collapse_key(bad_value(), CollapseMax, N2S, Bin);
 
 append_collapse_key(CollapseKey, CollapseMax, N2S, Bin@) ->
     Bin@ = append_command(collapse_key, Bin@),

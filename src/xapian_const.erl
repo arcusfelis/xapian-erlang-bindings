@@ -398,11 +398,11 @@ sort_order_value_type(X) ->
        end.
 
 
-docid_order_type_id(default)    -> 1;
-docid_order_type_id(asc)        -> 1;
-docid_order_type_id(desc)       -> 2;
-docid_order_type_id(undefined)  -> 3;
-docid_order_type_id(dont_care)  -> 3.
+docid_order_type_id(default)    -> 0;
+docid_order_type_id(asc)        -> 0;
+docid_order_type_id(desc)       -> 1;
+docid_order_type_id(undefined)  -> 2;
+docid_order_type_id(dont_care)  -> 2.
 
 
 %% ------------------------------------------------------------
