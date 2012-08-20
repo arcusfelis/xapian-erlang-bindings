@@ -1277,6 +1277,15 @@ synonym_gen() ->
         Table3 = Table2,
         Records3 = qlc:e(Table3),
         io:format(user, "~n~p~n", [Records2]),
+
+        %% Test clear_synonyms.
+        ?SRV:clear_synonyms(Server, "test"),
+        %% There are no synonyms in the DB.
+        ?assertError(#x_error{type = <<"EmptySetDriverError">>},
+                     xapian_term_qlc:synonym_table(Server, "test", Meta)),
+        %% Try run it again.
+        ?SRV:clear_synonyms(Server, "test"),
+
         [?_assertEqual(Records1, [#term_value{value = <<"test">>}])
         ,?_assertEqual(Records2, ExpectedRecords2)
         ,?_assertEqual(Records3, ExpectedRecords3)
@@ -1760,6 +1769,7 @@ special_fields_query_page_case(Server) ->
 document_case(Server) ->
     DocRes1 = xapian_server:document(Server, "telecom"),
     DocRes2 = xapian_server:document(Server, 1),
+    ?assertError(badarg, xapian_server:document(Server, [])),
     Meta = xapian_term_record:record(term, record_info(fields, term)),
     AllDocumentTermsFn = 
     fun(DocRes) ->
