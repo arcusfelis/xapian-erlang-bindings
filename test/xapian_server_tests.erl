@@ -2362,7 +2362,13 @@ database_info_case(Server) ->
                                         {value_lower_bound, author})),
         ?assertEqual(<<"Steve McConnell">>, 
                      ?SRV:database_info(Server, 
-                                        {value_upper_bound, author}))
+                                        {value_upper_bound, author})),
+        ?assertEqual(1, 
+                     ?SRV:database_info(Server, 
+                                        {wdf_upper_bound, "erlang"})),
+        ?assertEqual(undefined, 
+                     ?SRV:database_info(Server, 
+                                        {wdf_upper_bound, "php"}))
         
         end,
     {"Check database_info function.", Case}.
