@@ -33,3 +33,7 @@
 
 // Clone of params
 #define PCR ParamDecoder params, ResultEncoder& result 
+#define POS __FILE__, __LINE__
+
+#define GET_POS const char * file, uint32_t line
+#define SET_POS file, line

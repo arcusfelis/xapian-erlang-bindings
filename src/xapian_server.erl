@@ -1844,14 +1844,28 @@ control(Port, Operation, Data) ->
     <<Status:8/native-unsigned-integer, Result/binary>> = 
         xapian_port:control(Port, command_id(Operation), Data),
     case Status of
+        %% SUCCESS
         0 -> {ok, Result};
+        %% ERROR
         1 -> 
             {Type, Bin1} = read_string(Result),
             {Mess, <<>>} = read_string(Bin1),
             error_logger:error_msg("[~w:~w] ~s: \"~s\" ~nData: ~p~n", 
                                    [Operation, command_id(Operation), 
                                     Type, Mess, Data]),
-            {error, #x_error{type=Type, reason=Mess, command=Operation}}
+            {error, #x_error{type=Type, reason=Mess, command=Operation}};
+        %% ERROR_WITH_POSITION
+        2 -> 
+            {Type, Bin@} = read_string(Result),
+            {Mess, Bin@} = read_string(Bin@),
+            {Line, Bin@} = read_uint(Bin@),
+            {File, <<>>} = read_string(Bin@),
+            error_logger:error_msg("[~w:~w] ~s: \"~s\" ~nData: ~p~n"
+                                   "C++ position: ~s:~B~n", 
+                                   [Operation, command_id(Operation), 
+                                    Type, Mess, Data, File, Line]),
+            {error, #x_error{type=Type, reason=Mess, command=Operation, 
+                             c_line=Line, c_file=File}}
     end.
 
 

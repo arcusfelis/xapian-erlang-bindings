@@ -26,7 +26,7 @@ class WdfManipulation
      * The term position, used for manipulation.
      * It can or cannot exist.
      */
-    static const Xapian::termpos POS = 666;
+    static const Xapian::termpos TERM_POS = 666;
     bool m_is_exist;
     Xapian::Document& m_doc;
     const std::string& m_tname;
@@ -38,16 +38,16 @@ class WdfManipulation
     : m_doc(doc), m_tname(tname)
     {
         if (!Helpers::isTermExist(doc, tname))
-            throw BadArgumentDriverError();
+            throw BadArgumentDriverError(POS);
 
-        m_is_exist = Helpers::isPostingExist(doc, tname, POS);
+        m_is_exist = Helpers::isPostingExist(doc, tname, TERM_POS);
     }
 
     void
     dec_wdf(const Xapian::termcount wdf)
     {
-        m_doc.add_posting(m_tname, POS, 0);
-        m_doc.remove_posting(m_tname, POS, wdf);
+        m_doc.add_posting(m_tname, TERM_POS, 0);
+        m_doc.remove_posting(m_tname, TERM_POS, wdf);
     }
 
     void
@@ -72,7 +72,7 @@ class WdfManipulation
     {
         // Add the posting back
         if (m_is_exist)
-            m_doc.add_posting(m_tname, POS, 0);
+            m_doc.add_posting(m_tname, TERM_POS, 0);
     }
 };
 

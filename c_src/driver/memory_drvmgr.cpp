@@ -11,7 +11,7 @@ void* DriverMemoryManager::alloc(size_t size)
 {
     void* buf = driver_alloc(size);
     if (buf == NULL)
-        throw MemoryAllocationDriverError(size);
+        throw MemoryAllocationDriverError(POS, size);
 //  std::cout << "Alloc: " << buf << ' ' << size << '\n';
 //  std::cout.flush();
     return buf;

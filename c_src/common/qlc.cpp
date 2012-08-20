@@ -91,7 +91,7 @@ MSetQlcTable::lookup(ParamDecoder& driver_params, ResultEncoder& result)
             break;
 
         default:
-            throw BadCommandDriverError(key);
+            throw BadCommandDriverError(POS, key);
     }
 
     Xapian::MSetIterator miter = m_mset.begin(), mend = m_mset.end();
@@ -146,7 +146,7 @@ TermQlcTable::TermQlcTable(Driver& driver,
 
     assert(!mp_gen->empty() || (m_iter == m_end));
     if (mp_gen->empty())
-        throw EmptySetDriverError();
+        throw EmptySetDriverError(POS);
 }
 
 

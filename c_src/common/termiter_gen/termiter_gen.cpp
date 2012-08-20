@@ -40,13 +40,13 @@ Iterator::create(
         {
             const uint32_t max_values = params;
             if (!max_values)
-                throw BadArgumentDriverError();
+                throw BadArgumentDriverError(POS);
             return new ValueCountMatchSpy::
                         TopValues(spy, max_values);
         }
 
         default:
-            throw BadCommandDriverError(type);
+            throw BadCommandDriverError(POS, type);
     }
 }
 
@@ -77,7 +77,7 @@ Iterator::create(
         }
 
         default:
-            throw BadCommandDriverError(type);
+            throw BadCommandDriverError(POS, type);
     }
 }
 
@@ -119,7 +119,7 @@ Iterator::create(
         }
 
         default:
-            throw BadCommandDriverError(type);
+            throw BadCommandDriverError(POS, type);
     }
 }
 

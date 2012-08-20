@@ -70,7 +70,7 @@ extract(ParamDecoder& params)
         }
 
         default:
-            throw BadCommandDriverError(schema_type);
+            throw BadCommandDriverError(POS, schema_type);
     }
 }
 
@@ -97,7 +97,7 @@ skip(ParamDecoder& params)
             break;
 
         default:
-            throw BadCommandDriverError(schema_type);
+            throw BadCommandDriverError(POS, schema_type);
     }
 }
 

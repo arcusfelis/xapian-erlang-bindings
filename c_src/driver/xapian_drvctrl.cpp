@@ -94,7 +94,7 @@ DriverController::control(
     {
         ErlDrvBinary* bin = driver_alloc_binary(result_len);
         if (bin == NULL)
-            throw MemoryAllocationDriverError(result_len);
+            throw MemoryAllocationDriverError(POS, result_len);
         result.finalize(bin->orig_bytes);
         *rbuf = (char*) bin;
     }

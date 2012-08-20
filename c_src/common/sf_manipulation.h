@@ -22,7 +22,7 @@ class SpellingFreqManipulation
     : m_wdb(wdb), m_tname(tname)
     {
         if (!Helpers::isSpellingExist(wdb, tname))
-            throw BadArgumentDriverError();
+            throw BadArgumentDriverError(POS);
     }
     Xapian::termcount
     current_frequency()

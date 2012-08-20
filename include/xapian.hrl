@@ -106,7 +106,14 @@
 
     %% The wdf increment (or decriment, if it is below 0).
     frequency = 1 :: xapian_type:x_wdf_difference(),
-    %% Set the current term position. 
+    %% Set the current term position.
+    %% The first indexed term from the value field will have 
+    %% `(position+1)' position, the second - `(position+2)'.
+    %%
+    %% Each extracted and indexed term in the text, usually increments
+    %% the position counter on 1.
+    %%
+    %% This field is meaningless with the `add_spelling' function.
     position :: xapian_type:x_position(),
 
     %% The term prefix to use (default is no prefix). 
@@ -190,7 +197,10 @@
     reason,
 
     %% Current operation
-    command
+    command,
+
+    c_file,
+    c_line
 }).
 
 -record(x_server_error, {

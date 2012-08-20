@@ -17,8 +17,8 @@ XAPIAN_ERLANG_NS_BEGIN
 // DriverRuntimeError
 // -------------------------------------------------------------------
 DriverRuntimeError::DriverRuntimeError(
-    const char * type, const std::string& str):
-    runtime_error(str) { m_type = type; }
+    GET_POS, const char * type, const std::string& str):
+    runtime_error(str) { m_type = type; m_file = file; m_line = line; }
 
 const char* 
 DriverRuntimeError::get_type() const
@@ -26,13 +26,24 @@ DriverRuntimeError::get_type() const
    return m_type;
 }
 
+const char* 
+DriverRuntimeError::get_file() const
+{
+   return m_file;
+}
+
+uint32_t 
+DriverRuntimeError::get_line() const
+{
+   return m_line;
+}
 
 
 // -------------------------------------------------------------------
 // MemoryAllocationDriverError
 // -------------------------------------------------------------------
-MemoryAllocationDriverError::MemoryAllocationDriverError(size_t size) : 
-    DriverRuntimeError(TYPE, buildString(size)) {}
+MemoryAllocationDriverError::MemoryAllocationDriverError(GET_POS, size_t size) :
+    DriverRuntimeError(SET_POS, TYPE, buildString(size)) {}
 
 const std::string 
 MemoryAllocationDriverError::buildString(size_t size)
@@ -46,8 +57,8 @@ MemoryAllocationDriverError::buildString(size_t size)
 // -------------------------------------------------------------------
 // BadCommandDriverError
 // -------------------------------------------------------------------
-BadCommandDriverError::BadCommandDriverError(int command_id) : 
-    DriverRuntimeError(TYPE, buildString(command_id)) {}
+BadCommandDriverError::BadCommandDriverError(GET_POS, int command_id) : 
+    DriverRuntimeError(SET_POS, TYPE, buildString(command_id)) {}
 
 const std::string 
 BadCommandDriverError::buildString(int command_id)
@@ -61,8 +72,9 @@ BadCommandDriverError::buildString(int command_id)
 // -------------------------------------------------------------------
 // NotImplementedCommandDriverError
 // -------------------------------------------------------------------
-NotImplementedCommandDriverError::NotImplementedCommandDriverError(int command_id) : 
-    DriverRuntimeError(TYPE, buildString(command_id)) {}
+NotImplementedCommandDriverError::NotImplementedCommandDriverError(
+        GET_POS, int command_id) : 
+    DriverRuntimeError(SET_POS, TYPE, buildString(command_id)) {}
 
 const std::string 
 NotImplementedCommandDriverError::buildString(int command_id)
@@ -76,46 +88,46 @@ NotImplementedCommandDriverError::buildString(int command_id)
 // -------------------------------------------------------------------
 // BadArgDriverError
 // -------------------------------------------------------------------
-BadArgumentDriverError::BadArgumentDriverError() : 
-    DriverRuntimeError(TYPE, 
+BadArgumentDriverError::BadArgumentDriverError(GET_POS) : 
+    DriverRuntimeError(SET_POS, TYPE, 
         "Bad Argument was passed.") {}
 
 
 // -------------------------------------------------------------------
 // BadArgDriverError
 // -------------------------------------------------------------------
-EmptySetDriverError::EmptySetDriverError() : 
-    DriverRuntimeError(TYPE, 
+EmptySetDriverError::EmptySetDriverError(GET_POS) : 
+    DriverRuntimeError(SET_POS, TYPE, 
         "Operation is not define for empty sets.") {}
 
 
 // -------------------------------------------------------------------
 // OverflowDriverError
 // -------------------------------------------------------------------
-OverflowDriverError::OverflowDriverError() : 
-    DriverRuntimeError(TYPE, "Too short binary.") {}
+OverflowDriverError::OverflowDriverError(GET_POS) : 
+    DriverRuntimeError(SET_POS, TYPE, "Too short binary.") {}
 
 
 // -------------------------------------------------------------------
 // NotWritableDatabaseError
 // -------------------------------------------------------------------
-NotWritableDatabaseError::NotWritableDatabaseError() : 
-     DriverRuntimeError(TYPE, "The database is open as read only.") {}
+NotWritableDatabaseError::NotWritableDatabaseError(GET_POS) : 
+     DriverRuntimeError(SET_POS, TYPE, "The database is open as read only.") {}
 
 
 // -------------------------------------------------------------------
 // DbIsNotReadyDriverError
 // -------------------------------------------------------------------
-DbIsNotReadyDriverError::DbIsNotReadyDriverError() : 
-    DriverRuntimeError(TYPE, 
+DbIsNotReadyDriverError::DbIsNotReadyDriverError(GET_POS) : 
+    DriverRuntimeError(SET_POS, TYPE, 
         "Call xapian_server:port_open.") {}
 
 
 // -------------------------------------------------------------------
 // ElementNotFoundDriverError
 // -------------------------------------------------------------------
-ElementNotFoundDriverError::ElementNotFoundDriverError(uint32_t num) : 
-    DriverRuntimeError(TYPE, buildString(num)) {}
+ElementNotFoundDriverError::ElementNotFoundDriverError(GET_POS, uint32_t num) : 
+    DriverRuntimeError(SET_POS, TYPE, buildString(num)) {}
 
 const std::string 
 ElementNotFoundDriverError::buildString(uint32_t num)
@@ -130,8 +142,8 @@ ElementNotFoundDriverError::buildString(uint32_t num)
 // GroupResourceTypeMismatchDriverError
 // -------------------------------------------------------------------
 GroupResourceTypeMismatchDriverError::GroupResourceTypeMismatchDriverError(
-        uint32_t passed, uint32_t expected) : 
-    DriverRuntimeError(TYPE, buildString(passed, expected)) {}
+    GET_POS, uint32_t passed, uint32_t expected) : 
+    DriverRuntimeError(SET_POS, TYPE, buildString(passed, expected)) {}
 
 const std::string 
 GroupResourceTypeMismatchDriverError::buildString(uint32_t passed, uint32_t expected)
@@ -146,9 +158,9 @@ GroupResourceTypeMismatchDriverError::buildString(uint32_t passed, uint32_t expe
 // -------------------------------------------------------------------
 // ResourceTypeMismatchDriverError
 // -------------------------------------------------------------------
-ResourceTypeMismatchDriverError::ResourceTypeMismatchDriverError(
+ResourceTypeMismatchDriverError::ResourceTypeMismatchDriverError(GET_POS, 
         const std::string& passed, const std::string& expected) : 
-    DriverRuntimeError(TYPE, buildString(passed, expected)) {}
+    DriverRuntimeError(SET_POS, TYPE, buildString(passed, expected)) {}
 
 const std::string 
 ResourceTypeMismatchDriverError::buildString(const std::string& passed, 
@@ -164,9 +176,9 @@ ResourceTypeMismatchDriverError::buildString(const std::string& passed,
 // -------------------------------------------------------------------
 // AbstractMethodDriverError
 // -------------------------------------------------------------------
-AbstractMethodDriverError::AbstractMethodDriverError(
+AbstractMethodDriverError::AbstractMethodDriverError(GET_POS, 
         const std::string& object_type, const std::string& method_name) : 
-    DriverRuntimeError(TYPE, buildString(object_type, method_name)) {}
+    DriverRuntimeError(SET_POS, TYPE, buildString(object_type, method_name)) {}
 
 const std::string 
 AbstractMethodDriverError::buildString(const std::string& object_type, 
@@ -182,9 +194,9 @@ AbstractMethodDriverError::buildString(const std::string& object_type,
 // -------------------------------------------------------------------
 // AlreadyAttachedDriverError
 // -------------------------------------------------------------------
-AlreadyAttachedDriverError::AlreadyAttachedDriverError(
+AlreadyAttachedDriverError::AlreadyAttachedDriverError(GET_POS, 
         const std::string& parent_type, const std::string& child_type) : 
-    DriverRuntimeError(TYPE, buildString(parent_type, child_type)) {}
+    DriverRuntimeError(SET_POS, TYPE, buildString(parent_type, child_type)) {}
 
 const std::string 
 AlreadyAttachedDriverError::buildString(const std::string& parent_type, 
@@ -199,8 +211,8 @@ AlreadyAttachedDriverError::buildString(const std::string& parent_type,
 // -------------------------------------------------------------------
 // MatchSpyFinalizedDriverError
 // -------------------------------------------------------------------
-MatchSpyFinalizedDriverError::MatchSpyFinalizedDriverError() : 
-    DriverRuntimeError(TYPE, 
+MatchSpyFinalizedDriverError::MatchSpyFinalizedDriverError(GET_POS) : 
+    DriverRuntimeError(SET_POS, TYPE, 
         "Xapian::MatchSet can be used just once.") {}
 
 

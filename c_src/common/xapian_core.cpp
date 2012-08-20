@@ -186,13 +186,6 @@ Driver::addSpelling(ParamDecoder& params)
                 break;
             }
 
-            case SET_TERM_GEN_POS:
-            {
-                const uint32_t         position = params; // pos
-                tg.set_termpos(static_cast<Xapian::termcount>(position));
-                break;
-            }
-
             case TEXT:
             {
                 // see xapian_document:append_delta
@@ -243,7 +236,7 @@ Driver::addSpelling(ParamDecoder& params)
             }
 
             default:
-                throw BadCommandDriverError(command);
+                throw BadCommandDriverError(POS, command);
         }
     }
 }
@@ -275,7 +268,7 @@ Driver::replaceOrCreateDocument(PR)
         }
 
         default:
-            throw BadCommandDriverError(idType);
+            throw BadCommandDriverError(POS, idType);
     }
         
     result << static_cast<uint32_t>(docid);
@@ -318,7 +311,7 @@ Driver::replaceDocument(PR)
         }
 
         default:
-            throw BadCommandDriverError(idType);
+            throw BadCommandDriverError(POS, idType);
     }
         
     result << static_cast<uint32_t>(docid);
@@ -389,13 +382,13 @@ Driver::updateDocument(PR, bool create)
             }
             else 
             {
-                throw BadArgumentDriverError();
+                throw BadArgumentDriverError(POS);
             }
             break;
         }
 
         default:
-            throw BadCommandDriverError(idType);
+            throw BadCommandDriverError(POS, idType);
     }
         
     result << static_cast<uint32_t>(docid);
@@ -435,7 +428,7 @@ Driver::deleteDocument(PR)
         }
 
         default:
-            throw BadCommandDriverError(idType);
+            throw BadCommandDriverError(POS, idType);
     }
     result << is_exist;
 }
@@ -471,7 +464,7 @@ Driver::isDocumentExist(PR)
         }
 
         default:
-            throw BadCommandDriverError(idType);
+            throw BadCommandDriverError(POS, idType);
     }
     result << is_exist;
 }
@@ -528,7 +521,7 @@ Driver::retrieveDocuments(PCR,
             break;
 
         default:
-            throw BadCommandDriverError(decoder_type);
+            throw BadCommandDriverError(POS, decoder_type);
     }
 }
 
@@ -567,7 +560,7 @@ Driver::selectEncoderAndRetrieveDocument(PR, Xapian::MSetIterator& iter)
         }
 
         default:
-            throw BadCommandDriverError(decoder_type);
+            throw BadCommandDriverError(POS, decoder_type);
     }
 }
 
@@ -648,7 +641,7 @@ Driver::parseString(CPR)
             }
 
         default:
-            throw BadCommandDriverError(field_id);
+            throw BadCommandDriverError(POS, field_id);
     }
 }
 
@@ -682,7 +675,7 @@ Driver::getDocument(ParamDecoder& params)
                     iter = mset.begin(),
                     end  = mset.end();
                 if (iter == end) 
-                    throw BadArgumentDriverError(); // doc us not found
+                    throw BadArgumentDriverError(POS); // doc us not found
 
                 return iter.get_document();
             }
@@ -690,9 +683,9 @@ Driver::getDocument(ParamDecoder& params)
         }
 
         default:
-            throw BadCommandDriverError(idType);
+            throw BadCommandDriverError(POS, idType);
     }
-    throw BadArgumentDriverError();
+    throw BadArgumentDriverError(POS);
 }
 
 
@@ -796,7 +789,7 @@ Driver::extractWritableSpy(CP)
 {
     Resource::Element elem = m_store.extract(con, params);
     if (elem.is_finalized())
-        throw MatchSpyFinalizedDriverError();
+        throw MatchSpyFinalizedDriverError(POS);
     elem.finalize();
     return elem;
 }
@@ -937,7 +930,7 @@ Driver::qlcInit(PR)
         }
 
         default:
-            throw BadCommandDriverError(qlc_type);
+            throw BadCommandDriverError(POS, qlc_type);
     }
 }
 
@@ -1055,7 +1048,7 @@ Driver::test(PR)
             break;
 
         default:
-            throw BadCommandDriverError(num);
+            throw BadCommandDriverError(POS, num);
     }
 }
 
@@ -1082,7 +1075,7 @@ void Driver::testEcho(PR)
 void
 Driver::testException()
 {
-    throw MemoryAllocationDriverError(1000);
+    throw MemoryAllocationDriverError(POS, 1000);
 }
 
 
@@ -1101,7 +1094,7 @@ unsigned
 Driver::idToParserFeature(int type)
 {
   if ((type > PARSER_FEATURE_COUNT) || (type < 1))
-    throw BadCommandDriverError(type);
+    throw BadCommandDriverError(POS, type);
   return PARSER_FEATURES[type];
 }
 
@@ -1127,7 +1120,7 @@ unsigned
 Driver::idToGeneratorFeature(int type)
 {
   if ((type > GENERATOR_FEATURE_COUNT) || (type < 1))
-    throw BadCommandDriverError(type);
+    throw BadCommandDriverError(POS, type);
   return GENERATOR_FEATURES[type];
 }
 
@@ -1138,7 +1131,7 @@ Driver::idToTextFeature(int type)
     type -= GENERATOR_AND_TEXT_FEATURES_DELIM;
 
     if ((type > TEXT_FEATURE_COUNT) || (type < 1))
-      throw BadCommandDriverError(type);
+      throw BadCommandDriverError(POS, type);
 
     return TEXT_FEATURES[type];
 }
@@ -1169,11 +1162,12 @@ Driver::decodeGeneratorFeatureFlags(
         }
         else
         {
+            int pos_type = -type;
             // unset flag
-            if (type < GENERATOR_AND_TEXT_FEATURES_DELIM)
-                textFlags &= ~idToTextFeature(type);
+            if (pos_type > GENERATOR_AND_TEXT_FEATURES_DELIM)
+                textFlags &= ~idToTextFeature(pos_type);
             else
-                genFlags &= ~idToGeneratorFeature(type);
+                genFlags &= ~idToGeneratorFeature(pos_type);
          }
     }
 }
@@ -1184,7 +1178,7 @@ Driver::readStemmingStrategy(ParamDecoder& params)
 {
   const uint8_t type = params;
   if (type > STEM_STRATEGY_COUNT)
-    throw BadCommandDriverError(type);
+    throw BadCommandDriverError(POS, type);
   return STEM_STRATEGIES[type];
 }
 
@@ -1196,7 +1190,7 @@ Driver::readStemmingStrategy(ParamDecoder& params)
 //{
 //  const uint8_t type = params;
 //  if (type > TG_STEM_STRATEGY_COUNT)
-//    throw BadCommandDriverError(type);
+//    throw BadCommandDriverError(POS, type);
 //  return TG_STEM_STRATEGIES[type];
 //}
 
@@ -1329,7 +1323,7 @@ Driver::buildQuery(CP)
         }
 
         default:
-            throw BadCommandDriverError(type);
+            throw BadCommandDriverError(POS, type);
     }
 }
 
@@ -1366,7 +1360,7 @@ Driver::fillEnquire(CP, Xapian::Enquire& enquire)
         {
         uint8_t type   = params;
         if (type >= DOCID_ORDER_TYPE_COUNT)
-            throw BadCommandDriverError(type);
+            throw BadCommandDriverError(POS, type);
         
         Xapian::Enquire::docid_order order = DOCID_ORDER_TYPES[type];
         enquire.set_docid_order(order);
@@ -1399,7 +1393,7 @@ Driver::fillEnquire(CP, Xapian::Enquire& enquire)
         }
 
     default:
-        throw BadCommandDriverError(command);
+        throw BadCommandDriverError(POS, command);
     }
 }
 
@@ -1455,7 +1449,7 @@ Driver::fillEnquireOrder(CP, Xapian::Enquire& enquire)
         }
 
     default:
-        throw BadCommandDriverError(type);
+        throw BadCommandDriverError(POS, type);
     }
 }
 
@@ -1476,7 +1470,7 @@ Driver::selectParser(ParamDecoder& params)
         return m_standard_parser_factory;
 
     default:
-        throw BadCommandDriverError(type);
+        throw BadCommandDriverError(POS, type);
     }
 }
 
@@ -1493,7 +1487,7 @@ Driver::selectGenerator(ParamDecoder& params)
         return m_standard_generator_factory;
 
     default:
-        throw BadCommandDriverError(type);
+        throw BadCommandDriverError(POS, type);
     }
 }
 
@@ -1590,7 +1584,7 @@ Driver::readParser(CP)
         }
 
     default:
-        throw BadCommandDriverError(command);
+        throw BadCommandDriverError(POS, command);
     }
   } while((command = params)); // yes, it's an assignment [-Wparentheses]
   // warning: suggest parentheses around assignment used as truth value
@@ -1624,7 +1618,7 @@ Driver::readGenerator(CP)
     case TG_STEMMING_STRATEGY: 
         {
 // TODO: fix it in 1.3.1
-        throw NotImplementedCommandDriverError(command);
+        throw NotImplementedCommandDriverError(POS, command);
 //      Xapian::TermGenerator::stem_strategy 
 //      strategy = readTermGeneratorStemmingStrategy(params);
 //      qp.set_stemming_strategy(strategy);
@@ -1640,7 +1634,7 @@ Driver::readGenerator(CP)
 // TODO: write it, if you need it.
     case TG_FROM_RESOURCE:
         {
-        throw NotImplementedCommandDriverError(command);
+        throw NotImplementedCommandDriverError(POS, command);
 //      Resource::Element elem = m_store.extract(params);
 //      // The elem is not interesting for us, but its children are.
 //      con.attachContext(elem);
@@ -1664,7 +1658,7 @@ Driver::readGenerator(CP)
         }
 
     default:
-        throw BadCommandDriverError(command);
+        throw BadCommandDriverError(POS, command);
     }
   } while((command = params)); // yes, it's an assignment [-Wparentheses]
   // warning: suggest parentheses around assignment used as truth value
@@ -1869,15 +1863,17 @@ Driver::handleCommand(PR,
             break;
 
         default:
-            throw BadCommandDriverError(command);
+            throw BadCommandDriverError(POS, command);
         }
     }
     catch (DriverRuntimeError& e) 
     {
         result.reset();
-        result << static_cast<uint8_t>( ERROR );
+        result << static_cast<uint8_t>( ERROR_WITH_POSITION );
         result << e.get_type();
         result << e.what();
+        result << e.get_line();
+        result << e.get_file();
     }
     catch (Xapian::Error& e) 
     {
@@ -1922,7 +1918,7 @@ Driver::open(uint8_t mode, const std::string& dbpath)
             break;
 
         default:
-            throw BadCommandDriverError(mode);
+            throw BadCommandDriverError(POS, mode);
     }
     setDatabaseAgain();
 }
@@ -1949,7 +1945,7 @@ Driver::openWriteMode(uint8_t mode)
             return Xapian::DB_OPEN;
 
         default:
-            throw BadCommandDriverError(mode);
+            throw BadCommandDriverError(POS, mode);
     }
 }
 
@@ -1981,7 +1977,7 @@ Driver::open(uint8_t mode, const std::string& host, uint16_t port,
             break;
 
         default:
-            throw BadCommandDriverError(mode);
+            throw BadCommandDriverError(POS, mode);
     }
     setDatabaseAgain();
 }
@@ -2011,7 +2007,7 @@ Driver::open(uint8_t mode, const std::string& prog, const std::string& args,
             break;
 
         default:
-            throw BadCommandDriverError(mode);
+            throw BadCommandDriverError(POS, mode);
     }
     setDatabaseAgain();
 }
@@ -2045,6 +2041,13 @@ Driver::applyDocument(
             {
                 tg = readGenerator(gen_con, params);
                 tg.set_document(doc);
+                break;
+            }
+
+            case SET_TERM_GEN_POS:
+            {
+                const uint32_t         position = params; // pos
+                tg.set_termpos(static_cast<Xapian::termcount>(position));
                 break;
             }
 
@@ -2147,7 +2150,7 @@ Driver::applyDocument(
             }
 
             default:
-                throw BadCommandDriverError(command);
+                throw BadCommandDriverError(POS, command);
         }
     }
 }
@@ -2195,7 +2198,7 @@ Driver::handleTerm(
     if (is_error)
     {
         if (ignore) return;
-        else        throw BadArgumentDriverError();
+        else        throw BadArgumentDriverError(POS);
     }
 
     doc.add_term(tname, wdf_inc);
@@ -2244,7 +2247,7 @@ Driver::handleSpelling(
     if (is_error)
     {
         if (ignore) return;
-        else        throw BadArgumentDriverError();
+        else        throw BadArgumentDriverError(POS);
     }
 
     wdb.add_spelling(tname, wdf_inc);
@@ -2262,7 +2265,7 @@ Driver::decodeValue(ParamDecoder& params)
             return Xapian::sortable_serialise(params);
 
         default:
-            throw BadCommandDriverError(type);
+            throw BadCommandDriverError(POS, type);
      }
 }
 
@@ -2306,7 +2309,7 @@ Driver::handleValue(
     if (is_error)
     {
         if (ignore) return;
-        else        throw BadArgumentDriverError();
+        else        throw BadArgumentDriverError(POS);
     }
 
     doc.add_value(slot_no, value); 
@@ -2352,7 +2355,7 @@ Driver::handlePosting(
     if (is_error)
     {
         if (ignore) return;
-        else        throw BadArgumentDriverError();
+        else        throw BadArgumentDriverError(POS);
     }
 
     doc.add_posting(tname, term_pos, wdf2);
@@ -2364,7 +2367,7 @@ Driver::retrieveDocument(PCR,
 {
     const uint8_t decoder_type = params;
     if (decoder_type != DEC_DOCUMENT)
-        throw BadArgumentDriverError();
+        throw BadArgumentDriverError(POS);
 
     while (const uint8_t command = params)
     /* Do, while command != stop != 0 */
@@ -2407,7 +2410,7 @@ Driver::retrieveDocument(PCR,
             }
 
             default:
-                throw BadCommandDriverError(command);
+                throw BadCommandDriverError(POS, command);
         }
     }
 }
@@ -2418,7 +2421,7 @@ Driver::retrieveDocument(PCR,
 {
     const uint8_t decoder_type = params;
     if (decoder_type != DEC_ITERATOR)
-        throw BadArgumentDriverError();
+        throw BadArgumentDriverError(POS);
 
     while (const uint8_t command = params)
     /* Do, while command != stop != 0 */
@@ -2480,7 +2483,7 @@ Driver::retrieveDocument(PCR,
             }
 
             default:
-                throw BadCommandDriverError(command);
+                throw BadCommandDriverError(POS, command);
         }
     }
 }
@@ -2493,7 +2496,7 @@ Driver::retrieveDocument(PCR,
 {
     const uint8_t decoder_type = params;
     if (decoder_type != DEC_BOTH)
-        throw BadArgumentDriverError();
+        throw BadArgumentDriverError(POS);
 
     //Xapian::docid did = *m;
     while (const uint8_t command = params)
@@ -2584,7 +2587,7 @@ Driver::retrieveDocument(PCR,
             }
 
             default:
-                throw BadCommandDriverError(command);
+                throw BadCommandDriverError(POS, command);
         }
     }
 }
@@ -2649,7 +2652,7 @@ Driver::retrieveTerm(PCR, const Xapian::TermIterator& iter)
             }
 
             default:
-                throw BadCommandDriverError(command);
+                throw BadCommandDriverError(POS, command);
         }
     }
 }
@@ -2708,7 +2711,7 @@ Driver::retrieveDocumentSchema(
                 break;
 
             default:
-                throw BadCommandDriverError(command);
+                throw BadCommandDriverError(POS, command);
         }
     }
 
@@ -2745,6 +2748,13 @@ Driver::applyDocumentSchema(
                     Resource::Element::createContext();
                 Xapian::TermGenerator tg = readGenerator(gen_con, params);
                 (void) tg;
+                break;
+            }
+
+            case SET_TERM_GEN_POS:
+            {
+                const uint32_t         position = params; // pos
+                (void) position;
                 break;
             }
 
@@ -2845,7 +2855,7 @@ Driver::applyDocumentSchema(
             }
 
             default:
-                throw BadCommandDriverError(command);
+                throw BadCommandDriverError(POS, command);
         }
     }
 
@@ -2941,7 +2951,7 @@ Driver::msetInfo(PR)
         }
 
         default:
-            throw BadCommandDriverError(command);
+            throw BadCommandDriverError(POS, command);
     }
 }
 
@@ -3058,7 +3068,7 @@ Driver::databaseInfo(PR)
 // TODO: synonym, spellcorrection
 
         default:
-            throw BadCommandDriverError(command);
+            throw BadCommandDriverError(POS, command);
     }
 }
 
@@ -3093,7 +3103,7 @@ Driver::matchSpyInfo(PR)
         }
 
         default:
-            throw BadCommandDriverError(field);
+            throw BadCommandDriverError(POS, field);
     }
 }
 
@@ -3166,7 +3176,7 @@ Driver::qlcTermIteratorLookup(
         }
 
         default:
-            throw BadCommandDriverError(encoder_type);
+            throw BadCommandDriverError(POS, encoder_type);
     }
 
     assert(!terms.empty());

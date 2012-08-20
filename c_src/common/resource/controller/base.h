@@ -69,7 +69,7 @@ class Base
     attach(Element& child)
     {
         if (mb_attached)
-            throw AlreadyAttachedDriverError(type(), child.get().type());
+            throw AlreadyAttachedDriverError(POS, type(), child.get().type());
         assert(!mb_attached);
 
         // Create a copy of "the reference" 
@@ -96,94 +96,94 @@ class Base
 
     virtual operator Xapian::MSet&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::MSet");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::MSet");
     }
 
     virtual operator Xapian::KeyMaker&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::KeyMaker");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::KeyMaker");
     }
 
     virtual operator Xapian::Enquire&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::Enquire");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::Enquire");
     }
 
     virtual operator QlcTable&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "QlcTable");
+        throw ResourceTypeMismatchDriverError(POS, type(), "QlcTable");
     }
 
     virtual operator Xapian::Weight&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::Weight");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::Weight");
     }
 
     virtual operator Xapian::Query&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::Query");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::Query");
     }
 
     virtual operator Xapian::MatchDecider&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::MatchDecider");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::MatchDecider");
     }
 
     virtual operator Xapian::ExpandDecider&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::ExpandDecider");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::ExpandDecider");
     }
 
     virtual operator Xapian::ValueRangeProcessor&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::ValueRangeProcessor");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::ValueRangeProcessor");
     }
 
     virtual operator Xapian::QueryParser&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::QueryParser");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::QueryParser");
     }
 
     virtual operator Xapian::Stopper&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::Stopper");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::Stopper");
     }
 
     virtual operator Xapian::Stem&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::Stem");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::Stem");
     }
 
     virtual operator Xapian::ValueCountMatchSpy&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::ValueCountMatchSpy");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::ValueCountMatchSpy");
     }
 
     virtual operator Xapian::MatchSpy&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::MatchSpy");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::MatchSpy");
     }
 
     virtual operator Xapian::Document&()
     {
-        throw ResourceTypeMismatchDriverError(type(), "Xapian::Document");
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::Document");
     }
 
     // Extensions
     virtual operator Extension::ValueCountMatchSpy&()
     {
-        throw ResourceTypeMismatchDriverError(type(), 
+        throw ResourceTypeMismatchDriverError(POS, type(), 
                 "Extension::ValueCountMatchSpy");
     }
 
     virtual void finalize()
     {
-        throw AbstractMethodDriverError(type(), "finalize");
+        throw AbstractMethodDriverError(POS, type(), "finalize");
     }
 
     virtual bool is_finalized()
     {
-        throw AbstractMethodDriverError(type(), "is_finalized");
+        throw AbstractMethodDriverError(POS, type(), "is_finalized");
     }
 };
 

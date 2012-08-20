@@ -26,7 +26,7 @@ char*
 ParamDecoder::move(const size_t size)
 {
     if (size > m_len)
-        throw OverflowDriverError();
+        throw OverflowDriverError(POS);
     m_len -= size;
     char* old_buf = m_buf;
     m_buf += size;

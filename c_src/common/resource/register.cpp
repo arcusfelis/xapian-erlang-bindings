@@ -29,7 +29,7 @@ get(Register::Counter num)
     i = m_elements.find(num);
 
     if (i == m_elements.end())
-        throw ElementNotFoundDriverError(num);
+        throw ElementNotFoundDriverError(POS, num);
 
     return i->second;
 }
@@ -42,7 +42,7 @@ remove(Register::Counter num)
     i = m_elements.find(num);
 
     if (i == m_elements.end())
-        throw ElementNotFoundDriverError(num);
+        throw ElementNotFoundDriverError(POS, num);
 
     m_elements.erase(i);
 }

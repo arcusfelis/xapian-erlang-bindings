@@ -39,12 +39,12 @@ Helpers::getExistedTermFrequency(
         end = doc.termlist_end();
 
     if (iter == end)
-        throw BadArgumentDriverError();
+        throw BadArgumentDriverError(POS);
 
     iter.skip_to(tname);
 
     if ((iter == end) || (tname != (*iter))) 
-            throw BadArgumentDriverError();
+            throw BadArgumentDriverError(POS);
 
     return iter.get_wdf();
 }

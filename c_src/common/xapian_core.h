@@ -116,7 +116,8 @@ class Driver
     // used in the control function
     enum e_errorCode {
         SUCCESS                     = 0,
-        ERROR                       = 1
+        ERROR                       = 1,
+        ERROR_WITH_POSITION         = 2
     };
 
     // see fun xapian_common:append_unique_document_id/2

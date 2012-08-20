@@ -713,6 +713,49 @@ term_pos_qlc_gen() ->
     end.
 
 
+term_generator_features_gen() ->
+    Path = testdb_path(tg_features),
+    Params = [write, create, overwrite],
+    Document =
+        [ #x_text{value = "The quick brown fox jumps over the lazy dog.",
+                  features = [default, {except, spelling}, 
+                              spelling, {except, [spelling]}]} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        ?SRV:add_document(Server, Document),
+        []
+    after
+        ?SRV:close(Server)
+    end.
+
+
+text_position_gen() ->
+    Path = testdb_path(text_pos),
+    Params = [write, create, overwrite],
+    Document =
+        [ #x_text{value = "The quick brown fox jumps over the lazy dog.",
+           %% Positions:   6   7     8     9   10    11   12  13   14
+                  position = 5} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        %% Test a term generator
+        DocId = ?SRV:add_document(Server, Document),
+        Meta = xapian_term_record:record(term_pos, 
+                record_info(fields, term_pos)),
+        Table = xapian_term_qlc:document_term_table(Server, DocId, Meta),
+
+        Term1Records = 
+        qlc:e(qlc:q([X || X = #term_pos{value = <<"the">>} <- Table])),
+        Term1 = #term_pos{
+            value = <<"the">>, position_count = 2, positions = [6, 12]},
+        [ ?_assertEqual([Term1], Term1Records)
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+
 
 value_count_match_spy_gen() ->
     Path = testdb_path(value_count_mspy),
@@ -1050,6 +1093,7 @@ stemmer_gen() ->
         Q9 = #x_query_string{value="return", parser=Q9Parser},
 
         %% `exclude' is used for unsetting flags.
+        %% Test x_query_parser.features.
         Q10 = #x_query_string{value="test -return"},
         Q11 = #x_query_string{value="test -return",
                               features=[default, {except, lovehate}]},

@@ -11,7 +11,7 @@ create(Register& manager, ParamDecoder& params)
     uint32_t constructor_num = params;
     // Does exists?
     if (!isExists(constructor_num))
-        throw ElementNotFoundDriverError(constructor_num);
+        throw ElementNotFoundDriverError(POS, constructor_num);
     Constructor& constructor = * m_constructors.at(constructor_num);
     // Create a new element.
     return constructor.call(manager, params);
