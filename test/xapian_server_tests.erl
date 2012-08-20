@@ -1809,6 +1809,7 @@ cases_gen() ->
     Cases = 
     [ fun single_term_query_page_case/1
     , fun value_range_query_page_case/1
+    , fun query_value_equal_case/1
     , fun double_terms_or_query_page_case/1
     , fun special_fields_query_page_case/1
 
@@ -1893,6 +1894,19 @@ value_range_query_page_case(Server) ->
         Query = #x_query_value_range{slot=author, 
                                      from="Joe Armstrong", 
                                      to="Joe Armstrong"},
+        Meta = xapian_record:record(book, record_info(fields, book)),
+        RecList = ?SRV:query_page(Server, Offset, PageSize, Query, Meta),
+        io:format(user, "~n~p~n", [RecList])
+        end,
+    {"Joe Armstrong - Joe Armstrong", Case}.
+
+query_value_equal_case(Server) ->
+    Case = fun() ->
+        Offset = 0,
+        PageSize = 10,
+        Query = #x_query_value{op=equal,
+                               slot=author, 
+                               value="Joe Armstrong"},
         Meta = xapian_record:record(book, record_info(fields, book)),
         RecList = ?SRV:query_page(Server, Offset, PageSize, Query, Meta),
         io:format(user, "~n~p~n", [RecList])

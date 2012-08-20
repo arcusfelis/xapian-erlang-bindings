@@ -33,7 +33,7 @@ encode(#x_query{op=Op, value=Value, parameter=Param}, N2S, S2T, RA, Bin@) ->
     Bin@;
 
 encode(#x_query_value{op=equal, slot=Slot, value=Value}, N2S, S2T, RA, Bin) ->
-    Q = #x_query_value_range{op=equal, slot=Slot, from=Value, to=Value},
+    Q = #x_query_value_range{slot=Slot, from=Value, to=Value},
     encode(Q, N2S, S2T, RA, Bin);
 
 encode(#x_query_value{op=Op, slot=Slot, value=Value}, N2S, S2T, _RA, Bin@) ->
