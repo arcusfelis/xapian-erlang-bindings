@@ -146,6 +146,15 @@ createSimpleStopper(Register& /*m*/, ParamDecoder& params)
 
 
 Element
+createSimpleStemmer(Register& /*m*/, ParamDecoder& params)
+{
+    const std::string& language = params;
+    Xapian::Stem* p_stemmer = new Xapian::Stem(language);
+    return Element::wrap(p_stemmer);
+}
+
+
+Element
 createEnquire(Driver& driver, Register& /*m*/, ParamDecoder& params)
 {
     // Use an Enquire object on the database to run the query.
@@ -203,6 +212,9 @@ Generator::registerCallbacks(Driver& driver)
 
     add(Constructor::create(std::string("simple_stopper"), 
                             &createSimpleStopper));
+
+    add(Constructor::create(std::string("simple_stemmer"), 
+                            &createSimpleStemmer));
 
     add(Constructor::create(driver,
                             std::string("enquire"), 

@@ -79,6 +79,7 @@ class Element
     static Element wrap(Xapian::Query* p_query);
     static Element wrap(Xapian::MSet* p_mset);
     static Element wrap(Xapian::Stopper* p_stopper);
+    static Element wrap(Xapian::Stem* p_stemmer);
     static Element wrap(QlcTable* p_table);
     static Element wrap(uint32_t slot, 
             Xapian::ValueCountMatchSpy* p_spy);

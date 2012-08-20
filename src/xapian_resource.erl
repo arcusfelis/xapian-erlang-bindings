@@ -32,6 +32,11 @@
     simple_stopper/1
     ]).
 
+%% Stemmer 
+-export([
+    simple_stemmer/1
+    ]).
+
 %% Enquire 
 -export([
     enquire/2
@@ -242,6 +247,18 @@ simple_stopper(Strings) ->
             {ok, xapian_common:append_terms(Strings, <<>>)}
         end,
     con(simple_stopper, GenFn).
+
+
+-spec simple_stemmer(Language) -> Stemmer
+    when Language :: term(),
+         Stemmer  :: xapian_type:x_resource_con().
+
+simple_stemmer(Language) ->
+    GenFn = 
+        fun() ->
+            {ok, xapian_common:append_string(Language, <<>>)}
+        end,
+    con(simple_stemmer, GenFn).
 
 
 %% @doc Create an enquire constructor.

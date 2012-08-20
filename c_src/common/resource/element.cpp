@@ -12,6 +12,7 @@
 #include "resource/controller/match_set.h"
 #include "resource/controller/qlc_table.h"
 #include "resource/controller/stopper.h"
+#include "resource/controller/stem.h"
 
 #include <xapian.h>
 
@@ -244,6 +245,13 @@ Element::
 wrap(Xapian::Stopper* p_stopper)
 {
     return Element(new Controller::Stopper(p_stopper));
+}
+
+Element
+Element::
+wrap(Xapian::Stem* p_stemmer)
+{
+    return Element(new Controller::Stem(p_stemmer));
 }
 
 XAPIAN_RESOURCE_NS_END

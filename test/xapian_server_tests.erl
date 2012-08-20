@@ -1462,8 +1462,9 @@ read_document_test() ->
     Path = testdb_path(read_document),
     Params = [write, create, overwrite, 
         #x_value_name{slot = 1, name = slot1}],
+    Stem = xapian_resource:simple_stemmer(<<"english">>),
     Document =
-        [ #x_stemmer{language = <<"english">>}
+        [ #x_term_generator{stemmer = Stem}
         , #x_data{value = "My test data as iolist"} 
         , #x_value{slot = slot1, value = "Slot #0"} 
         ],
