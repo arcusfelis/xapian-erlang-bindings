@@ -10,7 +10,8 @@
     append_uint/2,
     append_slot/3,
     append_boolean/2,
-    append_double/2,
+    append_percent/2,
+    append_weight/2,
     bad_value/0]).
 
 -import(xapian_const, [
@@ -142,14 +143,6 @@ append_collapse_key(CollapseKey, CollapseMax, N2S, Bin@) ->
 
 append_command(Type, Bin) ->
     append_uint8(enquire_command_id(Type), Bin).
-
-
-append_weight(Value, Bin) ->
-    append_uint8(Value, Bin).
-
-
-append_percent(Value, Bin) ->
-    append_double(Value, Bin).
 
 
 append_uint8(Value, Bin) ->

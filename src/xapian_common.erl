@@ -21,7 +21,9 @@
          append_uint16/2,
          append_double/2,
          append_boolean/2,
-         append_binary/2
+         append_binary/2,
+         append_weight/2,
+         append_percent/2
         ]).
 
 %% Advanced decoding functions
@@ -351,6 +353,10 @@ read_boolean(Bin) ->
 read_weight(Bin) ->
     read_double(Bin).
 
+%% @doc Write weight as a double.
+append_weight(Value, Bin) ->
+    append_double(Value, Bin).
+
 %% @doc Read a document rank (uint32_t).
 read_rank(Bin) ->
     read_uint(Bin).
@@ -365,6 +371,10 @@ read_slot(Bin) ->
     Percent :: 0 .. 100.
 read_percent(Bin) ->
     read_uint8(Bin).
+
+%% @doc Write percent as a double.
+append_percent(Value, Bin) ->
+    append_uint8(Value, Bin).
 
 %% @doc Read a document count (uint32_t).
 read_doccount(Bin) ->
