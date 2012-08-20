@@ -1719,6 +1719,18 @@ collapse_key_gen() ->
         Enquire2 = #x_enquire{collapse_key = slot0, collapse_max=2, value=Query},
         Records1 = collapsed_records(Server, Enquire1),
         Records2 = collapsed_records(Server, Enquire2),
+
+        MSet = #x_match_set{enquire = Enquire1},
+        MSetResourceId = ?SRV:match_set(Server, MSet),
+
+        MatchesCounts = xapian_server:mset_info(Server, MSetResourceId,
+            [uncollapsed_matches_lower_bound
+            ,uncollapsed_matches_estimated
+            ,uncollapsed_matches_upper_bound
+            ]),
+        [{uncollapsed_matches_lower_bound, LowerBound}
+        ,{uncollapsed_matches_estimated, Estimated}
+        ,{uncollapsed_matches_upper_bound, UpperBound}] = MatchesCounts,
         
         [?_assertEqual(Records1, 
        [#collapsed{docid = DocId1, collapse_key = <<"a">>, collapse_count = 1}
@@ -1730,6 +1742,8 @@ collapse_key_gen() ->
        ,#collapsed{docid = DocId3, collapse_key = <<"b">>, collapse_count = 0}
        ,#collapsed{docid = DocId4, collapse_key = <<"b">>, collapse_count = 0}
        ])
+        ,{"Uncollapsed matches counts."
+         ,[?_assert(LowerBound =< Estimated), ?_assert(Estimated =< UpperBound)]}
         ]
     after
         ?SRV:close(Server)
