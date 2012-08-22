@@ -1,5 +1,3 @@
-.. highlight:: erlang
-
 Xapian binding for Erlang
 =========================
 
@@ -37,14 +35,17 @@ Using
 =====
 
 This application uses records, defined in the file
-``include/xapian.hrl``. To include it use::
+``include/xapian.hrl``. To include it use:
+.. code-block:: erlang
 
     -include_lib("xapian/include/xapian.hrl").
 
 Tests
 =====
 
-Next command runs tests::
+Next command runs tests:
+
+.. code-block:: shell
 
     $ ./rebar eunit skip_deps=true
 
