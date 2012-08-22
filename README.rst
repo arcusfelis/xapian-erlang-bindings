@@ -13,7 +13,9 @@ their own applications.
 Installation
 ============
 
-I use rebar for building::
+I use rebar for building:
+
+.. code-block:: shell
 
     $ git clone git://github.com/freeakk/xapian.git 
     $ cd xapian ./rebar get-deps ./rebar compile
@@ -36,6 +38,7 @@ Using
 
 This application uses records, defined in the file
 ``include/xapian.hrl``. To include it use:
+
 .. code-block:: erlang
 
     -include_lib("xapian/include/xapian.hrl").
@@ -61,12 +64,16 @@ A pool of readers
 
 Readers use the Poolboy application. There is only one writer for each
 database, so there is no a writer pool. You can use a named process and
-a supervisor instead:::
+a supervisor instead:
+
+.. code-block:: erlang
 
     {ok, Pid} = xapian_server:open(Path, [{name, simple_writer}, write]). 
     xapian_server:add_document(simple_writer, [#x_text{value = "Paragraph 1"}]).
 
-If you try run this code from console, then next command will be useful:::
+If you try run this code from console, then next command will be useful:
+
+.. code-block:: erlang
 
     rr(code:lib_dir(xapian, include) ++ "/xapian.hrl").
 
@@ -76,13 +83,17 @@ A pool is supervised by ``xapian_sup``. That is why, call of
 ``xapian_pool:open`` function do *not* link the parent process with the
 new process.
 
-As with ``xapian_drv:transaction``, you can checkout few pools.::
+As with ``xapian_drv:transaction``, you can checkout few pools.
+
+.. code-block:: erlang
 
     xapian_pool:checkout([pool1, poo2], 
                          fun([Server1, Server2]) -> actions_here end).
 
 If an error will occured, an exception will be thrown and workers will
-be returned into the pool.::
+be returned into the pool.
+
+.. code-block:: erlang
 
     catch xapian_pool:checkout([simple], fun([S]) -> 5 = 2 + 2 end). 
     {'EXIT',{{badmatch,4},[{erl_eval,expr,3,[]}]}}
@@ -91,7 +102,9 @@ Multi-database support
 ======================
 
 You can use this code for opening two databases from "DB1" and "DB2"
-directories.::
+directories.
+
+.. code-block:: erlang
 
     {ok, Server} = xapian_driver:open([#x_database{path="DB1"}, 
                                        #x_database{path="DB2"}], []).
@@ -111,7 +124,9 @@ Otherwise, first field contains a document id (can be repeated) and
 ``name`` field of ``#x_database{}`` record will be used for this. This
 field is ``undefined`` by default.
 
-A full multi-database example:::
+Here is a full multi-database example:
+
+.. code-block:: erlang
 
     -record(document, {docid, db_name, multi_docid, db_number}).
 
@@ -139,7 +154,9 @@ Use the ``release_resource(Server, Resource)`` function call to free
 unused anymore resource.
 
 The second call of this function with the same arguments will cause an
-error:::
+error:
+
+.. code-block:: erlang
 
     1> Path = filename:join([code:priv_dir(xapian), test_db, simple]). 
     "/home/user/erlang/xapian/priv/test_db/simple" 
@@ -157,20 +174,27 @@ Using a port
 Ports cannot crash Erlang VM. The port program will be compilled by
 rebar.
 
-For running a single server in the port mode use:::
+For running a single server in the port mode use:
+
+.. code-block:: erlang
 
     {ok, Server} = xapian_driver:open(Path, [port|Params]).
 
-For running all servers in the port mode use:::
+For running all servers in the port mode use:
+
+.. code-block:: erlang
 
     application:set_env(xapian, default_open_parameters, [port]).
 
 Testing a port
 --------------
 
-.. code-block::
+.. code-block:: shell
 
     $ erl -pa ./.eunit/ ./../xapian/ebin ./deps/?*/ebin
+
+.. code-block:: erlang
+
     application:set_env(xapian, default_open_parameters, [port]).
     eunit:test({application, xapian}, [verbose]). 
 
