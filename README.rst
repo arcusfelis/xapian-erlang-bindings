@@ -38,12 +38,14 @@ Using
 
 This application uses records, defined in the file
 ``include/xapian.hrl``. To include it use::
+
     -include_lib("xapian/include/xapian.hrl").
 
 Tests
 =====
 
 Next command runs tests::
+
     $ ./rebar eunit skip_deps=true
 
 A pool of readers
@@ -59,10 +61,12 @@ A pool of readers
 Readers use the Poolboy application. There is only one writer for each
 database, so there is no a writer pool. You can use a named process and
 a supervisor instead:::
+
     {ok, Pid} = xapian_server:open(Path, [{name, simple_writer}, write]). 
     xapian_server:add_document(simple_writer, [#x_text{value = "Paragraph 1"}]).
 
 If you try run this code from console, then next command will be useful:::
+
     rr(code:lib_dir(xapian, include) ++ "/xapian.hrl").
 
 It loads information about records into console.
@@ -72,11 +76,13 @@ A pool is supervised by ``xapian_sup``. That is why, call of
 new process.
 
 As with ``xapian_drv:transaction``, you can checkout few pools.::
+
     xapian_pool:checkout([pool1, poo2], 
                          fun([Server1, Server2]) -> actions_here end).
 
 If an error will occured, an exception will be thrown and workers will
 be returned into the pool.::
+
     catch xapian_pool:checkout([simple], fun([S]) -> 5 = 2 + 2 end). 
     {'EXIT',{{badmatch,4},[{erl_eval,expr,3,[]}]}}
 
@@ -133,6 +139,7 @@ unused anymore resource.
 
 The second call of this function with the same arguments will cause an
 error:::
+
     1> Path = filename:join([code:priv_dir(xapian), test_db, simple]). 
     "/home/user/erlang/xapian/priv/test_db/simple" 
     2> {ok, Server} = xapian_server:open(Path, []). {ok,<0.57.0>} 
@@ -150,9 +157,11 @@ Ports cannot crash Erlang VM. The port program will be compilled by
 rebar.
 
 For running a single server in the port mode use:::
+
     {ok, Server} = xapian_driver:open(Path, [port|Params]).
 
 For running all servers in the port mode use:::
+
     application:set_env(xapian, default_open_parameters, [port]).
 
 Testing a port
