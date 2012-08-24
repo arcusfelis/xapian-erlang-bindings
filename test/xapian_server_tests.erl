@@ -1061,7 +1061,6 @@ standard_term_generator_gen() ->
         Terms2 = ExtractDocTerms(DocId2),
         Terms1 = ExtractDocTerms(DocId1),
 
-        %% Test, that the stemmed forms of the words was filtered by Stopper.
         [ {"Is #x_term_generator.name respected?"
           ,[?_assertEqual(Terms1, [<<"Zcat">>,<<"cats">>])
            ,?_assertEqual(Terms2, [<<"cats">>])
@@ -1104,6 +1103,32 @@ reopen_test() ->
 
 
 -record(stemmer_test_record, {docid, data}).
+
+cancel_default_stemmer_gen() ->
+    Path = testdb_path(cancel_stemmer),
+    Params = [write, create, overwrite, 
+        #x_stemmer{language = <<"english">>}],
+    Document =
+        [ #x_stemmer{language = none}
+        , #x_text{value = "cats"}],
+    Meta = xapian_term_record:record(term, record_info(fields, term)),
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    %% The default generator uses the "english" stemmer.
+    ExtractDocTerms = fun(Doc) ->
+        TermTable = xapian_term_qlc:document_term_table(Server, Doc, Meta),
+        Values = qlc:q([Val || #term{value = Val} <- TermTable]),
+        qlc:e(Values)
+        end,
+    try
+        DocId = ?SRV:add_document(Server, Document),
+        Terms = ExtractDocTerms(DocId),
+
+        [ {"Is #x_stemmer.language = none respected?"
+          ,?_assertEqual(Terms, [<<"cats">>])}
+        ]
+    after
+        ?SRV:close(Server)
+    end.
 
 stemmer_gen() ->
     % Open test with the default stemmer
