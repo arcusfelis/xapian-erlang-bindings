@@ -81,7 +81,8 @@ command_id(parse_string)                -> 37;
 command_id(add_spelling)                -> 38;
 command_id(add_synonym)                 -> 39;
 command_id(remove_synonym)              -> 40;
-command_id(clear_synonyms)              -> 41.
+command_id(clear_synonyms)              -> 41;
+command_id(create_term_generator)       -> 42.
 
 
 %% Open modes of the DB

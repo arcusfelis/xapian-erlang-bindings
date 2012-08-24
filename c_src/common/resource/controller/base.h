@@ -24,6 +24,7 @@ namespace Xapian
     class ExpandDecider;
     class ValueRangeProcessor;
     class QueryParser;
+    class TermGenerator;
     class Stem;
     class Stopper;
     class MatchSpy;
@@ -142,6 +143,11 @@ class Base
     virtual operator Xapian::QueryParser&()
     {
         throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::QueryParser");
+    }
+
+    virtual operator Xapian::TermGenerator&()
+    {
+        throw ResourceTypeMismatchDriverError(POS, type(), "Xapian::TermGenerator");
     }
 
     virtual operator Xapian::Stopper&()

@@ -36,7 +36,8 @@
 -export([enquire/2,
          document/2,
          match_set/2,
-         query_parser/2]).
+         query_parser/2,
+         term_generator/2]).
 
 
 -export([parse_string/3]).
@@ -506,6 +507,13 @@ match_set(Server, EnquireResource) ->
 -spec query_parser(x_server(), #x_query_parser{}) -> x_resource().
 
 query_parser(Server, #x_query_parser{} = Rec) ->
+    call(Server, Rec).
+
+
+%% @doc Create TermGenerator as a resource.
+-spec term_generator(x_server(), #x_term_generator{}) -> x_resource().
+
+term_generator(Server, #x_term_generator{} = Rec) ->
     call(Server, Rec).
 
 
@@ -1485,6 +1493,13 @@ hc(#x_query_parser{} = QP, {FromPid, _FromRef}, State) ->
     m_do_register_resource(State, FromPid, PortAnswer);
 
 
+hc(#x_term_generator{} = TG, {FromPid, _FromRef}, State) ->
+    #state{port = Port } = State,
+    RA = resource_appender(State, FromPid),
+    PortAnswer = port_create_term_generator(Port, RA, TG),
+    m_do_register_resource(State, FromPid, PortAnswer);
+
+
 hc(#x_match_set{} = Mess, {FromPid, _FromRef}, State) ->
     #x_match_set{
         enquire = Enquire, 
@@ -2142,6 +2157,11 @@ port_parse_string(Port, RA, RR, QS, Fields) ->
 port_create_query_parser(Port, RA, QP) ->
     EncodedQP = xapian_query:append_parser(RA, QP, <<>>),
     decode_resource_result(control(Port, create_query_parser, EncodedQP)).
+
+
+port_create_term_generator(Port, RA, TG) ->
+    EncodedTG = xapian_document:append_generator(TG, RA, <<>>),
+    decode_resource_result(control(Port, create_term_generator, EncodedTG)).
 
 append_compiled_resource(Res, Bin) -> Res(Bin).
 

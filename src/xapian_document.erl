@@ -2,7 +2,7 @@
 -module(xapian_document).
 
 %% Internal functions
--export([encode/5]).
+-export([encode/5, append_generator/3]).
 
 
 -include_lib("xapian/include/xapian.hrl").

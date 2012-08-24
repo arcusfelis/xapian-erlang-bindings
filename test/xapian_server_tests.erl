@@ -1032,6 +1032,64 @@ term_generator_gen() ->
     after
         ?SRV:close(Server)
     end.
+    
+
+standard_term_generator_gen() ->
+    Path = testdb_path(std_term_generator),
+    Params = [write, create, overwrite,
+              #x_stemmer{language = <<"english">>}],
+    Meta = xapian_term_record:record(term, record_info(fields, term)),
+    %% The default generator uses the "english" stemmer.
+    Document1 =
+        [ #x_term_generator{name = default}
+        , #x_text{value = "cats"} 
+        ],
+    %% The standard generator is without any stemmer.
+    Document2 =
+        [ #x_term_generator{name = standard}
+        , #x_text{value = "cats"} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    ExtractDocTerms = fun(Doc) ->
+        TermTable = xapian_term_qlc:document_term_table(Server, Doc, Meta),
+        Values = qlc:q([Val || #term{value = Val} <- TermTable]),
+        qlc:e(Values)
+        end,
+    try
+        DocId1 = ?SRV:add_document(Server, Document1),
+        DocId2 = ?SRV:add_document(Server, Document2),
+        Terms2 = ExtractDocTerms(DocId2),
+        Terms1 = ExtractDocTerms(DocId1),
+
+        %% Test, that the stemmed forms of the words was filtered by Stopper.
+        [ {"Is #x_term_generator.name respected?"
+          ,[?_assertEqual(Terms1, [<<"Zcat">>,<<"cats">>])
+           ,?_assertEqual(Terms2, [<<"cats">>])
+           ]}
+        ]
+    after
+        ?SRV:close(Server)
+    end.
+    
+
+term_generator_from_resource_gen() ->
+    Path = testdb_path(res_term_generator),
+    Params = [write, create, overwrite,
+              #x_stemmer{language = <<"english">>}],
+    %% The default generator uses the "english" stemmer.
+    Document1 =
+        [ #x_term_generator{name = default}
+        , #x_text{value = "cats"} 
+        ],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        TGRes = xapian_server:term_generator(Server, #x_term_generator{}),
+        TGRec = #x_term_generator{name = TGRes},
+        ?SRV:add_document(Server, [TGRec|Document1]),
+        []
+    after
+        ?SRV:close(Server)
+    end.
 
 
 reopen_test() ->

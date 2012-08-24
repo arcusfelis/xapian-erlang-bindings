@@ -17,6 +17,7 @@ namespace Xapian
     class MatchDecider;
     class ExpandDecider;
     class QueryParser;
+    class TermGenerator;
     class Stopper;
     class Stem;
     class MatchSpy;
@@ -75,6 +76,7 @@ class Element
     static Element wrap(Xapian::KeyMaker* p_key_maker);
     static Element wrap(Xapian::Enquire* p_enquire);
     static Element wrap(Xapian::QueryParser* p_query_parser);
+    static Element wrap(Xapian::TermGenerator* p_term_gen);
     static Element wrap(Xapian::Document* p_document);
     static Element wrap(Xapian::Query* p_query);
     static Element wrap(Xapian::MSet* p_mset);
@@ -98,6 +100,7 @@ class Element
     operator Xapian::ExpandDecider&();
     operator Xapian::ValueRangeProcessor&();
     operator Xapian::QueryParser&();
+    operator Xapian::TermGenerator&();
     operator Xapian::Stopper&();
     operator Xapian::Stem&();
     operator Xapian::ValueCountMatchSpy&();

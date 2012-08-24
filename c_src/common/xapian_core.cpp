@@ -606,6 +606,33 @@ Driver::createQueryParser(PR)
     m_store.save(elem, result);
 }
 
+
+
+/**
+ * Create a parser with a corrected string inside.
+ */
+void
+Driver::createTermGenerator(PR)
+{
+    // Create a new context.
+    Resource::Element gen_con = Resource::Element::createContext();
+
+    // Read a generator into allocated pointer.
+    // parser_con holds child resources.
+    Xapian::TermGenerator* p_gen = 
+        new Xapian::TermGenerator(readGenerator(gen_con, params));
+
+    Resource::Element elem = 
+        Resource::Element::wrap(p_gen);
+
+    // Add the context as a child.
+    // Delete the context (and all inside) when the TermGenerator is deleted
+    // only.
+    elem.attachContext(gen_con);
+    m_store.save(elem, result);
+}
+
+
 void
 Driver::parseString(CPR)
 {
@@ -1630,17 +1657,14 @@ Driver::readGenerator(CP)
         tg = selectGenerator(params);
         break; 
 
-
-// TODO: write it, if you need it.
     case TG_FROM_RESOURCE:
         {
-        throw NotImplementedCommandDriverError(POS, command);
-//      Resource::Element elem = m_store.extract(params);
-//      // The elem is not interesting for us, but its children are.
-//      con.attachContext(elem);
-//      // Copy from resource
-//      tg = elem;
-//      break;
+        Resource::Element elem = m_store.extract(params);
+        // The elem is not interesting for us, but its children are.
+        con.attachContext(elem);
+        // Copy from resource
+        tg = elem;
+        break;
         }
 
     case TG_STEMMER_RESOURCE:
@@ -1856,6 +1880,10 @@ Driver::handleCommand(PR,
 
         case CREATE_QUERY_PARSER: 
             createQueryParser(params, result);
+            break;
+
+        case CREATE_TERM_GENERATOR: 
+            createTermGenerator(params, result);
             break;
 
         case PARSE_STRING:

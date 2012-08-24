@@ -13,6 +13,7 @@
 #include "resource/controller/qlc_table.h"
 #include "resource/controller/stopper.h"
 #include "resource/controller/stem.h"
+#include "resource/controller/term_gen.h"
 
 #include <xapian.h>
 
@@ -127,6 +128,10 @@ operator Xapian::QueryParser&()
 { return *mp_controller; }
 
 Element::
+operator Xapian::TermGenerator&()
+{ return *mp_controller; }
+
+Element::
 operator Xapian::Stopper&()
 { return *mp_controller; }
 
@@ -224,6 +229,13 @@ Element::
 wrap(Xapian::QueryParser* p_query_parser)
 {
     return Element(new Controller::QueryParser(p_query_parser));
+}
+
+Element
+Element::
+wrap(Xapian::TermGenerator* p_term_gen)
+{
+    return Element(new Controller::TermGenerator(p_term_gen));
 }
 
 Element
