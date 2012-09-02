@@ -3,6 +3,7 @@
 
 -ifdef(BENCHMARK).
 -import(xapian_helper, [testdb_path/1]).
+-define(EMARK_NOAUTO, true).
 -include_lib("emark/include/emark.hrl").
 -endif.
 

@@ -114,8 +114,7 @@ postcondition(_S, _C, _R) ->
 
 
 prop_main() ->
-    %% Run at least 200 commands
-    ?FORALL(Cmds, more_commands(200, commands(?MODULE)),
+    ?FORALL(Cmds, commands(?MODULE),
        ?TRAPEXIT(
             begin
             {History,State,Result} = run_commands(?MODULE, Cmds),
@@ -140,7 +139,7 @@ remove_directory_with_files(DirName) ->
 proper_test_() ->
     EunitLeader = erlang:group_leader(),     
     erlang:group_leader(whereis(user), self()),
-    Res = proper:module(?MODULE, [{numtests, 10}]),
+    Res = proper:module(?MODULE, [{numtests, 20}]),
     erlang:group_leader(EunitLeader, self()),
     {timeout, 600, ?_assertEqual([], Res)}.
 
