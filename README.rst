@@ -3,7 +3,7 @@ Xapian binding for Erlang
 
 **License**: MIT, GPL2 or higher (Xapian is still under GPL only.)
 
-**Author**: Uvarov Michael (cytozoon@gmail.com)
+**Author**: Uvarov Michael (arcusfelis@gmail.com)
 
 `Xapian <http://xapian.org/>`_ is an Open Source Search Engine Library,
 written in C++. Xapian is a highly adaptable toolkit which allows
@@ -17,7 +17,7 @@ I use rebar for building:
 
 .. code-block:: shell
 
-    $ git clone git://github.com/cytozoon/xapian.git 
+    $ git clone git://github.com/arcusfelis/xapian.git 
     $ cd xapian ./rebar get-deps ./rebar compile
 
 Google hash map (optional)
@@ -256,15 +256,15 @@ Stand-alone Stemmer
 Code examples
 =============
 
--  `escripts <https://github.com/cytozoon/xapian-examples>`_
+-  `escripts <https://github.com/arcusfelis/xapian-examples>`_
 
 Documentation
 =============
 
--  `Edoc Reference <http://cytozoon.github.com/xapian/index.html>`_
+-  `Edoc Reference <http://arcusfelis.github.com/xapian/index.html>`_
 -  `Sphinx
-   Manual <http://cytozoon.github.com/xapian-docsprint/index.html>`_
+   Manual <http://arcusfelis.github.com/xapian-docsprint/index.html>`_
 -  `C++ Doxygen
-   Reference <http://cytozoon.github.com/xapian/doxygen/index.html>`_
--  `Sphinx raws <https://github.com/cytozoon/xapian-docsprint>`_
+   Reference <http://arcusfelis.github.com/xapian/doxygen/index.html>`_
+-  `Sphinx raws <https://github.com/arcusfelis/xapian-docsprint>`_
 

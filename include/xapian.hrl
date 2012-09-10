@@ -54,7 +54,7 @@
 %%      action = add | set | update | remove,
 %%      ignore = boolean()}.
 %%
-%% [https://github.com/cytozoon/xapian-docsprint/blob/master/erlang/records.rst#x_term]
+%% [https://github.com/arcusfelis/xapian-docsprint/blob/master/erlang/records.rst#x_term]
 -record(x_term, {
     value = ?REQUIRED :: xapian_type:x_string(),
     position :: xapian_type:x_position() | [xapian_type:x_position()] | undefined,
@@ -145,7 +145,7 @@
 %% These records contain metainfo
 % ----------------------------------------------------------
 
-%% [https://github.com/cytozoon/xapian-docsprint/blob/master/erlang/records.rst#x_prefix_name]
+%% [https://github.com/arcusfelis/xapian-docsprint/blob/master/erlang/records.rst#x_prefix_name]
 -record(x_prefix_name, {
     name = ?REQUIRED  :: xapian_type:x_non_empty_string() | atom(),
     prefix = ?REQUIRED :: xapian_type:x_non_empty_string() | char(),
@@ -155,7 +155,7 @@
 }).
 
 
-%% [https://github.com/cytozoon/xapian-docsprint/blob/master/erlang/records.rst#x_value_name]
+%% [https://github.com/arcusfelis/xapian-docsprint/blob/master/erlang/records.rst#x_value_name]
 -record(x_value_name, {
     name :: atom(),
     slot :: non_neg_integer(),
@@ -263,7 +263,7 @@
 }).
 
 
-%% [https://github.com/cytozoon/xapian-docsprint/blob/master/erlang/records.rst#x_query_parser]
+%% [https://github.com/arcusfelis/xapian-docsprint/blob/master/erlang/records.rst#x_query_parser]
 -record(x_query_parser, {
     name = default 
         :: default | standard | xapian_type:x_resource(),
@@ -330,7 +330,7 @@
 }).
 
 
-%% [https://github.com/cytozoon/xapian-docsprint/blob/master/erlang/records.rst#x_enquire]
+%% [https://github.com/arcusfelis/xapian-docsprint/blob/master/erlang/records.rst#x_enquire]
 -record(x_enquire, {
     value = xapian_type:x_sub_query(),
     query_len = 0 :: non_neg_integer(),
@@ -353,7 +353,7 @@
 }).
 
 
-%% [https://github.com/cytozoon/xapian-docsprint/blob/master/erlang/records.rst#x_match_set]
+%% [https://github.com/arcusfelis/xapian-docsprint/blob/master/erlang/records.rst#x_match_set]
 -record(x_match_set, {
     enquire = ?REQUIRED :: xapian_type:x_resource() | #x_enquire{},
     offset = 0 :: non_neg_integer(), 
