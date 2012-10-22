@@ -13,12 +13,27 @@ their own applications.
 Installation
 ============
 
-I use rebar for building:
+I use rebar for building.
+
+Try as a stand-alone Erlang application:
 
 .. code-block:: shell
 
-    $ git clone git://github.com/arcusfelis/xapian.git 
-    $ cd xapian ./rebar get-deps ./rebar compile
+    git clone git://github.com/arcusfelis/xapian-erlang-bindings.git xapian
+    cd xapian 
+    ./rebar get-deps compile
+    ./start-dev.sh
+ 
+Add as a dependency to ``rebar.config``:
+
+.. code-block:: erlang
+
+    {deps, [                                                                     
+       {xapian, ".*",                                               
+           {git, "git://github.com/arcusfelis/xapian-erlang-bindings.git", "master"}}
+    ]}.
+
+
 
 Google hash map (optional)
 --------------------------
