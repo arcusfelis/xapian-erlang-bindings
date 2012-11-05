@@ -1,4 +1,3 @@
-%% This module is a `gen_server' that handles a single port connection.
 -module(xapian_proper_tests).
 -include_lib("xapian/include/xapian.hrl").
 -include_lib("xapian/src/xapian.hrl").
@@ -249,8 +248,8 @@ is_valid_prefix_short_name(Prefix) ->
 are_valid_prefixes([_,_|_] = Prefixes) -> 
     %% GROUP BY name
     KeyMaker = fun(#x_prefix_name{name = Name}) -> to_unicode_binary(Name) end,
-    GroupsAndKeys = group_with(Prefixes, KeyMaker),
-    Groups = delete_keys(GroupsAndKeys),
+    GroupsAndKeys = lists2:group_with(KeyMaker, Prefixes),
+    Groups = lists2:keys(2, GroupsAndKeys),
     %% true, when each Prefix is used only with one type of the term.
     lists:all(fun is_only_with_one_type/1, Groups)
         andalso lists:all(fun is_same_exclusive_value/1, Groups);
@@ -372,84 +371,6 @@ is_normal_prefix(#x_prefix_name{is_boolean = X}) ->
     not X.
 
 
-%% @doc Looks like `GROUP BY KeyMaker(List)` in SQL.
--spec group_with(list(), fun()) -> list({term(),list()}).
-
-group_with([], _keymaker) ->
-    [];
-
-group_with(List, KeyMaker) ->
-    %% Map
-    Mapped = [{KeyMaker(X), X} || X <- List],
-    [SortedH|SortedT] = lists:keysort(1, Mapped),
-
-    %% Reduce
-    group_reduce(SortedT, [SortedH], []).
-    
-
-%% @doc Return `[{Key, [Value1, Value2, ...]}]'.
-%% @end
-%%
-%% Still the same group:
-group_reduce([{Key, _}=H|T],  [{Key, _}|_] = SubAcc,  Acc) ->
-    group_reduce(T,  [H|SubAcc],  Acc);
-
-%% Add the new group:
-group_reduce([H|T],  SubAcc,  Acc) ->
-    NewAcc = add_sub_acc(SubAcc, Acc),
-    group_reduce(T,  [H],  NewAcc);
-
-%% End of the list
-group_reduce([],  SubAcc,  Acc) ->
-    NewAcc = add_sub_acc(SubAcc, Acc),
-    lists:reverse(NewAcc).
-
-
-add_sub_acc([{Key, _Val}|_] = SubAcc, Acc) when is_list(Acc) ->
-    Elem = {Key, lists:reverse(delete_keys(SubAcc))},
-    [Elem | Acc].
-
-
-delete_keys(List) ->
-    [Val || {_Key, Val} <- List].
-
-
-%% Test the group_with function.
-prop_group_with() ->
-    ?FORALL(Result, [{unique(term()), non_empty([term()])}],
-        begin
-        %% Sorted by key, add the key as a part of the body
-        SortedData    = lists:flatmap(fun flatten_prop_group_result/1, Result),
-        ResultPlusKey = lists:map(fun result_plus_key/1, Result),
-        RandomData = shuffle(SortedData),
-        equals(group_with(RandomData, fun key_maker_prop_group_with/1), ResultPlusKey)
-        end).
-
-
-unique(ElemTypes) ->
-    ?LET(Values, list(ElemTypes), lists:usort(Values)).
-
-
-flatten_prop_group_result({Key, Values}) ->
-    [{Key, Value} || Value <- Values].
-
-
-result_plus_key({Key, _Values} = Group) ->
-    {Key, flatten_prop_group_result(Group)}.
-
-
-%% @doc `KeyMaker' for `fun prop_group_with/0'.
-key_maker_prop_group_with({Key, _Val}) ->
-    Key.
-
-
-shuffle(List) -> 
-    WithKey = [ {random:uniform(), X} || X <- List ],
-    Sorted  = lists:keysort(1, WithKey),
-    delete_keys(Sorted).
-
-
-%% group_with end
 
 
 is_valid_non_empty_unicode_string(Str) ->

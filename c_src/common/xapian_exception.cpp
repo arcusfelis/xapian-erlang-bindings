@@ -98,7 +98,7 @@ BadArgumentDriverError::BadArgumentDriverError(GET_POS) :
 // -------------------------------------------------------------------
 EmptySetDriverError::EmptySetDriverError(GET_POS) : 
     DriverRuntimeError(SET_POS, TYPE, 
-        "Operation is not define for empty sets.") {}
+        "Operation is not defined for empty sets.") {}
 
 
 // -------------------------------------------------------------------
