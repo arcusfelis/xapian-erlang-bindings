@@ -42,10 +42,10 @@ You can use `google sparse
 hash <http://code.google.com/p/sparsehash/?redir=1>`_ for storing
 resources' ids.
 
-Here is a package name of this library in the Ubuntu repository
+In the Debian and Ubuntu repositories, this is packaged as
 ``libsparsehash-dev``.
 
-The C++-predprocessor's macro ``GOOGLE_HASH_MAP`` enables google hash
+The C++-preprocessor macro ``GOOGLE_HASH_MAP`` enables using google hash
 map as a hash map.
 
 Using
@@ -78,7 +78,7 @@ A pool of readers
         fun([Server]) -> io:write(Server), result end).
 
 Readers use the Poolboy application. There is only one writer for each
-database, so there is no a writer pool. You can use a named process and
+database, so there is no writer pool. You can use a named process and
 a supervisor instead:
 
 .. code-block:: erlang
@@ -86,26 +86,26 @@ a supervisor instead:
     {ok, Pid} = xapian_server:open(Path, [{name, simple_writer}, write]). 
     xapian_server:add_document(simple_writer, [#x_text{value = "Paragraph 1"}]).
 
-If you try run this code from console, then next command will be useful:
+If you try to run this code from the console, then next command will be useful:
 
 .. code-block:: erlang
 
     rr(code:lib_dir(xapian, include) ++ "/xapian.hrl").
 
-It loads information about records into console.
+It loads information about records into the console.
 
-A pool is supervised by ``xapian_sup``. That is why, call of
-``xapian_pool:open`` function do *not* link the parent process with the
+A pool is supervised by ``xapian_sup``. That is why calling the
+``xapian_pool:open`` function does *not* link the parent process with the
 new process.
 
-As with ``xapian_drv:transaction``, you can checkout few pools.
+As with ``xapian_drv:transaction``, you can checkout a few pools.
 
 .. code-block:: erlang
 
     xapian_pool:checkout([pool1, poo2], 
                          fun([Server1, Server2]) -> actions_here end).
 
-If an error will occured, an exception will be thrown and workers will
+If an error occurs, an exception will be thrown and workers will
 be returned into the pool.
 
 .. code-block:: erlang
@@ -116,8 +116,8 @@ be returned into the pool.
 Multi-database support
 ======================
 
-You can use this code for opening two databases from "DB1" and "DB2"
-directories.
+You can use this code for opening two databases from the directories
+"DB1" and "DB2".
 
 .. code-block:: erlang
 
@@ -129,11 +129,11 @@ Only read-only databases can be used.
 There are two fields meaning a document's id: ``docid`` and
 ``multi_docid``. They are equal if only one database is used.
 
-Otherwise, first field contains a document id (can be repeated) and
+Otherwise, the first field contains a document id (can be repeated) and
 ``multi_docid`` is a unique idintifier, which is calculated from
 ``docid`` and ``db_number``.
 
-``db_number`` is a number of the document's database encounted from 1.
+``db_number`` is the number of the document's database counting from 1.
 
 ``db_name`` field contains pseudonyms of the databases. Information from
 ``name`` field of ``#x_database{}`` record will be used for this. This
@@ -160,15 +160,15 @@ Resources
 =========
 
 A resource is a C++ object, which can be passed and stored inside an
-Erlang VM. Each server can have an own set of resources. Resources from
+Erlang VM. Each server can have its own set of resources. Resources from
 other servers cannot be used or controlled. Resources are *not*
 automatically garbidge-collected, but if a control process (server)
 dies, all its resources are released.
 
 Use the ``release_resource(Server, Resource)`` function call to free 
-unused anymore resource.
+a resource which is no longer needed.
 
-The second call of this function with the same arguments will cause an
+A second call of this function with the same arguments will cause an
 error:
 
 .. code-block:: erlang
@@ -186,16 +186,16 @@ error:
 Using a port
 ============
 
-Ports cannot crash Erlang VM. The port program will be compilled by
+Ports cannot crash the Erlang VM. The port program will be compiled by
 rebar.
 
-For running a single server in the port mode use:
+For running a single server in port mode use:
 
 .. code-block:: erlang
 
     {ok, Server} = xapian_driver:open(Path, [port|Params]).
 
-For running all servers in the port mode use:
+For running all servers in port mode use:
 
 .. code-block:: erlang
 
@@ -266,7 +266,7 @@ Stand-alone Stemmer
      #x_term{value = <<"cat">>, position = [1,3], frequency = 2},
      #x_term{value = <<"octo">>, position = [2], frequency = 1}] 
 
-``"Z"`` is a prefix. It means, that this term is stemmed.
+``"Z"`` is a prefix. It means that this term is stemmed.
 
 Code examples
 =============
