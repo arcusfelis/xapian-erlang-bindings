@@ -271,15 +271,17 @@ Stand-alone Stemmer
 Code examples
 =============
 
--  `escripts <https://github.com/arcusfelis/xapian-examples>`_
+-  `escripts <https://github.com/arcusfelis/xapian-erlang-examples>`_
 
 Documentation
 =============
 
--  `Edoc Reference <http://arcusfelis.github.com/xapian/index.html>`_
+.. FIXME: Does this still exist anywhere?
+.. -  `Edoc Reference <https://arcusfelis.github.com/xapian/index.html>`_
+
 -  `Sphinx
-   Manual <http://arcusfelis.github.com/xapian-docsprint/index.html>`_
+   Manual <https://arcusfelis.github.com/xapian-erlang-docs/index.rst>`_
 -  `C++ Doxygen
-   Reference <http://arcusfelis.github.com/xapian/doxygen/index.html>`_
--  `Sphinx raws <https://github.com/arcusfelis/xapian-docsprint>`_
+   Reference <http://xapian.org/docs/apidoc/html/index.html>`_
+-  `Sphinx raws <https://github.com/arcusfelis/xapian-erlang-docs>`_
 
