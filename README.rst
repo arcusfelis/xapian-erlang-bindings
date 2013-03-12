@@ -276,9 +276,7 @@ Code examples
 Documentation
 =============
 
-.. FIXME: Does this still exist anywhere?
-.. -  `Edoc Reference <https://arcusfelis.github.com/xapian/index.html>`_
-
+-  `Edoc Reference <http://arcusfelis.github.com/xapian-erlang-bindings/index.html>`_
 -  `Sphinx
    Manual <https://arcusfelis.github.com/xapian-erlang-docs/index.rst>`_
 -  `C++ Doxygen
