@@ -22,17 +22,18 @@
 
 <h2><a name="index">Function Index</a></h2>
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#append_binary-2">append_binary/2</a></td><td>Concat 2 binaries in the reverse order.</td></tr>
-<tr><td valign="top"><a href="#append_boolean-2">append_boolean/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#append_docids-2">append_docids/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#append_boolean-2">append_boolean/2</a></td><td>Append a bool.</td></tr>
+<tr><td valign="top"><a href="#append_docids-2">append_docids/2</a></td><td>Append a list of document identifiers.</td></tr>
 <tr><td valign="top"><a href="#append_document_id-2">append_document_id/2</a></td><td>Append a document identifier (as <code>uint32_t</code>).</td></tr>
 <tr><td valign="top"><a href="#append_double-2">append_double/2</a></td><td>Append a float.</td></tr>
 <tr><td valign="top"><a href="#append_flags-2">append_flags/2</a></td><td>Append flags, used in <code>XapianErlangDriver::decodeParserFeatureFlags</code>.</td></tr>
-<tr><td valign="top"><a href="#append_floats-2">append_floats/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#append_floats-2">append_floats/2</a></td><td>Append a list of double numbers.</td></tr>
 <tr><td valign="top"><a href="#append_int-2">append_int/2</a></td><td>Append a signed integer <code>int32_t</code>.</td></tr>
 <tr><td valign="top"><a href="#append_int8-2">append_int8/2</a></td><td>Append a unsigned integer <code>int8_t</code>.</td></tr>
 <tr><td valign="top"><a href="#append_iolist-2">append_iolist/2</a></td><td>Append iolist as a list of bytes.</td></tr>
 <tr><td valign="top"><a href="#append_param-2">append_param/2</a></td><td>Append a parameter or a field as <code>uint8_t</code>.</td></tr>
-<tr><td valign="top"><a href="#append_resource-3">append_resource/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#append_percent-2">append_percent/2</a></td><td>Write percent as a double.</td></tr>
+<tr><td valign="top"><a href="#append_resource-3">append_resource/3</a></td><td>Encode a resource <code>Res</code> using the resource appender <code>RA</code>.</td></tr>
 <tr><td valign="top"><a href="#append_resource-4">append_resource/4</a></td><td>Append a resource reference or constructor.</td></tr>
 <tr><td valign="top"><a href="#append_slot-2">append_slot/2</a></td><td>Append a value slot (uint32_t).</td></tr>
 <tr><td valign="top"><a href="#append_slot-3">append_slot/3</a></td><td>Append a value slot (uint32_t).</td></tr>
@@ -40,39 +41,40 @@
 <tr><td valign="top"><a href="#append_slots_with_order-3">append_slots_with_order/3</a></td><td>Append a list of slots.</td></tr>
 <tr><td valign="top"><a href="#append_stop-1">append_stop/1</a></td><td>Append a special parameter, which shows the end of the list of commands.</td></tr>
 <tr><td valign="top"><a href="#append_string-2">append_string/2</a></td><td>Append characters as an unicode string.</td></tr>
-<tr><td valign="top"><a href="#append_terms-2">append_terms/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#append_terms-2">append_terms/2</a></td><td>Append a list of terms.</td></tr>
 <tr><td valign="top"><a href="#append_uint-2">append_uint/2</a></td><td>Encode to unsigned <code>int32_t</code> (for example, it is <code>Xapian::valueno</code>).</td></tr>
 <tr><td valign="top"><a href="#append_uint16-2">append_uint16/2</a></td><td>Encode to unsigned <code>int16_t</code> (for example, it is a tcp port).</td></tr>
 <tr><td valign="top"><a href="#append_uint8-2">append_uint8/2</a></td><td>Append a signed integer <code>uint8_t</code>.</td></tr>
 <tr><td valign="top"><a href="#append_unique_document_id-2">append_unique_document_id/2</a></td><td>Appends a document id or a unique term.</td></tr>
-<tr><td valign="top"><a href="#append_value-2">append_value/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#fix_value-3">fix_value/3</a></td><td>Returns the fixed value: float or string if all is ok.</td></tr>
-<tr><td valign="top"><a href="#index_of-2">index_of/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#index_one_of-2">index_one_of/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#read_boolean-1">read_boolean/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#append_value-3">append_value/3</a></td><td>Append a value of the slot.</td></tr>
+<tr><td valign="top"><a href="#append_value-4">append_value/4</a></td><td>Append a value <code>Value</code> of the slot <code>SlotId</code>.</td></tr>
+<tr><td valign="top"><a href="#append_weight-2">append_weight/2</a></td><td>Write weight as a double.</td></tr>
+<tr><td valign="top"><a href="#index_of-2">index_of/2</a></td><td>Return a position of the element <code>Item</code> in the list <code>List</code>.</td></tr>
+<tr><td valign="top"><a href="#index_one_of-2">index_one_of/2</a></td><td>Search any term from <code>Items</code> inside <code>List</code>.</td></tr>
+<tr><td valign="top"><a href="#read_boolean-1">read_boolean/1</a></td><td>Read a bool.</td></tr>
 <tr><td valign="top"><a href="#read_db_id-1">read_db_id/1</a></td><td>Read a database number (uint32_t).</td></tr>
-<tr><td valign="top"><a href="#read_doccount-1">read_doccount/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#read_doccount-1">read_doccount/1</a></td><td>Read a document count (uint32_t).</td></tr>
 <tr><td valign="top"><a href="#read_document_count-1">read_document_count/1</a></td><td>Read a count of documents (uint32_t).</td></tr>
 <tr><td valign="top"><a href="#read_document_id-1">read_document_id/1</a></td><td>Zero id will be replaced by <code>undefined</code>.</td></tr>
 <tr><td valign="top"><a href="#read_document_length-1">read_document_length/1</a></td><td>Read a document length (double).</td></tr>
 <tr><td valign="top"><a href="#read_double-1">read_double/1</a></td><td>Read a float.</td></tr>
 <tr><td valign="top"><a href="#read_maybe-2">read_maybe/2</a></td><td>If the value is defined, then read it with <code>Fn</code> function.</td></tr>
-<tr><td valign="top"><a href="#read_percent-1">read_percent/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#read_position_list-1">read_position_list/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#read_rank-1">read_rank/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#read_resource-2">read_resource/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#read_slot-1">read_slot/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#read_percent-1">read_percent/1</a></td><td>Read a percent value (uint8_t).</td></tr>
+<tr><td valign="top"><a href="#read_position_list-1">read_position_list/1</a></td><td>Read a fixed count of positions from <code>Bin</code>.</td></tr>
+<tr><td valign="top"><a href="#read_rank-1">read_rank/1</a></td><td>Read a document rank (uint32_t).</td></tr>
+<tr><td valign="top"><a href="#read_resource-2">read_resource/2</a></td><td>Decode a resource from <code>Bin</code> using a resource reader <code>RR</code>.</td></tr>
+<tr><td valign="top"><a href="#read_slot-1">read_slot/1</a></td><td>Read a value slot (uint32_t).</td></tr>
 <tr><td valign="top"><a href="#read_string-1">read_string/1</a></td><td>Split the binary on a string and a tail.</td></tr>
 <tr><td valign="top"><a href="#read_term_count-1">read_term_count/1</a></td><td>Read a term count (uint32_t).</td></tr>
 <tr><td valign="top"><a href="#read_uint-1">read_uint/1</a></td><td>Read an unsigned integer <code>int32_t</code>.</td></tr>
 <tr><td valign="top"><a href="#read_uint8-1">read_uint8/1</a></td><td>Append an unsigned byte (<code>uint8_t</code>).</td></tr>
 <tr><td valign="top"><a href="#read_unknown_type_value-1">read_unknown_type_value/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#read_weight-1">read_weight/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#resource_appender-2">resource_appender/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#resource_reader-2">resource_reader/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#read_weight-1">read_weight/1</a></td><td>Read weight as a double.</td></tr>
+<tr><td valign="top"><a href="#resource_appender-2">resource_appender/2</a></td><td>Create a resource appender.</td></tr>
+<tr><td valign="top"><a href="#resource_reader-2">resource_reader/2</a></td><td>Create a resource reader.</td></tr>
 <tr><td valign="top"><a href="#resource_register-1">resource_register/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#slot_id-2">slot_id/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#slot_type-2">slot_type/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#slot_id-2">slot_id/2</a></td><td>Convert slot name to its number.</td></tr>
+<tr><td valign="top"><a href="#slot_type-2">slot_type/2</a></td><td>Convert a slot number (not name) into a slot type (<code>float</code> or <code>string</code>).</td></tr>
 <tr><td valign="top"><a href="#string_to_binary-1">string_to_binary/1</a></td><td>Convert characters into a binary.</td></tr>
 </table>
 
@@ -86,12 +88,12 @@
 <h3 class="function"><a name="append_boolean-2">append_boolean/2</a></h3>
 <div class="spec">
 <p><tt>append_boolean(Value, Bin) -&gt; any()</tt></p>
-</div>
+</div><p>Append a bool.</p>
 
 <h3 class="function"><a name="append_docids-2">append_docids/2</a></h3>
 <div class="spec">
 <p><tt>append_docids(DocIds, Bin@) -&gt; any()</tt></p>
-</div>
+</div><p>Append a list of document identifiers.</p>
 
 <h3 class="function"><a name="append_document_id-2">append_document_id/2</a></h3>
 <div class="spec">
@@ -110,8 +112,9 @@
 
 <h3 class="function"><a name="append_floats-2">append_floats/2</a></h3>
 <div class="spec">
-<p><tt>append_floats(Nums, Bin@) -&gt; any()</tt></p>
-</div>
+<p><tt>append_floats(Nums, Bin) -&gt; Bin</tt>
+<ul class="definitions"><li><tt>Nums = [float()]</tt></li><li><tt>Bin = binary()</tt></li></ul></p>
+</div><p>Append a list of double numbers.</p>
 
 <h3 class="function"><a name="append_int-2">append_int/2</a></h3>
 <div class="spec">
@@ -135,16 +138,24 @@
   It is used primarily for encoding command types, that are handled inside
   <code>switch</code> constructings on the C++ side.</p>
 
+<h3 class="function"><a name="append_percent-2">append_percent/2</a></h3>
+<div class="spec">
+<p><tt>append_percent(Value, Bin) -&gt; any()</tt></p>
+</div><p>Write percent as a double.</p>
+
 <h3 class="function"><a name="append_resource-3">append_resource/3</a></h3>
 <div class="spec">
 <p><tt>append_resource(RA, Res, Bin) -&gt; Bin</tt>
 <ul class="definitions"><li><tt>RA = <a href="#type-x_resource_appender">x_resource_appender()</a></tt></li><li><tt>Res = <a href="xapian_type.html#type-x_resource">xapian_type:x_resource()</a></tt></li><li><tt>Bin = binary()</tt></li></ul></p>
-</div>
+</div><p>Encode a resource <code>Res</code> using the resource appender <code>RA</code>.
+  Concat it with <code>Bin</code>.</p>
+<p><b>See also:</b> <a href="#append_resource-4">append_resource/4</a>, <a href="#resource_appender-2">resource_appender/2</a>.</p>
 
 <h3 class="function"><a name="append_resource-4">append_resource/4</a></h3>
 <div class="spec">
 <p><tt>append_resource(State, Res, Bin, ClientPid) -&gt; any()</tt></p>
 </div><p>Append a resource reference or constructor.</p>
+<p><b>See also:</b> <a href="#append_resource-3">append_resource/3</a>.</p>
 
 <h3 class="function"><a name="append_slot-2">append_slot/2</a></h3>
 <div class="spec">
@@ -181,8 +192,9 @@
 
 <h3 class="function"><a name="append_terms-2">append_terms/2</a></h3>
 <div class="spec">
-<p><tt>append_terms(Terms, Bin@) -&gt; any()</tt></p>
-</div>
+<p><tt>append_terms(Terms, Bin) -&gt; Bin</tt>
+<ul class="definitions"><li><tt>Terms = [<a href="xapian_type.html#type-x_non_empty_string">xapian_type:x_non_empty_string()</a>]</tt></li><li><tt>Bin = binary()</tt></li></ul></p>
+</div><p>Append a list of terms.</p>
 
 <h3 class="function"><a name="append_uint-2">append_uint/2</a></h3>
 <div class="spec">
@@ -205,31 +217,41 @@
 </div><p>Appends a document id or a unique term.
   Add a prefix tag (1,2) also.</p>
 
-<h3 class="function"><a name="append_value-2">append_value/2</a></h3>
+<h3 class="function"><a name="append_value-3">append_value/3</a></h3>
 <div class="spec">
-<p><tt>append_value(Value, Bin@) -&gt; any()</tt></p>
-</div>
+<p><tt>append_value(Type, Value, Bin) -&gt; Bin</tt>
+<ul class="definitions"><li><tt>Type = atom()</tt></li><li><tt>Value = float()</tt></li><li><tt>Bin = binary()</tt></li></ul></p>
+</div><p>Append a value of the slot.
+  <code>Type</code> is a user defined type (for example, <code>string</code>, <code>float</code> or <code>bytes</code>).
+  See <code>XapianErlang::Driver::decodeValue</code>.</p>
 
-<h3 class="function"><a name="fix_value-3">fix_value/3</a></h3>
+<h3 class="function"><a name="append_value-4">append_value/4</a></h3>
 <div class="spec">
-<p><tt>fix_value(Slot, Value, Slot2TypeArray) -&gt; any()</tt></p>
-</div><p>Returns the fixed value: float or string if all is ok.
-       Othervise, throws an error.</p>
+<p><tt>append_value(SlotId, Value, S2T, Bin) -&gt; any()</tt></p>
+</div><p>Append a value <code>Value</code> of the slot <code>SlotId</code>.</p>
+
+<h3 class="function"><a name="append_weight-2">append_weight/2</a></h3>
+<div class="spec">
+<p><tt>append_weight(Value, Bin) -&gt; any()</tt></p>
+</div><p>Write weight as a double.</p>
 
 <h3 class="function"><a name="index_of-2">index_of/2</a></h3>
 <div class="spec">
-<p><tt>index_of(Item, List) -&gt; any()</tt></p>
-</div>
+<p><tt>index_of(Item, List) -&gt; Pos | not_found</tt>
+<ul class="definitions"><li><tt>Pos = non_neg_integer()</tt></li><li><tt>Item = term()</tt></li><li><tt>List = [Item]</tt></li></ul></p>
+</div><p>Return a position of the element <code>Item</code> in the list <code>List</code>.</p>
 
 <h3 class="function"><a name="index_one_of-2">index_one_of/2</a></h3>
 <div class="spec">
 <p><tt>index_one_of(Items::[term()], List::[term()]) -&gt; non_neg_integer() | not_found</tt><br></p>
-</div>
+</div><p>Search any term from <code>Items</code> inside <code>List</code>.
+  Return its position in <code>List</code>.</p>
 
 <h3 class="function"><a name="read_boolean-1">read_boolean/1</a></h3>
 <div class="spec">
-<p><tt>read_boolean(Bin) -&gt; any()</tt></p>
-</div>
+<p><tt>read_boolean(Bin) -&gt; {Bool, Bin}</tt>
+<ul class="definitions"><li><tt>Bin = binary()</tt></li><li><tt>Bool = boolean()</tt></li></ul></p>
+</div><p>Read a bool. Return <code>true</code> or <code>false</code>.</p>
 
 <h3 class="function"><a name="read_db_id-1">read_db_id/1</a></h3>
 <div class="spec">
@@ -239,7 +261,7 @@
 <h3 class="function"><a name="read_doccount-1">read_doccount/1</a></h3>
 <div class="spec">
 <p><tt>read_doccount(Bin) -&gt; any()</tt></p>
-</div>
+</div><p>Read a document count (uint32_t).</p>
 
 <h3 class="function"><a name="read_document_count-1">read_document_count/1</a></h3>
 <div class="spec">
@@ -272,28 +294,31 @@
 
 <h3 class="function"><a name="read_percent-1">read_percent/1</a></h3>
 <div class="spec">
-<p><tt>read_percent(Bin) -&gt; any()</tt></p>
-</div>
+<p><tt>read_percent(Bin) -&gt; Percent</tt>
+<ul class="definitions"><li><tt>Bin = binary()</tt></li><li><tt>Percent = 0..100</tt></li></ul></p>
+</div><p>Read a percent value (uint8_t).</p>
 
 <h3 class="function"><a name="read_position_list-1">read_position_list/1</a></h3>
 <div class="spec">
-<p><tt>read_position_list(Bin@) -&gt; any()</tt></p>
-</div>
+<p><tt>read_position_list(Bin) -&gt; {Positions, Bin}</tt>
+<ul class="definitions"><li><tt>Positions = [Pos]</tt></li><li><tt>Pos = non_neg_integer()</tt></li><li><tt>Bin = binary()</tt></li></ul></p>
+</div><p>Read a fixed count of positions from <code>Bin</code>.</p>
 
 <h3 class="function"><a name="read_rank-1">read_rank/1</a></h3>
 <div class="spec">
 <p><tt>read_rank(Bin) -&gt; any()</tt></p>
-</div>
+</div><p>Read a document rank (uint32_t).</p>
 
 <h3 class="function"><a name="read_resource-2">read_resource/2</a></h3>
 <div class="spec">
 <p><tt>read_resource(RR, Bin) -&gt; any()</tt></p>
-</div>
+</div><p>Decode a resource from <code>Bin</code> using a resource reader <code>RR</code>.</p>
+<p><b>See also:</b> <a href="#resource_reader-2">resource_reader/2</a>.</p>
 
 <h3 class="function"><a name="read_slot-1">read_slot/1</a></h3>
 <div class="spec">
 <p><tt>read_slot(Bin) -&gt; any()</tt></p>
-</div>
+</div><p>Read a value slot (uint32_t).</p>
 
 <h3 class="function"><a name="read_string-1">read_string/1</a></h3>
 <div class="spec">
@@ -324,18 +349,18 @@
 <h3 class="function"><a name="read_weight-1">read_weight/1</a></h3>
 <div class="spec">
 <p><tt>read_weight(Bin) -&gt; any()</tt></p>
-</div>
+</div><p>Read weight as a double.</p>
 
 <h3 class="function"><a name="resource_appender-2">resource_appender/2</a></h3>
 <div class="spec">
 <p><tt>resource_appender(State, Client) -&gt; <a href="#type-x_resource_appender">x_resource_appender()</a></tt>
 <ul class="definitions"><li><tt>State = <a href="xapian_type.html#type-x_state">xapian_type:x_state()</a></tt></li><li><tt>Client = pid() | {pid(), reference()}</tt></li></ul></p>
-</div>
+</div><p>Create a resource appender.</p>
 
 <h3 class="function"><a name="resource_reader-2">resource_reader/2</a></h3>
 <div class="spec">
 <p><tt>resource_reader(Register, ClientPid) -&gt; any()</tt></p>
-</div>
+</div><p>Create a resource reader.</p>
 
 <h3 class="function"><a name="resource_register-1">resource_register/1</a></h3>
 <div class="spec">
@@ -345,12 +370,13 @@
 <h3 class="function"><a name="slot_id-2">slot_id/2</a></h3>
 <div class="spec">
 <p><tt>slot_id(Name, N2S) -&gt; any()</tt></p>
-</div>
+</div><p>Convert slot name to its number.</p>
 
 <h3 class="function"><a name="slot_type-2">slot_type/2</a></h3>
 <div class="spec">
-<p><tt>slot_type(Slot, N2S) -&gt; any()</tt></p>
-</div>
+<p><tt>slot_type(Slot, N2S::N2S | undefined) -&gt; Type</tt>
+<ul class="definitions"><li><tt>Slot = non_neg_integer()</tt></li><li><tt>N2S = term()</tt></li><li><tt>Type = <a href="xapian_type.html#type-x_slot_type">xapian_type:x_slot_type()</a></tt></li></ul></p>
+</div><p>Convert a slot number (not name) into a slot type (<code>float</code> or <code>string</code>).</p>
 
 <h3 class="function"><a name="string_to_binary-1">string_to_binary/1</a></h3>
 <div class="spec">
@@ -360,6 +386,6 @@
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Aug 18 2012, 22:29:03.</i></p>
+<p><i>Generated by EDoc, Mar 12 2013, 11:34:47.</i></p>
 </body>
 </html>
