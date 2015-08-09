@@ -10,6 +10,13 @@ written in C++. Xapian is a highly adaptable toolkit which allows
 developers to easily add advanced indexing and search facilities to
 their own applications.
 
+
+Xapian library
+==============
+
+Install Xapian library itself.
+``emerge dev-libs/xapian`` in Gentoo Linux.
+
 Installation
 ============
 
@@ -47,6 +54,8 @@ In the Debian and Ubuntu repositories, this is packaged as
 
 The C++-preprocessor macro ``GOOGLE_HASH_MAP`` enables using google hash
 map as a hash map.
+
+``emerge dev-cpp/sparsehash`` in Gentoo Linux.
 
 Using
 =====
