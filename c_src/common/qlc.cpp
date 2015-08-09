@@ -271,6 +271,7 @@ TermQlcTable::getPageKnownSize(
     {
         if (m_iter == m_end)
         {
+            /*
             std::cout 
                 << "m_size = "          << m_size
                 << ", m_current_pos = " << m_current_pos
@@ -279,6 +280,7 @@ TermQlcTable::getPageKnownSize(
                 << ", skip = "          << skip 
                 << ", count = "         << count
                 << ", real m_size = "   << static_cast<uint32_t>(mp_gen->size());
+                */
         }
         assert(m_iter != m_end);
         ParamDecoder params = m_controller;
