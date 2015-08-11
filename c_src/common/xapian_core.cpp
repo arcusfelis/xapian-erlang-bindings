@@ -632,6 +632,20 @@ Driver::createTermGenerator(PR)
     m_store.save(elem, result);
 }
 
+/**
+ * Suggest a spelling correction.
+ */
+void
+Driver::getSpellingCorrection(PR)
+{
+    const std::string& word = params;
+    const uint32_t max_edit_distance = params;
+
+    const std::string& corrected
+        = m_db.get_spelling_suggestion(word, max_edit_distance);
+    result << corrected;
+}
+
 
 void
 Driver::parseString(CPR)
@@ -1884,6 +1898,10 @@ Driver::handleCommand(PR,
 
         case CREATE_TERM_GENERATOR: 
             createTermGenerator(params, result);
+            break;
+
+        case GET_SPELLING_CORRECTION:
+            getSpellingCorrection(params, result);
             break;
 
         case PARSE_STRING:

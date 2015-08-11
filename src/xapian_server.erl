@@ -12,6 +12,8 @@
          read_document/3,
          document_info/3,
          is_document_exist/2,
+         get_spelling_suggestion/2,
+         get_spelling_suggestion/3,
          close/1]).
 
 %% For writable DB
@@ -595,8 +597,25 @@ add_document(Server, Document) ->
     Server :: x_server(),
     Spelling :: xapian_type:x_spelling_constructor().
 
+%% @doc Suggest a spelling correction
 add_spelling(Server, Spelling) ->
     call(Server, {add_spelling, Spelling}).
+
+%% @doc Suggest a spelling correction
+-spec get_spelling_suggestion(Server, Word) -> Suggestion when
+    Server :: x_server(),
+    Word :: x_string(), 
+    Suggestion :: x_string().
+get_spelling_suggestion(Server, Word) ->
+    get_spelling_suggestion(Server, Word, 2).
+
+-spec get_spelling_suggestion(Server, Word, MaxEditDistance) -> Suggestion when
+    Server :: x_server(),
+    Word :: x_string(), 
+    MaxEditDistance :: non_neg_integer(),
+    Suggestion :: x_string().
+get_spelling_suggestion(Server, Word, MaxEditDistance) ->
+    call(Server, {get_spelling_suggestion, Word, MaxEditDistance}).
 
 
 %% @doc Add the synonym `Synonym' for the term `Term'.
@@ -1388,6 +1407,11 @@ hc({add_spelling, Spelling}, From, State) ->
     Reply = port_add_spelling(Port, EncodedSpelling),
     {reply, Reply, State};
 
+hc({get_spelling_suggestion, Word, MaxEditDistance}, From, State) ->
+    #state{ port = Port } = State,
+    Reply = port_get_spelling_suggestion(Port, Word, MaxEditDistance),
+    {reply, Reply, State};
+
 hc({clear_synonyms, Term}, _From, State) ->
     #state{ port = Port } = State,
     Reply = port_clear_synonyms(Port, Term),
@@ -1995,6 +2019,12 @@ port_add_document(Port, EncodedDocument) ->
 port_add_spelling(Port, EncodedSpelling) ->
     control(Port, add_spelling, EncodedSpelling).
 
+port_get_spelling_suggestion(Port, Word, MaxEditDistance) ->
+    Bin@ = <<>>,
+    Bin@ = append_string(Word, Bin@),
+    Bin@ = append_uint(MaxEditDistance, Bin@),
+    decode_string_result(control(Port, get_spelling_suggestion, Bin@)).
+
 port_remove_synonym(Port, Term, Synonym) ->
     Bin@ = append_string(Term, <<>>),
     Bin@ = append_string(Synonym, Bin@), 
@@ -2361,6 +2391,9 @@ decode_database_info_result(Data, Params) ->
 
 decode_docid_result(Data) -> 
     decode_result_with_hof(Data, fun xapian_common:read_document_id/1).
+
+decode_string_result(Data) ->
+    decode_result_with_hof(Data, fun xapian_common:read_string/1).
 
 decode_resource_result(Data) -> 
     decode_result_with_hof(Data, fun xapian_common:read_uint/1).

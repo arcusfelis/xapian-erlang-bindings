@@ -82,7 +82,8 @@ command_id(add_spelling)                -> 38;
 command_id(add_synonym)                 -> 39;
 command_id(remove_synonym)              -> 40;
 command_id(clear_synonyms)              -> 41;
-command_id(create_term_generator)       -> 42.
+command_id(create_term_generator)       -> 42;
+command_id(get_spelling_suggestion)     -> 43.
 
 
 %% Open modes of the DB

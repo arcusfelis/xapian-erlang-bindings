@@ -109,7 +109,8 @@ class Driver
         ADD_SYNONYM                 = 39,
         REMOVE_SYNONYM              = 40,
         CLEAR_SYNONYMS              = 41,
-        CREATE_TERM_GENERATOR       = 42
+        CREATE_TERM_GENERATOR       = 42,
+        GET_SPELLING_CORRECTION     = 43
     };
 
 
@@ -697,6 +698,9 @@ class Driver
 
     void
     createTermGenerator(PR);
+
+    void
+    getSpellingCorrection(PR);
 
     void
     parseString(CPR);

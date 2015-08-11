@@ -1355,6 +1355,7 @@ add_spelling_gen() ->
                    ,#x_term{value = "jumps", action = remove}
                    ],
         ?SRV:add_spelling(Server, Spelling),
+        Corrected = ?SRV:get_spelling_suggestion(Server, <<"lazzy">>),
         Table2 = xapian_term_qlc:spelling_table(Server, Meta),
         Records2 = qlc:e(Table2),
         io:format(user, "~n Before: ~p\tAfter: ~p~n", [Records1, Records2]),
@@ -1373,7 +1374,9 @@ add_spelling_gen() ->
                                  ,#term_freq{value = <<"lazy">>,  freq = 6}
                                  ,#term_freq{value = <<"over">>,  freq = 5}
                                  ,#term_freq{value = <<"the">>,   freq = 1}
-                                 ])
+                                 ]),
+        {"get_spelling_suggestion test",
+         ?_assertEqual(Corrected, <<"lazy">>)}
         ]
     after
         ?SRV:close(Server)
