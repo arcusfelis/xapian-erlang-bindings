@@ -447,7 +447,9 @@ document_field_id(db_number)      -> 9;
 %% db_name and db_number have the same nature.
 document_field_id(db_name)        -> document_field_id(db_number);
 document_field_id(collapse_key)   -> 10;
-document_field_id(collapse_count) -> 11.
+document_field_id(collapse_count) -> 11;
+document_field_id(all_terms)      -> 12;
+document_field_id(all_values)     -> 13.
 
 
 resource_encoding_schema_id(reference)    -> 56;

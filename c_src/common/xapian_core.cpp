@@ -2448,6 +2448,18 @@ Driver::retrieveDocument(PCR,
                 break;
             }
 
+            case GET_ALL_TERMS:
+            {
+                retrieveTermValues(result, doc);
+                break;
+            }
+
+            case GET_ALL_VALUES:
+            {
+                retrieveSlotAndValues(result, doc);
+                break;
+            }
+
             case GET_DOCID:
             {
                 const Xapian::docid docid = doc.get_docid();
@@ -2575,6 +2587,18 @@ Driver::retrieveDocument(PCR,
             {
                 const std::string& data = doc.get_data();
                 result << data;
+                break;
+            }
+
+            case GET_ALL_TERMS:
+            {
+                retrieveTermValues(result, doc);
+                break;
+            }
+
+            case GET_ALL_VALUES:
+            {
+                retrieveSlotAndValues(result, doc);
                 break;
             }
 
@@ -2754,6 +2778,8 @@ Driver::retrieveDocumentSchema(
             case GET_DB_NUMBER:
             case GET_COLLAPSE_KEY:
             case GET_COLLAPSE_COUNT:
+            case GET_ALL_TERMS:
+            case GET_ALL_VALUES:
                 break;
 
             default:
@@ -3260,6 +3286,40 @@ Driver::qlcTermIteratorLookup(
         }
     };
     result << stop;
+}
+
+
+void
+Driver::retrieveTermValues(ResultEncoder& result, Xapian::Document& doc)
+{
+    
+    Xapian::TermIterator iter, end;
+    uint32_t size = static_cast<uint32_t>(doc.termlist_count());
+    iter = doc.termlist_begin();
+    end = doc.termlist_end();
+    result << size;
+    for (; iter != end; iter++)
+    {
+        const std::string& value = *iter;
+        result << value;
+    }
+}
+
+void
+Driver::retrieveSlotAndValues(ResultEncoder& result, Xapian::Document& doc)
+{
+    Xapian::ValueIterator
+        iter = doc.values_begin(),
+        end = doc.values_end();
+    uint32_t size = static_cast<uint32_t>(doc.values_count());
+    result << size;
+    for (; iter != end; iter++)
+    {
+        Xapian::valueno slot_no = iter.get_valueno();
+        const std::string& value = *iter;
+        result << slot_no;
+        result << value;
+    }
 }
 
 XAPIAN_ERLANG_NS_END

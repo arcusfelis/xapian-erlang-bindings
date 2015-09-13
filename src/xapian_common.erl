@@ -39,7 +39,9 @@
          read_weight/1,
          read_percent/1,
          read_db_id/1,
-         read_maybe/2
+         read_maybe/2,
+         read_strings/1,
+         read_slot_and_values/1
         ]).
 
 %% Advanced encoding functions
@@ -94,6 +96,27 @@ read_maybe(Fn, Bin) ->
         0 -> {undefined, Bin2}; 
         1 -> Fn(Bin2)
     end.
+
+read_strings(Bin) ->
+    {Size, Bin2} = read_uint(Bin),
+    read_strings(Size, Bin2, []).
+
+read_strings(0, Bin, Acc) ->
+    {lists:reverse(Acc), Bin};
+read_strings(N, Bin, Acc) when N > 0 ->
+    {Str, Bin2} = read_string(Bin),
+    read_strings(N-1, Bin2, [Str|Acc]).
+
+read_slot_and_values(Bin) ->
+    {Size, Bin2} = read_uint(Bin),
+    read_slot_and_values(Size, Bin2, []).
+
+read_slot_and_values(0, Bin, Acc) ->
+    {lists:reverse(Acc), Bin};
+read_slot_and_values(N, Bin, Acc) when N > 0 ->
+    {Slot, Bin2} = read_uint(Bin),
+    {Value, Bin3} = read_string(Bin2),
+    read_slot_and_values(N-1, Bin3, [{Slot, Value}|Acc]).
 
 
 %% Note: Order of the functions:

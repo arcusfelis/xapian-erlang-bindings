@@ -22,6 +22,8 @@
         read_weight/1,
         read_rank/1,
         read_string/1,
+        read_strings/1,
+        read_slot_and_values/1,
         read_percent/1,
         read_uint8/1,
         read_unknown_type_value/1,
@@ -48,6 +50,8 @@
 %% <ul><li>
 %% </li><li> docid
 %% </li><li> data
+%% </li><li> all_values
+%% </li><li> all_terms
 %% </li><li> weight
 %% </li><li> rank
 %% </li><li> percent
@@ -182,7 +186,8 @@ type([], IsDoc, IsIter) ->
 %% Encode a field without parameters:
 enc([H  | T], N2S, V2T, Bin) 
     when in(H, [data, docid, weight, rank, percent, multi_docid, 
-                db_number, db_name, collapse_count, collapse_key]) ->
+                db_number, db_name, collapse_count, collapse_key,
+                all_terms, all_values]) ->
     enc(T, N2S, V2T, append_type(H, Bin));
 
 %% ... with a parameter:
@@ -229,6 +234,8 @@ dec([H|T], I2N, Bin, Acc) ->
             multi_docid      -> read_document_id(Bin);
             db_number        -> read_db_id(Bin);
             db_name          -> read_db_name(Bin, I2N);
+            all_terms        -> read_strings(Bin);
+            all_values       -> read_slot_and_values(Bin);
             _ValueField      -> read_unknown_type_value(Bin)
         end,
     dec(T, I2N, NewBin, [Val|Acc]);

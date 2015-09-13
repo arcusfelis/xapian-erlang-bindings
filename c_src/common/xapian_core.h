@@ -185,7 +185,9 @@ class Driver
         GET_MULTI_DOCID             = 8,
         GET_DB_NUMBER               = 9,
         GET_COLLAPSE_KEY            = 10,
-        GET_COLLAPSE_COUNT          = 11
+        GET_COLLAPSE_COUNT          = 11,
+        GET_ALL_TERMS               = 12,
+        GET_ALL_VALUES              = 13
     };
 
     enum e_encodedValueType {
@@ -707,6 +709,12 @@ class Driver
 
     void
     setDatabaseAgain();
+
+    static void
+    retrieveTermValues(ResultEncoder& result, Xapian::Document& doc);
+
+    static void
+    retrieveSlotAndValues(ResultEncoder& result, Xapian::Document& doc);
 };
 
 XAPIAN_ERLANG_NS_END
