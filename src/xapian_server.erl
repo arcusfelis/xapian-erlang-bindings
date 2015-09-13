@@ -10,6 +10,7 @@
          start_link/2,
          last_document_id/1,
          read_document/3,
+         read_document2/3,
          document_info/3,
          is_document_exist/2,
          get_spelling_suggestion/2,
@@ -383,9 +384,20 @@ close(Server) ->
 %%          xapian_record:record(record_name, record_info(fields, record_fields)).
 %%     '''
 %%
-read_document(Server, DocId, RecordMetaDefinition) ->
+read_document(Server, DocId, RecordMetaDefinition) when is_integer(DocId) ->
     call(Server, {read_document_by_id, DocId, RecordMetaDefinition}).
 
+%% @doc `read_document/3' with API similar to `ets:info/2'.
+read_document2(Server, DocId, FieldName) when is_atom(FieldName) ->
+    RecordMetaDefinition =
+        xapian_record:record(read_document2_rec, [FieldName]),
+    Result = read_document(Server, DocId, RecordMetaDefinition),
+    record_to_fields_one(read_document2_rec, FieldName, Result);
+read_document2(Server, DocId, FieldNames) when is_list(FieldNames) ->
+    RecordMetaDefinition =
+        xapian_record:record(read_document2_rec, FieldNames),
+    Result = read_document(Server, DocId, RecordMetaDefinition),
+    record_to_fields_many(read_document2_rec, FieldNames, Result).
 
 %% @doc Read document info, without putting it into database.
 -spec document_info(x_server(), 
@@ -2552,3 +2564,10 @@ maybe_convert_enquire_record_into_constructor(Enquire = #x_enquire{},
     xapian_resource:enquire(Enquire, ClientPid);
 maybe_convert_enquire_record_into_constructor(Enquire, _ClientPid) ->
     Enquire.
+
+
+record_to_fields_one(RecName, FieldName, {RecName, FieldValue}) ->
+    {FieldName, FieldValue}.
+
+record_to_fields_many(RecName, FieldNames, Rec) when RecName =:= element(1, Rec) ->
+    lists:zip(FieldNames, tl(tuple_to_list(Rec))).
