@@ -320,8 +320,10 @@ table_int(Server, QlcType, EncFun, IterRes, Meta, UserParams)
 
 empty_table() ->
     TraverseFun = fun() -> [] end,
+    TableId = xapian_qlc_table_hash:get_table_id(),
     InfoFun = 
     fun(num_of_objects) -> 0;
+       (xapian_table_id) -> TableId;
        (_) -> undefined
        end,
     qlc:table(TraverseFun, [{info_fun, InfoFun}]).
@@ -339,11 +341,13 @@ init_not_empty_table(Server, Info, Meta, UserParams, SortedValue) ->
     From = proplists:get_value(from, UserParams, 0),
     Len = proplists:get_value(page_size, UserParams, 20),
     TraverseFun = traverse_fun(Server, ResNum, Meta, From, Len, Size),
+    TableId = xapian_qlc_table_hash:get_table_id(),
     InfoFun = 
     fun(num_of_objects) -> Size;
        (keypos) -> KeyPos;
        (is_sorted_key) -> KeyPos =/= undefined andalso SortedValue;
        (is_unique_objects) -> true;
+       (xapian_table_id) -> TableId;
        (_) -> undefined
        end,
     LookupFun = lookup_fun(Server, ResNum, Meta, KeyPos, KeyName),

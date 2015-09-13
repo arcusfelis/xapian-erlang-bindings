@@ -37,6 +37,7 @@ table(Server, MSet, Meta)
             end
     end,
     TraverseFun = traverse_fun(Server, ResNum, Meta, SubDbNames, From, Len, Size),
+    TableId = xapian_qlc_table_hash:get_table_id(),
     InfoFun = 
     fun(num_of_objects) -> Size;
        (keypos) -> KeyPos;
@@ -48,6 +49,7 @@ table(Server, MSet, Meta)
 %              ;_           -> false
             end;
        (indices) -> [X || X <- [MultiDocIdPos, DocIdPos], X =/= undefined];
+       (xapian_table_id) -> TableId;
        (_) -> undefined
        end,
     LookupFun = lookup_fun(Server, ResNum, Meta, SubDbNames),

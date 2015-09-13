@@ -8,7 +8,8 @@
 -export([new/0,
          get/2,
          erase/2,
-         put/3]).
+         put/3,
+         get_table_id/0]).
 
 -type gb_tree2(X, X) :: gb_tree().
 
@@ -34,8 +35,21 @@
 
 -spec hash(term()) -> table_hash().
 hash(Table) ->
-    erlang:phash2(Table).
+%   erlang:phash2(Table).
+    extract_table_id(Table).
 
+%% XXX This function is a hack and can be broken in new versions
+extract_table_id(Table) when element(1, Table) =:= qlc_handle ->
+    extract_table_id(element(2, Table));
+extract_table_id(Table) when element(1, Table) =:= qlc_table ->
+    InfoFun = element(6, Table), % #qlc_table.info_fun
+    InfoFun(xapian_table_id).
+
+get_table_id() ->                                                                    
+    now_to_microseconds(now()).
+
+now_to_microseconds({Mega, Secs, MicroSecs}) ->                                      
+    (Mega*1000000+Secs)*1000000+MicroSecs.
 
 -spec new() -> hr_store().
 
