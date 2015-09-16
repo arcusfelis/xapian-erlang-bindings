@@ -227,6 +227,57 @@ update_document_test() ->
         ?SRV:close(Server)
     end.
 
+update_document_value_test() ->
+    Path = testdb_path(update_document_value),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        DocId = ?SRV:add_document(Server, []),
+
+        %% The document with DocId will be extended.
+        %% <<"Slot #15">> = <<83,108,111,116,32,35,49,53>>
+        %% byte_size(<<"Slot #15">>) = 8
+        %%
+        %% Whole command:
+        %% =ERROR REPORT==== 16-Sep-2015::03:15:10 ===
+        %% [update_document:24] OverflowDriverError: "Too short binary." 
+        %% Data: <<27,15,0,0,0,0,8,0,0,0,83,108,111,116,32,35,49,53,1,0,1,1,0,0,0>>
+        %% C++ position: c_src/common/param_decoder.cpp:29
+        %%
+        %% Test DB: add_document_value
+        %% *failed*
+        %% in function xapian_server:client_error_handler/1 (src/xapian_server.erl, line 1285)
+        %% in call from xapian_server_tests:update_document_value_test/0 (test/xapian_server_tests.erl, line 241)
+        %% **error:{x_error,<<"OverflowDriverError">>,<<"Too short binary.">>,update_document,
+        %%          <<"c_src/common/param_decoder.cpp">>,29}
+        %%
+        %%<<27, % SET_VALUE
+        %%  15,0,0,0, % slot
+        %%  0, % xapian_const:value_type_id(string)
+        %%  8,0,0,0,83,108,111,116,32,35,49,53, % string
+        %%  1, % ignore
+        %%  0, % stop applyDocument
+        %%  1,1,0,0,0>>
+        Doc = [#x_value{slot = 15, value = <<"Slot #15">>}],
+        DocId1 = ?SRV:update_document(Server, DocId, Doc),
+        ?assertEqual(DocId, DocId1)
+
+    after
+        ?SRV:close(Server)
+    end.
+
+add_document_value_test() ->
+    Path = testdb_path(add_document_value),
+    Params = [write, create, overwrite],
+    {ok, Server} = ?SRV:start_link(Path, Params),
+    try
+        Doc = [#x_value{slot = 15, value = <<"Slot #15">>}],
+        DocId = ?SRV:add_document(Server, Doc)
+
+    after
+        ?SRV:close(Server)
+    end.
+
     
 %% REP_CRT_DOC_MARK
 replace_or_create_document_test() ->

@@ -2875,7 +2875,7 @@ Driver::applyDocumentSchema(
             case REMOVE_VALUE:
             {
                 const uint32_t         slot    = params;
-                const std::string&     value   = params;
+                const std::string&     value   = decodeValue(params);
                 const bool             ignore  = params;
                 (void) slot;
                 (void) value;
