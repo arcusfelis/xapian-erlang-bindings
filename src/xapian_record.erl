@@ -23,6 +23,7 @@
         read_rank/1,
         read_string/1,
         read_strings/1,
+        read_strings_and_positions/1,
         read_slot_and_values/1,
         read_percent/1,
         read_uint8/1,
@@ -52,6 +53,7 @@
 %% </li><li> data
 %% </li><li> all_values
 %% </li><li> all_terms
+%% </li><li> all_terms_pos
 %% </li><li> weight
 %% </li><li> rank
 %% </li><li> percent
@@ -187,7 +189,7 @@ type([], IsDoc, IsIter) ->
 enc([H  | T], N2S, V2T, Bin) 
     when in(H, [data, docid, weight, rank, percent, multi_docid, 
                 db_number, db_name, collapse_count, collapse_key,
-                all_terms, all_values]) ->
+                all_terms, all_values, all_terms_pos]) ->
     enc(T, N2S, V2T, append_type(H, Bin));
 
 %% ... with a parameter:
@@ -235,6 +237,7 @@ dec([H|T], I2N, Bin, Acc) ->
             db_number        -> read_db_id(Bin);
             db_name          -> read_db_name(Bin, I2N);
             all_terms        -> read_strings(Bin);
+            all_terms_pos    -> read_strings_and_positions(Bin);
             all_values       -> read_slot_and_values(Bin);
             _ValueField      -> read_unknown_type_value(Bin)
         end,

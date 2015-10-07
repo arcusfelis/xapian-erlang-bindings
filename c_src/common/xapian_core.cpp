@@ -2454,6 +2454,12 @@ Driver::retrieveDocument(PCR,
                 break;
             }
 
+            case GET_ALL_TERMS_POS:
+            {
+                retrieveTermValuesAndPositions(result, doc);
+                break;
+            }
+
             case GET_ALL_VALUES:
             {
                 retrieveSlotAndValues(result, doc);
@@ -2593,6 +2599,12 @@ Driver::retrieveDocument(PCR,
             case GET_ALL_TERMS:
             {
                 retrieveTermValues(result, doc);
+                break;
+            }
+
+            case GET_ALL_TERMS_POS:
+            {
+                retrieveTermValuesAndPositions(result, doc);
                 break;
             }
 
@@ -3302,6 +3314,33 @@ Driver::retrieveTermValues(ResultEncoder& result, Xapian::Document& doc)
     {
         const std::string& value = *iter;
         result << value;
+    }
+}
+
+void
+Driver::retrieveTermValuesAndPositions(ResultEncoder& result, Xapian::Document& doc)
+{
+    
+    Xapian::TermIterator iter, end;
+    uint32_t size = static_cast<uint32_t>(doc.termlist_count());
+    iter = doc.termlist_begin();
+    end = doc.termlist_end();
+    result << size;
+    for (; iter != end; iter++)
+    {
+        const std::string& value = *iter;
+        result << value;
+
+        // See TERM_POSITIONS
+        Xapian::termcount count = iter.positionlist_count();
+        result << static_cast<uint32_t>(count);
+        if (count > 0)
+            for (Xapian::PositionIterator 
+                    piter = iter.positionlist_begin(),
+                    pend = iter.positionlist_end();
+                piter != pend;
+                piter++)
+                result << static_cast<uint32_t>(*piter);
     }
 }
 

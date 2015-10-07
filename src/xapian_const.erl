@@ -449,7 +449,8 @@ document_field_id(db_name)        -> document_field_id(db_number);
 document_field_id(collapse_key)   -> 10;
 document_field_id(collapse_count) -> 11;
 document_field_id(all_terms)      -> 12;
-document_field_id(all_values)     -> 13.
+document_field_id(all_values)     -> 13;
+document_field_id(all_terms_pos)  -> 14.
 
 
 resource_encoding_schema_id(reference)    -> 56;

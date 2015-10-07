@@ -187,7 +187,8 @@ class Driver
         GET_COLLAPSE_KEY            = 10,
         GET_COLLAPSE_COUNT          = 11,
         GET_ALL_TERMS               = 12,
-        GET_ALL_VALUES              = 13
+        GET_ALL_VALUES              = 13,
+        GET_ALL_TERMS_POS           = 14
     };
 
     enum e_encodedValueType {
@@ -712,6 +713,9 @@ class Driver
 
     static void
     retrieveTermValues(ResultEncoder& result, Xapian::Document& doc);
+
+    static void
+    retrieveTermValuesAndPositions(ResultEncoder& result, Xapian::Document& doc);
 
     static void
     retrieveSlotAndValues(ResultEncoder& result, Xapian::Document& doc);

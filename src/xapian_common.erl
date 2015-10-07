@@ -41,6 +41,7 @@
          read_db_id/1,
          read_maybe/2,
          read_strings/1,
+         read_strings_and_positions/1,
          read_slot_and_values/1
         ]).
 
@@ -106,6 +107,17 @@ read_strings(0, Bin, Acc) ->
 read_strings(N, Bin, Acc) when N > 0 ->
     {Str, Bin2} = read_string(Bin),
     read_strings(N-1, Bin2, [Str|Acc]).
+
+read_strings_and_positions(Bin) ->
+    {Size, Bin2} = read_uint(Bin),
+    read_strings_and_positions(Size, Bin2, []).
+
+read_strings_and_positions(0, Bin, Acc) ->
+    {lists:reverse(Acc), Bin};
+read_strings_and_positions(N, Bin, Acc) when N > 0 ->
+    {Str, Bin2} = read_string(Bin),
+    {Pos, Bin3} = read_position_list(Bin2),
+    read_strings_and_positions(N-1, Bin3, [{Str, Pos}|Acc]).
 
 read_slot_and_values(Bin) ->
     {Size, Bin2} = read_uint(Bin),
