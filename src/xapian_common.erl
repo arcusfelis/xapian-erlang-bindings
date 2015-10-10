@@ -246,6 +246,9 @@ read_uint8(Bin) ->
 append_document_id(Id, Bin) ->
     append_uint(Id, Bin).
 
+append_non_zero_document_id(Id, Bin) when Id =/= 0 ->
+    append_document_id(Id, Bin).
+
 
 %% @doc Appends a document id or a unique term.
 %% Add a prefix tag (1,2) also.
@@ -503,7 +506,7 @@ read_position_list(0, Acc, Bin@) ->
 
 %% @doc Append a list of document identifiers.
 append_docids(DocIds, Bin@) ->
-    Bin@ = lists:foldl(fun append_document_id/2, Bin@, DocIds),
+    Bin@ = lists:foldl(fun append_non_zero_document_id/2, Bin@, DocIds),
     Bin@ = append_document_id(0, Bin@),
     Bin@.
 
