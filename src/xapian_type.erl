@@ -93,7 +93,8 @@
     | #x_query_value_range{} 
     | #x_query_term{}
     | #x_query_string{}
-    | #x_query_scale_weight{}.
+    | #x_query_scale_weight{}
+    | #x_query_similar_document{}.
 
 -type x_resource() :: reference().
 -type x_record() :: tuple().

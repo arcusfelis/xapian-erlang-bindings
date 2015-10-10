@@ -11,6 +11,7 @@
     append_stop/1,
     append_flags/2,
     append_double/2,
+    append_docids/2,
     append_string/2,
     append_value/4,
     slot_id/2]).
@@ -72,6 +73,13 @@ encode(#x_query_scale_weight{value=SubQuery, op=Op, factor=Fac},
     Bin@ = append_operator(Op, Bin@),
     Bin@ = append_double(Fac, Bin@),
     Bin@ = encode(SubQuery, N2S, S2T, RA, Bin@),
+    Bin@;
+
+encode(#x_query_similar_document{max_terms=MaxTerms, document_ids=DocIds}, 
+       N2S, S2T, RA, Bin@) ->
+    Bin@ = append_type(query_similar_document, Bin@),
+    Bin@ = append_uint(MaxTerms, Bin@),
+    Bin@ = append_docids(DocIds, Bin@),
     Bin@;
 
 encode(ResRef, _N2S, _S2T, RA, Bin@) when is_reference(ResRef) ->

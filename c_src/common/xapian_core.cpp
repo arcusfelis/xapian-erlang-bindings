@@ -1358,6 +1358,22 @@ Driver::buildQuery(CP)
             return q;
         }
 
+        case QUERY_SIMILAR_DOCUMENT:
+        {
+            const uint32_t  maxitems = params;
+            Xapian::Enquire enquire(m_db);
+
+            Xapian::RSet rset;
+            while (const Xapian::docid docid = params)
+            {
+                rset.add_document(docid);
+            }
+            Xapian::ESet eset = enquire.get_eset(static_cast<Xapian::doccount>(maxitems), rset);
+            Xapian::Query q(Xapian::Query::OP_OR, eset.begin(), eset.end());
+
+            return q;
+        }
+
         case QUERY_REFERENCE:
         {
             return extractQuery(con, params);

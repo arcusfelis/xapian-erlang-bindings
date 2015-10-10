@@ -318,6 +318,12 @@
     factor = ?REQUIRED :: float()
 }). 
 
+%% [http://http://trac.xapian.org/wiki/FAQ/FindSimilar](Find similar)
+-record(x_query_similar_document, {
+    %% Max items in ESet (set of expanded terms)
+    max_terms = 40,
+    document_ids = ?REQUIRED :: [xapian_type:x_document_id()]
+}).
 
 -record(x_sort_order, {
     type = ?REQUIRED :: xapian_type:x_order_type(),

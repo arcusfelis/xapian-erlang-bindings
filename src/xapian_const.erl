@@ -140,7 +140,8 @@ query_id(query_value_range) -> 3;
 query_id(query_term)        -> 4;
 query_id(query_string)      -> 5;
 query_id(query_scale_weight) -> 6;
-query_id(query_resource)    -> 7.
+query_id(query_resource)    -> 7;
+query_id(query_similar_document) -> 8.
 
 
 %% ------------------------------------------------------------

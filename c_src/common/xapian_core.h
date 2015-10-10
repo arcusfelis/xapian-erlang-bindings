@@ -212,7 +212,8 @@ class Driver
         QUERY_TERM                  = 4,
         QUERY_PARSER                = 5,
         QUERY_SCALE_WEIGHT          = 6,  /// query, double
-        QUERY_REFERENCE             = 7
+        QUERY_REFERENCE             = 7,
+        QUERY_SIMILAR_DOCUMENT      = 8
     };
 
     enum e_queryParserCommand {
