@@ -3,6 +3,7 @@
 -module(xapian_helper).
 -export([stem/3, stem_qlc/3]).
 -export([testdb_path/1]).
+-export([add_delta_to_terms/2]).
 
 -include_lib("xapian/include/xapian.hrl").
 -include_lib("stdlib/include/qlc.hrl").
@@ -57,3 +58,11 @@ stem_test_() ->
                   , #x_term{frequency = 1, position = [3], value = <<"xapian">>}
                   ])].
 -endif.
+
+add_delta_to_terms(Delta, [H=#x_term{position=Pos}|T]) ->
+    HH = H#x_term{position=[X+Delta||X <- Pos]},
+    [HH|add_delta_to_terms(Delta, T)];
+add_delta_to_terms(Delta, [H|T]) ->
+    [H|add_delta_to_terms(Delta, T)];
+add_delta_to_terms(_, []) ->
+    [].
