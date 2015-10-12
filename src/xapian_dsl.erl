@@ -16,7 +16,10 @@
          value_name/2,
          x_query/1,
          x_query/2,
-         x_query/3]).
+         x_query/3,
+         x_query_similar_document/1,
+         x_query_similar_document/2,
+         enquire_percent_cutoff/2]).
 -include_lib("xapian/include/xapian.hrl").
 
 database(Name, Path) ->
@@ -73,4 +76,20 @@ x_query(Op, Value) when is_atom(Op) ->
 x_query(Op, Value, Param) when is_atom(Op) ->
     #x_query{op=Op, value=Value, parameter=Param}.
 
+x_query_similar_document(DocIds) ->
+    x_query_similar_document(DocIds, 40).
 
+x_query_similar_document(DocId, MaxTerms) when is_integer(DocId) ->
+    x_query_similar_document([DocId], MaxTerms);
+x_query_similar_document(DocIds, MaxTerms) when is_list(DocIds), is_integer(MaxTerms) ->
+    #x_query_similar_document{document_ids=DocIds, max_terms=MaxTerms}.
+
+%% @doc Set cutoff percent
+%% Gets enquire or query, returns enquire
+-spec enquire_percent_cutoff(Percent :: 0 .. 100, xapian_type:x_sub_query() | xapian_type:x_enquire()) ->
+    xapian_type:x_enquire().
+enquire_percent_cutoff(Percent, #x_enquire{}=E) when Percent >= 0, Percent =< 100 ->
+    E#x_enquire{percent_cutoff=Percent};
+enquire_percent_cutoff(Percent, Q) ->
+    %% Make enquire
+    #x_enquire{percent_cutoff=Percent, value=Q}.
